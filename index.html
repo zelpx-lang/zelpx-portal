@@ -1,336 +1,341 @@
 
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ZELPX Contractor Portal</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f5f8;
-      color: #172033;
-    }
-    header {
-      background: #111827;
-      color: white;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 { margin: 0; font-size: 25px; letter-spacing: 2px; }
-    main { max-width: 1050px; margin: 30px auto; padding: 15px; }
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 22px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 14px #0000000c;
-    }
-    h2 { margin-top: 0; }
-    input {
-      display: block;
-      width: 100%;
-      padding: 13px;
-      margin: 10px 0;
-      border: 1px solid #ccd2dc;
-      border-radius: 7px;
-      font-size: 16px;
-    }
-    button {
-      background: #1769e0;
-      color: white;
-      border: 0;
-      padding: 12px 18px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 15px;
-      margin: 5px 5px 5px 0;
-    }
-    button.secondary { background: #475569; }
-    button:disabled { opacity: .5; cursor: wait; }
-    .muted { color: #64748b; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 15px;
-    }
-    .stat { font-size: 26px; font-weight: bold; margin-top: 10px; }
-    .lead {
-      border: 1px solid #e1e6ed;
-      border-radius: 9px;
-      padding: 15px;
-      margin: 12px 0;
-    }
-    .hidden { display: none; }
-    #message { margin: 12px 0; color: #b42318; }
-    footer { text-align: center; color: #64748b; padding: 25px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZELPX | Contractor Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#071426,#102d50,#071426);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #172b46;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 440px;
+}
+
+.brand {
+  text-align: center;
+  color: white;
+  margin-bottom: 28px;
+}
+
+.brand h1 {
+  font-size: 38px;
+  letter-spacing: 7px;
+  margin: 0;
+  font-weight: 800;
+}
+
+.brand p {
+  color: #9bb9dc;
+  letter-spacing: 3px;
+  font-size: 11px;
+}
+
+.panel {
+  background: white;
+  border-radius: 18px;
+  padding: 35px 30px;
+  box-shadow: 0 25px 70px #0006;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 25px;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 14px;
+  margin-bottom: 26px;
+}
+
+.tabs {
+  display: flex;
+  background: #edf2f8;
+  padding: 5px;
+  border-radius: 9px;
+  margin-bottom: 23px;
+}
+
+.tabs button {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 12px;
+  border-radius: 7px;
+  color: #607087;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: white;
+  color: #1769e0;
+  box-shadow: 0 2px 8px #0001;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 15px 0 7px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #dce3ed;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #2476e8;
+  box-shadow: 0 0 0 3px #2476e81c;
+}
+
+.main-btn {
+  width: 100%;
+  margin-top: 23px;
+  padding: 15px;
+  background: #1769e0;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.main-btn:hover { background: #0e56bd; }
+.main-btn:disabled { opacity: .6; cursor: wait; }
+
+.message {
+  margin-top: 17px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  color: #1769e0;
+  overflow-wrap: anywhere;
+}
+
+.footer {
+  text-align: center;
+  color: #91a8c4;
+  font-size: 12px;
+  margin-top: 25px;
+}
+
+.hidden { display: none; }
+
+@media(max-width:480px) {
+  .panel { padding: 28px 22px; }
+}
+</style>
 </head>
+
 <body>
+<div class="wrapper">
 
-<header>
-  <h1>ZELPX</h1>
-  <span>CONTRACTOR PORTAL</span>
-</header>
+  <div class="brand">
+    <h1>ZELPX</h1>
+    <p>CONTRACTOR PORTAL</p>
+  </div>
 
-<main>
-  <section id="auth" class="card">
-    <h2>Добро пожаловать в ZELPX</h2>
-    <p class="muted">Войдите или создайте аккаунт подрядчика.</p>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Пароль">
-    <input id="fullname" type="text" placeholder="Ваше имя (для регистрации)">
-    <button id="loginBtn" onclick="login()">Войти</button>
-    <button id="registerBtn" onclick="register()" class="secondary">Регистрация</button>
-    <div id="message"></div>
-  </section>
-
-  <section id="dashboard" class="hidden">
-    <div class="card">
-      <button class="secondary" onclick="logout()">Выйти</button>
-      <h2>Личный кабинет</h2>
-      <p>Добро пожаловать, <strong id="userEmail"></strong></p>
-      <p>Компания: <strong id="companyName">Загрузка...</strong></p>
-      <p>Статус: <strong id="verification">Загрузка...</strong></p>
-    </div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="muted">Баланс кредитов</div>
-        <div class="stat" id="balance">—</div>
+  <div class="panel">
+    <div id="authPanel">
+      <h2 id="heading">Welcome Back</h2>
+      <div class="subtitle" id="subtitle">
+        Sign in to your contractor account.
       </div>
-      <div class="card">
-        <div class="muted">Доступные заявки</div>
-        <div class="stat" id="leadCount">—</div>
+
+      <div class="tabs">
+        <button id="loginTab" class="active" type="button">
+          Sign In
+        </button>
+        <button id="registerTab" type="button">
+          Create Account
+        </button>
       </div>
-      <div class="card">
-        <div class="muted">Купленные заявки</div>
-        <div class="stat" id="purchaseCount">—</div>
-      </div>
+
+      <form id="authForm">
+        <div id="nameField" class="hidden">
+          <label for="fullname">Full Name</label>
+          <input id="fullname" type="text"
+            placeholder="Your full name">
+        </div>
+
+        <label for="email">Email Address</label>
+        <input id="email" type="email"
+          placeholder="you@example.com" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password"
+          placeholder="Enter your password"
+          minlength="6" required>
+
+        <button class="main-btn" id="submitBtn" type="submit">
+          Sign In
+        </button>
+      </form>
+
+      <div class="message" id="message" role="status"></div>
     </div>
 
-    <div class="card">
-      <h2>Доступные заявки</h2>
-      <p class="muted">Здесь будут появляться заявки, подходящие подрядчикам.</p>
-      <div id="availableLeads">Загрузка...</div>
+    <div id="signedIn" class="hidden">
+      <h2>You are connected!</h2>
+      <p class="subtitle">
+        Your ZELPX account is active.
+      </p>
+      <p id="accountEmail"></p>
+      <button class="main-btn" id="logoutBtn">
+        Sign Out
+      </button>
     </div>
+  </div>
 
-    <div class="card">
-      <h2>Мои покупки</h2>
-      <div id="myPurchases">Загрузка...</div>
-    </div>
-  </section>
-</main>
-
-<footer>ZELPX.COM — Contractor Lead Marketplace</footer>
+  <div class="footer">
+    ZELPX.COM · Contractor Lead Marketplace
+  </div>
+</div>
 
 <script>
-  // ВСТАВЬ СЮДА СВОИ ПУБЛИЧНЫЕ ДАННЫЕ SUPABASE
-  const SUPABASE_URL = "https://uxqykfrzowprkemokhfo.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_O0a95ixw73AGpIT_ZlNZrA_Mh7GAX6X";
+// INSERT YOUR SUPABASE VALUES BELOW
+const SUPABASE_URL = "https://uxqykfrzowprkemokhfo.supabase.co";
+const SUPABASE_KEY = "sb_publishable_O0a95ixw73AGpIT_ZlNZrA_Mh7GAX6X";
 
-  const db = window.supabase.createClient(
-   NEXT_PUBLIC_SUPABASE_URL=https://uxqykfrzowprkemokhfo.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_O0a95ixw73AGpIT_ZlNZrA_Mh7GAX6X
-  );
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
 
-  const $ = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
+let mode = "login";
 
-  function showMessage(text) {
-    $("message").textContent = text;
-  }
+function setMode(newMode) {
+  mode = newMode;
+  const registering = mode === "register";
 
-  function showDashboard() {
-    $("auth").classList.add("hidden");
-    $("dashboard").classList.remove("hidden");
-  }
+  $("heading").textContent =
+    registering ? "Create Your Account" : "Welcome Back";
 
-  function showAuth() {
-    $("dashboard").classList.add("hidden");
-    $("auth").classList.remove("hidden");
-  }
+  $("subtitle").textContent =
+    registering
+      ? "Join the ZELPX contractor network."
+      : "Sign in to your contractor account.";
 
-  async function register() {
-    const email = $("email").value.trim();
-    const password = $("password").value;
-    const fullname = $("fullname").value.trim();
+  $("submitBtn").textContent =
+    registering ? "Create Account" : "Sign In";
 
-    if (!email || !password || !fullname) {
-      showMessage("Заполните email, пароль и имя.");
-      return;
-    }
+  $("loginTab").classList.toggle("active", !registering);
+  $("registerTab").classList.toggle("active", registering);
+  $("nameField").classList.toggle("hidden", !registering);
+  $("fullname").required = registering;
+  $("message").textContent = "";
+}
 
-    const { error } = await db.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullname }
-      }
-    });
+$("loginTab").addEventListener("click", () => setMode("login"));
+$("registerTab").addEventListener("click", () => setMode("register"));
 
-    if (error) {
-      showMessage(error.message);
-      return;
-    }
+function showAccount(user) {
+  $("authPanel").classList.add("hidden");
+  $("signedIn").classList.remove("hidden");
+  $("accountEmail").textContent = user.email || "";
+}
 
-    showMessage(
-      "Регистрация отправлена. Если требуется подтверждение email, проверьте почту."
-    );
-  }
+function showLogin() {
+  $("signedIn").classList.add("hidden");
+  $("authPanel").classList.remove("hidden");
+}
 
-  async function login() {
-    const email = $("email").value.trim();
-    const password = $("password").value;
+$("authForm").addEventListener("submit", async event => {
+  event.preventDefault();
 
-    const { error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const fullname = $("fullname").value.trim();
 
-    if (error) {
-      showMessage(error.message);
-      return;
-    }
+  $("submitBtn").disabled = true;
+  $("message").textContent = "Please wait...";
 
-    showMessage("");
-    await loadDashboard();
-  }
-
-  async function logout() {
-    await db.auth.signOut();
-    showAuth();
-  }
-
-  async function loadDashboard() {
-    const { data: sessionData } = await db.auth.getSession();
-    const user = sessionData.session?.user;
-
-    if (!user) {
-      showAuth();
-      return;
-    }
-
-    showDashboard();
-    $("userEmail").textContent = user.email || "";
-
-    const { data: profile, error: profileError } = await db
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const { data: contractor, error: contractorError } = await db
-      .from("contractors")
-      .select("id, company_name, verification_status")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (profileError || contractorError) {
-      $("companyName").textContent = "Не удалось загрузить профиль";
-      $("verification").textContent = "Ошибка загрузки";
-      return;
-    }
-
-    $("companyName").textContent =
-      contractor?.company_name || profile?.full_name || "Не указано";
-
-    $("verification").textContent =
-      contractor?.verification_status || "Профиль не найден";
-
-    if (!contractor) return;
-
-    const { data: wallet } = await db
-      .from("credit_wallets")
-      .select("balance_cents")
-      .eq("contractor_id", contractor.id)
-      .maybeSingle();
-
-    const balance = wallet?.balance_cents ?? 0;
-    $("balance").textContent = "$" + (balance / 100).toFixed(2);
-
-    const { data: leads, error: leadsError } = await db
-      .from("leads")
-      .select("id, service_category, zip_code, description, urgency, price_cents")
-      .eq("status", "available")
-      .order("created_at", { ascending: false });
-
-    if (leadsError) {
-      $("availableLeads").textContent = "Не удалось загрузить заявки.";
-    } else {
-      $("leadCount").textContent = leads.length;
-      $("availableLeads").replaceChildren();
-
-      if (!leads.length) {
-        $("availableLeads").textContent = "Пока нет доступных заявок.";
-      }
-
-      leads.forEach(lead => {
-        const item = document.createElement("div");
-        item.className = "lead";
-
-        const title = document.createElement("strong");
-        title.textContent = lead.service_category;
-
-        const details = document.createElement("p");
-        details.textContent =
-          "ZIP: " + lead.zip_code +
-          " | Срочность: " + lead.urgency;
-
-        const description = document.createElement("p");
-        description.textContent = lead.description || "Описание отсутствует";
-
-        const price = document.createElement("p");
-        price.textContent =
-          "Цена: $" + (lead.price_cents / 100).toFixed(2);
-
-        item.append(title, details, description, price);
-        $("availableLeads").appendChild(item);
+  try {
+    if (mode === "register") {
+      const { data, error } = await db.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullname }
+        }
       });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showAccount(data.user);
+        $("message").textContent = "";
+      } else {
+        $("message").textContent =
+          "Registration successful! Please check your email to confirm your account.";
+      }
+    } else {
+      const { data, error } = await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      showAccount(data.user);
+      $("message").textContent = "";
     }
+  } catch (error) {
+    $("message").textContent = error.message;
+  } finally {
+    $("submitBtn").disabled = false;
+  }
+});
 
-    const { data: purchases, error: purchasesError } = await db
-      .from("lead_purchases")
-      .select("id, lead_id, price_cents, purchased_at")
-      .eq("contractor_id", contractor.id)
-      .order("purchased_at", { ascending: false });
+$("logoutBtn").addEventListener("click", async () => {
+  const { error } = await db.auth.signOut();
+  if (error) {
+    $("message").textContent = error.message;
+    return;
+  }
+  showLogin();
+});
 
-    if (purchasesError) {
-      $("myPurchases").textContent = "Не удалось загрузить покупки.";
-      return;
-    }
+async function checkSession() {
+  const { data, error } = await db.auth.getSession();
 
-    $("purchaseCount").textContent = purchases.length;
-    $("myPurchases").replaceChildren();
-
-    if (!purchases.length) {
-      $("myPurchases").textContent = "Пока нет купленных заявок.";
-    }
-
-    purchases.forEach(purchase => {
-      const item = document.createElement("div");
-      item.className = "lead";
-      item.textContent =
-        "Заявка: " + purchase.lead_id +
-        " | Цена: $" + (purchase.price_cents / 100).toFixed(2) +
-        " | Дата: " + new Date(purchase.purchased_at).toLocaleDateString();
-      $("myPurchases").appendChild(item);
-    });
+  if (error) {
+    $("message").textContent = error.message;
+    return;
   }
 
-  db.auth.onAuthStateChange((event, session) => {
-    if (session) {
-      loadDashboard();
-    } else {
-      showAuth();
-    }
-  });
+  if (data.session) showAccount(data.session.user);
+}
 
-  loadDashboard();
+checkSession();
+
+db.auth.onAuthStateChange((event, session) => {
+  if (session) showAccount(session.user);
+  else showLogin();
+});
 </script>
 </body>
 </html>
