@@ -67,6 +67,15 @@
           <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
           <div class="stat"><span class="muted">Purchased leads</span><strong id="purchaseCount">0</strong></div>
         </div>
+        <div class="actions" style="align-items:end">
+          <div style="max-width:220px;flex:1">
+            <label for="creditAmount">Add credits (USD)</label>
+            <input id="creditAmount" type="number" min="10" max="10000" step="1" value="50" inputmode="decimal">
+          </div>
+          <button id="addCreditsBtn" type="button">Add Credits</button>
+          <button id="refreshBalanceBtn" type="button" class="secondary">Refresh balance</button>
+        </div>
+        <p class="muted">Minimum $10 · Maximum $10,000. Payments are processed securely by Stripe. Credits are added after Stripe confirms payment.</p>
         <div id="appMessage" class="message hidden"></div>
       </div>
 
@@ -125,8 +134,6 @@
 <script>
 (() => {
   "use strict";
-
-  // Browser-safe Supabase project URL and publishable key. Never put service_role here.
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
 
@@ -134,19 +141,12 @@
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
-  let db = null;
-  let currentUser = null;
-  let currentProfile = null;
-  let currentContractor = null;
-  let currentWallet = null;
-  let isAdmin = false;
-  let signupMode = false;
+  let db = null, currentUser = null, currentProfile = null;
+  let currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false;
 
   function message(id, text, type) {
-    const el = $(id);
-    el.textContent = text;
-    el.className = "message" + (type ? " " + type : "");
-    show(el);
+    const el = $(id); el.textContent = text;
+    el.className = "message" + (type ? " " + type : ""); show(el);
   }
   function clearMessage(id) { hide($(id)); $(id).textContent = ""; }
   function setBusy(button, busy, label) {
@@ -154,12 +154,10 @@
     if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
     else if (button.dataset.oldText) { button.textContent = button.dataset.oldText; delete button.dataset.oldText; }
   }
-
   function initClient() {
     if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
-
   function setSignupMode(enabled) {
     signupMode = enabled;
     enabled ? show($("signupFields")) : hide($("signupFields"));
@@ -169,11 +167,9 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
-
   async function signIn() {
     clearMessage("authMessage");
-    const email = $("authEmail").value.trim();
-    const password = $("authPassword").value;
+    const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
     try {
@@ -183,59 +179,39 @@
     } catch (e) { message("authMessage", e.message, "error"); }
     finally { setBusy($("loginBtn"), false); }
   }
-
   async function signUp() {
     clearMessage("authMessage");
-    const email = $("authEmail").value.trim();
-    const password = $("authPassword").value;
-    const fullName = $("fullName").value.trim();
-    const companyName = $("companyName").value.trim();
+    const email = $("authEmail").value.trim(), password = $("authPassword").value;
+    const fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim();
     const phone = $("phone").value.trim();
     if (!email || !password || !fullName || !companyName) return message("authMessage", "Enter email, password, your name, and company name.", "error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({
-        email, password,
-        options: { data: { full_name: fullName, phone } }
-      });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone } } });
       if (error) throw error;
-      if (data.session) {
-        message("authMessage", "Account created. Opening your portal…", "success");
-        await loadApp();
-      } else {
-        message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success");
-        setSignupMode(false);
-      }
+      if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
+      else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
     } catch (e) { message("authMessage", e.message, "error"); }
     finally { setBusy($("signupBtn"), false); }
   }
-
   async function loadApp() {
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    currentUser = user;
-    hide($("authView")); show($("appView")); show($("topUser"));
-    $("userEmail").textContent = user.email || "";
-    clearMessage("authMessage");
-    await loadAccount();
-    await loadCategories();
-    await loadLeads();
-    await loadPurchases();
+    currentUser = user; hide($("authView")); show($("appView")); show($("topUser"));
+    $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    await loadAccount(); await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) await loadAdminLeads();
   }
-
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles")
       .select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
-    currentProfile = profile;
-    isAdmin = profile?.role === "admin";
+    currentProfile = profile; isAdmin = profile?.role === "admin";
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-
     const { data: contractor, error: contractorError } = await db.from("contractors")
       .select("id,company_name,email,verification_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
@@ -246,7 +222,6 @@
       if (walletError) throw walletError;
       currentWallet = wallet;
     } else currentWallet = null;
-
     $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
     $("profileFullName").value = profile?.full_name || "";
     $("profilePhone").value = profile?.phone || "";
@@ -254,11 +229,46 @@
     $("profileCompanyEmail").value = contractor?.email || "";
   }
 
+  async function addCredits() {
+    clearMessage("appMessage");
+    if (!currentContractor || !currentWallet) {
+      return message("appMessage", "Your contractor account or credit wallet is not ready. Contact ZELPX support.", "error");
+    }
+    const dollars = Number($("creditAmount").value);
+    if (!Number.isFinite(dollars) || dollars < 10 || dollars > 10000 || Math.round(dollars * 100) !== dollars * 100) {
+      return message("appMessage", "Enter an amount from $10 to $10,000, with no more than 2 decimal places.", "error");
+    }
+    const button = $("addCreditsBtn"); setBusy(button, true, "Connecting to Stripe…");
+    try {
+      const { data, error } = await db.functions.invoke("create-checkout-session", {
+        body: { amount_cents: Math.round(dollars * 100) }
+      });
+      if (error) throw error;
+      if (!data?.url || typeof data.url !== "string" || !data.url.startsWith("https://")) {
+        throw new Error(data?.error || "Stripe did not return a valid checkout link.");
+      }
+      window.location.assign(data.url);
+    } catch (e) {
+      message("appMessage", "Could not start payment: " + (e.message || "Unknown error"), "error");
+      setBusy(button, false);
+    }
+  }
+
+  async function handlePaymentReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (payment === "success") {
+      message("appMessage", "Stripe returned you to ZELPX. Your payment is being confirmed. Click Refresh balance in a few moments; credits appear after the secure webhook confirms payment.", "success");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (payment === "cancelled") {
+      message("appMessage", "Payment was cancelled. No credits were added.", "error");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
   async function loadCategories() {
-    const select = $("leadCategory");
-    select.innerHTML = '<option value="">Loading categories…</option>';
-    const { data, error } = await db.from("service_categories")
-      .select("name,slug").eq("is_active", true).order("name");
+    const select = $("leadCategory"); select.innerHTML = '<option value="">Loading categories…</option>';
+    const { data, error } = await db.from("service_categories").select("name,slug").eq("is_active", true).order("name");
     if (error) {
       select.innerHTML = '<option value="">Could not load categories</option>';
       if (isAdmin) message("adminMessage", "Category loading error: " + error.message, "error");
@@ -266,61 +276,38 @@
     }
     select.innerHTML = '<option value="">Choose a service</option>';
     (data || []).forEach((category) => {
-      const option = document.createElement("option");
-      option.value = category.name;
-      option.textContent = category.name;
-      select.appendChild(option);
+      const option = document.createElement("option"); option.value = category.name;
+      option.textContent = category.name; select.appendChild(option);
     });
     if (!data?.length) select.innerHTML = '<option value="">No active categories found</option>';
   }
-
   async function buyLead(lead, button) {
-    const confirmed = window.confirm(
-      "Buy this exclusive lead for " + money(lead.price_cents) +
-      "?\n\nThe amount will be deducted from your ZELPX credit balance."
-    );
+    const confirmed = window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.");
     if (!confirmed) return;
-
-    clearMessage("appMessage");
-    setBusy(button, true, "Purchasing…");
+    clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
-      const { data, error } = await db.rpc("buy_lead", {
-        p_lead_id: lead.id
-      });
+      const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
       if (error) throw error;
-      if (!data || data.success !== true) {
-        throw new Error("The purchase was not confirmed by the server.");
-      }
+      if (!data || data.success !== true) throw new Error("The purchase was not confirmed by the server.");
       message("appMessage", "Lead purchased successfully. Your credit balance has been updated.", "success");
-      await loadAccount();
-      await loadLeads();
-      await loadPurchases();
+      await loadAccount(); await loadLeads(); await loadPurchases();
     } catch (e) {
-      const raw = String(e?.message || "Unknown error");
-      let friendly = raw;
+      const raw = String(e?.message || "Unknown error"); let friendly = raw;
       if (/insufficient credits/i.test(raw)) friendly = "Not enough credits. Add credits to your wallet before buying this lead.";
       else if (/no longer available/i.test(raw)) friendly = "This lead is no longer available. Refresh the list to see current leads.";
       else if (/contractor account not found/i.test(raw)) friendly = "Your contractor account is not set up yet. Contact ZELPX support.";
-      message("appMessage", "Purchase failed: " + friendly, "error");
-      await loadLeads();
-    } finally {
-      setBusy(button, false);
-    }
+      message("appMessage", "Purchase failed: " + friendly, "error"); await loadLeads();
+    } finally { setBusy(button, false); }
   }
-
   async function loadLeads() {
-    const list = $("leadsList");
-    list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads")
-      .select("id,service_category,zip_code,description,urgency,price_cents,status,created_at")
+    const list = $("leadsList"); list.textContent = "Loading leads…";
+    const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at")
       .eq("status", "available").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load leads: " + error.message; return; }
-    $("availableCount").textContent = String(data?.length || 0);
-    list.innerHTML = "";
+    $("availableCount").textContent = String(data?.length || 0); list.innerHTML = "";
     if (!data?.length) { list.innerHTML = '<p class="muted">No available leads at the moment.</p>'; return; }
     data.forEach((lead) => {
-      const card = document.createElement("article");
-      card.className = "lead";
+      const card = document.createElement("article"); card.className = "lead";
       const head = document.createElement("div"); head.className = "leadhead";
       const left = document.createElement("div");
       const title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
@@ -329,34 +316,23 @@
       left.append(title, meta);
       const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents);
       head.append(left, price); card.append(head);
-      const desc = document.createElement("p"); desc.textContent = lead.description || "No project description provided.";
-      card.append(desc);
-      const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden";
-      card.append(note);
-
-      const buyButton = document.createElement("button");
-      buyButton.type = "button";
-      buyButton.textContent = "Buy Lead";
-      buyButton.style.marginTop = "14px";
-      buyButton.addEventListener("click", () => buyLead(lead, buyButton));
-      card.append(buyButton);
-
-      list.append(card);
+      const desc = document.createElement("p"); desc.textContent = lead.description || "No project description provided."; card.append(desc);
+      const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden"; card.append(note);
+      const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "Buy Lead";
+      buyButton.style.marginTop = "14px"; buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+      card.append(buyButton); list.append(card);
     });
   }
-
   async function loadPurchases() {
     const list = $("purchasesList");
     if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
-    const { data, error } = await db.from("lead_purchases")
-      .select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id)
-      .order("purchased_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at")
+      .eq("contractor_id", currentContractor.id).order("purchased_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
     $("purchaseCount").textContent = String(data?.length || 0);
     if (!data?.length) { list.textContent = "You have not purchased any leads yet."; return; }
     const wrap = document.createElement("div"); wrap.className = "tablewrap";
-    const table = document.createElement("table");
-    table.innerHTML = "<thead><tr><th>Lead ID</th><th>Price</th><th>Purchased</th></tr></thead>";
+    const table = document.createElement("table"); table.innerHTML = "<thead><tr><th>Lead ID</th><th>Price</th><th>Purchased</th></tr></thead>";
     const body = document.createElement("tbody");
     data.forEach((item) => {
       const tr = document.createElement("tr");
@@ -367,61 +343,45 @@
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
-
   async function saveCompany() {
     clearMessage("appMessage");
     try {
-      const full_name = $("profileFullName").value.trim();
-      const phone = $("profilePhone").value.trim();
+      const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
       const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id);
       if (pErr) throw pErr;
       if (currentContractor) {
         const { error: cErr } = await db.from("contractors").update({
-          company_name: $("profileCompany").value.trim(),
-          email: $("profileCompanyEmail").value.trim()
+          company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim()
         }).eq("id", currentContractor.id);
         if (cErr) throw cErr;
       }
-      message("appMessage", "Company details saved.", "success");
-      await loadAccount();
+      message("appMessage", "Company details saved.", "success"); await loadAccount();
     } catch (e) { message("appMessage", e.message, "error"); }
   }
-
   async function createLead(event) {
-    event.preventDefault();
-    clearMessage("adminMessage");
+    event.preventDefault(); clearMessage("adminMessage");
     if (!isAdmin) return message("adminMessage", "Admin permission required.", "error");
-    const category = $("leadCategory").value;
-    const zip = $("leadZip").value.trim();
-    const price = Number($("leadPrice").value);
+    const category = $("leadCategory").value, zip = $("leadZip").value.trim(), price = Number($("leadPrice").value);
     if (!category) return message("adminMessage", "Choose a service category.", "error");
     if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zip)) return message("adminMessage", "Enter a valid US ZIP code.", "error");
     if (!Number.isFinite(price) || price <= 0) return message("adminMessage", "Enter a lead price greater than zero.", "error");
     const button = $("createLeadBtn"); setBusy(button, true, "Creating…");
     try {
       const { error } = await db.from("leads").insert({
-        service_category: category,
-        zip_code: zip,
-        description: $("leadDescription").value.trim() || null,
-        urgency: $("leadUrgency").value,
-        price_cents: Math.round(price * 100),
-        status: "available"
+        service_category: category, zip_code: zip, description: $("leadDescription").value.trim() || null,
+        urgency: $("leadUrgency").value, price_cents: Math.round(price * 100), status: "available"
       });
       if (error) throw error;
       $("leadForm").reset();
       message("adminMessage", "Lead created. It is now listed as available; no contractor has purchased it.", "success");
-      await loadAdminLeads();
-      await loadLeads();
+      await loadAdminLeads(); await loadLeads();
     } catch (e) { message("adminMessage", "Could not create lead: " + e.message, "error"); }
     finally { setBusy(button, false); }
   }
-
   async function loadAdminLeads() {
     if (!isAdmin) return;
-    const list = $("adminLeadsList");
-    list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads")
-      .select("id,service_category,zip_code,urgency,price_cents,status,created_at")
+    const list = $("adminLeadsList"); list.textContent = "Loading leads…";
+    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,status,created_at")
       .order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
     if (!data?.length) { list.textContent = "No leads created yet."; return; }
@@ -437,18 +397,14 @@
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
-
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach((id) => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === tabId));
   }
-
   async function logout() {
-    await db.auth.signOut();
-    currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+    await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
-
   function wireEvents() {
     $("loginBtn").addEventListener("click", signIn);
     $("signupBtn").addEventListener("click", signUp);
@@ -460,22 +416,24 @@
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
+    $("addCreditsBtn").addEventListener("click", addCredits);
+    $("refreshBalanceBtn").addEventListener("click", async () => {
+      try { await loadAccount(); message("appMessage", "Balance refreshed.", "success"); }
+      catch (e) { message("appMessage", "Could not refresh balance: " + e.message, "error"); }
+    });
     document.querySelectorAll(".tabs button[data-tab]").forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
     $("authPassword").addEventListener("keydown", (event) => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
-
   async function start() {
     wireEvents();
     try {
       initClient();
       const { data: { session } } = await db.auth.getSession();
-      if (session) await loadApp();
+      if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) {
-      message("authMessage", e.message, "error");
-    }
+    } catch (e) { message("authMessage", e.message, "error"); }
   }
   start();
 })();
