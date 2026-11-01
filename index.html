@@ -292,7 +292,96 @@ const db = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
+async function checkAdmin() {// Показываем админ-панель только администратору
+async function initAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  if (!panel) return;
 
+  const isAdmin = await checkAdmin();
+  panel.style.display = isAdmin ? 'block' : 'none';
+}
+
+// Создание новой заявки
+document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const message = document.getElementById('leadMessage');
+  const button = event.target.querySelector('button[type="submit"]');
+
+  const category = document.getElementById('leadCategory').value;
+  const zip = document.getElementById('leadZip').value.trim();
+  const description = document.getElementById('leadDescription').value.trim();
+  const urgency = document.getElementById('leadUrgency').value;
+  const price = Number(document.getElementById('leadPrice').value);
+
+  if (!/^\d{5}$/.test(zip)) {
+    message.textContent = 'Enter a valid 5-digit ZIP code.';
+    return;
+  }
+
+  if (!Number.isFinite(price) || price <= 0) {
+    message.textContent = 'Enter a valid price.';
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = 'Creating lead...';
+
+  const { data: { user } } = await db.auth.getUser();
+
+  if (!user || !(await checkAdmin())) {
+    message.textContent = 'Administrator access required.';
+    button.disabled = false;
+    return;
+  }
+
+  const { error } = await db.from('leads').insert({
+    service_category: category,
+    zip_code: zip,
+    description: description,
+    urgency: urgency,
+    price_cents: Math.round(price * 100),
+    status: 'available'
+  });
+
+  button.disabled = false;
+
+  if (error) {
+    console.error(error);
+    message.textContent = 'Error: ' + error.message;
+    return;
+  }
+
+  message.textContent = 'Lead created successfully!';
+  event.target.reset();
+});
+
+// Проверяем вход при загрузке и при изменении авторизации
+db.auth.onAuthStateChange(() => {
+  setTimeout(initAdminPanel, 0);
+});
+
+initAdminPanel();
+  const { data: { user }, error: authError } =
+    await db.auth.getUser();
+
+  if (authError || !user) {
+    return false;
+  }
+
+  const { data: profile, error } = await db
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (error) {
+    console.error('Admin check error:', error);
+    return false;
+  }
+
+  return profile.role === 'admin';
+}
 const $ = id => document.getElementById(id);
 
 let currentUser = null;
@@ -556,4 +645,42 @@ db.auth.onAuthStateChange((event, session) => {
 </script>
 
 </body>
+  <section id="adminPanel" style="display:none; padding:30px; max-width:900px; margin:auto;">
+  <h1>ZELPX Admin Dashboard</h1>
+  <p>Управление заявками</p>
+
+  <form id="leadForm">
+    <label>Категория услуги</label>
+    <select id="leadCategory" required>
+      <option value="">Выбери категорию</option>
+      <option value="Plumbing">Plumbing</option>
+      <option value="Electrical">Electrical</option>
+      <option value="HVAC">HVAC</option>
+      <option value="Roofing">Roofing</option>
+      <option value="Painting">Painting</option>
+      <option value="Cleaning">Cleaning</option>
+      <option value="Landscaping">Landscaping</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label>ZIP Code</label>
+    <input id="leadZip" type="text" maxlength="10" required>
+
+    <label>Описание работы</label>
+    <textarea id="leadDescription" required></textarea>
+
+    <label>Срочность</label>
+    <select id="leadUrgency">
+      <option value="normal">Normal</option>
+      <option value="urgent">Urgent</option>
+      <option value="low">Low</option>
+    </select>
+
+    <label>Цена лида ($)</label>
+    <input id="leadPrice" type="number" min="1" step="0.01" required>
+
+    <button type="submit">Create Lead</button>
+    <p id="leadMessage"></p>
+  </form>
+</section>
 </html>
