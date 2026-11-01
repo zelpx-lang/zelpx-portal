@@ -1,352 +1,442 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZELPX Contractor Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#17243a}
-button{cursor:pointer;font-family:inherit}
-.hidden{display:none!important}
-.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#071426,#173b65)}
-.auth-card{background:white;padding:35px;border-radius:16px;width:100%;max-width:420px}
-.logo{color:#1769e0;font-size:30px;font-weight:900;letter-spacing:5px}
-.auth-card input{display:block;width:100%;padding:13px;margin:10px 0;border:1px solid #d9e0ea;border-radius:7px;font-size:15px}
-.primary{background:#1769e0;color:white;border:0;border-radius:7px;padding:13px 18px;font-weight:bold}
-.auth-card .primary{width:100%;margin-top:12px}
-.message{color:#1769e0;font-size:13px;margin-top:15px}
-.layout{display:flex;min-height:100vh}
-.sidebar{width:245px;background:#101d32;color:white;padding:25px 17px;flex-shrink:0}
-.sidebar .logo{color:white;padding:0 12px 35px}
-.nav-button{display:block;width:100%;padding:14px 13px;margin:5px 0;color:#bdc9da;background:transparent;border:0;border-radius:8px;text-align:left;font-size:14px}
-.nav-button:hover,.nav-button.active{background:#203b60;color:white}
-.logout{margin-top:35px;color:#ffb6b6}
-.main{flex:1;min-width:0}
-.topbar{background:white;padding:19px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e7ebf1}
-.content{padding:28px;max-width:1250px;margin:auto}
-h1{font-size:25px;margin:0 0 8px}
-h2{font-size:19px}
-.muted{color:#748198;font-size:14px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:17px;margin:25px 0}
-.card{background:white;padding:22px;border-radius:12px;border:1px solid #e9edf3}
-.card-label{color:#748198;font-size:13px}
-.metric{font-size:29px;font-weight:bold;margin-top:12px}
-.panel{background:white;border-radius:12px;padding:23px;margin-top:20px;border:1px solid #e9edf3}
-.lead{border:1px solid #e5eaf1;border-radius:9px;padding:17px;margin:13px 0}
-.lead h3{margin:0 0 10px}
-.lead p{color:#68778d;font-size:14px}
-.price{font-weight:bold;color:#1769e0}
-.status{display:inline-block;padding:6px 10px;border-radius:20px;background:#fff3d9;color:#986000;font-size:12px}
-.info-row{padding:14px 0;border-bottom:1px solid #edf0f5}
-.admin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.admin-form label{display:block;font-size:13px;color:#536178;margin-bottom:5px}
-.admin-form input,.admin-form select,.admin-form textarea{width:100%;padding:11px;border:1px solid #d9e0ea;border-radius:7px;font:inherit;background:white}
-.admin-form textarea{min-height:90px;resize:vertical}
-.full{grid-column:1/-1}
-.table-wrap{overflow-x:auto;margin-top:15px}
-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px;min-width:750px}
-th,td{padding:11px 9px;border-bottom:1px solid #e9edf3;vertical-align:top}
-th{color:#536178;background:#f8faff}
-.secondary{background:#eef3fa;color:#1b3556;border:0;border-radius:7px;padding:10px 14px;font-weight:bold}
-@media(max-width:700px){.layout{display:block}.sidebar{width:100%;padding:14px}.sidebar .logo{padding:5px 10px 15px}.nav-button{display:inline-block;width:auto;padding:10px}.logout{margin-top:0}.content{padding:17px}.topbar{padding:15px}.admin-form{grid-template-columns:1fr}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZELPX Contractor Portal</title>
+  <meta name="description" content="ZELPX contractor lead marketplace">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root{--navy:#10243a;--blue:#1769aa;--bg:#f3f6fa;--line:#dce4ed;--muted:#64748b;--green:#147d55;--red:#b42318}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#172b43;font:15px/1.5 Arial,Helvetica,sans-serif}
+    .top{background:var(--navy);color:white;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .brand{font-size:23px;font-weight:800;letter-spacing:2px}.top small{color:#cbd5e1}
+    main{max-width:1120px;margin:28px auto;padding:0 18px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 4px 16px #10243a0a}
+    h1,h2,h3{margin:0 0 12px}h1{font-size:26px}h2{font-size:20px}p{color:var(--muted)}
+    label{display:block;font-weight:700;margin:12px 0 5px}input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:#172b43}
+    textarea{min-height:95px;resize:vertical}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    button{border:0;border-radius:8px;padding:11px 16px;background:var(--blue);color:white;font-weight:700;font-size:14px;cursor:pointer}
+    button.secondary{background:#e8eef5;color:var(--navy)}button.danger{background:#fff0ef;color:var(--red)}
+    button:disabled{opacity:.55;cursor:not-allowed}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+    .hidden{display:none!important}.muted{color:var(--muted)}.message{padding:10px 12px;border-radius:8px;margin:12px 0;background:#eef4fb;color:#24425f;white-space:pre-wrap}
+    .message.error{background:#fff0ef;color:var(--red)}.message.success{background:#eaf7f0;color:var(--green)}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tabs button.active{background:var(--navy)}
+    .statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat{background:#f6f9fc;border:1px solid var(--line);border-radius:10px;padding:14px}.stat strong{display:block;font-size:22px}
+    .tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;color:var(--muted)}
+    .pill{display:inline-block;padding:3px 9px;border-radius:20px;background:#edf3f9;font-size:12px;font-weight:700}
+    .lead{border:1px solid var(--line);border-radius:10px;padding:16px;margin:12px 0}.leadhead{display:flex;justify-content:space-between;gap:12px;align-items:start}.price{font-weight:800;font-size:19px}
+    .footer{font-size:12px;color:var(--muted);text-align:center;padding:22px}
+    @media(max-width:650px){.grid,.statrow{grid-template-columns:1fr}.top{padding:15px}.brand{font-size:19px}main{margin:16px auto}.card{padding:17px}}
+  </style>
 </head>
 <body>
-<section id="authScreen" class="auth-screen">
-  <div class="auth-card">
-    <div class="logo">ZELPX</div>
-    <p class="muted">CONTRACTOR PORTAL</p>
-    <h2>Welcome Back</h2>
-    <input id="email" type="email" placeholder="Email address" autocomplete="username">
-    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
-    <button class="primary" id="loginBtn">Sign In</button>
-    <p class="muted">New contractor? Register using the registration page.</p>
-    <div id="authMessage" class="message" role="status"></div>
-  </div>
-</section>
+  <header class="top">
+    <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
+    <div id="topUser" class="hidden"><span id="userEmail"></span> <button id="logoutBtn" class="secondary">Log out</button></div>
+  </header>
 
-<div id="app" class="layout hidden">
-  <aside class="sidebar">
-    <div class="logo">ZELPX</div>
-    <button class="nav-button active" data-page="dashboard">▦ Dashboard</button>
-    <button class="nav-button" data-page="leads">▤ Available Leads</button>
-    <button class="nav-button" data-page="purchases">✓ My Purchases</button>
-    <button class="nav-button" data-page="company">▣ My Company</button>
-    <button class="nav-button" data-page="credits">◈ Credits</button>
-    <button class="nav-button logout" id="logoutBtn">↪ Sign Out</button>
-  </aside>
-  <main class="main">
-    <div class="topbar"><strong>Contractor Portal</strong><span id="topEmail" class="muted"></span></div>
-    <div class="content">
-      <section class="page" id="page-dashboard">
-        <h1>Dashboard</h1><p class="muted">Welcome to your ZELPX contractor account.</p>
-        <div class="cards">
-          <div class="card"><div class="card-label">Credit Balance</div><div class="metric" id="dashBalance">$0.00</div></div>
-          <div class="card"><div class="card-label">Available Leads</div><div class="metric" id="dashLeads">0</div></div>
-          <div class="card"><div class="card-label">My Purchases</div><div class="metric" id="dashPurchases">0</div></div>
-        </div>
-        <div class="panel"><h2>Company Information</h2>
-          <div class="info-row">Company: <strong id="dashCompany">Loading...</strong></div>
-          <div class="info-row">Verification: <span id="dashStatus" class="status">Loading...</span></div>
-        </div>
-        <div class="panel"><h2>Latest Available Leads</h2><div id="latestLeads" class="muted">Loading...</div></div>
-      </section>
+  <main>
+    <section id="authView" class="card">
+      <h1>Welcome to ZELPX</h1>
+      <p>Sign in or create a contractor account to access the lead marketplace.</p>
+      <div id="authMessage" class="message hidden"></div>
+      <div class="grid">
+        <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
+        <div><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+      </div>
+      <div id="signupFields" class="grid hidden">
+        <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name"></div>
+        <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name"></div>
+        <div><label for="phone">Phone (optional)</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
+      </div>
+      <div class="actions">
+        <button id="loginBtn">Sign in</button>
+        <button id="showSignupBtn" class="secondary">Create contractor account</button>
+        <button id="signupBtn" class="hidden">Create account</button>
+        <button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
+      </div>
+      <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
+    </section>
 
-      <section class="page hidden" id="page-leads">
-        <h1>Available Leads</h1><p class="muted">Browse available contractor opportunities.</p>
-        <div class="panel"><div id="allLeads">Loading leads...</div></div>
-      </section>
-      <section class="page hidden" id="page-purchases">
-        <h1>My Purchases</h1><p class="muted">Your purchased leads.</p>
-        <div class="panel"><div id="purchaseList">Loading purchases...</div></div>
-      </section>
-      <section class="page hidden" id="page-company">
-        <h1>My Company</h1><div class="panel">
-          <div class="info-row">Company name: <strong id="companyName">Loading...</strong></div>
-          <div class="info-row">Email: <strong id="companyEmail">Loading...</strong></div>
-          <div class="info-row">Verification: <span id="companyStatus">Loading...</span></div>
-          <p class="muted">Contact support if your company information needs to be changed.</p>
+    <section id="appView" class="hidden">
+      <div class="card">
+        <h1 id="welcomeTitle">Contractor dashboard</h1>
+        <p id="accountLine">Your ZELPX account</p>
+        <div class="statrow">
+          <div class="stat"><span class="muted">Credit balance</span><strong id="walletBalance">$0.00</strong></div>
+          <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
+          <div class="stat"><span class="muted">Purchased leads</span><strong id="purchaseCount">0</strong></div>
         </div>
-      </section>
-      <section class="page hidden" id="page-credits">
-        <h1>Credits</h1><div class="panel">
-          <div class="card-label">Your Current Balance</div><div class="metric" id="creditBalance">$0.00</div>
-          <p class="muted">Credit purchases will be available after payment setup.</p>
-        </div>
+        <div id="appMessage" class="message hidden"></div>
+      </div>
+
+      <nav class="tabs">
+        <button class="active" data-tab="availablePanel">Available leads</button>
+        <button data-tab="purchasesPanel">My purchases</button>
+        <button data-tab="companyPanel">My company</button>
+        <button id="adminTabBtn" data-tab="adminPanel" class="hidden">Admin</button>
+      </nav>
+
+      <section id="availablePanel" class="card">
+        <h2>Available leads</h2>
+        <p>Lead summaries are shown without customer contact details. A lead is not yours until a secure purchase is completed.</p>
+        <div class="actions"><button id="refreshLeadsBtn" class="secondary">Refresh leads</button></div>
+        <div id="leadsList"><p class="muted">Loading leads…</p></div>
       </section>
 
-      <!-- Admin panel is INSIDE the page body and app, not after </body>. -->
-      <section id="adminPanel" class="hidden">
-        <div class="panel">
-          <h1>ZELPX Admin Dashboard</h1>
-          <p class="muted">Create and review leads. Admin access is checked against the profiles table.</p>
-          <h2>Create a Lead</h2>
-          <form id="leadForm" class="admin-form">
-            <div><label for="leadCategory">Service category</label>
-              <select id="leadCategory" required>
-                <option value="">Choose category</option>
-                <option value="Plumbing">Plumbing</option><option value="Electrical">Electrical</option>
-                <option value="HVAC">HVAC</option><option value="Roofing">Roofing</option>
-                <option value="Painting">Painting</option><option value="Cleaning">Cleaning</option>
-                <option value="Landscaping">Landscaping</option><option value="Other">Other</option>
-              </select>
-            </div>
-            <div><label for="leadZip">ZIP code</label><input id="leadZip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="97201" required></div>
-            <div class="full"><label for="leadDescription">Work description</label><textarea id="leadDescription" required></textarea></div>
-            <div><label for="leadUrgency">Urgency</label>
-              <select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select>
-            </div>
-            <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" required></div>
-            <div class="full"><button class="primary" id="createLeadBtn" type="submit">Create Lead</button><span id="leadMessage" class="message" aria-live="polite"></span></div>
-          </form>
-        </div>
-        <div class="panel">
-          <h2>All Leads</h2>
-          <button type="button" class="secondary" id="refreshLeads">Refresh Leads</button>
-          <div class="table-wrap"><table>
-            <thead><tr><th>Category</th><th>ZIP</th><th>Description</th><th>Urgency</th><th>Price</th><th>Status</th><th>Created</th></tr></thead>
-            <tbody id="adminLeadsList"><tr><td colspan="7">Sign in as admin to load leads.</td></tr></tbody>
-          </table></div>
-          <p id="adminListMessage" class="muted" aria-live="polite"></p>
-        </div>
+      <section id="purchasesPanel" class="card hidden">
+        <h2>My purchases</h2>
+        <p>Purchase history associated with your contractor account.</p>
+        <div id="purchasesList"><p class="muted">Loading purchases…</p></div>
       </section>
-    </div>
+
+      <section id="companyPanel" class="card hidden">
+        <h2>My company</h2>
+        <div class="grid">
+          <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
+          <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
+          <div><label for="profileCompany">Company name</label><input id="profileCompany"></div>
+          <div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
+        </div>
+        <div class="actions"><button id="saveCompanyBtn">Save company details</button></div>
+      </section>
+
+      <section id="adminPanel" class="card hidden">
+        <h2>Admin — create a lead</h2>
+        <p>New leads are created as available listings. This admin form does not yet implement contractor routing, credit deduction, or payment.</p>
+        <div id="adminMessage" class="message hidden"></div>
+        <form id="leadForm">
+          <div class="grid">
+            <div><label for="leadCategory">Service category</label><select id="leadCategory" required><option value="">Loading categories…</option></select></div>
+            <div><label for="leadZip">ZIP code</label><input id="leadZip" inputmode="numeric" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" placeholder="e.g. 97201" required></div>
+            <div><label for="leadUrgency">Urgency</label><select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
+            <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" placeholder="50.00" required></div>
+          </div>
+          <label for="leadDescription">Project description</label><textarea id="leadDescription" placeholder="Describe the requested work. Do not include customer phone, email, or street address here."></textarea>
+          <div class="actions"><button id="createLeadBtn" type="submit">Create lead</button><button id="reloadCategoriesBtn" class="secondary" type="button">Reload categories</button><button id="refreshAdminBtn" class="secondary" type="button">Refresh lead list</button></div>
+        </form>
+        <h3 style="margin-top:24px">Recent leads</h3>
+        <div id="adminLeadsList"><p class="muted">Loading…</p></div>
+      </section>
+    </section>
   </main>
-</div>
+  <div class="footer">ZELPX — contractor lead marketplace</div>
 
 <script>
-// IMPORTANT: replace these two placeholders with the same public Supabase
-// Project URL and publishable/anon key already used by your working site.
-// Never put a service_role or secret key in this file.
-const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
-const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+(() => {
+  "use strict";
 
-const $ = id => document.getElementById(id);
-let currentUser = null;
-let currentContractor = null;
+  // IMPORTANT: replace these two placeholders with your existing Supabase Project URL
+  // and public anon/publishable key. Never put a service_role or secret key in this file.
+  const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
 
-function money(cents){return "$"+(Number(cents||0)/100).toFixed(2)}
-function showMessage(text){$("authMessage").textContent=text}
-function showLogin(){$("app").classList.add("hidden");$("authScreen").classList.remove("hidden")}
-function showApp(user){currentUser=user;$("authScreen").classList.add("hidden");$("app").classList.remove("hidden");$("topEmail").textContent=user.email||""}
-function showPage(name){
-  document.querySelectorAll(".page").forEach(page=>page.classList.add("hidden"));
-  $("page-"+name).classList.remove("hidden");
-  document.querySelectorAll(".nav-button[data-page]").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===name));
-}
-document.querySelectorAll(".nav-button[data-page]").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
+  const $ = (id) => document.getElementById(id);
+  const show = (el) => el.classList.remove("hidden");
+  const hide = (el) => el.classList.add("hidden");
+  const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
+  const escapeText = (value) => String(value ?? "");
+  let db = null;
+  let currentUser = null;
+  let currentProfile = null;
+  let currentContractor = null;
+  let currentWallet = null;
+  let isAdmin = false;
+  let signupMode = false;
 
-async function checkAdmin(){
-  const {data:{user},error:authError}=await db.auth.getUser();
-  if(authError||!user)return false;
-  const {data:profile,error}=await db.from("profiles").select("role").eq("id",user.id).maybeSingle();
-  if(error){console.error("Admin role check:",error);return false}
-  return profile?.role==="admin";
-}
-
-async function loadAdminLeads(){
-  const list=$("adminLeadsList");
-  const message=$("adminListMessage");
-  if(!list)return;
-  list.replaceChildren();
-  message.textContent="Loading...";
-  const isAdmin=await checkAdmin();
-  if(!isAdmin){message.textContent="Administrator access required.";return}
-  const {data,error}=await db.from("leads")
-    .select("id,service_category,zip_code,description,urgency,price_cents,status,created_at")
-    .order("created_at",{ascending:false});
-  if(error){
-    console.error("Load admin leads:",error);
-    message.textContent="Could not load leads: "+error.message;
-    return;
+  function message(id, text, type) {
+    const el = $(id);
+    el.textContent = text;
+    el.className = "message" + (type ? " " + type : "");
+    show(el);
   }
-  if(!data||data.length===0){message.textContent="No leads yet. Create your first test lead above.";return}
-  message.textContent=data.length+" lead(s) found.";
-  data.forEach(lead=>{
-    const row=document.createElement("tr");
-    const values=[
-      lead.service_category,lead.zip_code,lead.description||"",lead.urgency,
-      money(lead.price_cents),lead.status,
-      lead.created_at?new Date(lead.created_at).toLocaleString():""
-    ];
-    values.forEach(value=>{const cell=document.createElement("td");cell.textContent=String(value);row.appendChild(cell)});
-    list.appendChild(row);
-  });
-}
+  function clearMessage(id) { hide($(id)); $(id).textContent = ""; }
+  function setBusy(button, busy, label) {
+    button.disabled = busy;
+    if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
+    else if (button.dataset.oldText) { button.textContent = button.dataset.oldText; delete button.dataset.oldText; }
+  }
 
-async function initAdminPanel(){
-  const panel=$("adminPanel");
-  if(!panel)return;
-  const isAdmin=await checkAdmin();
-  panel.classList.toggle("hidden",!isAdmin);
-  if(isAdmin)await loadAdminLeads();
-}
+  function initClient() {
+    if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
+    if (SUPABASE_URL.startsWith("PASTE_") || SUPABASE_KEY.startsWith("PASTE_")) {
+      throw new Error("Add your Supabase Project URL and public anon/publishable key in index.html before using the portal.");
+    }
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
 
-$("refreshLeads").addEventListener("click",loadAdminLeads);
+  function setSignupMode(enabled) {
+    signupMode = enabled;
+    enabled ? show($("signupFields")) : hide($("signupFields"));
+    enabled ? hide($("loginBtn")) : show($("loginBtn"));
+    enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
+    enabled ? show($("signupBtn")) : hide($("signupBtn"));
+    enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
+    $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
+  }
 
-$("leadForm").addEventListener("submit",async event=>{
-  event.preventDefault();
-  const message=$("leadMessage");
-  const button=$("createLeadBtn");
-  const zip=$("leadZip").value.trim();
-  const price=Number($("leadPrice").value);
-  if(!/^\d{5}$/.test(zip)){message.textContent="Enter a valid 5-digit ZIP code.";return}
-  if(!Number.isFinite(price)||price<=0){message.textContent="Enter a valid price.";return}
-  button.disabled=true;message.textContent="Creating lead...";
-  try{
-    if(!(await checkAdmin())){message.textContent="Administrator access required.";return}
-    const {error}=await db.from("leads").insert({
-      service_category:$("leadCategory").value,
-      zip_code:zip,
-      description:$("leadDescription").value.trim(),
-      urgency:$("leadUrgency").value,
-      price_cents:Math.round(price*100),
-      status:"available"
-    });
-    if(error){console.error("Create lead:",error);message.textContent="Could not create lead: "+error.message;return}
-    message.textContent="Lead created successfully.";
-    event.target.reset();
-    await loadAdminLeads();
+  async function signIn() {
+    clearMessage("authMessage");
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+    if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
+    setBusy($("loginBtn"), true, "Signing in…");
+    try {
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await loadApp();
+    } catch (e) { message("authMessage", e.message, "error"); }
+    finally { setBusy($("loginBtn"), false); }
+  }
+
+  async function signUp() {
+    clearMessage("authMessage");
+    const email = $("authEmail").value.trim();
+    const password = $("authPassword").value;
+    const fullName = $("fullName").value.trim();
+    const companyName = $("companyName").value.trim();
+    const phone = $("phone").value.trim();
+    if (!email || !password || !fullName || !companyName) return message("authMessage", "Enter email, password, your name, and company name.", "error");
+    if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
+    setBusy($("signupBtn"), true, "Creating account…");
+    try {
+      const { data, error } = await db.auth.signUp({
+        email, password,
+        options: { data: { full_name: fullName, phone } }
+      });
+      if (error) throw error;
+      if (data.session) {
+        message("authMessage", "Account created. Opening your portal…", "success");
+        await loadApp();
+      } else {
+        message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success");
+        setSignupMode(false);
+      }
+    } catch (e) { message("authMessage", e.message, "error"); }
+    finally { setBusy($("signupBtn"), false); }
+  }
+
+  async function loadApp() {
+    const { data: { user }, error: userError } = await db.auth.getUser();
+    if (userError) throw userError;
+    if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
+    currentUser = user;
+    hide($("authView")); show($("appView")); show($("topUser"));
+    $("userEmail").textContent = user.email || "";
+    clearMessage("authMessage");
+    await loadAccount();
+    await loadCategories();
     await loadLeads();
-  }catch(error){console.error(error);message.textContent="Unexpected error: "+error.message}
-  finally{button.disabled=false}
-});
-
-function createLeadCard(lead){
-  const card=document.createElement("div");card.className="lead";
-  const title=document.createElement("h3");title.textContent=lead.service_category;
-  const zip=document.createElement("p");zip.textContent="ZIP Code: "+lead.zip_code;
-  const urgency=document.createElement("p");urgency.textContent="Urgency: "+lead.urgency;
-  const description=document.createElement("p");description.textContent=lead.description||"No description provided.";
-  const price=document.createElement("p");price.className="price";price.textContent="Lead Price: "+money(lead.price_cents);
-  const note=document.createElement("p");note.className="muted";note.textContent="Purchasing will be enabled after secure checkout setup.";
-  card.append(title,zip,urgency,description,price,note);return card;
-}
-
-async function loadWallet(){
-  const {data,error}=await db.from("credit_wallets").select("balance_cents").eq("contractor_id",currentContractor.id).maybeSingle();
-  if(error){$("dashBalance").textContent="Unavailable";$("creditBalance").textContent="Unavailable";console.error(error);return}
-  const balance=money(data?.balance_cents||0);$("dashBalance").textContent=balance;$("creditBalance").textContent=balance;
-}
-
-async function loadLeads(){
-  const {data,error}=await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents")
-    .eq("status","available").order("created_at",{ascending:false});
-  $("allLeads").replaceChildren();$("latestLeads").replaceChildren();
-  if(error){$("allLeads").textContent="Could not load leads: "+error.message;$("latestLeads").textContent="Could not load leads.";$("dashLeads").textContent="—";console.error(error);return}
-  $("dashLeads").textContent=data.length;
-  if(!data.length){$("allLeads").textContent="No available leads yet.";$("latestLeads").textContent="No available leads yet.";return}
-  data.forEach(lead=>$("allLeads").appendChild(createLeadCard(lead)));
-  data.slice(0,3).forEach(lead=>$("latestLeads").appendChild(createLeadCard(lead)));
-}
-
-async function loadPurchases(){
-  const {data,error}=await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at")
-    .eq("contractor_id",currentContractor.id).order("purchased_at",{ascending:false});
-  $("purchaseList").replaceChildren();
-  if(error){$("purchaseList").textContent="Could not load purchases: "+error.message;console.error(error);return}
-  $("dashPurchases").textContent=data.length;
-  if(!data.length){$("purchaseList").textContent="You have no purchased leads yet.";return}
-  data.forEach(purchase=>{
-    const item=document.createElement("div");item.className="lead";
-    const title=document.createElement("strong");title.textContent="Purchase #"+purchase.id.slice(0,8);
-    const price=document.createElement("p");price.textContent="Price: "+money(purchase.price_cents);
-    const date=document.createElement("p");date.textContent="Date: "+new Date(purchase.purchased_at).toLocaleDateString();
-    item.append(title,price,date);$("purchaseList").appendChild(item);
-  });
-}
-
-async function loadDashboard(user){
-  showApp(user);showPage("dashboard");
-  $("dashCompany").textContent="Loading...";$("dashStatus").textContent="Loading...";
-  const {data:contractor,error:contractorError}=await db.from("contractors")
-    .select("id,company_name,email,verification_status").eq("user_id",user.id).maybeSingle();
-  if(contractorError||!contractor){
-    $("dashCompany").textContent="Profile not available";$("dashStatus").textContent="Please contact support";
-    console.error("Contractor profile:",contractorError);
-    // Admin section can still be checked even if the contractor record is missing.
-    await initAdminPanel();
-    return;
+    await loadPurchases();
+    if (isAdmin) await loadAdminLeads();
   }
-  currentContractor=contractor;
-  $("dashCompany").textContent=contractor.company_name;$("dashStatus").textContent=contractor.verification_status;
-  $("companyName").textContent=contractor.company_name;$("companyEmail").textContent=contractor.email||user.email||"Not provided";
-  $("companyStatus").textContent=contractor.verification_status;
-  await Promise.all([loadWallet(),loadLeads(),loadPurchases()]);
-  await initAdminPanel();
-}
 
-$("loginBtn").addEventListener("click",async()=>{
-  const email=$("email").value.trim(),password=$("password").value;
-  if(!email||!password){showMessage("Enter your email and password.");return}
-  $("loginBtn").disabled=true;showMessage("Signing in...");
-  const {data,error}=await db.auth.signInWithPassword({email,password});
-  $("loginBtn").disabled=false;
-  if(error){showMessage(error.message);return}
-  showMessage("");await loadDashboard(data.user);
-});
+  async function loadAccount() {
+    const { data: profile, error: profileError } = await db.from("profiles")
+      .select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
+    if (profileError) throw profileError;
+    currentProfile = profile;
+    isAdmin = profile?.role === "admin";
+    $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
+    $("accountLine").textContent = currentUser.email || "";
+    if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
 
-$("logoutBtn").addEventListener("click",async()=>{
-  const {error}=await db.auth.signOut();
-  if(error){alert(error.message);return}
-  currentUser=null;currentContractor=null;showLogin();
-});
+    const { data: contractor, error: contractorError } = await db.from("contractors")
+      .select("id,company_name,email,verification_status").eq("user_id", currentUser.id).maybeSingle();
+    if (contractorError) throw contractorError;
+    currentContractor = contractor;
+    if (contractor) {
+      const { data: wallet, error: walletError } = await db.from("credit_wallets")
+        .select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
+      if (walletError) throw walletError;
+      currentWallet = wallet;
+    } else currentWallet = null;
 
-async function initialize(){
-  const {data,error}=await db.auth.getSession();
-  if(error){showLogin();showMessage(error.message);return}
-  if(data.session)await loadDashboard(data.session.user);else showLogin();
-}
-db.auth.onAuthStateChange((event,session)=>{
-  if(event==="SIGNED_OUT"){currentUser=null;currentContractor=null;showLogin()}
-});
-initialize();
+    $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
+    $("profileFullName").value = profile?.full_name || "";
+    $("profilePhone").value = profile?.phone || "";
+    $("profileCompany").value = contractor?.company_name || "";
+    $("profileCompanyEmail").value = contractor?.email || "";
+  }
+
+  async function loadCategories() {
+    const select = $("leadCategory");
+    select.innerHTML = '<option value="">Loading categories…</option>';
+    const { data, error } = await db.from("service_categories")
+      .select("name,slug").eq("is_active", true).order("name");
+    if (error) {
+      select.innerHTML = '<option value="">Could not load categories</option>';
+      if (isAdmin) message("adminMessage", "Category loading error: " + error.message, "error");
+      return;
+    }
+    select.innerHTML = '<option value="">Choose a service</option>';
+    (data || []).forEach((category) => {
+      const option = document.createElement("option");
+      option.value = category.name;
+      option.textContent = category.name;
+      select.appendChild(option);
+    });
+    if (!data?.length) select.innerHTML = '<option value="">No active categories found</option>';
+  }
+
+  async function loadLeads() {
+    const list = $("leadsList");
+    list.textContent = "Loading leads…";
+    const { data, error } = await db.from("leads")
+      .select("id,service_category,zip_code,description,urgency,price_cents,status,created_at")
+      .eq("status", "available").order("created_at", { ascending: false }).limit(100);
+    if (error) { list.textContent = "Could not load leads: " + error.message; return; }
+    $("availableCount").textContent = String(data?.length || 0);
+    list.innerHTML = "";
+    if (!data?.length) { list.innerHTML = '<p class="muted">No available leads at the moment.</p>'; return; }
+    data.forEach((lead) => {
+      const card = document.createElement("article");
+      card.className = "lead";
+      const head = document.createElement("div"); head.className = "leadhead";
+      const left = document.createElement("div");
+      const title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
+      const meta = document.createElement("div"); meta.className = "muted";
+      meta.textContent = "ZIP " + lead.zip_code + " · " + (lead.urgency || "normal") + " urgency";
+      left.append(title, meta);
+      const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents);
+      head.append(left, price); card.append(head);
+      const desc = document.createElement("p"); desc.textContent = lead.description || "No project description provided.";
+      card.append(desc);
+      const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden";
+      card.append(note); list.append(card);
+    });
+  }
+
+  async function loadPurchases() {
+    const list = $("purchasesList");
+    if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
+    const { data, error } = await db.from("lead_purchases")
+      .select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id)
+      .order("purchased_at", { ascending: false }).limit(100);
+    if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
+    $("purchaseCount").textContent = String(data?.length || 0);
+    if (!data?.length) { list.textContent = "You have not purchased any leads yet."; return; }
+    const wrap = document.createElement("div"); wrap.className = "tablewrap";
+    const table = document.createElement("table");
+    table.innerHTML = "<thead><tr><th>Lead ID</th><th>Price</th><th>Purchased</th></tr></thead>";
+    const body = document.createElement("tbody");
+    data.forEach((item) => {
+      const tr = document.createElement("tr");
+      [item.lead_id, money(item.price_cents), new Date(item.purchased_at).toLocaleString()].forEach((v) => {
+        const td = document.createElement("td"); td.textContent = String(v); tr.append(td);
+      });
+      body.append(tr);
+    });
+    table.append(body); wrap.append(table); list.replaceChildren(wrap);
+  }
+
+  async function saveCompany() {
+    clearMessage("appMessage");
+    try {
+      const full_name = $("profileFullName").value.trim();
+      const phone = $("profilePhone").value.trim();
+      const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id);
+      if (pErr) throw pErr;
+      if (currentContractor) {
+        const { error: cErr } = await db.from("contractors").update({
+          company_name: $("profileCompany").value.trim(),
+          email: $("profileCompanyEmail").value.trim()
+        }).eq("id", currentContractor.id);
+        if (cErr) throw cErr;
+      }
+      message("appMessage", "Company details saved.", "success");
+      await loadAccount();
+    } catch (e) { message("appMessage", e.message, "error"); }
+  }
+
+  async function createLead(event) {
+    event.preventDefault();
+    clearMessage("adminMessage");
+    if (!isAdmin) return message("adminMessage", "Admin permission required.", "error");
+    const category = $("leadCategory").value;
+    const zip = $("leadZip").value.trim();
+    const price = Number($("leadPrice").value);
+    if (!category) return message("adminMessage", "Choose a service category.", "error");
+    if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zip)) return message("adminMessage", "Enter a valid US ZIP code.", "error");
+    if (!Number.isFinite(price) || price <= 0) return message("adminMessage", "Enter a lead price greater than zero.", "error");
+    const button = $("createLeadBtn"); setBusy(button, true, "Creating…");
+    try {
+      const { error } = await db.from("leads").insert({
+        service_category: category,
+        zip_code: zip,
+        description: $("leadDescription").value.trim() || null,
+        urgency: $("leadUrgency").value,
+        price_cents: Math.round(price * 100),
+        status: "available"
+      });
+      if (error) throw error;
+      $("leadForm").reset();
+      message("adminMessage", "Lead created. It is now listed as available; no contractor has purchased it.", "success");
+      await loadAdminLeads();
+      await loadLeads();
+    } catch (e) { message("adminMessage", "Could not create lead: " + e.message, "error"); }
+    finally { setBusy(button, false); }
+  }
+
+  async function loadAdminLeads() {
+    if (!isAdmin) return;
+    const list = $("adminLeadsList");
+    list.textContent = "Loading leads…";
+    const { data, error } = await db.from("leads")
+      .select("id,service_category,zip_code,urgency,price_cents,status,created_at")
+      .order("created_at", { ascending: false }).limit(100);
+    if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
+    if (!data?.length) { list.textContent = "No leads created yet."; return; }
+    const wrap = document.createElement("div"); wrap.className = "tablewrap";
+    const table = document.createElement("table");
+    table.innerHTML = "<thead><tr><th>Category</th><th>ZIP</th><th>Urgency</th><th>Price</th><th>Status</th><th>Created</th></tr></thead>";
+    const body = document.createElement("tbody");
+    data.forEach((lead) => {
+      const tr = document.createElement("tr");
+      [lead.service_category, lead.zip_code, lead.urgency, money(lead.price_cents), lead.status, new Date(lead.created_at).toLocaleString()]
+        .forEach((value) => { const td = document.createElement("td"); td.textContent = String(value ?? ""); tr.append(td); });
+      body.append(tr);
+    });
+    table.append(body); wrap.append(table); list.replaceChildren(wrap);
+  }
+
+  function switchTab(tabId) {
+    ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach((id) => $(id).classList.toggle("hidden", id !== tabId));
+    document.querySelectorAll(".tabs button[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === tabId));
+  }
+
+  async function logout() { await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false; hide($("appView")); hide($("topUser")); show($("authView")); }
+
+  function wireEvents() {
+    $("loginBtn").addEventListener("click", signIn);
+    $("signupBtn").addEventListener("click", signUp);
+    $("showSignupBtn").addEventListener("click", () => setSignupMode(true));
+    $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
+    $("logoutBtn").addEventListener("click", logout);
+    $("leadForm").addEventListener("submit", createLead);
+    $("refreshLeadsBtn").addEventListener("click", loadLeads);
+    $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
+    $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("saveCompanyBtn").addEventListener("click", saveCompany);
+    document.querySelectorAll(".tabs button[data-tab]").forEach((button) => button.addEventListener("click", () => switchTab(button.dataset.tab)));
+    $("authPassword").addEventListener("keydown", (event) => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
+  }
+
+  async function start() {
+    wireEvents();
+    try {
+      initClient();
+      const { data: { session } } = await db.auth.getSession();
+      if (session) await loadApp();
+      db.auth.onAuthStateChange((_event, sessionNow) => {
+        if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
+      });
+    } catch (e) {
+      message("authMessage", e.message, "error");
+    }
+  }
+  start();
+})();
 </script>
 </body>
 </html>
-
-
-
