@@ -1,6 +1,4 @@
-from pathlib import Path
-
-html = r'''<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -484,8 +482,3 @@ html = r'''<!doctype html>
 </script>
 </body>
 </html>
-'''
-
-path = Path("/mnt/data/zelpx-index-with-buy-button.html")
-path.write_text(html, encoding="utf-8")
-print(f"Created {path} ({len(html):,} characters)")
