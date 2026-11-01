@@ -22,7 +22,7 @@
     p{color:var(--muted)}
     label{display:block;font-weight:700;margin:12px 0 5px}
     input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;background:#fff;color:#172b43}
-    textarea{min-height:95px;resize:vertical}
+    textarea{min-height:220px;resize:vertical}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
     button{border:0;border-radius:8px;padding:11px 16px;background:var(--blue);color:white;font-weight:700;font-size:14px;cursor:pointer}
     button.secondary{background:#e8eef5;color:var(--navy)}
@@ -151,8 +151,9 @@
           <div><label for="leadUrgency">Urgency</label><select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
           <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" placeholder="50.00" required></div>
         </div>
-        <label for="leadDescription">Project description</label>
-        <textarea id="leadDescription" placeholder="Describe the requested work. Do not include customer phone, email, or street address here."></textarea>
+
+        <label for="leadDescription">Work Details — Подробности и объём работ</label>
+        <textarea id="leadDescription" placeholder="Enter any work details here: install kitchen cabinets, install kitchen floor tile, repair apartment roof, bathroom renovation, plumbing, electrical work, measurements, materials, demolition, and any other details. Customer contact information must not be entered here."></textarea>
 
         <h3 style="margin-top:24px">Customer contact information</h3>
         <p class="muted">These details are kept private until a contractor purchases the lead.</p>
@@ -575,8 +576,14 @@
       status.textContent = lead.status === "available" ? "Available" : "Sold";
       card.append(status);
 
+      const descTitle = document.createElement("h3");
+      descTitle.textContent = "Work Details";
+      descTitle.style.marginTop = "14px";
+      card.append(descTitle);
+
       const desc = document.createElement("p");
-      desc.textContent = lead.description || "No project description provided.";
+      desc.style.whiteSpace = "pre-wrap";
+      desc.textContent = lead.description || "No work details provided.";
       card.append(desc);
 
       if (lead.status === "available") {
