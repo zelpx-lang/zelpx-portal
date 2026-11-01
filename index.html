@@ -1,4 +1,6 @@
-<!doctype html>
+from pathlib import Path
+
+html = r'''<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -103,7 +105,7 @@
 
       <section id="adminPanel" class="card hidden">
         <h2>Admin — create a lead</h2>
-        <p>New leads are created as available listings. This admin form does not yet implement contractor routing, credit deduction, or payment.</p>
+        <p>New leads are created as available listings. This admin form does not yet implement contractor routing or payment.</p>
         <div id="adminMessage" class="message hidden"></div>
         <form id="leadForm">
           <div class="grid">
@@ -126,8 +128,7 @@
 (() => {
   "use strict";
 
-  // IMPORTANT: replace these two placeholders with your existing Supabase Project URL
-  // and public anon/publishable key. Never put a service_role or secret key in this file.
+  // Browser-safe Supabase project URL and publishable key. Never put service_role here.
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
 
@@ -135,7 +136,6 @@
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
-  const escapeText = (value) => String(value ?? "");
   let db = null;
   let currentUser = null;
   let currentProfile = null;
@@ -159,9 +159,6 @@
 
   function initClient() {
     if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
-    if (SUPABASE_URL.startsWith("PASTE_") || SUPABASE_KEY.startsWith("PASTE_")) {
-      throw new Error("Add your Supabase Project URL and public anon/publishable key in index.html before using the portal.");
-    }
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 
@@ -279,6 +276,40 @@
     if (!data?.length) select.innerHTML = '<option value="">No active categories found</option>';
   }
 
+  async function buyLead(lead, button) {
+    const confirmed = window.confirm(
+      "Buy this exclusive lead for " + money(lead.price_cents) +
+      "?\n\nThe amount will be deducted from your ZELPX credit balance."
+    );
+    if (!confirmed) return;
+
+    clearMessage("appMessage");
+    setBusy(button, true, "Purchasing…");
+    try {
+      const { data, error } = await db.rpc("buy_lead", {
+        p_lead_id: lead.id
+      });
+      if (error) throw error;
+      if (!data || data.success !== true) {
+        throw new Error("The purchase was not confirmed by the server.");
+      }
+      message("appMessage", "Lead purchased successfully. Your credit balance has been updated.", "success");
+      await loadAccount();
+      await loadLeads();
+      await loadPurchases();
+    } catch (e) {
+      const raw = String(e?.message || "Unknown error");
+      let friendly = raw;
+      if (/insufficient credits/i.test(raw)) friendly = "Not enough credits. Add credits to your wallet before buying this lead.";
+      else if (/no longer available/i.test(raw)) friendly = "This lead is no longer available. Refresh the list to see current leads.";
+      else if (/contractor account not found/i.test(raw)) friendly = "Your contractor account is not set up yet. Contact ZELPX support.";
+      message("appMessage", "Purchase failed: " + friendly, "error");
+      await loadLeads();
+    } finally {
+      setBusy(button, false);
+    }
+  }
+
   async function loadLeads() {
     const list = $("leadsList");
     list.textContent = "Loading leads…";
@@ -303,7 +334,16 @@
       const desc = document.createElement("p"); desc.textContent = lead.description || "No project description provided.";
       card.append(desc);
       const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden";
-      card.append(note); list.append(card);
+      card.append(note);
+
+      const buyButton = document.createElement("button");
+      buyButton.type = "button";
+      buyButton.textContent = "Buy Lead";
+      buyButton.style.marginTop = "14px";
+      buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+      card.append(buyButton);
+
+      list.append(card);
     });
   }
 
@@ -405,7 +445,11 @@
     document.querySelectorAll(".tabs button[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === tabId));
   }
 
-  async function logout() { await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false; hide($("appView")); hide($("topUser")); show($("authView")); }
+  async function logout() {
+    await db.auth.signOut();
+    currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+    hide($("appView")); hide($("topUser")); show($("authView"));
+  }
 
   function wireEvents() {
     $("loginBtn").addEventListener("click", signIn);
@@ -440,3 +484,8 @@
 </script>
 </body>
 </html>
+'''
+
+path = Path("/mnt/data/zelpx-index-with-buy-button.html")
+path.write_text(html, encoding="utf-8")
+print(f"Created {path} ({len(html):,} characters)")
