@@ -299,8 +299,73 @@ async function initAdminPanel() {
 
   const isAdmin = await checkAdmin();
   panel.style.display = isAdmin ? 'block' : 'none';
+
+  if (isAdmin) {
+    await loadAdminLeads();
+  }
+}
+// Загрузка заявок для администратора
+async function loadAdminLeads() {
+  const list = document.getElementById('adminLeadsList');
+
+  if (!list) return;
+
+  list.replaceChildren();
+
+  const { data, error } = await db
+    .from('leads')
+    .select('id, service_category, zip_code, description, urgency, price_cents, status, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(error);
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.textContent = 'Error loading leads: ' + error.message;
+    row.appendChild(cell);
+    list.appendChild(row);
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.textContent = 'No leads yet.';
+    row.appendChild(cell);
+    list.appendChild(row);
+    return;
+  }
+
+  data.forEach(lead => {
+    const row = document.createElement('tr');
+
+    const values = [
+      lead.service_category,
+      lead.zip_code,
+      lead.description || '',
+      lead.urgency,
+      '$' + (lead.price_cents / 100).toFixed(2),
+      lead.status,
+      new Date(lead.created_at).toLocaleDateString()
+    ];
+
+    values.forEach(value => {
+      const cell = document.createElement('td');
+      cell.style.padding = '10px';
+      cell.style.borderBottom = '1px solid #ddd';
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
+
+    list.appendChild(row);
+  });
 }
 
+// Кнопка обновления списка
+document.getElementById('refreshLeads')
+  ?.addEventListener('click', loadAdminLeads);
 // Создание новой заявки
 document.getElementById('leadForm')?.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -681,6 +746,31 @@ db.auth.onAuthStateChange((event, session) => {
 
     <button type="submit">Create Lead</button>
     <p id="leadMessage"></p>
-  </form>
+  </form><h2 style="margin-top:35px;">All Leads</h2>
+
+<button type="button" id="refreshLeads">
+  Refresh Leads
+</button>
+
+<div style="overflow-x:auto; margin-top:15px;">
+  <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>ZIP</th>
+        <th>Description</th>
+        <th>Urgency</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="adminLeadsList">
+      <tr>
+        <td colspan="7">Loading leads...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 </section>
 </html>
