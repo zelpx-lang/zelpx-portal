@@ -1,222 +1,324 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ZELPX — Кабинет заказчика</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZELPX | Customer Portal</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 24px;
+      padding: 30px 16px;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #f3f5f8;
-      color: #172033;
+      background: #f4f6f9;
       font-family: Arial, sans-serif;
+      color: #202938;
     }
-    .card {
-      width: 100%;
+
+    .container {
       max-width: 440px;
+      margin: 40px auto;
       padding: 30px;
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 30px #17203312;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
     }
-    h1 { margin: 0 0 8px; color: #173b70; }
-    h2 { margin-top: 26px; }
-    p { color: #64748b; line-height: 1.5; }
-    label { display: block; margin: 16px 0 6px; font-weight: bold; }
+
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #1769aa;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 23px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #667085;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
     input {
       width: 100%;
-      padding: 13px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #ccd2da;
+      border-radius: 7px;
       font-size: 16px;
     }
+
     button {
       width: 100%;
-      margin-top: 16px;
-      padding: 14px;
+      padding: 13px;
+      margin-top: 20px;
       border: 0;
-      border-radius: 8px;
-      background: #1765b1;
+      border-radius: 7px;
+      background: #1769aa;
       color: white;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
     }
-    button.secondary { background: #e8eef6; color: #173b70; }
-    button:disabled { opacity: .6; cursor: wait; }
-    #message { margin-top: 16px; white-space: pre-wrap; }
-    .hidden { display: none; }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .switch {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .switch a {
+      color: #1769aa;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      display: block;
+      color: #a32121;
+      background: #fff0f0;
+    }
+
+    .success {
+      display: block;
+      color: #176b36;
+      background: #eaf8ef;
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
+
 <body>
-  <main class="card">
-    <h1>ZELPX</h1>
-    <p>Кабинет заказчика — заявки на ремонт и услуги.</p>
+  <main class="container">
+    <div class="logo">ZELPX</div>
 
-    <section id="auth">
-      <h2 id="formTitle">Регистрация заказчика</h2>
+    <section id="authView">
+      <h1 id="formTitle">Create Customer Account</h1>
+      <p class="subtitle" id="formSubtitle">
+        Create an account to request services and communicate with contractors.
+      </p>
 
-      <div id="nameField">
-        <label for="fullName">Ваше имя</label>
-        <input id="fullName" type="text" autocomplete="name"
-               placeholder="Имя и фамилия">
+      <form id="authForm">
+        <div id="nameField">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" autocomplete="name">
+        </div>
+
+        <div id="phoneField">
+          <label for="phone">Phone Number</label>
+          <input id="phone" type="tel" autocomplete="tel">
+        </div>
+
+        <label for="email">Email Address</label>
+        <input id="email" type="email" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password"
+               autocomplete="current-password" required minlength="6">
+
+        <button id="submitButton" type="submit">Create Account</button>
+      </form>
+
+      <div id="message" class="message" role="status"></div>
+
+      <div class="switch">
+        <span id="switchText">Already have an account?</span>
+        <a id="switchLink" href="#">Log In</a>
       </div>
-
-      <label for="email">Электронная почта</label>
-      <input id="email" type="email" autocomplete="email"
-             placeholder="name@example.com">
-
-      <label for="password">Пароль</label>
-      <input id="password" type="password"
-             autocomplete="new-password" placeholder="Не менее 6 символов">
-
-      <button id="submitButton" type="button">Зарегистрироваться</button>
-      <button id="switchButton" class="secondary" type="button">
-        Уже есть аккаунт? Войти
-      </button>
     </section>
 
-    <section id="account" class="hidden">
-      <h2>Вы вошли в кабинет</h2>
+    <section id="dashboardView" class="hidden">
+      <h1>Customer Dashboard</h1>
+      <p class="subtitle">Welcome to your ZELPX customer account.</p>
       <p id="accountEmail"></p>
-      <p>Регистрация прошла успешно. Подключение создания и просмотра заявок будет следующим этапом.</p>
-      <button id="logoutButton" type="button">Выйти</button>
+      <p>Your customer account is ready.</p>
+      <p>Service request and messaging features will be available here.</p>
+      <button id="logoutButton" type="button">Log Out</button>
     </section>
-
-    <p id="message" role="status"></p>
   </main>
 
   <script>
-    // Вставь сюда URL и публичный ключ из index.html.
-    // Не используй secret key или service_role key.
-    const SUPABASE_URL = "ВСТАВЬ_URL_ИЗ_INDEX_HTML";
-    const SUPABASE_KEY = "ВСТАВЬ_ПУБЛИЧНЫЙ_КЛЮЧ_ИЗ_INDEX_HTML";
+    const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
 
     const db = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_KEY
     );
 
+    const $ = (id) => document.getElementById(id);
+
     let isLogin = false;
 
-    const authSection = document.getElementById("auth");
-    const accountSection = document.getElementById("account");
-    const message = document.getElementById("message");
-    const submitButton = document.getElementById("submitButton");
-    const switchButton = document.getElementById("switchButton");
-    const nameField = document.getElementById("nameField");
-    const formTitle = document.getElementById("formTitle");
-
-    function showMessage(text) {
+    function showMessage(text, type) {
+      const message = $("message");
       message.textContent = text;
+      message.className = "message " + type;
     }
 
-    function showAccount(user) {
-      authSection.classList.add("hidden");
-      accountSection.classList.remove("hidden");
-      document.getElementById("accountEmail").textContent =
-        user.email || "";
-      showMessage("");
+    function clearMessage() {
+      $("message").textContent = "";
+      $("message").className = "message";
     }
 
-    function showAuth() {
-      accountSection.classList.add("hidden");
-      authSection.classList.remove("hidden");
+    function setMode(loginMode) {
+      isLogin = loginMode;
+      clearMessage();
+
+      $("formTitle").textContent = isLogin
+        ? "Customer Log In"
+        : "Create Customer Account";
+
+      $("formSubtitle").textContent = isLogin
+        ? "Log in to access your customer account."
+        : "Create an account to request services and communicate with contractors.";
+
+      $("nameField").classList.toggle("hidden", isLogin);
+      $("phoneField").classList.toggle("hidden", isLogin);
+
+      $("password").autocomplete = isLogin
+        ? "current-password"
+        : "new-password";
+
+      $("submitButton").textContent = isLogin
+        ? "Log In"
+        : "Create Account";
+
+      $("switchText").textContent = isLogin
+        ? "Don't have an account?"
+        : "Already have an account?";
+
+      $("switchLink").textContent = isLogin
+        ? "Create Account"
+        : "Log In";
     }
 
-    switchButton.addEventListener("click", () => {
-      isLogin = !isLogin;
-      formTitle.textContent = isLogin ? "Вход заказчика" : "Регистрация заказчика";
-      submitButton.textContent = isLogin ? "Войти" : "Зарегистрироваться";
-      switchButton.textContent = isLogin
-        ? "Нет аккаунта? Зарегистрироваться"
-        : "Уже есть аккаунт? Войти";
-      nameField.classList.toggle("hidden", isLogin);
-      document.getElementById("password").autocomplete =
-        isLogin ? "current-password" : "new-password";
-      showMessage("");
+    $("switchLink").addEventListener("click", (event) => {
+      event.preventDefault();
+      setMode(!isLogin);
     });
 
-    submitButton.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const fullName = document.getElementById("fullName").value.trim();
+    $("authForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage();
 
-      if (!email || !password) {
-        showMessage("Введите электронную почту и пароль.");
-        return;
-      }
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const button = $("submitButton");
 
-      if (password.length < 6) {
-        showMessage("Пароль должен содержать не менее 6 символов.");
-        return;
-      }
-
-      if (!isLogin && !fullName) {
-        showMessage("Введите ваше имя.");
-        return;
-      }
-
-      submitButton.disabled = true;
-      showMessage("Пожалуйста, подождите…");
+      button.disabled = true;
+      button.textContent = isLogin ? "Logging In..." : "Creating Account...";
 
       try {
-        let result;
-
         if (isLogin) {
-          result = await db.auth.signInWithPassword({ email, password });
+          const { error } = await db.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) throw error;
+
+          await checkSession();
         } else {
-          result = await db.auth.signUp({
+          const fullName = $("fullName").value.trim();
+          const phone = $("phone").value.trim();
+
+          if (!fullName || !phone) {
+            throw new Error("Please enter your full name and phone number.");
+          }
+
+          const { data, error } = await db.auth.signUp({
             email,
             password,
             options: {
               data: {
                 full_name: fullName,
-                role: "customer"
+                phone: phone
               }
             }
           });
-        }
 
-        if (result.error) throw result.error;
+          if (error) throw error;
 
-        if (!isLogin && !result.data.session) {
-          showMessage("Проверьте почту и подтвердите регистрацию. Затем войдите в кабинет.");
-        } else if (result.data.user) {
-          showAccount(result.data.user);
+          if (data.session) {
+            await checkSession();
+          } else {
+            showMessage(
+              "Your registration was submitted. Please check your email to confirm your account before logging in.",
+              "success"
+            );
+          }
         }
       } catch (error) {
-        showMessage("Не удалось выполнить действие: " + error.message);
+        showMessage(error.message || "Something went wrong. Please try again.", "error");
       } finally {
-        submitButton.disabled = false;
+        button.disabled = false;
+        button.textContent = isLogin ? "Log In" : "Create Account";
       }
     });
 
-    document.getElementById("logoutButton").addEventListener("click", async () => {
+    async function checkSession() {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) throw error;
+
+      const session = data.session;
+
+      if (session) {
+        $("authView").classList.add("hidden");
+        $("dashboardView").classList.remove("hidden");
+        $("accountEmail").textContent = "Email: " + session.user.email;
+      } else {
+        $("authView").classList.remove("hidden");
+        $("dashboardView").classList.add("hidden");
+      }
+    }
+
+    $("logoutButton").addEventListener("click", async () => {
       const { error } = await db.auth.signOut();
+
       if (error) {
-        showMessage(error.message);
+        showMessage(error.message, "error");
         return;
       }
-      showAuth();
-      showMessage("Вы вышли из аккаунта.");
+
+      $("authForm").reset();
+      setMode(false);
+      await checkSession();
     });
 
-    (async () => {
-      const { data, error } = await db.auth.getSession();
-      if (error) {
-        showMessage(error.message);
-      } else if (data.session) {
-        showAccount(data.session.user);
-      }
-    })();
+    checkSession();
   </script>
 </body>
 </html>
