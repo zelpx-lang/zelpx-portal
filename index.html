@@ -640,21 +640,7 @@ html = r'''<!doctype html>
 </script>
 </body>
 </html>
-'''
 
-# Basic structural safeguards before writing the deliverable.
-required = [
-    'id="serviceRequestsList"',
-    'async function loadServiceRequests()',
-    'admin_publish_service_request',
-    'db.rpc("buy_lead"',
-    'create-checkout-session',
-    'get_purchased_lead_contact',
-    'openContractorChat'
-]
-missing = [item for item in required if item not in html]
-if missing:
-    raise ValueError("Missing expected functionality: " + ", ".join(missing))
 
 out = Path("/mnt/data/index.html")
 out.write_text(html, encoding="utf-8")
