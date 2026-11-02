@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZELPX — Кабинет заказчика</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f3f5f8;
+      color: #172033;
+      font-family: Arial, sans-serif;
+    }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      padding: 30px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px #17203312;
+    }
+    h1 { margin: 0 0 8px; color: #173b70; }
+    h2 { margin-top: 26px; }
+    p { color: #64748b; line-height: 1.5; }
+    label { display: block; margin: 16px 0 6px; font-weight: bold; }
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #1765b1;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.secondary { background: #e8eef6; color: #173b70; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #message { margin-top: 16px; white-space: pre-wrap; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>ZELPX</h1>
+    <p>Кабинет заказчика — заявки на ремонт и услуги.</p>
+
+    <section id="auth">
+      <h2 id="formTitle">Регистрация заказчика</h2>
+
+      <div id="nameField">
+        <label for="fullName">Ваше имя</label>
+        <input id="fullName" type="text" autocomplete="name"
+               placeholder="Имя и фамилия">
+      </div>
+
+      <label for="email">Электронная почта</label>
+      <input id="email" type="email" autocomplete="email"
+             placeholder="name@example.com">
+
+      <label for="password">Пароль</label>
+      <input id="password" type="password"
+             autocomplete="new-password" placeholder="Не менее 6 символов">
+
+      <button id="submitButton" type="button">Зарегистрироваться</button>
+      <button id="switchButton" class="secondary" type="button">
+        Уже есть аккаунт? Войти
+      </button>
+    </section>
+
+    <section id="account" class="hidden">
+      <h2>Вы вошли в кабинет</h2>
+      <p id="accountEmail"></p>
+      <p>Регистрация прошла успешно. Подключение создания и просмотра заявок будет следующим этапом.</p>
+      <button id="logoutButton" type="button">Выйти</button>
+    </section>
+
+    <p id="message" role="status"></p>
+  </main>
+
+  <script>
+    // Вставь сюда URL и публичный ключ из index.html.
+    // Не используй secret key или service_role key.
+    const SUPABASE_URL = "ВСТАВЬ_URL_ИЗ_INDEX_HTML";
+    const SUPABASE_KEY = "ВСТАВЬ_ПУБЛИЧНЫЙ_КЛЮЧ_ИЗ_INDEX_HTML";
+
+    const db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    let isLogin = false;
+
+    const authSection = document.getElementById("auth");
+    const accountSection = document.getElementById("account");
+    const message = document.getElementById("message");
+    const submitButton = document.getElementById("submitButton");
+    const switchButton = document.getElementById("switchButton");
+    const nameField = document.getElementById("nameField");
+    const formTitle = document.getElementById("formTitle");
+
+    function showMessage(text) {
+      message.textContent = text;
+    }
+
+    function showAccount(user) {
+      authSection.classList.add("hidden");
+      accountSection.classList.remove("hidden");
+      document.getElementById("accountEmail").textContent =
+        user.email || "";
+      showMessage("");
+    }
+
+    function showAuth() {
+      accountSection.classList.add("hidden");
+      authSection.classList.remove("hidden");
+    }
+
+    switchButton.addEventListener("click", () => {
+      isLogin = !isLogin;
+      formTitle.textContent = isLogin ? "Вход заказчика" : "Регистрация заказчика";
+      submitButton.textContent = isLogin ? "Войти" : "Зарегистрироваться";
+      switchButton.textContent = isLogin
+        ? "Нет аккаунта? Зарегистрироваться"
+        : "Уже есть аккаунт? Войти";
+      nameField.classList.toggle("hidden", isLogin);
+      document.getElementById("password").autocomplete =
+        isLogin ? "current-password" : "new-password";
+      showMessage("");
+    });
+
+    submitButton.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const fullName = document.getElementById("fullName").value.trim();
+
+      if (!email || !password) {
+        showMessage("Введите электронную почту и пароль.");
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage("Пароль должен содержать не менее 6 символов.");
+        return;
+      }
+
+      if (!isLogin && !fullName) {
+        showMessage("Введите ваше имя.");
+        return;
+      }
+
+      submitButton.disabled = true;
+      showMessage("Пожалуйста, подождите…");
+
+      try {
+        let result;
+
+        if (isLogin) {
+          result = await db.auth.signInWithPassword({ email, password });
+        } else {
+          result = await db.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName,
+                role: "customer"
+              }
+            }
+          });
+        }
+
+        if (result.error) throw result.error;
+
+        if (!isLogin && !result.data.session) {
+          showMessage("Проверьте почту и подтвердите регистрацию. Затем войдите в кабинет.");
+        } else if (result.data.user) {
+          showAccount(result.data.user);
+        }
+      } catch (error) {
+        showMessage("Не удалось выполнить действие: " + error.message);
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      const { error } = await db.auth.signOut();
+      if (error) {
+        showMessage(error.message);
+        return;
+      }
+      showAuth();
+      showMessage("Вы вышли из аккаунта.");
+    });
+
+    (async () => {
+      const { data, error } = await db.auth.getSession();
+      if (error) {
+        showMessage(error.message);
+      } else if (data.session) {
+        showAccount(data.session.user);
+      }
+    })();
+  </script>
+</body>
+</html>
