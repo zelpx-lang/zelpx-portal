@@ -236,7 +236,17 @@
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone } } });
+      const { data, error } = await db.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone,
+            account_type: "contractor"
+          }
+        }
+      });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -451,7 +461,6 @@
       const data = await response.json();
       const places = Array.isArray(data.places) ? data.places : [];
       if (!places.length) throw new Error("No city found for this ZIP code");
-      // Prefer the first official place; keep the inputs editable in case the address uses another locality.
       cityInput.value = places[0]["place name"] || "";
       stateInput.value = places[0]["state abbreviation"] || "";
       if (statusElement) {
