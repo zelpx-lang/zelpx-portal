@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,10 +35,7 @@
       margin-bottom: 8px;
     }
 
-    h1, h2 {
-      text-align: center;
-    }
-
+    h1, h2 { text-align: center; }
     h1 { font-size: 23px; }
     h2 { font-size: 20px; margin-top: 30px; }
 
@@ -156,9 +152,7 @@
       margin: 30px 0;
     }
 
-    .secondary-button {
-      background: #667085;
-    }
+    .secondary-button { background: #667085; }
 
     @media (max-width: 480px) {
       .container { padding: 22px 18px; }
@@ -366,7 +360,8 @@
             options: {
               data: {
                 full_name: fullName,
-                phone: phone
+                phone: phone,
+                account_type: "customer"
               }
             }
           });
@@ -377,6 +372,7 @@
             await checkSession();
           } else {
             showMessage(
+              "message",
               "Your registration was submitted. Please check your email to confirm your account before logging in.",
               "success"
             );
