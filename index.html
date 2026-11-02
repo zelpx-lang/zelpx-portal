@@ -62,9 +62,20 @@
     .chatmeta { font-size:11px; color:var(--muted); margin-top:4px; }
     .chatform { display:flex; gap:8px; align-items:flex-end; margin-top:10px; } .chatform textarea { min-height:70px; flex:1; } .chatform button { flex:0 0 auto; }
     #creditAmount { max-width:100%; }
+
+    /* Contractor message notifications */
+    #notificationsWrap { position:relative; display:inline-flex; align-items:center; }
+    #notificationsBtn { position:relative; min-height:40px; padding:8px 13px; background:#e8eef5; color:var(--navy); }
+    #unreadCount { display:inline-block; min-width:20px; padding:1px 5px; margin-left:4px; border-radius:20px; background:#b42318; color:white; font-size:12px; text-align:center; }
+    #notificationsPanel { position:absolute; z-index:1000; top:calc(100% + 10px); right:0; width:min(360px, calc(100vw - 24px)); max-height: min(65vh, 440px); overflow:auto; background:white; color:#172b43; border:1px solid var(--line); border-radius:12px; padding:14px; box-shadow:0 10px 30px #10243a30; }
+    .notificationItem { border:1px solid var(--line); border-radius:9px; padding:11px; margin:9px 0; }
+    .notificationItem p { margin:4px 0 9px; font-size:13px; }
+    .notificationItem button { width:100%; }
+    .notificationEmpty { color:var(--muted); font-size:14px; padding:8px 2px; }
+
     @media(max-width:700px) {
       body { font-size:16px; } .top { padding:13px 16px; align-items:flex-start; } .brand { font-size:21px; }
-      #topUser { justify-content:flex-end; max-width:62%; } #userEmail { font-size:12px; }
+      #topUser { justify-content:flex-end; max-width:70%; } #userEmail { font-size:12px; }
       #logoutBtn { min-height:40px; padding:9px 12px; } main { width:calc(100% - 24px); margin:16px auto; }
       .card { padding:16px; margin-bottom:14px; border-radius:12px; } .grid,.statrow { grid-template-columns:1fr; gap:10px; }
       .statrow { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .stat { padding:10px 8px; }
@@ -75,6 +86,7 @@
       .tabs button { width:100%; padding:10px 8px; min-height:44px; } .lead { padding:13px; } .leadhead { gap:8px; }
       .price { font-size:17px; } .chatform { flex-direction:column; align-items:stretch; } .chatform button { width:100%; }
       .chatbubble { max-width:96%; } .tablewrap { margin-left:-2px; width:calc(100% + 4px); } textarea { min-height:150px; }
+      #notificationsPanel { right:-65px; }
     }
     @media(max-width:380px) { .top { flex-direction:column; } #topUser { max-width:100%; width:100%; justify-content:space-between; }
       .statrow { grid-template-columns:1fr; } .stat { display:flex; justify-content:space-between; align-items:center; gap:8px; }
@@ -85,7 +97,19 @@
 <body>
 <header class="top">
   <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
-  <div id="topUser" class="hidden"><span id="userEmail"></span><button id="logoutBtn" class="secondary">Log out</button></div>
+  <div id="topUser" class="hidden">
+    <span id="userEmail"></span>
+    <div id="notificationsWrap">
+      <button id="notificationsBtn" type="button" class="secondary" aria-expanded="false" aria-controls="notificationsPanel">
+        🔔 <span id="unreadCount">0</span>
+      </button>
+      <div id="notificationsPanel" class="hidden">
+        <h3>Unread customer messages</h3>
+        <div id="notificationsList"><p class="notificationEmpty">No unread messages.</p></div>
+      </div>
+    </div>
+    <button id="logoutBtn" class="secondary">Log out</button>
+  </div>
 </header>
 <main>
   <section id="authView" class="card">
@@ -191,13 +215,23 @@
 <script>
 (() => {
   "use strict";
+
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const $ = (id) => document.getElementById(id);
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
+
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false;
+
+  // Notification and chat polling state
+  let notificationTimer = null;
+  let activeChatTimer = null;
+  let activeChatConversationId = null;
+  let notificationBusy = false;
+  let activeChatBusy = false;
+  const purchaseChatOpeners = new Map();
 
   function message(id, text, type) {
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
@@ -209,10 +243,12 @@
     else if (button.dataset.oldText) { button.textContent = button.dataset.oldText; delete button.dataset.oldText; }
   }
   function addCell(row, value) { const td = document.createElement("td"); td.textContent = String(value ?? ""); row.append(td); }
+
   function initClient() {
     if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
+
   function setSignupMode(enabled) {
     signupMode = enabled;
     enabled ? show($("signupFields")) : hide($("signupFields"));
@@ -222,6 +258,7 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
+
   async function signIn() {
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
@@ -229,6 +266,7 @@
     try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp(); }
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
+
   async function signUp() {
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
@@ -239,27 +277,65 @@
       const { data, error } = await db.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-            phone,
-            account_type: "contractor"
-          }
-        }
+        options: { data: { full_name: fullName, phone, account_type: "contractor" } }
       });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
     } catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("signupBtn"), false); }
   }
+
+  function stopChatPolling() {
+    if (activeChatTimer) clearInterval(activeChatTimer);
+    activeChatTimer = null;
+    activeChatConversationId = null;
+    activeChatBusy = false;
+  }
+
+  function stopNotificationPolling() {
+    if (notificationTimer) clearInterval(notificationTimer);
+    notificationTimer = null;
+    notificationBusy = false;
+  }
+
+  function stopAllPolling() {
+    stopChatPolling();
+    stopNotificationPolling();
+  }
+
+  function startNotificationPolling() {
+    stopNotificationPolling();
+    if (!currentUser) return;
+    refreshNotifications();
+    notificationTimer = setInterval(() => {
+      if (currentUser && !notificationBusy) refreshNotifications();
+    }, 10000);
+  }
+
   async function loadApp() {
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
-    if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
-    await loadAccount(); await loadCategories(); await loadLeads(); await loadPurchases();
+    if (!user) {
+      stopAllPolling();
+      currentUser = null;
+      show($("authView")); hide($("appView")); hide($("topUser"));
+      return;
+    }
+
+    currentUser = user;
+    hide($("authView")); show($("appView")); show($("topUser"));
+    $("userEmail").textContent = user.email || "";
+    clearMessage("authMessage");
+
+    await loadAccount();
+    await loadCategories();
+    await loadLeads();
+    await loadPurchases();
+
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); }
+    startNotificationPolling();
   }
+
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
@@ -267,52 +343,72 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
+
     const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
+
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
-      if (walletError) throw walletError; currentWallet = wallet;
+      if (walletError) throw walletError;
+      currentWallet = wallet;
     } else currentWallet = null;
+
     $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
-    $("profileFullName").value = profile?.full_name || ""; $("profilePhone").value = profile?.phone || "";
-    $("profileCompany").value = contractor?.company_name || ""; $("profileCompanyEmail").value = contractor?.email || "";
+    $("profileFullName").value = profile?.full_name || "";
+    $("profilePhone").value = profile?.phone || "";
+    $("profileCompany").value = contractor?.company_name || "";
+    $("profileCompanyEmail").value = contractor?.email || "";
   }
+
   async function addCredits() {
     clearMessage("appMessage");
     if (!currentContractor || !currentWallet) return message("appMessage", "Your contractor account or credit wallet is not ready. Contact ZELPX support.", "error");
     const dollars = Number($("creditAmount").value);
     if (!Number.isFinite(dollars) || dollars < 10 || dollars > 10000 || Math.round(dollars * 100) !== dollars * 100)
       return message("appMessage", "Enter an amount from $10 to $10,000, with no more than 2 decimal places.", "error");
+
     const button = $("addCreditsBtn"); setBusy(button, true, "Connecting to Stripe…");
     try {
       const { data, error } = await db.functions.invoke("create-checkout-session", { body: { amount_cents: Math.round(dollars * 100) } });
       if (error) throw error;
       if (!data?.url || typeof data.url !== "string" || !data.url.startsWith("https://")) throw new Error(data?.error || "Stripe did not return a valid checkout link.");
       window.location.assign(data.url);
-    } catch (e) { message("appMessage", "Could not start payment: " + (e.message || "Unknown error"), "error"); setBusy(button, false); }
+    } catch (e) {
+      message("appMessage", "Could not start payment: " + (e.message || "Unknown error"), "error");
+      setBusy(button, false);
+    }
   }
+
   async function handlePaymentReturn() {
     const params = new URLSearchParams(window.location.search), payment = params.get("payment");
     if (payment === "success") {
       message("appMessage", "Stripe returned you to ZELPX. Your payment is being confirmed. Click Refresh balance in a few moments; credits appear after the secure webhook confirms payment.", "success");
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (payment === "cancelled") {
-      message("appMessage", "Payment was cancelled. No credits were added.", "error"); window.history.replaceState({}, document.title, window.location.pathname);
+      message("appMessage", "Payment was cancelled. No credits were added.", "error");
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }
+
   async function loadCategories() {
     const select = $("leadCategory"); select.replaceChildren();
     const loading = document.createElement("option"); loading.value = ""; loading.textContent = "Loading categories…"; select.append(loading);
     const { data, error } = await db.from("service_categories").select("name,slug").eq("is_active", true).order("name");
     if (error) {
-      select.replaceChildren(); const option = document.createElement("option"); option.value = ""; option.textContent = "Could not load categories"; select.append(option);
-      if (isAdmin) message("adminMessage", "Category loading error: " + error.message, "error"); return;
+      select.replaceChildren();
+      const option = document.createElement("option"); option.value = ""; option.textContent = "Could not load categories"; select.append(option);
+      if (isAdmin) message("adminMessage", "Category loading error: " + error.message, "error");
+      return;
     }
-    select.replaceChildren(); const first = document.createElement("option"); first.value = ""; first.textContent = "Choose a service"; select.append(first);
-    (data || []).forEach(category => { const option = document.createElement("option"); option.value = category.name; option.textContent = category.name; select.append(option); });
+    select.replaceChildren();
+    const first = document.createElement("option"); first.value = ""; first.textContent = "Choose a service"; select.append(first);
+    (data || []).forEach(category => {
+      const option = document.createElement("option"); option.value = category.name; option.textContent = category.name; select.append(option);
+    });
     if (!data?.length) first.textContent = "No active categories found";
   }
+
   async function buyLead(lead, button) {
     if (!window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
@@ -320,6 +416,7 @@
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
       if (error) throw error;
       if (!data || data.success !== true) throw new Error("The purchase was not confirmed by the server.");
+
       let chatEmailWarning = "";
       try {
         const { data: chatData, error: chatError } = await db.functions.invoke("create-customer-chat", { body: { lead_id: lead.id } });
@@ -329,6 +426,7 @@
         console.error("Customer chat setup/email error:", chatError);
         chatEmailWarning = " The purchase is complete, but the customer chat email could not be sent: " + (chatError?.message || "unknown error") + ". Check that the customer email is present and contact ZELPX support if needed.";
       }
+
       await loadAccount(); await loadLeads(); await loadPurchases(); switchTab("purchasesPanel");
       message("appMessage", "Lead purchased successfully. Your contact details are shown in My purchases." + chatEmailWarning, chatEmailWarning ? "error" : "success");
     } catch (e) {
@@ -337,9 +435,11 @@
       else if (/no longer available/i.test(raw)) friendly = "This lead is no longer available. Refresh the list to see current leads.";
       else if (/contractor account not found/i.test(raw)) friendly = "Your contractor account is not set up yet. Contact ZELPX support.";
       else if (/contact details are not available/i.test(raw)) friendly = "This lead does not have customer contact details yet and cannot be purchased.";
-      message("appMessage", "Purchase failed: " + friendly, "error"); await loadLeads();
+      message("appMessage", "Purchase failed: " + friendly, "error");
+      await loadLeads();
     } finally { setBusy(button, false); }
   }
+
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…";
     const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
@@ -347,122 +447,403 @@
     const leads = data || [], available = leads.filter(lead => lead.status === "available");
     $("availableCount").textContent = String(available.length); list.replaceChildren();
     if (!leads.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No leads at the moment."; list.append(empty); return; }
+
     leads.forEach(lead => {
       const card = document.createElement("article"); card.className = "lead";
       const head = document.createElement("div"); head.className = "leadhead";
       const left = document.createElement("div"), title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
       const meta = document.createElement("div"); meta.className = "muted"; meta.textContent = "ZIP " + (lead.zip_code || "") + " · " + (lead.urgency || "normal") + " urgency";
-      left.append(title, meta); const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents); head.append(left, price); card.append(head);
-      const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; card.append(status);
+      left.append(title, meta);
+      const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents);
+      head.append(left, price); card.append(head);
+      const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold");
+      status.textContent = lead.status === "available" ? "Available" : "Sold"; card.append(status);
       const descTitle = document.createElement("h3"); descTitle.textContent = "Work Details"; descTitle.style.marginTop = "14px"; card.append(descTitle);
       const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description || "No work details provided."; card.append(desc);
+
       if (lead.status === "available") {
         const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden"; card.append(note);
         const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "Buy Lead"; buyButton.style.marginTop = "14px";
         buyButton.addEventListener("click", () => buyLead(lead, buyButton)); card.append(buyButton);
-      } else { const note = document.createElement("p"); note.className = "muted"; note.textContent = "This lead has already been purchased. Contact details are private."; card.append(note); }
+      } else {
+        const note = document.createElement("p"); note.className = "muted"; note.textContent = "This lead has already been purchased. Contact details are private."; card.append(note);
+      }
       list.append(card);
     });
   }
+
+  // Mark only customer messages in a conversation belonging to the signed-in contractor.
+  // The database function verifies ownership using auth.uid().
+  async function markConversationRead(conversationId) {
+    const { error } = await db.rpc("mark_contractor_messages_read", { p_conversation_id: conversationId });
+    if (error) {
+      console.error("Could not mark contractor messages as read:", error);
+      throw error;
+    }
+  }
+
   async function openContractorChat(leadId, panel) {
-    panel.replaceChildren(); const loading = document.createElement("p"); loading.className = "muted"; loading.textContent = "Opening conversation…"; panel.append(loading);
+    stopChatPolling();
+    panel.replaceChildren();
+    const loading = document.createElement("p"); loading.className = "muted"; loading.textContent = "Opening conversation…"; panel.append(loading);
+
     try {
       const { data: conversationData, error: conversationError } = await db.rpc("get_or_create_lead_conversation", { p_lead_id: leadId });
       if (conversationError) throw conversationError;
       const conversationId = Array.isArray(conversationData) ? conversationData[0] : conversationData;
       if (!conversationId || typeof conversationId !== "string") throw new Error("The conversation could not be opened.");
-      panel.replaceChildren(); const title = document.createElement("h3"); title.textContent = "Messages with customer"; panel.append(title);
+
+      activeChatConversationId = conversationId;
+      panel.replaceChildren();
+
+      const title = document.createElement("h3"); title.textContent = "Messages with customer"; panel.append(title);
       const messagesBox = document.createElement("div"); messagesBox.className = "chatmessages"; messagesBox.textContent = "Loading messages…"; panel.append(messagesBox);
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+
       async function refreshMessages() {
-        const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
-        if (error) throw error; messagesBox.replaceChildren();
-        if (!data?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet. Send the first message."; messagesBox.append(empty); return; }
-        data.forEach(item => {
-          const bubble = document.createElement("div"); bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
-          const sender = document.createElement("strong"); sender.textContent = item.sender_type === "contractor" ? "YOU" : "CUSTOMER";
-          const text = document.createElement("div"); text.textContent = item.message;
-          const time = document.createElement("div"); time.className = "chatmeta"; time.textContent = new Date(item.created_at).toLocaleString();
-          bubble.append(sender, text, time); messagesBox.append(bubble);
-        }); messagesBox.scrollTop = messagesBox.scrollHeight;
+        if (activeChatConversationId !== conversationId || panel.classList.contains("hidden")) return;
+
+        const { data, error } = await db.from("lead_messages")
+          .select("id,sender_type,message,created_at")
+          .eq("conversation_id", conversationId)
+          .order("created_at", { ascending: true })
+          .limit(200);
+
+        if (error) throw error;
+
+        messagesBox.replaceChildren();
+        if (!data?.length) {
+          const empty = document.createElement("p"); empty.className = "muted";
+          empty.textContent = "No messages yet. Send the first message.";
+          messagesBox.append(empty);
+        } else {
+          data.forEach(item => {
+            const bubble = document.createElement("div");
+            bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
+            const sender = document.createElement("strong");
+            sender.textContent = item.sender_type === "contractor" ? "YOU" : "CUSTOMER";
+            const text = document.createElement("div"); text.textContent = item.message;
+            const time = document.createElement("div"); time.className = "chatmeta";
+            time.textContent = new Date(item.created_at).toLocaleString();
+            bubble.append(sender, text, time); messagesBox.append(bubble);
+          });
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        }
+
+        // Mark customer messages read only after the conversation has been fetched successfully.
+        await markConversationRead(conversationId);
+        await refreshNotifications();
       }
+
       form.addEventListener("submit", async event => {
-        event.preventDefault(); const text = textarea.value.trim(); if (!text) return; send.disabled = true; status.textContent = "Sending…";
+        event.preventDefault();
+        const text = textarea.value.trim();
+        if (!text) return;
+
+        send.disabled = true; status.textContent = "Sending…";
         try {
-          const { error } = await db.from("lead_messages").insert({ conversation_id: conversationId, sender_type: "contractor", sender_user_id: currentUser.id, message: text });
-          if (error) throw error; textarea.value = ""; status.textContent = "Message sent."; await refreshMessages();
-        } catch (e) { status.textContent = "Could not send message: " + e.message; } finally { send.disabled = false; }
+          const { error } = await db.from("lead_messages").insert({
+            conversation_id: conversationId,
+            sender_type: "contractor",
+            sender_user_id: currentUser.id,
+            message: text
+          });
+          if (error) throw error;
+          textarea.value = "";
+          status.textContent = "Message sent.";
+          await refreshMessages();
+        } catch (e) {
+          status.textContent = "Could not send message: " + e.message;
+        } finally { send.disabled = false; }
       });
+
       await refreshMessages();
-      const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
-      refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
+
+      const refreshButton = document.createElement("button");
+      refreshButton.type = "button"; refreshButton.className = "secondary";
+      refreshButton.textContent = "Refresh messages";
+      refreshButton.addEventListener("click", async () => {
+        try { await refreshMessages(); status.textContent = "Messages refreshed."; }
+        catch (e) { status.textContent = "Could not refresh messages: " + e.message; }
+      });
       panel.append(refreshButton);
+
+      // Automatically check for new messages every five seconds while this chat is open.
+      activeChatTimer = setInterval(async () => {
+        if (activeChatBusy || activeChatConversationId !== conversationId || panel.classList.contains("hidden")) return;
+        activeChatBusy = true;
+        try { await refreshMessages(); }
+        catch (e) { console.error("Automatic chat refresh failed:", e); status.textContent = "Automatic refresh failed. Retrying…"; }
+        finally { activeChatBusy = false; }
+      }, 5000);
+
     } catch (e) {
-      panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
+      stopChatPolling();
+      panel.replaceChildren();
+      const errorText = document.createElement("p"); errorText.className = "error";
+      errorText.textContent = "Chat could not be opened: " + e.message;
+      panel.append(errorText);
     }
   }
+
+  // Load unread customer messages. RLS limits the result to conversations
+  // the signed-in contractor is allowed to see.
+  async function refreshNotifications() {
+    if (!currentUser || notificationBusy) return;
+    notificationBusy = true;
+
+    try {
+      const { data: unreadMessages, error: messagesError } = await db.from("lead_messages")
+        .select("id,conversation_id")
+        .eq("sender_type", "customer")
+        .is("contractor_read_at", null)
+        .limit(500);
+
+      if (messagesError) throw messagesError;
+
+      const counts = new Map();
+      (unreadMessages || []).forEach(row => {
+        counts.set(row.conversation_id, (counts.get(row.conversation_id) || 0) + 1);
+      });
+
+      const total = (unreadMessages || []).length;
+      $("unreadCount").textContent = total > 99 ? "99+" : String(total);
+
+      const list = $("notificationsList");
+      list.replaceChildren();
+
+      if (!counts.size) {
+        const empty = document.createElement("p");
+        empty.className = "notificationEmpty";
+        empty.textContent = "No unread messages.";
+        list.append(empty);
+        return;
+      }
+
+      const conversationIds = [...counts.keys()];
+      const { data: conversations, error: conversationsError } = await db.from("lead_conversations")
+        .select("id,lead_id")
+        .in("id", conversationIds);
+
+      if (conversationsError) throw conversationsError;
+
+      const leadIds = [...new Set((conversations || []).map(c => c.lead_id).filter(Boolean))];
+      const leadNames = new Map();
+
+      if (leadIds.length) {
+        const { data: leads, error: leadsError } = await db.from("leads")
+          .select("id,service_category,zip_code")
+          .in("id", leadIds);
+        if (leadsError) console.warn("Could not load notification lead details:", leadsError.message);
+        else (leads || []).forEach(lead => {
+          leadNames.set(lead.id, (lead.service_category || "Purchased lead") + (lead.zip_code ? " · ZIP " + lead.zip_code : ""));
+        });
+      }
+
+      (conversations || []).forEach(conversation => {
+        const count = counts.get(conversation.id) || 0;
+        if (!count) return;
+
+        const item = document.createElement("div"); item.className = "notificationItem";
+        const heading = document.createElement("strong");
+        heading.textContent = leadNames.get(conversation.lead_id) || "Customer conversation";
+        const detail = document.createElement("p");
+        detail.textContent = count + (count === 1 ? " unread message" : " unread messages");
+        const openButton = document.createElement("button");
+        openButton.type = "button"; openButton.textContent = "Open chat";
+        openButton.addEventListener("click", async () => {
+          hideNotificationsPanel();
+          await openPurchaseChat(conversation.lead_id);
+        });
+        item.append(heading, detail, openButton);
+        list.append(item);
+      });
+
+    } catch (e) {
+      console.error("Could not refresh unread notifications:", e);
+      $("unreadCount").textContent = "!";
+      const list = $("notificationsList");
+      list.replaceChildren();
+      const error = document.createElement("p"); error.className = "notificationEmpty";
+      error.textContent = "Notifications could not be loaded. Please try again.";
+      list.append(error);
+    } finally {
+      notificationBusy = false;
+    }
+  }
+
+  function hideNotificationsPanel() {
+    hide($("notificationsPanel"));
+    $("notificationsBtn").setAttribute("aria-expanded", "false");
+  }
+
+  function toggleNotificationsPanel() {
+    const panel = $("notificationsPanel");
+    const willOpen = panel.classList.contains("hidden");
+    if (willOpen) {
+      show(panel);
+      $("notificationsBtn").setAttribute("aria-expanded", "true");
+      refreshNotifications();
+    } else {
+      hideNotificationsPanel();
+    }
+  }
+
+  async function openPurchaseChat(leadId) {
+    switchTab("purchasesPanel");
+
+    let opener = purchaseChatOpeners.get(leadId);
+    if (!opener) {
+      await loadPurchases();
+      opener = purchaseChatOpeners.get(leadId);
+    }
+
+    if (opener) {
+      await opener();
+    } else {
+      message("appMessage", "The purchased lead chat could not be found. Refresh My purchases and try again.", "error");
+    }
+  }
+
   async function loadPurchases() {
     const list = $("purchasesList");
-    if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
+    purchaseChatOpeners.clear();
+
+    if (!currentContractor) {
+      list.textContent = "Contractor account not found. Contact ZELPX support.";
+      $("purchaseCount").textContent = "0";
+      return;
+    }
+
     list.textContent = "Loading purchases…";
-    const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id).order("purchased_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("lead_purchases")
+      .select("id,lead_id,price_cents,purchased_at")
+      .eq("contractor_id", currentContractor.id)
+      .order("purchased_at", { ascending: false })
+      .limit(100);
+
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
-    const purchases = data || []; $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
-    if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
+
+    const purchases = data || [];
+    $("purchaseCount").textContent = String(purchases.length);
+    list.replaceChildren();
+
+    if (!purchases.length) {
+      list.textContent = "You have not purchased any leads yet.";
+      return;
+    }
+
     for (const item of purchases) {
       const card = document.createElement("article"); card.className = "lead";
       const heading = document.createElement("h3"); heading.textContent = "Purchased lead"; card.append(heading);
-      const info = document.createElement("p"); info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); card.append(info);
+      const info = document.createElement("p");
+      info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString();
+      card.append(info);
+
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
-      const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
-      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
+      const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…";
+      contactBox.append(loading); card.append(contactBox);
+
+      const chatButton = document.createElement("button");
+      chatButton.type = "button"; chatButton.className = "secondary";
+      chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
+
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
-      chatButton.addEventListener("click", async () => {
-        if (chatPanel.classList.contains("hidden")) { show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
-        else { hide(chatPanel); chatButton.textContent = "Open customer chat"; }
+
+      const openChat = async () => {
+        if (chatPanel.classList.contains("hidden")) {
+          show(chatPanel);
+          chatButton.textContent = "Close customer chat";
+          await openContractorChat(item.lead_id, chatPanel);
+        } else {
+          hide(chatPanel);
+          chatButton.textContent = "Open customer chat";
+          if (activeChatConversationId) stopChatPolling();
+        }
+      };
+
+      purchaseChatOpeners.set(item.lead_id, async () => {
+        if (chatPanel.classList.contains("hidden")) await openChat();
+        else {
+          show(chatPanel);
+          chatButton.textContent = "Close customer chat";
+          await openContractorChat(item.lead_id, chatPanel);
+        }
+        chatPanel.scrollIntoView({ behavior: "smooth", block: "center" });
       });
-      card.append(chatButton, chatPanel); list.append(card);
+
+      chatButton.addEventListener("click", openChat);
+      card.append(chatButton, chatPanel);
+      list.append(card);
+
       try {
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
-        if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
-        contactBox.replaceChildren(); const contactTitle = document.createElement("h3"); contactTitle.textContent = "Customer contact details"; contactBox.append(contactTitle);
+        if (contactError) throw contactError;
+        if (!contact) throw new Error("Contact details not returned.");
+
+        contactBox.replaceChildren();
+        const contactTitle = document.createElement("h3");
+        contactTitle.textContent = "Customer contact details";
+        contactBox.append(contactTitle);
+
         [["Name",contact.customer_name],["Phone",contact.phone],["Email",contact.email],["Street address",contact.street_address],["City",contact.city],["State",contact.state],["ZIP code",contact.zip_code]].forEach(([label,value]) => {
-          if (!value) return; const p = document.createElement("p"), strong = document.createElement("strong"); strong.textContent = label + ": "; p.append(strong, document.createTextNode(String(value))); contactBox.append(p);
+          if (!value) return;
+          const p = document.createElement("p"), strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          contactBox.append(p);
         });
       } catch (e) {
-        contactBox.replaceChildren(); const errorText = document.createElement("p"); errorText.textContent = "Contact details could not be loaded. Refresh the page or contact ZELPX support."; contactBox.append(errorText); console.error("Contact loading error:", e);
+        contactBox.replaceChildren();
+        const errorText = document.createElement("p");
+        errorText.textContent = "Contact details could not be loaded. Refresh the page or contact ZELPX support.";
+        contactBox.append(errorText);
+        console.error("Contact loading error:", e);
       }
     }
   }
+
   async function saveCompany() {
     clearMessage("appMessage");
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
-      const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id); if (pErr) throw pErr;
+      const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id);
+      if (pErr) throw pErr;
+
       if (currentContractor) {
-        const { error: cErr } = await db.from("contractors").update({ company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim() }).eq("id", currentContractor.id);
+        const { error: cErr } = await db.from("contractors").update({
+          company_name: $("profileCompany").value.trim(),
+          email: $("profileCompanyEmail").value.trim()
+        }).eq("id", currentContractor.id);
         if (cErr) throw cErr;
       }
-      message("appMessage", "Company details saved.", "success"); await loadAccount();
+
+      message("appMessage", "Company details saved.", "success");
+      await loadAccount();
     } catch (e) { message("appMessage", e.message, "error"); }
   }
+
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
   async function lookupUsZip(zipInput, cityInput, stateInput, statusElement) {
     const raw = zipInput.value.trim();
     const zip = raw.replace(/[^0-9]/g, "").slice(0, 5);
     if (zip.length !== 5) return;
+
     if (statusElement) { statusElement.textContent = "Looking up ZIP code…"; statusElement.className = "muted"; }
+
     try {
       const response = await fetch("https://api.zippopotam.us/us/" + zip);
       if (!response.ok) throw new Error("ZIP code not found");
       const data = await response.json();
       const places = Array.isArray(data.places) ? data.places : [];
       if (!places.length) throw new Error("No city found for this ZIP code");
+
       cityInput.value = places[0]["place name"] || "";
       stateInput.value = places[0]["state abbreviation"] || "";
+
       if (statusElement) {
         statusElement.textContent = places.length > 1
           ? "ZIP found. Multiple localities are associated with this ZIP; verify the city and edit if needed."
@@ -470,46 +851,68 @@
         statusElement.className = "muted";
       }
     } catch (error) {
-      if (statusElement) { statusElement.textContent = "Could not look up this ZIP. Enter city and state manually."; statusElement.className = "message error"; }
+      if (statusElement) {
+        statusElement.textContent = "Could not look up this ZIP. Enter city and state manually.";
+        statusElement.className = "message error";
+      }
     }
   }
+
   async function createLead(event) {
     event.preventDefault(); clearMessage("adminMessage");
     if (!isAdmin) return message("adminMessage", "Admin permission required.", "error");
+
     const category = $("leadCategory").value, zip = $("leadZip").value.trim(), price = Number($("leadPrice").value);
     const customerName = $("customerName").value.trim(), customerPhone = $("customerPhone").value.trim(), customerEmail = $("customerEmail").value.trim();
     const customerStreet = $("customerStreet").value.trim(), customerCity = $("customerCity").value.trim(), customerState = $("customerState").value.trim();
+
     if (!category) return message("adminMessage", "Choose a service category.", "error");
     if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zip)) return message("adminMessage", "Enter a valid US ZIP code.", "error");
     if (!Number.isFinite(price) || price <= 0 || Math.round(price * 100) !== price * 100) return message("adminMessage", "Enter a valid lead price with no more than 2 decimal places.", "error");
     if (!customerName || !customerPhone || !customerStreet || !customerCity || !customerState) return message("adminMessage", "Enter the customer's name, phone, street address, city, and state.", "error");
+
     const button = $("createLeadBtn"); setBusy(button, true, "Creating…");
     try {
       const { error } = await db.rpc("admin_create_lead_with_contact", {
-        p_service_category: category, p_zip_code: zip, p_urgency: $("leadUrgency").value, p_price_cents: Math.round(price * 100),
-        p_description: $("leadDescription").value.trim(), p_customer_name: customerName, p_phone: customerPhone,
-        p_email: customerEmail || null, p_street_address: customerStreet, p_city: customerCity, p_state: customerState
+        p_service_category: category, p_zip_code: zip, p_urgency: $("leadUrgency").value,
+        p_price_cents: Math.round(price * 100), p_description: $("leadDescription").value.trim(),
+        p_customer_name: customerName, p_phone: customerPhone, p_email: customerEmail || null,
+        p_street_address: customerStreet, p_city: customerCity, p_state: customerState
       });
-      if (error) throw error; $("leadForm").reset();
+      if (error) throw error;
+
+      $("leadForm").reset();
       message("adminMessage", "Lead created successfully. It is now visible to contractors. Customer contact details are stored privately.", "success");
       await loadAdminLeads(); await loadLeads();
-    } catch (e) { message("adminMessage", "Could not create lead: " + e.message, "error"); } finally { setBusy(button, false); }
+    } catch (e) {
+      message("adminMessage", "Could not create lead: " + e.message, "error");
+    } finally { setBusy(button, false); }
   }
+
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("leads")
+      .select("id,service_category,zip_code,urgency,price_cents,status,created_at")
+      .order("created_at", { ascending: false }).limit(100);
+
     if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
     if (!data?.length) { list.textContent = "No leads created yet."; return; }
+
     const wrap = document.createElement("div"); wrap.className = "tablewrap";
     const table = document.createElement("table"), thead = document.createElement("thead"), headerRow = document.createElement("tr");
-    ["Category","ZIP","Urgency","Price","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
-    thead.append(headerRow); table.append(thead); const body = document.createElement("tbody");
+    ["Category","ZIP","Urgency","Price","Status","Created"].forEach(text => {
+      const th = document.createElement("th"); th.textContent = text; headerRow.append(th);
+    });
+    thead.append(headerRow); table.append(thead);
+    const body = document.createElement("tbody");
+
     data.forEach(lead => {
       const tr = document.createElement("tr");
       [lead.service_category,lead.zip_code,lead.urgency,money(lead.price_cents),lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
       body.append(tr);
     });
+
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
 
@@ -519,6 +922,7 @@
     const list = $("serviceRequestsList");
     list.textContent = "Loading customer requests…";
     clearMessage("serviceRequestsMessage");
+
     try {
       const { data: requests, error } = await db.from("service_requests")
         .select("id,user_id,service_type,description,property_address,preferred_time,status,price,lead_id,created_at")
@@ -527,6 +931,7 @@
 
       const userIds = [...new Set((requests || []).map(r => r.user_id).filter(Boolean))];
       let profilesById = {};
+
       if (userIds.length) {
         const { data: profiles, error: profilesError } = await db.from("profiles")
           .select("id,full_name,phone").in("id", userIds);
@@ -537,7 +942,8 @@
       list.replaceChildren();
       if (!requests?.length) {
         const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = "No customer service requests have been submitted."; list.append(empty); return;
+        empty.textContent = "No customer service requests have been submitted.";
+        list.append(empty); return;
       }
 
       requests.forEach(request => {
@@ -548,6 +954,7 @@
         const meta = document.createElement("p"); meta.className = "muted";
         meta.textContent = "Submitted: " + (request.created_at ? new Date(request.created_at).toLocaleString() : "Unknown date");
         titleWrap.append(title, meta);
+
         const status = document.createElement("span"); status.className = "pill";
         status.textContent = request.lead_id || request.status === "published" ? "Published" : (request.status || "Unknown");
         heading.append(titleWrap, status); card.append(heading);
@@ -560,10 +967,12 @@
           ["Preferred time", request.preferred_time ? new Date(request.preferred_time).toLocaleString() : "Not specified"],
           ["Request ID", request.id]
         ];
+
         details.forEach(([label, value]) => {
           const p = document.createElement("p"), strong = document.createElement("strong");
           strong.textContent = label + ": "; p.append(strong, document.createTextNode(String(value))); card.append(p);
         });
+
         const description = document.createElement("p"); description.style.whiteSpace = "pre-wrap";
         description.textContent = request.description || "No description provided."; card.append(description);
 
@@ -578,42 +987,65 @@
         } else {
           const form = document.createElement("div");
           const fields = document.createElement("div"); fields.className = "grid";
+
           const zipWrap = document.createElement("div"), zipLabel = document.createElement("label"), zip = document.createElement("input");
           zipLabel.textContent = "Verified ZIP code"; zip.maxLength = 10; zip.inputMode = "numeric"; zip.placeholder = "97201"; zip.value = "";
           zipLabel.append(zip); zipWrap.append(zipLabel);
+
           const cityWrap = document.createElement("div"), cityLabel = document.createElement("label"), city = document.createElement("input");
-          cityLabel.textContent = "Verified city"; city.placeholder = "Portland"; cityLabel.append(city); cityWrap.append(cityLabel);
+          cityLabel.textContent = "Verified city"; city.placeholder = "Portland"; cityLabel.append(city); cityWrap.append(city);
+
           const stateWrap = document.createElement("div"), stateLabel = document.createElement("label"), state = document.createElement("input");
-          stateLabel.textContent = "State"; state.placeholder = "OR"; state.maxLength = 2; stateLabel.append(state); stateWrap.append(stateLabel);
+          stateLabel.textContent = "State"; state.placeholder = "OR"; state.maxLength = 2; stateLabel.append(state); stateWrap.append(state);
+
           const urgencyWrap = document.createElement("div"), urgencyLabel = document.createElement("label"), urgency = document.createElement("select");
           urgencyLabel.textContent = "Urgency";
-          [["normal","Normal"],["urgent","Urgent"],["low","Low"]].forEach(([v,t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; urgency.append(o); });
-          urgencyLabel.append(urgency); urgencyWrap.append(urgencyLabel);
+          [["normal","Normal"],["urgent","Urgent"],["low","Low"]].forEach(([v,t]) => {
+            const o = document.createElement("option"); o.value = v; o.textContent = t; urgency.append(o);
+          });
+          urgencyLabel.append(urgency); urgencyWrap.append(urgency);
+
           const priceWrap = document.createElement("div"), priceLabel = document.createElement("label"), price = document.createElement("input");
           priceLabel.textContent = "Lead price (USD)"; price.type = "number"; price.min = "0.01"; price.step = "0.01"; price.placeholder = "50.00";
           priceLabel.append(price); priceWrap.append(priceLabel);
+
           const zipLookupNote = document.createElement("p"); zipLookupNote.className = "muted";
           zipLookupNote.textContent = "Enter a 5-digit ZIP code to fill city and state automatically. Verify the result before publishing.";
           zipWrap.append(zipLookupNote);
+
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
+
           fields.append(zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
+
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
+
           publish.addEventListener("click", async () => {
             const zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
-            if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
-            if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) { feedback.textContent = "Enter the verified city and 2-letter state code."; feedback.className = "message error"; return; }
-            if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
-              feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places."; feedback.className = "message error"; return;
+
+            if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) {
+              feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted).";
+              feedback.className = "message error"; return;
             }
+            if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) {
+              feedback.textContent = "Enter the verified city and 2-letter state code.";
+              feedback.className = "message error"; return;
+            }
+            if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
+              feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places.";
+              feedback.className = "message error"; return;
+            }
+
             const customerName = profile.full_name || "Unavailable";
             if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + (request.service_type || "Home service") +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
               "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
               "\n\nOnly continue after verifying the customer's details.")) return;
+
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
+
             try {
               const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
                 p_request_id: request.id, p_zip_code: zipValue, p_city: cityValue, p_state: stateValue,
@@ -621,19 +1053,23 @@
               });
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
+
               message("serviceRequestsMessage", "Request published successfully. Lead ID: " + leadId, "success");
               await loadServiceRequests(); await loadAdminLeads(); await loadLeads();
             } catch (e) {
               feedback.textContent = "Could not publish request: " + (e.message || "Unknown error");
-              feedback.className = "message error"; setBusy(publish, false);
+              feedback.className = "message error";
+              setBusy(publish, false);
             }
           });
+
           form.append(publish); card.append(form);
         }
+
         list.append(card);
       });
     } catch (e) {
-      list.textContent = "Could not load customer requests: " + (e.message || "Unknown error");
+      list.textContent = "Could not load customer requests: " + (e.message || "Unknown error)";
       message("serviceRequestsMessage", "Check the service_requests admin SELECT policy and Supabase permissions. " + (e.message || ""), "error");
     }
   }
@@ -644,36 +1080,78 @@
     window.scrollTo({ top:0, behavior:"smooth" });
     if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); }
   }
+
   async function logout() {
-    await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+    stopAllPolling();
+    hideNotificationsPanel();
+    await db.auth.signOut();
+    currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+    purchaseChatOpeners.clear();
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
+
   function wireEvents() {
-    $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
-    $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
-    $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
+    $("loginBtn").addEventListener("click", signIn);
+    $("signupBtn").addEventListener("click", signUp);
+    $("showSignupBtn").addEventListener("click", () => setSignupMode(true));
+    $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
+    $("logoutBtn").addEventListener("click", logout);
+    $("leadForm").addEventListener("submit", createLead);
+
+    $("notificationsBtn").addEventListener("click", toggleNotificationsPanel);
+
+    document.addEventListener("click", event => {
+      if (!$("notificationsWrap").contains(event.target)) hideNotificationsPanel();
+    });
+
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
-    $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
-    $("saveCompanyBtn").addEventListener("click", saveCompany); $("addCreditsBtn").addEventListener("click", addCredits);
+
+    $("refreshLeadsBtn").addEventListener("click", loadLeads);
+    $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
+    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
+    $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("saveCompanyBtn").addEventListener("click", saveCompany);
+    $("addCreditsBtn").addEventListener("click", addCredits);
+
     $("refreshBalanceBtn").addEventListener("click", async () => {
       try { await loadAccount(); message("appMessage", "Balance refreshed.", "success"); }
       catch (e) { message("appMessage", "Could not refresh balance: " + e.message, "error"); }
     });
-    document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
-    $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
+
+    document.querySelectorAll(".tabs button[data-tab]").forEach(button => {
+      button.addEventListener("click", () => switchTab(button.dataset.tab));
+    });
+
+    $("authPassword").addEventListener("keydown", event => {
+      if (event.key === "Enter") signupMode ? signUp() : signIn();
+    });
   }
+
   async function start() {
     wireEvents();
+
     try {
-      initClient(); const { data: { session } } = await db.auth.getSession();
-      if (session) { await loadApp(); await handlePaymentReturn(); }
+      initClient();
+      const { data: { session } } = await db.auth.getSession();
+
+      if (session) {
+        await loadApp();
+        await handlePaymentReturn();
+      }
+
       db.auth.onAuthStateChange((_event, sessionNow) => {
-        if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
+        if (!sessionNow) {
+          stopAllPolling();
+          currentUser = null;
+          hide($("appView")); hide($("topUser")); show($("authView"));
+        }
       });
-    } catch (e) { message("authMessage", e.message, "error"); }
+    } catch (e) {
+      message("authMessage", e.message, "error");
+    }
   }
+
   start();
 })();
 </script>
