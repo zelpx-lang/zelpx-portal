@@ -1,0 +1,9 @@
+
+{
+  "rewrites": [
+    {
+      "source": "/customer-chat",
+      "destination": "/customer-chat.html"
+    }
+  ]
+}
