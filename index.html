@@ -1,4 +1,4 @@
-from pathlib import Path
+
 
 html = r'''<!doctype html>
 <html lang="en">
@@ -1235,8 +1235,3 @@ html = r'''<!doctype html>
 </script>
 </body>
 </html>
-'''
-
-path = Path("/mnt/data/index-mobile.html")
-path.write_text(html, encoding="utf-8")
-print(f"Created {path} ({len(html):,} characters, {len(html.splitlines())} lines)")
