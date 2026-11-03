@@ -305,11 +305,10 @@
   }
 
   async function buyLead(lead, button) {
-    // Дополнительная защита: администратор не может начать покупку через интерфейс.
+    // Дополнительная проверка: администратор не может купить лид даже при вызове этой функции.
     if (isAdmin) {
       return message("appMessage", "Administrators cannot purchase leads.", "error");
     }
-
     if (!window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
@@ -354,13 +353,13 @@
       const descTitle = document.createElement("h3"); descTitle.textContent = "Work Details"; descTitle.style.marginTop = "14px"; card.append(descTitle);
       const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description || "No work details provided."; card.append(desc);
 
+      // Покупка доступна только подрядчикам. Администратор видит только уведомление.
       if (lead.status === "available") {
         const note = document.createElement("span");
         note.className = "pill";
         note.textContent = "Contact details hidden";
         card.append(note);
 
-        // Кнопка покупки создаётся только для подрядчика, не для администратора.
         if (!isAdmin) {
           const buyButton = document.createElement("button");
           buyButton.type = "button";
@@ -424,6 +423,7 @@
       panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
     }
   }
+
   async function loadPurchases() {
     const list = $("purchasesList");
     if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
@@ -457,6 +457,7 @@
       }
     }
   }
+
   async function saveCompany() {
     clearMessage("appMessage");
     try {
@@ -667,10 +668,12 @@
     window.scrollTo({ top:0, behavior:"smooth" });
     if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); }
   }
+
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
+
   function wireEvents() {
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
@@ -687,6 +690,7 @@
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
+
   async function start() {
     wireEvents();
     try {
@@ -697,6 +701,7 @@
       });
     } catch (e) { message("authMessage", e.message, "error"); }
   }
+
   start();
 })();
 </script>
