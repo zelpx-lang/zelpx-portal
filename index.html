@@ -303,7 +303,13 @@
     (data || []).forEach(category => { const option = document.createElement("option"); option.value = category.name; option.textContent = category.name; select.append(option); });
     if (!data?.length) first.textContent = "No active categories found";
   }
+
   async function buyLead(lead, button) {
+    // Дополнительная защита: администратор не может начать покупку через интерфейс.
+    if (isAdmin) {
+      return message("appMessage", "Administrators cannot purchase leads.", "error");
+    }
+
     if (!window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
@@ -330,6 +336,7 @@
       message("appMessage", "Purchase failed: " + friendly, "error"); await loadLeads();
     } finally { setBusy(button, false); }
   }
+
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…";
     const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
@@ -346,14 +353,37 @@
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; card.append(status);
       const descTitle = document.createElement("h3"); descTitle.textContent = "Work Details"; descTitle.style.marginTop = "14px"; card.append(descTitle);
       const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description || "No work details provided."; card.append(desc);
+
       if (lead.status === "available") {
-        const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden"; card.append(note);
-        const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "Buy Lead"; buyButton.style.marginTop = "14px";
-        buyButton.addEventListener("click", () => buyLead(lead, buyButton)); card.append(buyButton);
-      } else { const note = document.createElement("p"); note.className = "muted"; note.textContent = "This lead has already been purchased. Contact details are private."; card.append(note); }
+        const note = document.createElement("span");
+        note.className = "pill";
+        note.textContent = "Contact details hidden";
+        card.append(note);
+
+        // Кнопка покупки создаётся только для подрядчика, не для администратора.
+        if (!isAdmin) {
+          const buyButton = document.createElement("button");
+          buyButton.type = "button";
+          buyButton.textContent = "Buy Lead";
+          buyButton.style.marginTop = "14px";
+          buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+          card.append(buyButton);
+        } else {
+          const adminNote = document.createElement("p");
+          adminNote.className = "muted";
+          adminNote.textContent = "Admin view — purchasing disabled.";
+          card.append(adminNote);
+        }
+      } else {
+        const note = document.createElement("p");
+        note.className = "muted";
+        note.textContent = "This lead has already been purchased. Contact details are private.";
+        card.append(note);
+      }
       list.append(card);
     });
   }
+
   async function openContractorChat(leadId, panel) {
     panel.replaceChildren(); const loading = document.createElement("p"); loading.className = "muted"; loading.textContent = "Opening conversation…"; panel.append(loading);
     try {
@@ -439,6 +469,7 @@
       message("appMessage", "Company details saved.", "success"); await loadAccount();
     } catch (e) { message("appMessage", e.message, "error"); }
   }
+
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
   async function lookupUsZip(zipInput, cityInput, stateInput, statusElement) {
     const raw = zipInput.value.trim();
@@ -451,7 +482,6 @@
       const data = await response.json();
       const places = Array.isArray(data.places) ? data.places : [];
       if (!places.length) throw new Error("No city found for this ZIP code");
-      // Prefer the first official place; keep the inputs editable in case the address uses another locality.
       cityInput.value = places[0]["place name"] || "";
       stateInput.value = places[0]["state abbreviation"] || "";
       if (statusElement) {
@@ -464,6 +494,7 @@
       if (statusElement) { statusElement.textContent = "Could not look up this ZIP. Enter city and state manually."; statusElement.className = "message error"; }
     }
   }
+
   async function createLead(event) {
     event.preventDefault(); clearMessage("adminMessage");
     if (!isAdmin) return message("adminMessage", "Admin permission required.", "error");
@@ -486,6 +517,7 @@
       await loadAdminLeads(); await loadLeads();
     } catch (e) { message("adminMessage", "Could not create lead: " + e.message, "error"); } finally { setBusy(button, false); }
   }
+
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
