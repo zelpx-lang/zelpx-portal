@@ -1,6 +1,6 @@
-<!doctype html>
+ф<!doctype html>
 <html lang="en">
-<head>
+<head>aa
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10243a">
@@ -15,7 +15,7 @@
     button,input,select,textarea { font:inherit; }
     button { min-height:44px; border:0; border-radius:9px; padding:11px 16px; background:var(--blue); color:white; font-weight:700; font-size:14px; cursor:pointer; touch-action:manipulation; }
     button.secondary { background:#e8eef5; color:var(--navy); }
-    button.danger { background:#fff0ef; color:var(--red); }
+    button.danger { background:#fff0ef; color:var(--red); }aaaaa
     button:disabled { opacity:.55; cursor:not-allowed; }
     input,select,textarea { display:block; width:100%; min-width:0; min-height:44px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#172b43; font-size:16px; }
     input:focus,select:focus,textarea:focus,button:focus-visible { outline:3px solid #8fc5f1; outline-offset:2px; }
@@ -241,15 +241,23 @@
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
     } catch (e) {
-      const errorText = String(e?.message || "");
-      const duplicatePhone = e?.code === "23505" || /profiles_phone_unique/i.test(errorText);
-      message(
-        "authMessage",
-        duplicatePhone
-          ? "Этот номер телефона уже зарегистрирован. Войдите в существующий аккаунт или используйте другой номер."
-          : (errorText || "Не удалось создать аккаунт. Попробуйте еще раз."),
-        "error"
-      );
+      // Supabase Auth rejects an existing email; the profiles unique index rejects a duplicate phone.
+      // Keep the original server error available for cases that do not match either condition.
+      const errorCode = String(e?.code || e?.status || "").toLowerCase();
+      const errorText = [e?.message, e?.details, e?.hint, e?.error_description]
+        .filter(Boolean).join(" ");
+      const duplicatePhone = /profiles_phone_unique/i.test(errorText) ||
+        (/duplicate key|unique constraint|already exists/i.test(errorText) && /phone/i.test(errorText));
+      const duplicateEmail = /email_exists|user_already_exists|user_already_registered/i.test(errorCode) ||
+        /already registered|user already exists|email.*already.*(use|registered|exists)|already.*email/i.test(errorText);
+
+      if (duplicatePhone) {
+        message("authMessage", "Этот номер телефона уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой номер.", "error");
+      } else if (duplicateEmail) {
+        message("authMessage", "Этот email уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой email.", "error");
+      } else {
+        message("authMessage", errorText || "Не удалось создать аккаунт. Попробуйте еще раз.", "error");
+      }
     } finally { setBusy($("signupBtn"), false); }
   }
   async function loadApp() {
