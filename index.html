@@ -240,7 +240,17 @@
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
-    } catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("signupBtn"), false); }
+    } catch (e) {
+      const errorText = String(e?.message || "");
+      const duplicatePhone = e?.code === "23505" || /profiles_phone_unique/i.test(errorText);
+      message(
+        "authMessage",
+        duplicatePhone
+          ? "Этот номер телефона уже зарегистрирован. Войдите в существующий аккаунт или используйте другой номер."
+          : (errorText || "Не удалось создать аккаунт. Попробуйте еще раз."),
+        "error"
+      );
+    } finally { setBusy($("signupBtn"), false); }
   }
   async function loadApp() {
     const { data: { user }, error: userError } = await db.auth.getUser();
