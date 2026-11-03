@@ -9,176 +9,235 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 
-:root{
-  --ink:#17231f;--muted:#718078;--paper:#f4f5f0;--surface:#ffffff;
-  --surface-soft:#f8faf7;--line:#e2e8e1;--green:#176b4b;--green-dark:#104d37;
-  --green-soft:#e8f3ec;--amber:#c48a3a;--red:#b94c4c;--radius:20px;
-  --shadow:0 12px 36px rgba(26,48,37,.07);--page-width:1440px
-}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--forest:#123c32;--forest2:#1c5948;--mint:#dcebe1;--lime:#c9df91;--cream:#f4f3ed;--paper:#fafaf7;--white:#fff;--ink:#1c2924;--muted:#748078;--line:#e4e8e1;--red:#a94740;--shadow:0 18px 55px rgba(18,60,50,.08);--radius:20px}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:break-word}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--cream);color:var(--ink);font:15px/1.55 'DM Sans',Arial,sans-serif;overflow-wrap:break-word}
 button,input,select,textarea{font:inherit}
-button{min-height:44px;padding:11px 18px;border:1px solid var(--green);border-radius:11px;background:var(--green);color:#fff;font-size:13px;font-weight:750;letter-spacing:.01em;cursor:pointer;touch-action:manipulation;transition:background .18s,border-color .18s,transform .18s,box-shadow .18s}
-button:hover:not(:disabled){background:var(--green-dark);border-color:var(--green-dark);transform:translateY(-1px);box-shadow:0 7px 18px #176b4b24}
-button.secondary{background:#fff;color:var(--green);border-color:#cbd9cf;box-shadow:none}
-button.secondary:hover:not(:disabled){background:var(--green-soft);border-color:#a8c6b3;color:var(--green-dark)}
-button.danger{background:#fff4f2;color:var(--red);border-color:#efcfca;box-shadow:none}
-button:disabled{opacity:.48;cursor:not-allowed}
-input,select,textarea{display:block;width:100%;min-width:0;min-height:46px;padding:12px 14px;border:1px solid #d7e0d8;border-radius:10px;background:#fff;color:var(--ink);font-size:15px;transition:border-color .2s,box-shadow .2s}
-input::placeholder,textarea::placeholder{color:#9aa69e}
-input:focus,select:focus,textarea:focus{outline:none;border-color:#4b9871;box-shadow:0 0 0 3px #176b4b17}
-button:focus-visible{outline:3px solid #a8d5b9;outline-offset:3px}
-textarea{min-height:160px;resize:vertical}
-.top{position:relative;z-index:2;min-height:88px;padding:18px max(24px,calc((100% - var(--page-width))/2));display:flex;justify-content:space-between;align-items:center;gap:18px;background:#fff;border-bottom:1px solid var(--line)}
-.brand{font-size:25px;font-weight:950;letter-spacing:.2em;color:var(--green-dark);line-height:1}
-.top small{display:block;margin-top:7px;color:#829087;font-size:9px;font-weight:800;letter-spacing:.19em}
-#topUser{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-#userEmail{color:#53645a;font-size:13px;overflow-wrap:anywhere}
-main{width:min(100% - 48px,var(--page-width));margin:34px auto 48px}
-.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:27px;margin-bottom:20px;box-shadow:var(--shadow)}
-h1,h2,h3{margin:0 0 11px;line-height:1.2;overflow-wrap:anywhere;color:var(--ink)}
-h1{font-size:clamp(27px,3vw,38px);font-weight:850;letter-spacing:-1.25px}
-h2{font-size:21px;font-weight:820;letter-spacing:-.45px}
-h3{font-size:16px;font-weight:800}
+button{min-height:46px;padding:12px 19px;border:1px solid var(--forest);border-radius:10px;background:var(--forest);color:white;font-size:13px;font-weight:800;letter-spacing:.01em;cursor:pointer;transition:all .2s;touch-action:manipulation}
+button:hover:not(:disabled){background:#0b2d25;border-color:#0b2d25;transform:translateY(-1px);box-shadow:0 8px 18px #123c3225}
+button.secondary{background:white;color:var(--forest);border-color:#d4ded5;box-shadow:none}
+button.secondary:hover:not(:disabled){background:var(--mint);border-color:#a9c4af;box-shadow:none}
+button.danger{background:#fff4f1;color:var(--red);border-color:#efd1cb}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #a9c88c;outline-offset:2px}
+input,select,textarea{display:block;width:100%;min-width:0;min-height:48px;padding:13px 14px;border:1px solid #dce3da;border-radius:10px;background:#fff;color:var(--ink);font-size:14px;transition:border-color .2s,box-shadow .2s}
+input::placeholder,textarea::placeholder{color:#a1aaa2}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#6b9c79;box-shadow:0 0 0 3px #4b8a5a16}
+textarea{min-height:150px;resize:vertical}
+label{display:block;margin:15px 0 7px;color:#415148;font-size:11px;font-weight:800;letter-spacing:.075em;text-transform:uppercase}
+.top{position:relative;z-index:3;min-height:86px;padding:17px max(25px,calc((100% - 1440px)/2));display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--paper);border-bottom:1px solid var(--line)}
+.brand-lockup{display:flex;align-items:center;gap:15px}
+.brand{font:800 27px/1 'Manrope',sans-serif;letter-spacing:.15em;color:var(--forest)}
+.brand span{color:#8aa95f}
+.top small{display:block;padding-left:15px;border-left:1px solid #d7dfd6;color:#859087;font-size:9px;font-weight:800;letter-spacing:.17em}
+#topUser{display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+#userEmail{font-size:12px;color:#637168;overflow-wrap:anywhere}
+main{width:min(100% - 48px,1440px);margin:35px auto 45px;min-height:60vh}
+.card{min-width:0;padding:28px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:20px}
+h1,h2,h3{margin:0 0 11px;font-family:'Manrope','DM Sans',sans-serif;color:var(--ink);line-height:1.18;letter-spacing:-.045em;overflow-wrap:anywhere}
+h1{font-size:clamp(29px,3.5vw,43px);font-weight:800}
+h2{font-size:23px;font-weight:800}
+h3{font-size:16px;font-weight:800;letter-spacing:-.02em}
 p{margin:8px 0 14px;color:var(--muted)}
-label{display:block;margin:13px 0 6px;color:#34463b;font-size:12px;font-weight:800;letter-spacing:.025em}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .grid>div{min-width:0}
-.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:17px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 .actions>button{max-width:100%}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
-.message{padding:13px 15px;border-radius:11px;margin:13px 0;background:#edf5ef;color:#28583e;border:1px solid #cfe2d4;white-space:pre-wrap;overflow-wrap:anywhere}
+.message{padding:13px 15px;border-radius:10px;margin:13px 0;background:#edf5ed;color:#315e3d;border:1px solid #d3e5d2;white-space:pre-wrap;overflow-wrap:anywhere}
 .message.error{background:#fff1ef;color:#a33f3f;border-color:#efcfca}
 .message.success{background:#eaf6ee;color:#21633f;border-color:#c6e4cf}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 18px;padding:7px;background:#e9eee8;border:1px solid #dce5dc;border-radius:14px}
-.tabs button{flex:0 0 auto;min-height:42px;padding:10px 16px;background:transparent;color:#65746a;border:1px solid transparent;box-shadow:none}
-.tabs button:hover{background:#fff;color:var(--green-dark);box-shadow:none}
-.tabs button.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 4px 12px #176b4b22}
-.statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:22px}
-.stat{min-width:0;position:relative;overflow:hidden;background:linear-gradient(145deg,#fbfdfb,#f2f7f2);border:1px solid #e0e9e1;border-radius:15px;padding:17px 19px}
-.stat:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#75a889}
-.stat strong{display:block;margin-top:6px;font-size:clamp(24px,3vw,32px);line-height:1.15;color:var(--green-dark);letter-spacing:-1px;overflow-wrap:anywhere}
-.stat span{color:#78877d;font-size:12px;font-weight:700}
+.auth-shell{max-width:1120px;min-height:650px;margin:45px auto;display:grid;grid-template-columns:1.02fr .98fr;overflow:hidden;background:white;border:1px solid #e2e6de;border-radius:26px;box-shadow:0 28px 90px rgba(18,60,50,.13)}
+.auth-story{position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:650px;padding:34px 42px;color:#fff;background:radial-gradient(ellipse at 80% 18%,#47745a 0%,transparent 40%),linear-gradient(145deg,#163f34,#0e2d27 72%);overflow:hidden}
+.auth-story:after{content:"";position:absolute;width:440px;height:440px;border:1px solid #ffffff20;border-radius:50%;right:-180px;bottom:-200px;box-shadow:0 0 0 45px #ffffff08,0 0 0 90px #ffffff06,0 0 0 135px #ffffff04}
+.story-kicker,.auth-form-top,.story-foot,.auth-bottom,.workspace-kicker,.panel-kicker{font-size:9px;font-weight:800;letter-spacing:.18em}
+.story-kicker{display:flex;align-items:center;gap:9px;color:#d0dfd1}
+.story-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 5px #c9df9120}
+.story-copy{position:relative;z-index:1;margin:auto 0;padding:55px 0}
+.story-mark{display:grid;place-items:center;width:49px;height:49px;margin-bottom:30px;border:1px solid #ffffff4a;border-radius:13px;color:var(--lime);font:800 25px 'Manrope',sans-serif}
+.story-copy h1{font-size:clamp(43px,5vw,62px);line-height:1.03;letter-spacing:-.065em;color:#fff}
+.story-copy h1 em{font-style:normal;color:var(--lime)}
+.story-copy>p{max-width:380px;margin:22px 0 34px;color:#c3d2c8;font-size:15px;line-height:1.8}
+.story-points{display:grid;gap:15px}
+.story-points>div{display:flex;align-items:center;gap:15px;color:#f1f5ef;font-size:13px}
+.story-points span{color:var(--lime);font-size:10px;font-weight:800;letter-spacing:.1em}
+.story-foot{position:relative;z-index:1;color:#9db5a4}
+.auth-form-panel{display:flex;flex-direction:column;padding:34px 44px 25px;background:#fff}
+.auth-form-top{display:flex;justify-content:space-between;gap:10px;color:#849087}
+.secure-label{color:#538064;letter-spacing:.1em}
+.auth-form-inner{width:100%;max-width:420px;margin:auto;padding:42px 0}
+.form-eyebrow{margin-bottom:14px;color:#6d936d;font-size:10px;font-weight:800;letter-spacing:.17em}
+.auth-form-inner h2{font-size:clamp(31px,3vw,40px);line-height:1.12}
+.auth-intro{margin:13px 0 25px;font-size:13px}
+.auth-fields{display:grid;gap:5px}
+.auth-fields input{min-height:51px}
+.auth-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:22px}
+.auth-actions button{width:100%;min-height:49px}
+.legal-note{margin-top:24px!important;font-size:10px;line-height:1.7;color:#929c94}
+.auth-bottom{display:flex;justify-content:space-between;gap:10px;color:#9aa39b;font-size:8px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 18px;padding:8px;background:#e8ece5;border:1px solid #dce3d9;border-radius:14px}
+.tabs button{flex:0 0 auto;min-height:43px;padding:10px 17px;background:transparent;color:#65746a;border:1px solid transparent;box-shadow:none}
+.tabs button:hover{background:#fff;color:var(--forest);box-shadow:none}
+.tabs button.active{background:var(--forest);border-color:var(--forest);color:#fff;box-shadow:0 5px 13px #123c3222}
+.workspace-kicker,.panel-kicker{margin-bottom:9px;color:#79936f}
+#appView>.card:first-child{padding:30px 32px;background:linear-gradient(115deg,#fff 0%,#f6f8f2 100%)}
+#appView>.card:first-child>p{margin-bottom:0}
+.statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:23px}
+.stat{min-width:0;position:relative;overflow:hidden;padding:18px 20px;background:#f5f8f3;border:1px solid #e2e9de;border-radius:14px}
+.stat:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#9ab77d}
+.stat strong{display:block;margin-top:7px;font:800 clamp(24px,3vw,32px)/1.1 'Manrope',sans-serif;color:var(--forest);letter-spacing:-.06em;overflow-wrap:anywhere}
+.stat span{font-size:11px;font-weight:700;color:#7c897f}
+#creditAmount{max-width:100%}
 .tablewrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;min-width:650px}
-th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top}
-th{background:#f7faf7;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#78877d}
-td{color:#34463b}
-.pill{display:inline-block;padding:5px 11px;border-radius:30px;background:#edf3ee;color:#42664e;font-size:11px;font-weight:800;margin-top:8px;border:1px solid #dce8dd}
+table{width:100%;min-width:650px;border-collapse:collapse}
+th,td{padding:13px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:#f6f8f4;color:#7d8a7f;font-size:9px;text-transform:uppercase;letter-spacing:.13em}
+td{color:#3d4b42;font-size:13px}
+.pill{display:inline-block;margin-top:8px;padding:5px 11px;border-radius:30px;background:#edf3e9;color:#4d7049;border:1px solid #dce8d8;font-size:10px;font-weight:800}
 .pill.sold{background:#fff0ed;color:#a54a43;border-color:#f0d3ce}
 .pill.available{background:#eaf5ed;color:#246640;border-color:#cce5d2}
-.lead{min-width:0;background:#fff;border:1px solid var(--line);border-radius:15px;padding:20px;margin:14px 0;transition:border-color .2s,box-shadow .2s}
-.lead:hover{border-color:#b6d0bd;box-shadow:0 8px 24px rgba(26,48,37,.06)}
-.leadhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.lead{min-width:0;margin:14px 0;padding:20px;background:#fff;border:1px solid var(--line);border-radius:15px;transition:border-color .2s,box-shadow .2s}
+.lead:hover{border-color:#b7cbb1;box-shadow:0 8px 24px #123c3210}
+.leadhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .leadhead>*{min-width:0}
-.price{flex:0 0 auto;font-weight:900;font-size:22px;color:var(--green);white-space:nowrap}
-.contactbox{min-width:0;background:#f0f7f1;border:1px solid #d6e8d9;border-radius:12px;padding:15px;margin-top:12px}
+.price{flex:0 0 auto;color:var(--forest2);font-size:22px;font-weight:900;white-space:nowrap}
+.contactbox{min-width:0;margin-top:12px;padding:15px;background:#f1f6ef;border:1px solid #dce9d8;border-radius:12px}
 .contactbox p{margin:5px 0;color:#355d43;overflow-wrap:anywhere}
-.footer{font-size:11px;color:#89958c;text-align:center;padding:22px 16px;letter-spacing:.04em}
-.chatbox{min-width:0;border:1px solid var(--line);border-radius:13px;padding:15px;margin-top:14px;background:#f9fbf9}
-.chatmessages{max-height:min(42vh,360px);overflow-y:auto;padding:12px;background:#f1f5f1;border:1px solid #e1e9e1;border-radius:10px}
-.chatbubble{padding:10px 13px;border-radius:12px;margin:8px 0;max-width:88%;white-space:pre-wrap;overflow-wrap:anywhere}
-.chatbubble.contractor{margin-left:auto;background:#176b4b;color:#fff}
+#leadForm{padding:22px;border:1px solid var(--line);border-radius:15px;background:#fafbf8}
+#leadForm h3{margin-top:6px}
+#adminPanel>h2{margin-top:25px}
+#adminPanel>.lead{background:#f7faf5;border-color:#dce8d9}
+.chatbox{min-width:0;margin-top:14px;padding:15px;background:#fafbf8;border:1px solid var(--line);border-radius:13px}
+.chatmessages{max-height:min(42vh,360px);overflow-y:auto;padding:12px;background:#f1f4ee;border:1px solid #e1e9df;border-radius:10px}
+.chatbubble{max-width:88%;margin:8px 0;padding:10px 13px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.chatbubble.contractor{margin-left:auto;background:var(--forest);color:#fff}
 .chatbubble.customer{margin-right:auto;background:#fff;border:1px solid #e0e7e0;color:#34463b}
-.chatmeta{font-size:11px;color:#829087;margin-top:4px}
+.chatmeta{margin-top:4px;font-size:10px;color:#829087}
 .chatform{display:flex;gap:9px;align-items:flex-end;margin-top:10px}
 .chatform textarea{min-height:70px;flex:1}
 .chatform button{flex:0 0 auto}
-#creditAmount{max-width:100%}
-#authView{max-width:780px;margin:48px auto}
-#authView>h1{color:var(--green-dark)}
-#authView>p{line-height:1.7}
-#authView.card{padding:clamp(24px,5vw,42px)}
-#adminPanel>.lead{background:#f6faf6;border-color:#dce9dd}
-#leadForm{border:1px solid var(--line);border-radius:15px;padding:20px;background:#fbfcfa}
-#leadForm h3{margin-top:5px}
-#adminPanel>h2{margin-top:25px}
-#appView>.card:first-child{background:linear-gradient(115deg,#fff 0%,#f8fbf7 100%);padding:30px}
-#appView>.card:first-child>p{margin-bottom:2px}
-#appView>.card:first-child .actions{padding-top:4px}
+.site-footer{width:min(100% - 48px,1440px);margin:0 auto;padding:23px 0 30px;display:flex;justify-content:space-between;gap:12px;border-top:1px solid #dfe4dc;color:#8b968d;font-size:9px;font-weight:800;letter-spacing:.15em}
+.site-footer span:first-child{color:var(--forest);font-size:13px;letter-spacing:.2em}
 @media(min-width:980px){
-  #appView{display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-areas:"overview overview" "nav content";gap:0 22px;align-items:start}
-  #appView>.card:first-child{grid-area:overview}
-  #appView>.tabs{grid-area:nav;display:flex;flex-direction:column;position:sticky;top:18px;padding:9px}
-  #appView>.tabs button{text-align:left;width:100%;justify-content:flex-start;padding:13px 14px}
-  #appView>section[id$="Panel"]{grid-area:content;min-width:0}
+ #appView{display:grid;grid-template-columns:235px minmax(0,1fr);grid-template-areas:"overview overview" "nav content";gap:0 22px;align-items:start}
+ #appView>.card:first-child{grid-area:overview}
+ #appView>.tabs{grid-area:nav;display:flex;flex-direction:column;position:sticky;top:18px;padding:9px}
+ #appView>.tabs button{text-align:left;width:100%;padding:13px 14px}
+ #appView>section[id$="Panel"]{grid-area:content;min-width:0}
 }
 @media(max-width:979px){
-  main{width:min(100% - 32px,var(--page-width));margin:24px auto 38px}
-  #appView>.card:first-child{padding:24px}
+ main{width:min(100% - 32px,1440px);margin:24px auto 35px}
+ .auth-shell{margin:24px auto;max-width:850px}
+ .auth-story{padding:30px}
+ .auth-form-panel{padding:30px}
 }
 @media(max-width:700px){
-  body{font-size:14px}
-  .top{padding:15px 17px;min-height:76px;align-items:center}
-  .brand{font-size:22px}
-  #topUser{justify-content:flex-end;max-width:64%}
-  #userEmail{font-size:11px}
-  #logoutBtn{min-height:39px;padding:8px 11px}
-  main{width:calc(100% - 22px);margin:16px auto 28px}
-  .card{padding:17px;margin-bottom:13px;border-radius:15px}
-  #appView>.card:first-child{padding:19px}
-  .grid{grid-template-columns:1fr;gap:9px}
-  .statrow{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:16px}
-  .stat{padding:12px 9px}
-  .stat strong{font-size:19px}
-  .stat span{font-size:10px;line-height:1.3;display:block}
-  .actions{gap:8px}
-  .actions>button{flex:1 1 100%;width:100%}
-  .actions>div{max-width:none!important;width:100%;flex:1 1 100%!important}
-  .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px}
-  .tabs button{width:100%;padding:9px 6px;min-height:42px;font-size:12px}
-  .lead{padding:14px}
-  .leadhead{gap:8px}
-  .price{font-size:19px}
-  .chatform{flex-direction:column;align-items:stretch}
-  .chatform button{width:100%}
-  .chatbubble{max-width:96%}
-  .tablewrap{margin-left:-2px;width:calc(100% + 4px)}
-  textarea{min-height:145px}
-  #leadForm{padding:14px}
+ body{font-size:14px}
+ .top{min-height:73px;padding:14px 17px}
+ .brand{font-size:23px}
+ .top small{font-size:8px;letter-spacing:.1em;padding-left:10px}
+ #topUser{max-width:62%;justify-content:flex-end;gap:8px}
+ #userEmail{font-size:10px}
+ #logoutBtn{min-height:38px;padding:8px 11px}
+ main{width:calc(100% - 22px);margin:15px auto 25px}
+ .auth-shell{grid-template-columns:1fr;margin:12px auto;border-radius:18px}
+ .auth-story{min-height:0;padding:22px 23px}
+ .story-copy{padding:30px 0 23px}
+ .story-mark{width:39px;height:39px;margin-bottom:17px;font-size:20px}
+ .story-copy h1{font-size:42px}
+ .story-copy>p{margin:13px 0 20px;font-size:13px}
+ .story-points{display:none}
+ .story-foot{font-size:8px}
+ .auth-form-panel{padding:23px}
+ .auth-form-inner{padding:30px 0}
+ .auth-form-inner h2{font-size:32px}
+ .auth-bottom{font-size:7px}
+ .card{padding:17px;margin-bottom:13px;border-radius:15px}
+ #appView>.card:first-child{padding:20px}
+ .grid{grid-template-columns:1fr;gap:8px}
+ .statrow{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:16px}
+ .stat{padding:12px 9px}
+ .stat strong{font-size:19px}
+ .stat span{font-size:9px;line-height:1.3;display:block}
+ .actions{gap:8px}
+ .actions>button{flex:1 1 100%;width:100%}
+ .actions>div{max-width:none!important;width:100%;flex:1 1 100%!important}
+ .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px}
+ .tabs button{width:100%;padding:9px 6px;min-height:42px;font-size:12px}
+ .lead{padding:14px}
+ .leadhead{gap:8px}
+ .price{font-size:19px}
+ .chatform{flex-direction:column;align-items:stretch}
+ .chatform button{width:100%}
+ .chatbubble{max-width:96%}
+ .tablewrap{margin-left:-2px;width:calc(100% + 4px)}
+ textarea{min-height:140px}
+ #leadForm{padding:14px}
+ .site-footer{width:calc(100% - 30px);font-size:7px}
 }
 @media(max-width:380px){
-  .top{flex-direction:column;align-items:flex-start;gap:10px}
-  #topUser{max-width:100%;width:100%;justify-content:space-between}
-  .statrow{grid-template-columns:1fr}
-  .stat{display:flex;justify-content:space-between;align-items:center;gap:8px}
-  .stat strong{font-size:20px;margin:0}
-  .leadhead{flex-direction:column}
-  .price{white-space:normal}
+ .top{align-items:flex-start}
+ .brand-lockup{gap:8px}
+ #topUser{max-width:100%;width:100%;justify-content:space-between}
+ .statrow{grid-template-columns:1fr}
+ .stat{display:flex;justify-content:space-between;align-items:center;gap:8px}
+ .stat strong{font-size:20px;margin:0}
+ .leadhead{flex-direction:column}
+ .price{white-space:normal}
 }
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 </style>
 </head>
 <body>
 <header class="top">
-<div><div class="brand">ZELPX</div><small>PREMIUM CONTRACTOR PORTAL</small></div>
+<div class="brand-lockup"><div class="brand">ZELPX<span>.</span></div><small>CONTRACTOR MARKETPLACE</small></div>
 <div id="topUser" class="hidden"><span id="userEmail"></span><button id="logoutBtn" class="secondary">Log out</button></div>
 </header>
 <main>
-<section id="authView" class="card">
-<h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
-<div id="authMessage" class="message hidden"></div>
-<div class="grid">
-<div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
-<div><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
-</div>
-<div id="signupFields" class="grid hidden">
-<div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name"></div>
-<div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name"></div>
-<div><label for="phone">Phone (optional)</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
-</div>
-<div class="actions"><button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button><button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button></div>
-<p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
+<section id="authView" class="auth-shell">
+  <div class="auth-story">
+    <div class="story-kicker"><span class="story-dot"></span> THE CONTRACTOR NETWORK</div>
+    <div class="story-copy">
+      <div class="story-mark">Z.</div>
+      <h1>Good work<br><em>starts here.</em></h1>
+      <p>Find qualified service opportunities, manage your business, and keep every customer connection in one place.</p>
+      <div class="story-points">
+        <div><span>01</span><b>Discover local projects</b></div>
+        <div><span>02</span><b>Build your pipeline</b></div>
+        <div><span>03</span><b>Grow your business</b></div>
+      </div>
+    </div>
+    <div class="story-foot">BUILT FOR THE PEOPLE WHO BUILD.</div>
+  </div>
+  <div class="auth-form-panel">
+    <div class="auth-form-top"><span>CONTRACTOR PORTAL</span><span class="secure-label">● SECURE ACCESS</span></div>
+    <div class="auth-form-inner">
+      <div class="form-eyebrow">WELCOME TO ZELPX</div>
+      <h2>Sign in to your<br>workspace.</h2>
+      <p class="auth-intro">Access your leads, company profile, and account activity.</p>
+      <div id="authMessage" class="message hidden"></div>
+      <div class="auth-fields">
+        <div><label for="authEmail">Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
+        <div><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter your password"></div>
+      </div>
+      <div id="signupFields" class="grid hidden">
+        <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name"></div>
+        <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name"></div>
+        <div><label for="phone">Phone (optional)</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
+      </div>
+      <div class="actions auth-actions"><button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button><button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button></div>
+      <p class="legal-note">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
+    </div>
+    <div class="auth-bottom"><span>© ZELPX</span><span>PREMIUM CONTRACTOR MARKETPLACE</span></div>
+  </div>
 </section>
 <section id="appView" class="hidden">
 <div class="card">
-<h1 id="welcomeTitle">Contractor dashboard</h1><p id="accountLine">Your ZELPX account</p>
+<div class="workspace-kicker">YOUR WORKSPACE</div><h1 id="welcomeTitle">Contractor dashboard</h1><p id="accountLine">Your ZELPX account</p>
 <div class="statrow">
 <div class="stat"><span class="muted">Credit balance</span><strong id="walletBalance">$0.00</strong></div>
 <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
@@ -194,12 +253,12 @@ td{color:#34463b}
 <nav class="tabs">
 <button class="active" data-tab="availablePanel">All leads</button><button data-tab="purchasesPanel">My purchases</button><button data-tab="companyPanel">My company</button><button id="adminTabBtn" data-tab="adminPanel" class="hidden">Admin</button>
 </nav>
-<section id="availablePanel" class="card"><h2>All leads</h2><p>All contractors can see lead summaries and sold status. Customer contact details are only available to the contractor who purchases a lead.</p><div class="actions"><button id="refreshLeadsBtn" class="secondary">Refresh leads</button></div><div id="leadsList"><p class="muted">Loading leads…</p></div></section>
-<section id="purchasesPanel" class="card hidden"><h2>My purchases</h2><p>Customer contact details are shown here only for leads purchased by your contractor account.</p><div id="purchasesList"><p class="muted">Loading purchases…</p></div></section>
-<section id="companyPanel" class="card hidden"><h2>My company</h2><div class="grid">
+<section id="availablePanel" class="card"><div class="panel-kicker">OPPORTUNITIES</div><h2>All leads</h2><p>All contractors can see lead summaries and sold status. Customer contact details are only available to the contractor who purchases a lead.</p><div class="actions"><button id="refreshLeadsBtn" class="secondary">Refresh leads</button></div><div id="leadsList"><p class="muted">Loading leads…</p></div></section>
+<section id="purchasesPanel" class="card hidden"><div class="panel-kicker">YOUR PIPELINE</div><h2>My purchases</h2><p>Customer contact details are shown here only for leads purchased by your contractor account.</p><div id="purchasesList"><p class="muted">Loading purchases…</p></div></section>
+<section id="companyPanel" class="card hidden"><div class="panel-kicker">BUSINESS PROFILE</div><h2>My company</h2><div class="grid">
 <div><label for="profileFullName">Your name</label><input id="profileFullName"></div><div><label for="profilePhone">Phone</label><input id="profilePhone"></div><div><label for="profileCompany">Company name</label><input id="profileCompany"></div><div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
 </div><div class="actions"><button id="saveCompanyBtn">Save company details</button></div></section>
-<section id="adminPanel" class="card hidden">
+<section id="adminPanel" class="card hidden"><div class="panel-kicker">MANAGEMENT CONSOLE</div>
 <section class="lead"><h2>Customer service requests</h2><p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p><div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button></div><div id="serviceRequestsMessage" class="message hidden"></div><div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div></section>
 <h2>Admin — create a lead</h2><p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p><div id="adminMessage" class="message hidden"></div>
 <form id="leadForm"><h3>Lead information</h3><div class="grid">
