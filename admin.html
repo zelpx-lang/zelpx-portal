@@ -689,17 +689,17 @@
     clearMessage("serviceRequestsMessage");
     try {
       const { data: requests, error } = await db.from("service_requests")
-        .select("id,user_id,service_type,description,property_address,preferred_time,status,price,lead_id,created_at")
+        .select("id,user_id,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
 
       const userIds = [...new Set((requests || []).map(r => r.user_id).filter(Boolean))];
       let profilesById = {};
       if (userIds.length) {
-        const { data: profiles, error: profilesError } = await db.from("profiles")
-          .select("id,full_name,phone").in("id", userIds);
+        // Admin-only SECURITY DEFINER RPC: ordinary profile RLS intentionally hides other users.
+        const { data: profiles, error: profilesError } = await db.rpc("admin_get_customer_profiles", { p_user_ids: userIds });
         if (profilesError) console.warn("Could not load customer profile details:", profilesError.message);
-        else (profiles || []).forEach(p => { profilesById[p.id] = p; });
+        else (profiles || []).forEach(p => { profilesById[p.user_id] = p; });
       }
 
       list.replaceChildren();
@@ -721,10 +721,12 @@
         heading.append(titleWrap, status); card.append(heading);
 
         const profile = profilesById[request.user_id] || {};
+        const addressParts = [request.property_address, request.service_city, request.service_state, request.service_zip_code].filter(v => v && String(v).trim());
+        const formattedAddress = addressParts.join(", ");
         const details = [
-          ["Customer", profile.full_name || "Not available from profile"],
-          ["Phone", profile.phone || "Not available from profile"],
-          ["Address", request.property_address || "Missing"],
+          ["Customer", profile.full_name || "Name not provided"],
+          ["Phone", profile.phone || "Phone not provided"],
+          ["Address", formattedAddress || "Address not provided"],
           ["Preferred time", request.preferred_time ? new Date(request.preferred_time).toLocaleString() : "Not specified"],
           ["Request ID", request.id]
         ];
