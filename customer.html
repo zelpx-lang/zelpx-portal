@@ -243,7 +243,7 @@
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
       <p id="accountEmail"></p>
-      <section class="request-card"><strong>Purchase notifications</strong><p class="subtitle">Get a background alert as soon as a contractor purchases your request, with a link to your chat.</p><button id="enablePurchasePushButton" type="button" class="secondary-button">Enable purchase notifications</button><p id="purchasePushStatus" class="customer-chat-status" role="status"></p></section>
+      <section class="request-card" id="purchasePushPanel" hidden><strong>Purchase notifications</strong><p class="subtitle">Background alerts for purchases and messages are managed automatically when browser permission is available.</p><p id="purchasePushStatus" class="customer-chat-status" role="status"></p></section>
 
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
@@ -543,7 +543,7 @@
         } catch (profileError) {
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
-        await loadRequests(session);
+        await loadRequests(session);\n        if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "customer");
         const openLeadId = new URLSearchParams(window.location.search).get("open_lead");
         if (openLeadId) {
           const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.dataset.leadId === openLeadId);
