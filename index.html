@@ -444,9 +444,42 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+      const soundButton = document.createElement("button"); soundButton.type = "button"; soundButton.className = "secondary"; soundButton.textContent = "🔊 Enable sound"; soundButton.style.margin = "0 0 10px 8px";
+      soundButton.addEventListener("click", async () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) throw new Error("This browser does not support chat audio."); chatSoundContext ||= new AudioCtx(); await chatSoundContext.resume(); playIncomingChatSound(); soundButton.textContent = "🔊 Sound enabled"; status.textContent = "Sound test played. Keep this chat open to hear incoming messages."; } catch (e) { status.textContent = "Could not enable sound: " + (e.message || "Check device sound settings."); } });
+      panel.append(soundButton);
+
+      const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary";
+      pushButton.textContent = "🔔 Enable chat notifications"; pushButton.style.marginBottom = "10px";
+      pushButton.addEventListener("click", async () => {
+        try {
+          await window.ZELPXEnablePushForConversation(db, conversationId, pushButton);
+          status.textContent = "Chat notifications are enabled on this device.";
+        } catch (error) {
+          status.textContent = "Could not enable notifications: " + (error.message || "Unknown error");
+        }
+      });
+      panel.append(pushButton);
+      let knownMessageIds = null;
+      let chatSoundContext = null;
+      function playIncomingChatSound() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          chatSoundContext ||= new AudioCtx();
+          if (chatSoundContext.state === "suspended") chatSoundContext.resume();
+          const oscillator = chatSoundContext.createOscillator(); const gain = chatSoundContext.createGain();
+          oscillator.type = "sine"; oscillator.frequency.setValueAtTime(880, chatSoundContext.currentTime); oscillator.frequency.setValueAtTime(660, chatSoundContext.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.16, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.28);
+          oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
+        } catch (_) {}
+      }
       async function refreshMessages() {
         const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
-        if (error) throw error; messagesBox.replaceChildren();
+        if (error) throw error;
+        const currentIds = new Set((data || []).map(item => item.id));
+        if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "contractor")) playIncomingChatSound();
+        knownMessageIds = currentIds;
+        messagesBox.replaceChildren();
         if (!data?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet. Send the first message."; messagesBox.append(empty); return; }
         data.forEach(item => {
           const bubble = document.createElement("div"); bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
@@ -467,6 +500,7 @@
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
       panel.append(refreshButton);
+      const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.classList.contains("hidden")) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
     } catch (e) {
       panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
     }

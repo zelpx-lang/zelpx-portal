@@ -8,6 +8,8 @@ self.addEventListener("push", event => {
     badge: "/favicon.ico",
     tag: data.tag || "zelpx-chat-message",
     renotify: true,
+    silent: false,
+    vibrate: [200, 100, 200],
     data: { url: data.url || "/" }
   };
   event.waitUntil(self.registration.showNotification(title, options));
