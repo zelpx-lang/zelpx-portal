@@ -127,6 +127,12 @@
         <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
         <div class="stat"><span class="muted">Purchased leads</span><strong id="purchaseCount">0</strong></div>
       </div>
+      <section class="lead" id="contractorPushSection">
+        <h2>Background lead alerts</h2>
+        <p>Get a screen notification when a new lead is published, even when ZELPX is closed or running in the background.</p>
+        <div class="actions"><button id="enableContractorPushBtn" type="button">Enable new lead notifications</button></div>
+        <div id="contractorPushMessage" class="message hidden" role="status"></div>
+      </section>
       <div class="actions" style="align-items:end">
         <div style="max-width:220px;flex:1"><label for="creditAmount">Add credits (USD)</label><input id="creditAmount" type="number" min="10" max="10000" step="0.01" value="50" inputmode="decimal"></div>
         <button id="addCreditsBtn" type="button">Add Credits</button><button id="refreshBalanceBtn" type="button" class="secondary">Refresh balance</button>
@@ -334,6 +340,7 @@
     const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
+    if (contractor && !isAdmin) show($("contractorPushSection")); else hide($("contractorPushSection"));
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
       if (walletError) throw walletError; currentWallet = wallet;
@@ -421,7 +428,7 @@
     $("availableCount").textContent = String(available.length); list.replaceChildren();
     if (!leads.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No leads at the moment."; list.append(empty); return; }
     leads.forEach(lead => {
-      const card = document.createElement("article"); card.className = "lead";
+      const card = document.createElement("article"); card.className = "lead"; card.id = "lead-" + lead.id;
       const head = document.createElement("div"); head.className = "leadhead";
       const left = document.createElement("div"), title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
       const meta = document.createElement("div"); meta.className = "muted"; meta.textContent = "ZIP " + (lead.zip_code || "") + " · " + (lead.urgency || "normal") + " urgency";
@@ -435,6 +442,12 @@
         buyButton.addEventListener("click", () => buyLead(lead, buyButton)); card.append(buyButton);
       } else { const note = document.createElement("p"); note.className = "muted"; note.textContent = "This lead has already been purchased. Contact details are private."; card.append(note); }
       list.append(card);
+      const requestedLead = new URLSearchParams(window.location.search).get("lead");
+      if (requestedLead === lead.id) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.outline = "3px solid #1769aa";
+        window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel");
+      }
     });
   }
   async function openContractorChat(leadId, panel) {
@@ -851,6 +864,19 @@
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
+    $("enableContractorPushBtn").addEventListener("click", async () => {
+      const button = $("enableContractorPushBtn"), status = $("contractorPushMessage");
+      status.className = "message hidden"; status.textContent = "";
+      try {
+        if (typeof window.ZELPXEnableContractorLeadPush !== "function") throw new Error("Push module is not loaded. Refresh the page and try again.");
+        await window.ZELPXEnableContractorLeadPush(db, button);
+        status.textContent = "New lead alerts are enabled on this device.";
+        status.className = "message success";
+      } catch (e) {
+        status.textContent = e.message || "Could not enable notifications.";
+        status.className = "message error";
+      }
+    });
     $("enableAdminPushBtn").addEventListener("click", async () => {
       const button = $("enableAdminPushBtn");
       const status = $("adminPushMessage");
