@@ -444,6 +444,10 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+      const soundButton = document.createElement("button"); soundButton.type = "button"; soundButton.className = "secondary"; soundButton.textContent = "🔊 Enable sound"; soundButton.style.margin = "0 0 10px 8px";
+      soundButton.addEventListener("click", async () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) throw new Error("This browser does not support chat audio."); chatSoundContext ||= new AudioCtx(); await chatSoundContext.resume(); playIncomingChatSound(); soundButton.textContent = "🔊 Sound enabled"; status.textContent = "Sound test played. Keep this chat open to hear incoming messages."; } catch (e) { status.textContent = "Could not enable sound: " + (e.message || "Check device sound settings."); } });
+      panel.append(soundButton);
+
       const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary";
       pushButton.textContent = "🔔 Enable chat notifications"; pushButton.style.marginBottom = "10px";
       pushButton.addEventListener("click", async () => {
@@ -492,8 +496,6 @@
           if (error) throw error; textarea.value = ""; status.textContent = "Message sent."; await refreshMessages();
         } catch (e) { status.textContent = "Could not send message: " + e.message; } finally { send.disabled = false; }
       });
-      panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
-      panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
       await refreshMessages();
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
