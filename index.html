@@ -340,7 +340,7 @@
     const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
-    if (!isAdmin) show($("contractorPushSection")); else hide($("contractorPushSection"));
+    if (!IS_ADMIN_PORTAL) show($("contractorPushSection")); else hide($("contractorPushSection"));
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
       if (walletError) throw walletError; currentWallet = wallet;
