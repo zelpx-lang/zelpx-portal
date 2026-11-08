@@ -472,18 +472,6 @@
       const conversationId = Array.isArray(conversationData) ? conversationData[0] : conversationData;
       if (!conversationId || typeof conversationId !== "string") throw new Error("The conversation could not be opened.");
       panel.replaceChildren(); const title = document.createElement("h3"); title.textContent = "Messages with customer"; panel.append(title);
-      const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary"; pushButton.textContent = "Enable message notifications";
-      const pushStatus = document.createElement("p"); pushStatus.className = "muted"; pushStatus.setAttribute("role", "status");
-      pushButton.addEventListener("click", async () => {
-        pushButton.disabled = true; pushStatus.textContent = "Enabling notifications…";
-        try {
-          if (typeof window.ZELPXEnablePushForConversation !== "function") throw new Error("Push module did not load. Reload the page.");
-          await window.ZELPXEnablePushForConversation(db, conversationId, pushButton, "contractor");
-          pushButton.textContent = "✓ Message notifications enabled"; pushStatus.textContent = "This device is subscribed for this conversation.";
-        } catch (e) { pushStatus.textContent = e.message || "Could not enable notifications."; pushStatus.style.color = "#b42318"; }
-        finally { pushButton.disabled = false; }
-      });
-      panel.append(pushButton, pushStatus);
       const messagesBox = document.createElement("div"); messagesBox.className = "chatmessages"; messagesBox.textContent = "Loading messages…"; panel.append(messagesBox);
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
