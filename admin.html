@@ -318,6 +318,7 @@
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); }
+    if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
