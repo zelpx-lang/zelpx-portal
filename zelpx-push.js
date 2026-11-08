@@ -23,6 +23,26 @@
       applicationServerKey: expectedKey
     });
   }
+  window.ZELPXEnableContractorLeadPush = async function(db, button) {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      throw new Error("Push notifications are not supported by this browser.");
+    }
+    if (button) button.disabled = true;
+    try {
+      const registration = await navigator.serviceWorker.register("/zelpx-sw.js", { scope: "/" });
+      if (Notification.permission !== "granted") {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") throw new Error("Allow notifications for this site in browser settings, then try again.");
+      }
+      const subscription = await getCurrentVapidSubscription(registration);
+      const { error } = await db.functions.invoke("send-chat-push", {
+        body: { action: "contractor_subscribe", subscription: subscription.toJSON() }
+      });
+      if (error) throw error;
+      if (button) button.textContent = "🔔 Lead alerts enabled";
+      return true;
+    } finally { if (button) button.disabled = false; }
+  };
   window.ZELPXEnableAdminPush = async function(db, button) {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       throw new Error("Push notifications are not supported by this browser.");
@@ -54,8 +74,7 @@
         const permission = await Notification.requestPermission();
         if (permission !== "granted") throw new Error("Allow notifications in your browser settings, then try again.");
       }
-      const subscription = await registration.pushManager.getSubscription() ||
-        await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+      const subscription = await getCurrentVapidSubscription(registration);
       const { error } = await db.functions.invoke("send-chat-push", {
         body: { action: "subscribe", recipient_type: recipientType, conversation_id: conversationId, subscription: subscription.toJSON() }
       });
