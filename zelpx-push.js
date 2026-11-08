@@ -93,6 +93,10 @@
       return true;
     } finally { if (button) button.disabled = false; }
   };
+  window.ZELPXRefreshPushForConversation = async function(db, conversationId, recipientType = "contractor") {
+    if (!("Notification" in window) || Notification.permission !== "granted") return false;
+    return window.ZELPXEnablePushForConversation(db, conversationId, null, recipientType);
+  };
   window.ZELPXEnablePushForConversation = async function(db, conversationId, button, recipientType = "contractor") {
     if (!conversationId || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       throw new Error("Push notifications are not supported by this browser.");
