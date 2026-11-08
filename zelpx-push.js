@@ -1,10 +1,27 @@
 (() => {
   "use strict";
-  const VAPID_PUBLIC_KEY = "BJ_Re5koTbkuNzJHO85KMY2w8QXE8iQCH2E-UeG7p6pXkHgG0mKFYh06_j2hpszx9Z3fruqcHdzCOAYUtKCz780";
+  const VAPID_PUBLIC_KEY = "BKVLenWuqBhJx4Na2HXZg1tT6m3EJT-fD5lZf_Mtpm_42cr8Y7Mn7B97j5szad49e1unuvIvbl_F_E-DE3fG8J4";
   function urlBase64ToUint8Array(value) {
     const padding = "=".repeat((4 - value.length % 4) % 4);
     const raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(raw, ch => ch.charCodeAt(0));
+  }
+  async function getCurrentVapidSubscription(registration) {
+    const expectedKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    let subscription = await registration.pushManager.getSubscription();
+    if (subscription) {
+      const currentKey = subscription.options && subscription.options.applicationServerKey;
+      const matches = currentKey && currentKey.byteLength === expectedKey.byteLength &&
+        Array.from(new Uint8Array(currentKey)).every((byte, index) => byte === expectedKey[index]);
+      if (!matches) {
+        await subscription.unsubscribe();
+        subscription = null;
+      }
+    }
+    return subscription || registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: expectedKey
+    });
   }
   window.ZELPXEnableAdminPush = async function(db, button) {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
@@ -17,8 +34,7 @@
         const permission = await Notification.requestPermission();
         if (permission !== "granted") throw new Error("Allow notifications for this site in browser settings, then try again.");
       }
-      const subscription = await registration.pushManager.getSubscription() ||
-        await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+      const subscription = await getCurrentVapidSubscription(registration);
       const { error } = await db.functions.invoke("send-chat-push", {
         body: { action: "admin_subscribe", subscription: subscription.toJSON() }
       });
