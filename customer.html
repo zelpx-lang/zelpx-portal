@@ -267,16 +267,23 @@
         <label for="serviceType">Service Type</label>
         <select id="serviceType" required>
           <option value="">Select a service</option>
-          <option value="Plumbing">Plumbing</option>
-          <option value="Electrical">Electrical</option>
-          <option value="HVAC">HVAC</option>
-          <option value="Roofing">Roofing</option>
-          <option value="Painting">Painting</option>
-          <option value="Cleaning">Cleaning</option>
-          <option value="Landscaping">Landscaping</option>
-          <option value="General Maintenance">General Maintenance</option>
-          <option value="Other">Other</option>
+          <optgroup label="Remodeling & Construction">
+            <option>Bathroom Remodeling</option><option>Kitchen Remodeling</option><option>Tile Installation</option><option>Flooring Installation</option><option>Carpet Installation</option><option>Drywall & Framing</option><option>Concrete & Foundation</option><option>Roofing</option><option>Gutters</option><option>Painting</option><option>Doors & Windows</option><option>Decks & Fences</option>
+          </optgroup>
+          <optgroup label="Home Systems">
+            <option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Water Heater</option><option>Appliance Installation</option><option>Garage Door</option><option>Insulation</option>
+          </optgroup>
+          <optgroup label="Cleaning & Maintenance">
+            <option>House Cleaning</option><option>Office Cleaning</option><option>Deep Cleaning</option><option>Move-in / Move-out Cleaning</option><option>Post-Construction Cleaning</option><option>Window Cleaning</option><option>Carpet & Upholstery Cleaning</option><option>Pressure Washing</option><option>Handyman</option><option>Junk Removal</option>
+          </optgroup>
+          <optgroup label="Outdoor & Landscaping">
+            <option>Landscaping</option><option>Lawn Care</option><option>Tree Service</option><option>Irrigation</option><option>Snow Removal</option><option>Pool Service</option>
+          </optgroup>
+          <optgroup label="Other Services"><option>Moving</option><option>Pest Control</option><option>Other</option></optgroup>
         </select>
+        <div id="serviceDetails" class="request-card" aria-live="polite">
+          <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
+        </div>
 
         <label for="propertyAddress">Property Street Address</label>
         <input id="propertyAddress" type="text"
@@ -567,6 +574,54 @@
     $("serviceZip").addEventListener("change", lookupCustomerZip);
     $("serviceZip").addEventListener("blur", lookupCustomerZip);
 
+    const serviceDetailQuestions = {
+      "Tile Installation": [["Work area","Floor, walls, shower, backsplash"],["Approximate area (sq ft)","number"],["Tile type","Ceramic, porcelain, natural stone, not sure"],["Remove old tile?","Yes, no, not sure"],["Subfloor/wall repair needed?","Yes, no, not sure"],["Materials supplied by","Customer, contractor, not sure"]],
+      "House Cleaning": [["Home size (sq ft)","number"],["Bedrooms","number"],["Bathrooms","number"],["Home type","Apartment, single-story, multi-story, townhouse"],["Cleaning type","Standard, deep clean, move-in/out"],["Frequency","One-time, weekly, biweekly, monthly"],["Inside oven/fridge?","Yes, no"],["Pets?","Yes, no"]],
+      "Office Cleaning": [["Area (sq ft)","number"],["Number of rooms","number"],["Number of bathrooms","number"],["Cleaning frequency","One-time, daily, weekly, monthly"],["After-hours access?","Yes, no"]],
+      "Bathroom Remodeling": [["Bathroom size (sq ft)","number"],["Full remodel or partial?","Full, partial"],["Tile area (sq ft)","number"],["Replace tub/shower?","Yes, no"],["Replace vanity/toilet?","Yes, no"],["Demolition required?","Yes, no, not sure"]],
+      "Kitchen Remodeling": [["Kitchen size (sq ft)","number"],["Cabinet work","New cabinets, refacing, repair, none"],["Countertop","New, repair, none"],["Floor area (sq ft)","number"],["Appliance/plumbing/electrical changes?","Describe"]],
+      "Flooring Installation": [["Area (sq ft)","number"],["Flooring type","Hardwood, laminate, vinyl, tile, carpet, other"],["Remove existing floor?","Yes, no, not sure"],["Stairs included?","Yes, no"],["Subfloor repair?","Yes, no, not sure"]],
+      "Carpet Installation": [["Area (sq ft)","number"],["Number of rooms","number"],["Remove old carpet?","Yes, no"],["Stairs?","Yes, no"]],
+      "Painting": [["Interior or exterior?","Interior, exterior, both"],["Area (sq ft)","number"],["Number of rooms","number"],["Walls, ceilings, trim?","Walls, ceilings, trim, all"],["Surface repairs needed?","Yes, no, not sure"],["Number of coats","1, 2, 3 or more, not sure"]],
+      "Roofing": [["Approximate roof area (sq ft)","number"],["Roof type/material","Shingle, metal, tile, flat, not sure"],["Repair or replacement?","Repair, replacement, inspection"],["Number of stories","1, 2, 3+"],["Leak or damage?","Describe"]],
+      "Landscaping": [["Yard area (sq ft)","number"],["Work needed","Design, planting, cleanup, maintenance, sod"],["Lot size","Small, medium, large, not sure"],["Haul away debris?","Yes, no"]],
+      "Lawn Care": [["Lawn area (sq ft)","number"],["Mowing, edging, fertilizing?","Mowing, edging, fertilizing, all"],["Frequency","One-time, weekly, biweekly"]],
+      "Plumbing": [["Issue or installation","Leak, clog, fixture, pipe, water heater, other"],["Number of fixtures","number"],["Is water shut off?","Yes, no, not sure"],["Urgency","Emergency, within 24 hours, flexible"]],
+      "Electrical": [["Work needed","Outlet, lighting, panel, wiring, troubleshooting, other"],["Number of outlets/fixtures","number"],["New installation or repair?","New, repair"],["Urgency","Emergency, soon, flexible"]],
+      "HVAC": [["System","Heating, air conditioning, both, ventilation"],["Service type","Repair, maintenance, replacement, installation"],["Home area (sq ft)","number"],["System age","Years / not sure"]],
+      "Drywall & Framing": [["Area (sq ft)","number"],["New installation or repair?","New, repair"],["Ceiling included?","Yes, no"],["Texture/finish","Smooth, textured, match existing"]],
+      "Concrete & Foundation": [["Area (sq ft)","number"],["Project type","Driveway, patio, slab, foundation, repair"],["Thickness/depth","Inches / not sure"],["Removal required?","Yes, no"]],
+      "Window Cleaning": [["Number of windows","number"],["Stories","1, 2, 3+"],["Interior, exterior, or both?","Interior, exterior, both"]],
+      "Post-Construction Cleaning": [["Area (sq ft)","number"],["Property type","House, apartment, office, other"],["Bedrooms","number"],["Bathrooms","number"],["Debris removal needed?","Yes, no"]],
+      "Pressure Washing": [["Area (sq ft)","number"],["Surface","Driveway, siding, deck, patio, roof, other"],["Stories","1, 2, 3+"]],
+      "Decks & Fences": [["Approximate size/length (linear ft or sq ft)","number"],["New installation or repair?","New, repair, replacement"],["Material","Wood, composite, vinyl, metal, not sure"]],
+      "Tree Service": [["Number of trees","number"],["Work needed","Trimming, removal, stump grinding"],["Approximate tree height","Small, medium, large, not sure"]],
+      "Moving": [["Home size","Studio, 1 bedroom, 2 bedrooms, 3+ bedrooms, office"],["Move distance","Local, long distance"],["Packing needed?","Yes, no"],["Stairs/elevator?","Stairs, elevator, ground floor"]],
+      "Handyman": [["Describe tasks","Describe"],["Number of tasks/items","number"],["Estimated hours","number"]],
+      "Junk Removal": [["Amount","A few items, pickup load, 1/4 truck, 1/2 truck, full truck"],["Item types","Furniture, appliances, construction debris, yard waste, other"],["Stairs/access notes","Describe"]],
+      "Other": [["Describe the service","Describe"],["Approximate size or quantity","Describe"]]
+    };
+    function renderServiceDetails() {
+      const service = $("serviceType").value, panel = $("serviceDetails");
+      panel.replaceChildren();
+      const heading = document.createElement("strong"); heading.textContent = "Job details"; panel.append(heading);
+      const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
+      questions.forEach(([labelText, options]) => {
+        const label = document.createElement("label"); label.textContent = labelText;
+        let input;
+        if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = "any"; input.placeholder = "Enter amount"; }
+        else if (options === "Describe") { input = document.createElement("textarea"); input.rows = 2; input.placeholder = "Add details"; }
+        else { input = document.createElement("select"); const first = document.createElement("option"); first.value = ""; first.textContent = "Select / not sure"; input.append(first); options.split(", ").forEach(value => { const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option); }); }
+        input.dataset.jobQuestion = labelText; label.append(input); panel.append(label);
+      });
+      const note = document.createElement("p"); note.className = "subtitle"; note.textContent = "Answer what you can. You can leave unknown measurements blank and add photos or details below."; panel.append(note);
+    }
+    $("serviceType").addEventListener("change", renderServiceDetails);
+    function collectServiceDetails() {
+      return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
+        input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
+      ).join("\\n");
+    }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       clearMessage("requestMessage");
@@ -594,7 +649,7 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: $("description").value.trim(),
+          description: "JOB DETAILS\\n" + collectServiceDetails() + "\\n\\nCUSTOMER DESCRIPTION\\n" + $("description").value.trim(),
           preferred_time: $("preferredTime").value || null
         };
 
