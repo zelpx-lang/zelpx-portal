@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VAPID_PUBLIC_KEY = "ADD_VAPID_PUBLIC_KEY_HERE";
+  const VAPID_PUBLIC_KEY = "BJ_Re5koTbkuNzJHO85KMY2w8QXE8iQCH2E-UeG7p6pXkHgG0mKFYh06_j2hpszx9Z3fruqcHdzCOAYUtKCz780";
   const SW_PATH = "/zelpx-sw.js";
   const BUTTON_ID = "zelpxPushButton";
 
