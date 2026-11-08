@@ -455,9 +455,27 @@
         }
       });
       panel.append(pushButton);
+      let knownMessageIds = null;
+      let chatSoundContext = null;
+      function playIncomingChatSound() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          chatSoundContext ||= new AudioCtx();
+          if (chatSoundContext.state === "suspended") chatSoundContext.resume();
+          const oscillator = chatSoundContext.createOscillator(); const gain = chatSoundContext.createGain();
+          oscillator.type = "sine"; oscillator.frequency.setValueAtTime(880, chatSoundContext.currentTime); oscillator.frequency.setValueAtTime(660, chatSoundContext.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.16, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.28);
+          oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
+        } catch (_) {}
+      }
       async function refreshMessages() {
         const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
-        if (error) throw error; messagesBox.replaceChildren();
+        if (error) throw error;
+        const currentIds = new Set((data || []).map(item => item.id));
+        if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "contractor")) playIncomingChatSound();
+        knownMessageIds = currentIds;
+        messagesBox.replaceChildren();
         if (!data?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet. Send the first message."; messagesBox.append(empty); return; }
         data.forEach(item => {
           const bubble = document.createElement("div"); bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
@@ -478,6 +496,7 @@
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
       panel.append(refreshButton);
+      const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.classList.contains("hidden")) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
     } catch (e) {
       panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
     }
