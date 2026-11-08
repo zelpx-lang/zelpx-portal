@@ -551,6 +551,14 @@
         }
         await loadRequests(session);
         if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "customer");
+        const alertStatus = $("customerBackgroundChatAlertsStatus");
+        if (alertStatus && "Notification" in window) {
+          alertStatus.textContent = Notification.permission === "granted"
+            ? "Notifications allowed — chat and purchase alerts will register automatically."
+            : Notification.permission === "denied"
+              ? "Notifications are blocked for this site. Enable them in your browser's site settings."
+              : "Open a conversation and allow browser notifications to activate chat and purchase alerts.";
+        }
         const openLeadId = new URLSearchParams(window.location.search).get("open_lead");
         if (openLeadId) {
           const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.dataset.leadId === openLeadId);
@@ -795,11 +803,28 @@
           catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
         });
         panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
-        // Quietly initialize sound and push while the customer opens the chat.
+        // Initialize sound and register BOTH customer chat and purchase alerts.
         try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
-        // Refresh an already-authorized subscription on every chat open; never prompt without a user tap.
-        try { if (Notification.permission === "granted" && typeof window.ZELPXRefreshPushForConversation === "function") await window.ZELPXRefreshPushForConversation(db, conversation.id, "customer"); }
-        catch (e) { pushStatus.textContent = "Notifications need attention: " + (e.message || "subscription refresh failed"); pushStatus.style.color = "#b42318"; }
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            if (typeof window.ZELPXEnableCustomerPurchasePush === "function") {
+              await window.ZELPXEnableCustomerPurchasePush(db, null);
+            }
+            if (typeof window.ZELPXRefreshPushForConversation === "function") {
+              await window.ZELPXRefreshPushForConversation(db, conversation.id, "customer");
+            }
+            status.textContent = "Background notifications are enabled for chat messages and when a contractor purchases your request.";
+            const alertStatus = $("customerBackgroundChatAlertsStatus");
+            if (alertStatus) alertStatus.textContent = "Notifications allowed — chat and request-purchase alerts are registered on this device.";
+          } catch (e) {
+            status.textContent = "Could not activate background notifications: " + (e.message || "subscription failed");
+            const alertStatus = $("customerBackgroundChatAlertsStatus");
+            if (alertStatus) alertStatus.textContent = "Notification setup needs attention: " + (e.message || "subscription failed");
+          }
+        } else {
+          const alertStatus = $("customerBackgroundChatAlertsStatus");
+          if (alertStatus) alertStatus.textContent = "Allow notifications in your browser when prompted while opening this chat.";
+        }
         await refreshMessages();
         const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
       } catch (error) {
@@ -890,7 +915,14 @@
             card.appendChild(chat);
             chatButton.addEventListener("click", async () => {
               const opening = chatPanel.classList.contains("hidden");
-              if (opening && "Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch (_) {} }
+              if (opening && "Notification" in window && Notification.permission === "default") {
+                try {
+                  const permission = await Notification.requestPermission();
+                  if (permission === "granted" && typeof window.ZELPXAutoSubscribe === "function") {
+                    await window.ZELPXAutoSubscribe(db, "customer");
+                  }
+                } catch (_) {}
+              }
               chatPanel.classList.toggle("hidden", !opening);
               chatButton.textContent = opening ? "Close conversation" : "Open conversation";
               if (opening && !chatPanel.dataset.loaded) {
