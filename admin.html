@@ -180,6 +180,12 @@
     </section>
 
     <section id="adminPanel" class="card hidden">
+      <section class="lead" id="adminPushSection">
+        <h2>Background notifications</h2>
+        <p>Enable push alerts for new customer service requests, even when the admin dashboard is closed.</p>
+        <div class="actions"><button id="enableAdminPushBtn" type="button">Enable admin notifications</button></div>
+        <div id="adminPushMessage" class="message hidden" role="status"></div>
+      </section>
       <section class="lead" id="adminChatsSection">
         <h2>All customer conversations</h2>
         <p>Administrator-only, read-only overview of conversations and messages.</p>
@@ -827,6 +833,20 @@
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
+    $("enableAdminPushBtn").addEventListener("click", async () => {
+      const button = $("enableAdminPushBtn");
+      const status = $("adminPushMessage");
+      status.className = "message hidden"; status.textContent = "";
+      try {
+        if (typeof window.ZELPXEnableAdminPush !== "function") throw new Error("Push module is not loaded. Reload this page and try again.");
+        await window.ZELPXEnableAdminPush(db, button);
+        status.textContent = "Background notifications are enabled on this device.";
+        status.className = "message success";
+      } catch (e) {
+        status.textContent = e.message || "Could not enable notifications.";
+        status.className = "message error";
+      }
+    });
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
@@ -855,5 +875,6 @@
   start();
 })();
 </script>
+<script src="/zelpx-push.js"></script>
 </body>
 </html>
