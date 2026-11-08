@@ -543,7 +543,8 @@
         } catch (profileError) {
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
-        await loadRequests(session);\n        if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "customer");
+        await loadRequests(session);
+        if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "customer");
         const openLeadId = new URLSearchParams(window.location.search).get("open_lead");
         if (openLeadId) {
           const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.dataset.leadId === openLeadId);
