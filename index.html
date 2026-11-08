@@ -444,21 +444,6 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
-      const soundButton = document.createElement("button"); soundButton.type = "button"; soundButton.className = "secondary"; soundButton.textContent = "🔊 Enable sound"; soundButton.style.margin = "0 0 10px 8px";
-      soundButton.addEventListener("click", async () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) throw new Error("This browser does not support chat audio."); chatSoundContext ||= new AudioCtx(); await chatSoundContext.resume(); playIncomingChatSound(); soundButton.textContent = "🔊 Sound enabled"; status.textContent = "Sound test played. Keep this chat open to hear incoming messages."; } catch (e) { status.textContent = "Could not enable sound: " + (e.message || "Check device sound settings."); } });
-      panel.append(soundButton);
-
-      const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary";
-      pushButton.textContent = "🔔 Enable chat notifications"; pushButton.style.marginBottom = "10px";
-      pushButton.addEventListener("click", async () => {
-        try {
-          await window.ZELPXEnablePushForConversation(db, conversationId, pushButton);
-          status.textContent = "Chat notifications are enabled on this device.";
-        } catch (error) {
-          status.textContent = "Could not enable notifications: " + (error.message || "Unknown error");
-        }
-      });
-      panel.append(pushButton);
       let knownMessageIds = null;
       let chatSoundContext = null;
       function playIncomingChatSound() {
