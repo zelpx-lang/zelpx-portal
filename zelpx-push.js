@@ -10,7 +10,7 @@
     if (!conversationId || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       throw new Error("Push notifications are not supported by this browser.");
     }
-    button.disabled = true;
+    if (button) button.disabled = true;
     try {
       const registration = await navigator.serviceWorker.register("/zelpx-sw.js", { scope: "/" });
       if (Notification.permission !== "granted") {
@@ -23,8 +23,8 @@
         body: { action: "subscribe", recipient_type: recipientType, conversation_id: conversationId, subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      button.textContent = "🔔 Chat notifications enabled";
+      if (button) button.textContent = "🔔 Chat notifications enabled";
       return true;
-    } finally { button.disabled = false; }
+    } finally { if (button) button.disabled = false; }
   };
 })();
