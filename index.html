@@ -244,7 +244,7 @@
   function addCell(row, value) { const td = document.createElement("td"); td.textContent = String(value ?? ""); row.append(td); }
   function initClient() {
     if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); window.zelpxDb = db;
   }
   function setSignupMode(enabled) {
     signupMode = enabled;
@@ -851,5 +851,6 @@
   start();
 })();
 </script>
+  <script src="/zelpx-push.js"></script>
 </body>
 </html>

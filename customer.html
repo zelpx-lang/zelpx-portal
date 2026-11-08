@@ -302,6 +302,7 @@
       SUPABASE_URL,
       SUPABASE_KEY
     );
+    window.zelpxDb = db;
 
     const $ = (id) => document.getElementById(id);
 
@@ -794,5 +795,6 @@
       showMessage("message", error.message, "error");
     });
   </script>
+  <script src="/zelpx-push.js"></script>
 </body>
 </html>
