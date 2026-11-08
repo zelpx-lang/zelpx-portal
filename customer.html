@@ -243,7 +243,7 @@
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
       <p id="accountEmail"></p>
-      <section class="request-card" id="purchasePushPanel" hidden><strong>Purchase notifications</strong><p class="subtitle">Background alerts for purchases and messages are managed automatically when browser permission is available.</p><p id="purchasePushStatus" class="customer-chat-status" role="status"></p></section>
+      
 
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
@@ -913,20 +913,7 @@
       }
     }
 
-    $("refreshButton").addEventListener("click", loadRequests);
-
-    $("enablePurchasePushButton").addEventListener("click", async () => {
-      const button = $("enablePurchasePushButton");
-      const status = $("purchasePushStatus");
-      status.textContent = "Enabling purchase notifications…";
-      try {
-        if (typeof window.ZELPXEnableCustomerPurchasePush !== "function") throw new Error("Notification module did not load. Reload the page.");
-        await window.ZELPXEnableCustomerPurchasePush(db, button);
-        status.textContent = "This device will receive a background alert when a contractor purchases your request.";
-      } catch (error) { status.textContent = error.message || "Could not enable notifications."; status.style.color = "#b42318"; }
-    });
-
-    $("logoutButton").addEventListener("click", async () => {
+    $("refreshButton").addEventListener("click", loadRequests);\n$("logoutButton").addEventListener("click", async () => {
       // Sign out only this browser session; do not revoke other active sessions.
       const { error } = await db.auth.signOut({ scope: "local" });
 
