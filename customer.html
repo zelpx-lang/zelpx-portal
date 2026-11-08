@@ -576,13 +576,10 @@
       button.textContent = "Submitting...";
 
       try {
-        let session = sessionOverride;
-        if (sessionOverride === undefined) {
-          const { data: sessionData, error: sessionError } =
-            await db.auth.getSession();
-          if (sessionError) throw sessionError;
-          session = sessionData.session;
-        }
+        const { data: sessionData, error: sessionError } =
+          await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        const session = sessionData.session;
 
         if (!session) {
           throw new Error("Please log in before submitting a request.");
