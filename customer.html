@@ -668,12 +668,29 @@
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
         panel.replaceChildren(messagesBox, form, refresh, status);
 
+        let knownMessageIds = null;
+        let chatSoundContext = null;
+        function playIncomingChatSound() {
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            chatSoundContext ||= new AudioCtx();
+            if (chatSoundContext.state === "suspended") chatSoundContext.resume();
+            const oscillator = chatSoundContext.createOscillator(); const gain = chatSoundContext.createGain();
+            oscillator.type = "sine"; oscillator.frequency.setValueAtTime(880, chatSoundContext.currentTime); oscillator.frequency.setValueAtTime(660, chatSoundContext.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.16, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.28);
+            oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
+          } catch (_) {}
+        }
         async function refreshMessages() {
           const { data, error } = await db.from("lead_messages")
             .select("id,sender_type,message,created_at")
             .eq("conversation_id", conversation.id)
             .order("created_at", { ascending: true }).limit(200);
           if (error) throw error;
+          const currentIds = new Set((data || []).map(item => item.id));
+          if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "customer")) playIncomingChatSound();
+          knownMessageIds = currentIds;
           messagesBox.replaceChildren();
           if (!data?.length) {
             const empty = document.createElement("p"); empty.className = "subtitle";
@@ -703,6 +720,7 @@
             });
             if (error) throw error; input.value = ""; status.textContent = "Message sent.";
             await refreshMessages();
+        const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
           } catch (error) { status.textContent = "Could not send message: " + (error.message || "Unknown error"); }
           finally { send.disabled = false; }
         });
