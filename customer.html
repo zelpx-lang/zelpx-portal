@@ -722,6 +722,21 @@
         const session = sessionData.session;
         if (!session) throw new Error("Please log in again to open this conversation.");
 
+        // Register purchase alerts before looking up the chat: a contractor may
+        // not have created the conversation yet, but the customer still needs
+        // to receive the purchase notification.
+        if ("Notification" in window && Notification.permission === "granted" &&
+            typeof window.ZELPXEnableCustomerPurchasePush === "function") {
+          try {
+            await window.ZELPXEnableCustomerPurchasePush(db, null);
+            const alertStatus = $("customerBackgroundChatAlertsStatus");
+            if (alertStatus) alertStatus.textContent = "Purchase notifications are registered on this device.";
+          } catch (pushError) {
+            const alertStatus = $("customerBackgroundChatAlertsStatus");
+            if (alertStatus) alertStatus.textContent = "Purchase notification setup failed: " + (pushError.message || "subscription failed");
+          }
+        }
+
         const { data: conversation, error: conversationError } = await db
           .from("lead_conversations")
           .select("id")
