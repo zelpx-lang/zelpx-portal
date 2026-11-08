@@ -26,33 +26,49 @@
   });
 
   let autoRole = null, autoDb = null, autoPromptInstalled = false, autoBusy = false;
+  let autoSubscriptionBusy = false;
+  async function subscribeForRole(db, role) {
+    if (autoSubscriptionBusy) return false;
+    autoSubscriptionBusy = true;
+    try {
+      // Register the worker as soon as an authenticated dashboard initializes.
+      const registration = await navigator.serviceWorker.register("/zelpx-sw.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+      if (Notification.permission !== "granted") return false;
+      if (role === "customer") await window.ZELPXEnableCustomerPurchasePush(db, null);
+      else if (role === "admin") await window.ZELPXEnableAdminPush(db, null);
+      else await window.ZELPXEnableContractorLeadPush(db, null);
+      return !!registration;
+    } finally { autoSubscriptionBusy = false; }
+  }
   window.ZELPXAutoSubscribe = async function(db, role) {
     autoDb = db; autoRole = role;
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+    try { await navigator.serviceWorker.register("/zelpx-sw.js", { scope: "/" }); }
+    catch (e) { console.warn("ZELPX service worker registration failed:", e); }
     if (Notification.permission === "granted") {
-      try {
-        if (role === "customer") await window.ZELPXEnableCustomerPurchasePush(db, null);
-        else if (role === "admin") await window.ZELPXEnableAdminPush(db, null);
-        else await window.ZELPXEnableContractorLeadPush(db, null);
-        return true;
-      } catch (e) { console.warn("Automatic push subscription failed:", e); return false; }
+      try { return await subscribeForRole(db, role); }
+      catch (e) { console.warn("Automatic push subscription failed:", e); return false; }
     }
     if (Notification.permission === "default" && !autoPromptInstalled) {
       autoPromptInstalled = true;
-      const ask = async () => {
+      const ask = async (event) => {
+        if (event && event.isTrusted === false) return;
         if (autoBusy || !autoDb || !autoRole || Notification.permission !== "default") return;
         autoBusy = true;
         try {
+          // Request permission directly inside a real user interaction.
           const permission = await Notification.requestPermission();
-          if (permission === "granted") await window.ZELPXAutoSubscribe(autoDb, autoRole);
-        } catch (e) { console.warn("Notification permission was not granted:", e); }
-        finally {
-          autoBusy = false;
-          window.removeEventListener("pointerdown", ask, true);
-          window.removeEventListener("keydown", ask, true);
-        }
+          if (permission === "granted") await subscribeForRole(autoDb, autoRole);
+          if (permission !== "default") {
+            window.removeEventListener("click", ask, true);
+            window.removeEventListener("keydown", ask, true);
+            autoPromptInstalled = false;
+          }
+        } catch (e) { console.warn("Notification permission request failed:", e); }
+        finally { autoBusy = false; }
       };
-      window.addEventListener("pointerdown", ask, true);
+      window.addEventListener("click", ask, true);
       window.addEventListener("keydown", ask, true);
     }
     return false;
