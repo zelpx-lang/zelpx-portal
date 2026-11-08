@@ -728,18 +728,7 @@
         form.append(input, send);
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
-        const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary-button"; pushButton.textContent = "Enable message notifications";
-        const pushStatus = document.createElement("p"); pushStatus.className = "subtitle"; pushStatus.setAttribute("role", "status");
-        panel.replaceChildren(messagesBox, form, refresh, pushButton, pushStatus, status);
-        pushButton.addEventListener("click", async () => {
-          pushButton.disabled = true; pushStatus.textContent = "Enabling notifications…";
-          try {
-            if (typeof window.ZELPXEnablePushForConversation !== "function") throw new Error("Push module did not load. Reload the page.");
-            await window.ZELPXEnablePushForConversation(db, conversation.id, pushButton, "customer");
-            pushButton.textContent = "✓ Message notifications enabled"; pushStatus.textContent = "This device is subscribed for this conversation.";
-          } catch (e) { pushStatus.textContent = e.message || "Could not enable notifications."; pushStatus.style.color = "#b42318"; }
-          finally { pushButton.disabled = false; }
-        });
+        panel.replaceChildren(messagesBox, form, refresh, status);
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
