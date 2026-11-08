@@ -328,7 +328,7 @@
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
+    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }\n    if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
