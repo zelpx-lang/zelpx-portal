@@ -401,6 +401,26 @@
       if (!data || data.success !== true) throw new Error("The purchase was not confirmed by the server.");
       let chatEmailWarning = "";
       try {
+        // Create the private conversation immediately after purchase so the
+        // customer can message the contractor without waiting for first contact.
+        const { data: conversationData, error: conversationError } = await db.rpc("get_or_create_lead_conversation", { p_lead_id: lead.id });
+        if (conversationError) throw conversationError;
+        const conversationId = Array.isArray(conversationData) ? conversationData[0] : conversationData;
+        if (!conversationId || typeof conversationId !== "string") throw new Error("The purchase is complete, but the chat could not be opened automatically.");
+        const { data: existingMessages, error: messagesError } = await db.from("lead_messages").select("id").eq("conversation_id", conversationId).limit(1);
+        if (messagesError) throw messagesError;
+        if (!existingMessages?.length) {
+          const { error: welcomeError } = await db.from("lead_messages").insert({
+            conversation_id: conversationId, sender_type: "contractor", sender_user_id: currentUser.id,
+            message: "I purchased your service request and am ready to discuss the project. Please message me here."
+          });
+          if (welcomeError) throw welcomeError;
+        }
+      } catch (conversationError) {
+        console.error("Customer conversation setup error:", conversationError);
+        chatEmailWarning = " The purchase is complete, but automatic chat setup needs attention: " + (conversationError?.message || "unknown error") + ".";
+      }
+      try {
         const { data: chatData, error: chatError } = await db.functions.invoke("create-customer-chat", { body: { lead_id: lead.id } });
         if (chatError) throw chatError;
         if (!chatData?.success) throw new Error(chatData?.error || "Customer chat email was not confirmed.");
