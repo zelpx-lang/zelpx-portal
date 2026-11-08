@@ -913,7 +913,8 @@
       }
     }
 
-    $("refreshButton").addEventListener("click", loadRequests);\n$("logoutButton").addEventListener("click", async () => {
+    $("refreshButton").addEventListener("click", loadRequests);
+    $("logoutButton").addEventListener("click", async () => {
       // Sign out only this browser session; do not revoke other active sessions.
       const { error } = await db.auth.signOut({ scope: "local" });
 
