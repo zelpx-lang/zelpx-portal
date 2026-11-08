@@ -238,7 +238,7 @@
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
-  let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, contractorExtendedFieldsAvailable = true;
+  let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false;
 
   function message(id, text, type) {
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
@@ -333,15 +333,8 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    let { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
-    if (contractorError?.code === "42703") {
-      // Compatibility fallback: the deployed UI may be ahead of the database migrations.
-      contractorExtendedFieldsAvailable = false;
-      const fallback = await db.from("contractors").select("id,company_name,email,verification_status").eq("user_id", currentUser.id).maybeSingle();
-      if (fallback.error) throw fallback.error;
-      contractor = fallback.data;
-      if ($("appMessage")) message("appMessage", "Your account and credit balance loaded. Some company profile fields are waiting for a database update; Stripe top-ups can still be used.", "error");
-    } else if (contractorError) throw contractorError;
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
+    if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
@@ -521,7 +514,6 @@
   async function saveCompany() {
     clearMessage("appMessage");
     try {
-      if (!contractorExtendedFieldsAvailable) throw new Error("Company profile changes are temporarily paused until the database update is applied. Your credit balance and Stripe top-ups remain available.");
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
       const hasLicense = $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
