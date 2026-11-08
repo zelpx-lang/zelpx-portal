@@ -546,7 +546,7 @@
         await loadRequests(session);
         const openLeadId = new URLSearchParams(window.location.search).get("open_lead");
         if (openLeadId) {
-          const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.querySelector("[data-lead-id]")?.dataset.leadId === openLeadId);
+          const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.dataset.leadId === openLeadId);
           const chatButton = targetRequest?.querySelector("button[data-open-chat]");
           if (chatButton) chatButton.click();
           else showMessage("requestMessage", "Your contractor purchased the request. Refresh the request list to open the conversation.", "success");
@@ -913,6 +913,17 @@
     }
 
     $("refreshButton").addEventListener("click", loadRequests);
+
+    $("enablePurchasePushButton").addEventListener("click", async () => {
+      const button = $("enablePurchasePushButton");
+      const status = $("purchasePushStatus");
+      status.textContent = "Enabling purchase notifications…";
+      try {
+        if (typeof window.ZELPXEnableCustomerPurchasePush !== "function") throw new Error("Notification module did not load. Reload the page.");
+        await window.ZELPXEnableCustomerPurchasePush(db, button);
+        status.textContent = "This device will receive a background alert when a contractor purchases your request.";
+      } catch (error) { status.textContent = error.message || "Could not enable notifications."; status.style.color = "#b42318"; }
+    });
 
     $("logoutButton").addEventListener("click", async () => {
       // Sign out only this browser session; do not revoke other active sessions.
