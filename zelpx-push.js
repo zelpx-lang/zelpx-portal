@@ -24,6 +24,39 @@
     restorePushButton(document.getElementById("enableContractorPushBtn"), "contractor_leads", "🔔 Lead alerts enabled");
     restorePushButton(document.getElementById("enableAdminPushBtn"), "admin", "🔔 Admin notifications enabled");
   });
+
+  let autoRole = null, autoDb = null, autoPromptInstalled = false, autoBusy = false;
+  window.ZELPXAutoSubscribe = async function(db, role) {
+    autoDb = db; autoRole = role;
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+    if (Notification.permission === "granted") {
+      try {
+        if (role === "customer") await window.ZELPXEnableCustomerPurchasePush(db, null);
+        else if (role === "admin") await window.ZELPXEnableAdminPush(db, null);
+        else await window.ZELPXEnableContractorLeadPush(db, null);
+        return true;
+      } catch (e) { console.warn("Automatic push subscription failed:", e); return false; }
+    }
+    if (Notification.permission === "default" && !autoPromptInstalled) {
+      autoPromptInstalled = true;
+      const ask = async () => {
+        if (autoBusy || !autoDb || !autoRole || Notification.permission !== "default") return;
+        autoBusy = true;
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === "granted") await window.ZELPXAutoSubscribe(autoDb, autoRole);
+        } catch (e) { console.warn("Notification permission was not granted:", e); }
+        finally {
+          autoBusy = false;
+          window.removeEventListener("pointerdown", ask, true);
+          window.removeEventListener("keydown", ask, true);
+        }
+      };
+      window.addEventListener("pointerdown", ask, true);
+      window.addEventListener("keydown", ask, true);
+    }
+    return false;
+  };
   function urlBase64ToUint8Array(value) {
     const padding = "=".repeat((4 - value.length % 4) % 4);
     const raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
