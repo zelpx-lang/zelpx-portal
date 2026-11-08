@@ -34,11 +34,16 @@
     let subscription = await registration.pushManager.getSubscription();
     if (subscription) {
       const currentKey = subscription.options && subscription.options.applicationServerKey;
-      const matches = currentKey && currentKey.byteLength === expectedKey.byteLength &&
-        Array.from(new Uint8Array(currentKey)).every((byte, index) => byte === expectedKey[index]);
-      if (!matches) {
-        await subscription.unsubscribe();
-        subscription = null;
+      // Some browsers (notably mobile browser builds) return null for
+      // applicationServerKey even when the existing subscription is valid.
+      // Never destroy a working subscription just because the browser hides this value.
+      if (currentKey) {
+        const matches = currentKey.byteLength === expectedKey.byteLength &&
+          Array.from(new Uint8Array(currentKey)).every((byte, index) => byte === expectedKey[index]);
+        if (!matches) {
+          await subscription.unsubscribe();
+          subscription = null;
+        }
       }
     }
     return subscription || registration.pushManager.subscribe({
