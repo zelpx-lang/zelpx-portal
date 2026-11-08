@@ -358,6 +358,10 @@
 
       $("nameField").classList.toggle("hidden", isLogin);
       $("phoneField").classList.toggle("hidden", isLogin);
+      // Hidden registration fields must not block the login form's native
+      // required-field validation (notably on mobile browsers).
+      $("fullName").required = !isLogin;
+      $("phone").required = !isLogin;
 
       $("password").autocomplete = isLogin
         ? "current-password"
@@ -518,14 +522,20 @@
       }
 
       if (session) {
-        // A contractor profile may also use the customer portal. Keep its
-        // existing database role unchanged; customer access is based on the
-        // authenticated account and ownership of its own service requests.
-        await loadCustomerProfile(session.user);
-        await loadRequests(session);
-        $("accountEmail").textContent = "Email: " + session.user.email;
+        // Authentication is the gate for the customer portal. A profile
+        // lookup or an empty request list must never bounce a valid user back
+        // to the login form. Contractor accounts may also use this portal;
+        // do not rewrite their database role during customer sign-in.
+        $("accountEmail").textContent = "Email: " + (session.user.email || "");
         $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
+
+        try {
+          await loadCustomerProfile(session.user);
+        } catch (profileError) {
+          showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
+        }
+        await loadRequests(session);
       } else {
         $("authView").classList.remove("hidden");
         $("dashboardView").classList.add("hidden");
