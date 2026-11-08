@@ -186,13 +186,6 @@
         <div class="actions"><button id="enableAdminPushBtn" type="button">Enable admin notifications</button></div>
         <div id="adminPushMessage" class="message hidden" role="status"></div>
       </section>
-      <section class="lead" id="adminChatsSection">
-        <h2>All customer conversations</h2>
-        <p>Administrator-only, read-only overview of conversations and messages.</p>
-        <div class="actions"><button id="refreshAdminChatsBtn" type="button" class="secondary">Refresh conversations</button></div>
-        <div id="adminChatsMessage" class="message hidden"></div>
-        <div id="adminChatsList"><p class="muted">Loading conversations…</p></div>
-      </section>
       <section class="lead">
         <h2>Customer service requests</h2>
         <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
@@ -330,7 +323,7 @@
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
+    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); }
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
@@ -624,69 +617,6 @@
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
 
-  async function loadAdminChats() {
-    if (!isAdmin) return;
-    const list = $("adminChatsList");
-    list.textContent = "Loading conversations…";
-    clearMessage("adminChatsMessage");
-    try {
-      const { data: conversations, error: conversationError } = await db
-        .from("lead_conversations")
-        .select("id,lead_id,contractor_id,created_at")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (conversationError) throw conversationError;
-      const ids = (conversations || []).map(c => c.id);
-      let messages = [];
-      if (ids.length) {
-        const { data, error } = await db.from("lead_messages")
-          .select("id,conversation_id,sender_type,sender_user_id,message,created_at")
-          .in("conversation_id", ids)
-          .order("created_at", { ascending: true })
-          .limit(2000);
-        if (error) throw error;
-        messages = data || [];
-      }
-      const byConversation = new Map();
-      messages.forEach(m => {
-        if (!byConversation.has(m.conversation_id)) byConversation.set(m.conversation_id, []);
-        byConversation.get(m.conversation_id).push(m);
-      });
-      list.replaceChildren();
-      if (!conversations?.length) {
-        const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = "No conversations found."; list.append(empty); return;
-      }
-      conversations.forEach(c => {
-        const card = document.createElement("article"); card.className = "lead";
-        const title = document.createElement("h3"); title.textContent = "Lead conversation"; card.append(title);
-        const meta = document.createElement("p"); meta.className = "muted";
-        meta.textContent = "Lead: " + c.lead_id + " · Contractor: " + c.contractor_id + " · Created: " + new Date(c.created_at).toLocaleString();
-        card.append(meta);
-        const thread = document.createElement("div"); thread.className = "chatmessages";
-        const threadMessages = byConversation.get(c.id) || [];
-        if (!threadMessages.length) {
-          const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet."; thread.append(empty);
-        } else {
-          threadMessages.forEach(m => {
-            const bubble = document.createElement("div");
-            bubble.className = "chatbubble " + (m.sender_type === "contractor" ? "contractor" : "customer");
-            const sender = document.createElement("strong");
-            sender.textContent = String(m.sender_type || "unknown").toUpperCase();
-            const body = document.createElement("div"); body.textContent = m.message || "";
-            const time = document.createElement("div"); time.className = "chatmeta";
-            time.textContent = m.created_at ? new Date(m.created_at).toLocaleString() : "";
-            bubble.append(sender, body, time); thread.append(bubble);
-          });
-        }
-        card.append(thread); list.append(card);
-      });
-    } catch (e) {
-      list.textContent = "Could not load conversations: " + (e.message || "Unknown error");
-      message("adminChatsMessage", "Check the administrator SELECT policies for lead_conversations and lead_messages. " + (e.message || ""), "error");
-    }
-  }
-
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadServiceRequests() {
     if (!isAdmin) return;
@@ -832,7 +762,6 @@
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
-    $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
     $("enableAdminPushBtn").addEventListener("click", async () => {
       const button = $("enableAdminPushBtn");
       const status = $("adminPushMessage");
