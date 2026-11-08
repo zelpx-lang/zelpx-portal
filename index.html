@@ -481,6 +481,9 @@
           if (error) throw error; textarea.value = ""; status.textContent = "Message sent."; await refreshMessages();
         } catch (e) { status.textContent = "Could not send message: " + e.message; } finally { send.disabled = false; }
       });
+      // Quietly initialize sound and push while the contractor opens the chat.
+      try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
+      try { if ("Notification" in window && "serviceWorker" in navigator && "PushManager" in window) { if (Notification.permission === "default") await Notification.requestPermission(); if (Notification.permission === "granted") await window.ZELPXEnablePushForConversation(db, conversationId, null, "contractor"); } } catch (e) { console.warn("ZELPX background notifications unavailable:", e); }
       await refreshMessages();
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
