@@ -439,6 +439,9 @@
       const conversationId = Array.isArray(conversationData) ? conversationData[0] : conversationData;
       if (!conversationId || typeof conversationId !== "string") throw new Error("The conversation could not be opened.");
       panel.replaceChildren(); const title = document.createElement("h3"); title.textContent = "Messages with customer"; panel.append(title);
+      if (window.ZELPXEnableChatNotifications) {
+        await window.ZELPXEnableChatNotifications(db, conversationId, panel);
+      }
       const messagesBox = document.createElement("div"); messagesBox.className = "chatmessages"; messagesBox.textContent = "Loading messages…"; panel.append(messagesBox);
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
