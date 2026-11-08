@@ -727,6 +727,9 @@
           catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
         });
         panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
+        // Quietly initialize sound and push while the customer opens the chat.
+        try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
+        try { if ("Notification" in window && "serviceWorker" in navigator && "PushManager" in window) { if (Notification.permission === "default") await Notification.requestPermission(); if (Notification.permission === "granted") await window.ZELPXEnablePushForConversation(db, conversation.id, null, "customer"); } } catch (e) { console.warn("ZELPX background notifications unavailable:", e); }
         await refreshMessages();
         const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
       } catch (error) {
