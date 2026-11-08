@@ -444,6 +444,17 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+      const pushButton = document.createElement("button"); pushButton.type = "button"; pushButton.className = "secondary";
+      pushButton.textContent = "🔔 Enable chat notifications"; pushButton.style.marginBottom = "10px";
+      pushButton.addEventListener("click", async () => {
+        try {
+          await window.ZELPXEnablePushForConversation(db, conversationId, pushButton);
+          status.textContent = "Chat notifications are enabled on this device.";
+        } catch (error) {
+          status.textContent = "Could not enable notifications: " + (error.message || "Unknown error");
+        }
+      });
+      panel.append(pushButton);
       async function refreshMessages() {
         const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
         if (error) throw error; messagesBox.replaceChildren();
