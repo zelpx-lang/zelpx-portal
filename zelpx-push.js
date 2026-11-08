@@ -67,7 +67,8 @@
         body: { action: "contractor_subscribe", subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      rememberPushEnabled("contractor_leads");\n      if (button) button.textContent = "🔔 Lead alerts enabled";
+      rememberPushEnabled("contractor_leads");
+      if (button) button.textContent = "🔔 Lead alerts enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
@@ -87,7 +88,8 @@
         body: { action: "admin_subscribe", subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      rememberPushEnabled("admin");\n      if (button) button.textContent = "🔔 Admin notifications enabled";
+      rememberPushEnabled("admin");
+      if (button) button.textContent = "🔔 Admin notifications enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
@@ -107,7 +109,8 @@
         body: { action: "subscribe", recipient_type: recipientType, conversation_id: conversationId, subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      rememberPushEnabled("chat:" + recipientType + ":" + conversationId);\n      if (button) button.textContent = "🔔 Chat notifications enabled";
+      rememberPushEnabled("chat:" + recipientType + ":" + conversationId);
+      if (button) button.textContent = "🔔 Chat notifications enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
