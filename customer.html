@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZELPX | Customer Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 30px 16px;
+      min-height: 100vh;
+      background: #f4f6f9;
+      font-family: Arial, sans-serif;
+      color: #202938;
+    }
+
+    .container {
+      max-width: 620px;
+      margin: 30px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #1769aa;
+      margin-bottom: 8px;
+    }
+
+    h1, h2 { text-align: center; }
+    h1 { font-size: 23px; }
+    h2 { font-size: 20px; margin-top: 30px; }
+
+    .subtitle {
+      text-align: center;
+      color: #667085;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd2da;
+      border-radius: 7px;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      background: white;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 7px;
+      background: #1769aa;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .switch {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .switch a {
+      color: #1769aa;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+
+    .error {
+      display: block;
+      color: #a32121;
+      background: #fff0f0;
+    }
+
+    .success {
+      display: block;
+      color: #176b36;
+      background: #eaf8ef;
+    }
+
+    .hidden { display: none !important; }
+
+    .request-card {
+      border: 1px solid #e0e5eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      background: #fafbfc;
+      overflow-wrap: anywhere;
+    }
+
+    .request-card p {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      background: #eaf2fb;
+      color: #1769aa;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .section-divider {
+      border: 0;
+      border-top: 1px solid #e5e7eb;
+      margin: 30px 0;
+    }
+
+    .secondary-button { background: #667085; }
+
+    .customer-chat { margin-top:14px; padding:12px; border:1px solid #dce4ed; border-radius:9px; background:#fbfdff; }
+    .customer-chat-messages { max-height:280px; overflow-y:auto; padding:10px; border:1px solid #e0e5eb; border-radius:8px; background:#f6f9fc; }
+    .customer-chat-bubble { max-width:92%; margin:8px 0; padding:9px 11px; border-radius:9px; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .customer-chat-bubble.customer { margin-left:auto; background:#dceeff; }
+    .customer-chat-bubble.contractor { margin-right:auto; background:#e9edf2; }
+    .customer-chat-form { display:flex; gap:8px; align-items:flex-end; margin-top:10px; }
+    .customer-chat-form textarea { flex:1; min-height:72px; }
+    .customer-chat-form button { width:auto; margin-top:0; }
+    .customer-chat-status { margin:8px 0 0; font-size:13px; color:#667085; }
+    @media(max-width:480px) { .customer-chat-form { flex-direction:column; align-items:stretch; } .customer-chat-form button { width:100%; } }
+
+
+    @media (max-width: 480px) {
+      .container { padding: 22px 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <div class="logo">ZELPX</div>
+
+    <section id="authView">
+      <h1 id="formTitle">Create Customer Account</h1>
+      <p class="subtitle" id="formSubtitle">
+        Create an account to request services and communicate with contractors.
+      </p>
+
+      <form id="authForm">
+        <div id="nameField">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" autocomplete="name">
+        </div>
+
+        <div id="phoneField">
+          <label for="phone">Phone Number</label>
+          <input id="phone" type="tel" autocomplete="tel">
+        </div>
+
+        <label for="email">Email Address</label>
+        <input id="email" type="email" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password"
+               autocomplete="current-password" required minlength="6">
+
+        <button id="submitButton" type="submit">Create Account</button>
+      </form>
+
+      <div id="message" class="message" role="status"></div>
+
+      <div class="switch">
+        <span id="switchText">Already have an account?</span>
+        <a id="switchLink" href="#">Log In</a>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="hidden">
+      <h1>Customer Dashboard</h1>
+      <p class="subtitle">Welcome to your ZELPX customer account.</p>
+
+      <p id="accountEmail"></p>
+
+      <hr class="section-divider">
+
+      <h2>Request a Service</h2>
+      <p class="subtitle">
+        Tell us what service you need. Our team will review your request.
+      </p>
+
+      <form id="requestForm">
+        <label for="serviceType">Service Type</label>
+        <select id="serviceType" required>
+          <option value="">Select a service</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="HVAC">HVAC</option>
+          <option value="Roofing">Roofing</option>
+          <option value="Painting">Painting</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Landscaping">Landscaping</option>
+          <option value="General Maintenance">General Maintenance</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="propertyAddress">Property Street Address</label>
+        <input id="propertyAddress" type="text"
+               placeholder="Street address" autocomplete="street-address" required>
+
+        <div class="grid">
+          <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
+          <div><label for="serviceState">State (2-letter code)</label><input id="serviceState" maxlength="2" placeholder="WA" autocomplete="address-level1" required></div>
+          <div><label for="serviceZip">ZIP Code</label><input id="serviceZip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="98661" autocomplete="postal-code" required></div>
+        </div>
+        <p id="serviceZipStatus" class="subtitle">Enter a US ZIP code to look up city, state and approximate location.</p>
+
+        <label for="description">Describe the Service Needed</label>
+        <textarea id="description"
+                  placeholder="Please describe the issue or work needed..."
+                  required minlength="5"></textarea>
+
+        <label for="preferredTime">Preferred Date and Time</label>
+        <input id="preferredTime" type="datetime-local">
+
+        <button id="requestButton" type="submit">
+          Submit Request
+        </button>
+      </form>
+
+      <div id="requestMessage" class="message" role="status"></div>
+
+      <hr class="section-divider">
+
+      <h2>My Service Requests</h2>
+      <div id="requestsList">
+        <p class="subtitle">Loading your requests...</p>
+      </div>
+
+      <button id="refreshButton" type="button" class="secondary-button">
+        Refresh Requests
+      </button>
+
+      <button id="logoutButton" type="button" class="secondary-button">
+        Log Out
+      </button>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+
+    const db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const $ = (id) => document.getElementById(id);
+
+    let isLogin = false;
+
+    function showMessage(elementId, text, type) {
+      const element = $(elementId);
+      element.textContent = text;
+      element.className = "message " + type;
+    }
+
+    function clearMessage(elementId) {
+      const element = $(elementId);
+      element.textContent = "";
+      element.className = "message";
+    }
+
+    function setMode(loginMode) {
+      isLogin = loginMode;
+      clearMessage("message");
+
+      $("formTitle").textContent = isLogin
+        ? "Customer Log In"
+        : "Create Customer Account";
+
+      $("formSubtitle").textContent = isLogin
+        ? "Log in to access your customer account."
+        : "Create an account to request services and communicate with contractors.";
+
+      $("nameField").classList.toggle("hidden", isLogin);
+      $("phoneField").classList.toggle("hidden", isLogin);
+
+      $("password").autocomplete = isLogin
+        ? "current-password"
+        : "new-password";
+
+      $("submitButton").textContent = isLogin
+        ? "Log In"
+        : "Create Account";
+
+      $("switchText").textContent = isLogin
+        ? "Don't have an account?"
+        : "Already have an account?";
+
+      $("switchLink").textContent = isLogin
+        ? "Create Account"
+        : "Log In";
+    }
+
+    $("switchLink").addEventListener("click", (event) => {
+      event.preventDefault();
+      setMode(!isLogin);
+    });
+
+    $("authForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage("message");
+
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const button = $("submitButton");
+
+      button.disabled = true;
+      button.textContent = isLogin ? "Logging In..." : "Creating Account...";
+
+      try {
+        if (isLogin) {
+          const { error } = await db.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) throw error;
+
+          await checkSession();
+        } else {
+          const fullName = $("fullName").value.trim();
+          const phone = $("phone").value.trim();
+
+          if (!fullName || !phone) {
+            throw new Error("Please enter your full name and phone number.");
+          }
+
+          const { data, error } = await db.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName,
+                phone: phone,
+                account_type: "customer"
+              }
+            }
+          });
+
+          if (error) throw error;
+
+          if (data.session) {
+            await checkSession();
+          } else {
+            showMessage(
+              "message",
+              "Your registration was submitted. Please check your email to confirm your account before logging in.",
+              "success"
+            );
+          }
+        }
+      } catch (error) {
+        showMessage(
+          "message",
+          error.message || "Something went wrong. Please try again.",
+          "error"
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = isLogin ? "Log In" : "Create Account";
+      }
+    });
+
+    async function checkSession() {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) throw error;
+
+      const session = data.session;
+
+      if (session) {
+        $("authView").classList.add("hidden");
+        $("dashboardView").classList.remove("hidden");
+        $("accountEmail").textContent = "Email: " + session.user.email;
+
+        await loadRequests();
+      } else {
+        $("authView").classList.remove("hidden");
+        $("dashboardView").classList.add("hidden");
+      }
+    }
+
+    async function lookupCustomerZip() {
+      const zipInput = $("serviceZip");
+      const zip = zipInput.value.trim();
+      if (!/^[0-9]{5}$/.test(zip)) return;
+      $("serviceZipStatus").textContent = "Looking up ZIP code…";
+      try {
+        const response = await fetch("https://api.zippopotam.us/us/" + zip);
+        if (!response.ok) throw new Error("ZIP not found");
+        const data = await response.json();
+        const place = (data.places || [])[0];
+        if (!place) throw new Error("No locality found");
+        $("serviceCity").value = place["place name"] || "";
+        $("serviceState").value = place["state abbreviation"] || "";
+        zipInput.dataset.latitude = place.latitude || "";
+        zipInput.dataset.longitude = place.longitude || "";
+        $("serviceZipStatus").textContent = "ZIP found. City/state filled in; coordinates are approximate ZIP-centroid coordinates.";
+      } catch (error) {
+        zipInput.dataset.latitude = "";
+        zipInput.dataset.longitude = "";
+        $("serviceZipStatus").textContent = "ZIP lookup unavailable. Verify city and state manually; exact ZIP matching will still be used.";
+      }
+    }
+    $("serviceZip").addEventListener("change", lookupCustomerZip);
+    $("serviceZip").addEventListener("blur", lookupCustomerZip);
+
+    $("requestForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage("requestMessage");
+
+      const button = $("requestButton");
+      button.disabled = true;
+      button.textContent = "Submitting...";
+
+      try {
+        const { data: sessionData, error: sessionError } =
+          await db.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        const session = sessionData.session;
+
+        if (!session) {
+          throw new Error("Please log in before submitting a request.");
+        }
+
+        const request = {
+          user_id: session.user.id,
+          service_type: $("serviceType").value,
+          property_address: $("propertyAddress").value.trim(),
+          service_city: $("serviceCity").value.trim(),
+          service_state: $("serviceState").value.trim().toUpperCase(),
+          service_zip_code: $("serviceZip").value.trim(),
+          service_latitude: Number($("serviceZip").dataset.latitude) || null,
+          service_longitude: Number($("serviceZip").dataset.longitude) || null,
+          description: $("description").value.trim(),
+          preferred_time: $("preferredTime").value || null
+        };
+
+        if (!request.service_type || !request.property_address || !request.service_city ||
+            !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code) ||
+            !request.description) {
+          throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code and description.");
+        }
+
+        const { error } = await db
+          .from("service_requests")
+          .insert(request);
+
+        if (error) throw error;
+
+        $("requestForm").reset();
+
+        showMessage(
+          "requestMessage",
+          "Your service request has been submitted successfully.",
+          "success"
+        );
+
+        await loadRequests();
+
+      } catch (error) {
+        showMessage(
+          "requestMessage",
+          error.message || "Unable to submit your request. Please try again.",
+          "error"
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Submit Request";
+      }
+    });
+
+    async function openCustomerConversation(leadId, panel) {
+      panel.replaceChildren();
+      const status = document.createElement("p");
+      status.className = "customer-chat-status"; status.textContent = "Loading conversation…";
+      panel.appendChild(status);
+      try {
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        const session = sessionData.session;
+        if (!session) throw new Error("Please log in again to open this conversation.");
+
+        const { data: conversation, error: conversationError } = await db
+          .from("lead_conversations")
+          .select("id")
+          .eq("lead_id", leadId)
+          .maybeSingle();
+        if (conversationError) throw conversationError;
+        if (!conversation?.id) {
+          status.textContent = "The contractor conversation has not been opened yet. Please check again after the contractor starts the chat.";
+          return;
+        }
+
+        const messagesBox = document.createElement("div");
+        messagesBox.className = "customer-chat-messages";
+        const form = document.createElement("form"); form.className = "customer-chat-form";
+        const input = document.createElement("textarea"); input.maxLength = 5000; input.required = true;
+        input.placeholder = "Write your message to the contractor…";
+        const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
+        form.append(input, send);
+        const refresh = document.createElement("button"); refresh.type = "button";
+        refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
+        panel.replaceChildren(messagesBox, form, refresh, status);
+
+        async function refreshMessages() {
+          const { data, error } = await db.from("lead_messages")
+            .select("id,sender_type,message,created_at")
+            .eq("conversation_id", conversation.id)
+            .order("created_at", { ascending: true }).limit(200);
+          if (error) throw error;
+          messagesBox.replaceChildren();
+          if (!data?.length) {
+            const empty = document.createElement("p"); empty.className = "subtitle";
+            empty.textContent = "No messages yet. You can send the first message.";
+            messagesBox.appendChild(empty); return;
+          }
+          data.forEach(item => {
+            const bubble = document.createElement("div");
+            bubble.className = "customer-chat-bubble " + (item.sender_type === "customer" ? "customer" : "contractor");
+            const sender = document.createElement("strong");
+            sender.textContent = item.sender_type === "customer" ? "YOU" : "CONTRACTOR";
+            const body = document.createElement("div"); body.textContent = item.message || "";
+            const time = document.createElement("small");
+            time.textContent = item.created_at ? new Date(item.created_at).toLocaleString() : "";
+            bubble.append(sender, body, time); messagesBox.appendChild(bubble);
+          });
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        }
+
+        form.addEventListener("submit", async event => {
+          event.preventDefault(); const messageText = input.value.trim();
+          if (!messageText) return; send.disabled = true; status.textContent = "Sending…";
+          try {
+            const { error } = await db.from("lead_messages").insert({
+              conversation_id: conversation.id, sender_type: "customer",
+              sender_user_id: session.user.id, message: messageText
+            });
+            if (error) throw error; input.value = ""; status.textContent = "Message sent.";
+            await refreshMessages();
+          } catch (error) { status.textContent = "Could not send message: " + (error.message || "Unknown error"); }
+          finally { send.disabled = false; }
+        });
+        refresh.addEventListener("click", async () => {
+          try { await refreshMessages(); status.textContent = "Messages refreshed."; }
+          catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
+        });
+        await refreshMessages();
+      } catch (error) {
+        status.textContent = "Could not open conversation: " + (error.message || "Unknown error");
+      }
+    }
+
+    async function loadRequests() {
+      const list = $("requestsList");
+      list.textContent = "Loading your requests...";
+
+      try {
+        const { data: sessionData, error: sessionError } =
+          await db.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        const session = sessionData.session;
+
+        if (!session) {
+          list.textContent = "Please log in to view your requests.";
+          return;
+        }
+
+        const { data, error } = await db
+          .from("service_requests")
+          .select("id, lead_id, service_type, description, property_address, preferred_time, status, created_at")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        list.replaceChildren();
+
+        if (!data || data.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "subtitle";
+          empty.textContent = "You have not submitted any service requests yet.";
+          list.appendChild(empty);
+          return;
+        }
+
+        data.forEach((request) => {
+          const card = document.createElement("div");
+          card.className = "request-card";
+
+          const title = document.createElement("strong");
+          title.textContent = request.service_type;
+
+          const status = document.createElement("span");
+          status.className = "status";
+          status.textContent = request.status;
+
+          const address = document.createElement("p");
+          address.textContent = "Address: " + request.property_address;
+
+          const description = document.createElement("p");
+          description.textContent = "Description: " + request.description;
+
+          const date = document.createElement("p");
+          date.textContent = "Submitted: " +
+            new Date(request.created_at).toLocaleString();
+
+          card.append(title, document.createElement("br"), status,
+                      address, description, date);
+
+          if (request.preferred_time) {
+            const preferred = document.createElement("p");
+            preferred.textContent = "Preferred time: " +
+              new Date(request.preferred_time).toLocaleString();
+            card.appendChild(preferred);
+          }
+
+          if (request.lead_id) {
+            const chat = document.createElement("section");
+            chat.className = "customer-chat";
+            const chatTitle = document.createElement("strong");
+            chatTitle.textContent = "Messages with your contractor";
+            const chatIntro = document.createElement("p");
+            chatIntro.className = "subtitle";
+            chatIntro.textContent = "Your private conversation for this service request.";
+            const chatButton = document.createElement("button");
+            chatButton.type = "button"; chatButton.className = "secondary-button";
+            chatButton.textContent = "Open conversation";
+            const chatPanel = document.createElement("div");
+            chatPanel.className = "hidden";
+            chat.append(chatTitle, chatIntro, chatButton, chatPanel);
+            card.appendChild(chat);
+            chatButton.addEventListener("click", async () => {
+              const opening = chatPanel.classList.contains("hidden");
+              chatPanel.classList.toggle("hidden", !opening);
+              chatButton.textContent = opening ? "Close conversation" : "Open conversation";
+              if (opening && !chatPanel.dataset.loaded) {
+                await openCustomerConversation(request.lead_id, chatPanel);
+                chatPanel.dataset.loaded = "1";
+              }
+            });
+          }
+
+          list.appendChild(card);
+        });
+
+      } catch (error) {
+        list.textContent = "Unable to load requests: " + error.message;
+      }
+    }
+
+    $("refreshButton").addEventListener("click", loadRequests);
+
+    $("logoutButton").addEventListener("click", async () => {
+      const { error } = await db.auth.signOut();
+
+      if (error) {
+        showMessage("requestMessage", error.message, "error");
+        return;
+      }
+
+      $("authForm").reset();
+      $("requestForm").reset();
+      setMode(false);
+      await checkSession();
+    });
+
+    checkSession().catch((error) => {
+      showMessage("message", error.message, "error");
+    });
+  </script>
+</body>
+</html>
