@@ -243,6 +243,7 @@
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
       <p id="accountEmail"></p>
+      <section class="request-card"><strong>Purchase notifications</strong><p class="subtitle">Get a background alert as soon as a contractor purchases your request, with a link to your chat.</p><button id="enablePurchasePushButton" type="button" class="secondary-button">Enable purchase notifications</button><p id="purchasePushStatus" class="customer-chat-status" role="status"></p></section>
 
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
@@ -543,6 +544,14 @@
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
         await loadRequests(session);
+        const openLeadId = new URLSearchParams(window.location.search).get("open_lead");
+        if (openLeadId) {
+          const targetRequest = [...$("requestsList").querySelectorAll(".request-card")].find(card => card.querySelector("[data-lead-id]")?.dataset.leadId === openLeadId);
+          const chatButton = targetRequest?.querySelector("button[data-open-chat]");
+          if (chatButton) chatButton.click();
+          else showMessage("requestMessage", "Your contractor purchased the request. Refresh the request list to open the conversation.", "success");
+          history.replaceState({}, "", window.location.pathname);
+        }
       } else {
         $("authView").classList.remove("hidden");
         $("dashboardView").classList.add("hidden");
@@ -867,6 +876,7 @@
           }
 
           if (request.lead_id) {
+            card.dataset.leadId = request.lead_id;
             const chat = document.createElement("section");
             chat.className = "customer-chat";
             const chatTitle = document.createElement("strong");
@@ -877,6 +887,7 @@
             const chatButton = document.createElement("button");
             chatButton.type = "button"; chatButton.className = "secondary-button";
             chatButton.textContent = "Open conversation";
+            chatButton.dataset.openChat = "1";
             const chatPanel = document.createElement("div");
             chatPanel.className = "hidden";
             chat.append(chatTitle, chatIntro, chatButton, chatPanel);
