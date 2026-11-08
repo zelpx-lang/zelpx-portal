@@ -742,13 +742,10 @@
       list.textContent = "Loading your requests...";
 
       try {
-        let session = sessionOverride;
-        if (sessionOverride === undefined) {
-          const { data: sessionData, error: sessionError } =
-            await db.auth.getSession();
-          if (sessionError) throw sessionError;
-          session = sessionData.session;
-        }
+        const { data: sessionData, error: sessionError } =
+          await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        const session = sessionData.session;
 
         if (!session) {
           list.textContent = "Please log in to view your requests.";
