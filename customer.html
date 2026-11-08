@@ -667,6 +667,10 @@
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
         panel.replaceChildren(messagesBox, form, refresh, status);
+        const soundButton = document.createElement("button"); soundButton.type = "button"; soundButton.className = "secondary-button"; soundButton.textContent = "🔊 Enable sound";
+        soundButton.addEventListener("click", async () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) throw new Error("This browser does not support chat audio."); chatSoundContext ||= new AudioCtx(); await chatSoundContext.resume(); playIncomingChatSound(); soundButton.textContent = "🔊 Sound enabled"; status.textContent = "Sound test played. Keep this chat open to hear incoming messages."; } catch (e) { status.textContent = "Could not enable sound: " + (e.message || "Check device sound settings."); } });
+        panel.insertBefore(soundButton, messagesBox);
+
 
         let knownMessageIds = null;
         let chatSoundContext = null;
