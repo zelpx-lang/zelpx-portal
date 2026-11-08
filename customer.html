@@ -677,7 +677,7 @@
             if (chatSoundContext.state === "suspended") chatSoundContext.resume();
             const oscillator = chatSoundContext.createOscillator(); const gain = chatSoundContext.createGain();
             oscillator.type = "sine"; oscillator.frequency.setValueAtTime(880, chatSoundContext.currentTime); oscillator.frequency.setValueAtTime(660, chatSoundContext.currentTime + 0.12);
-            gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.16, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.28);
+            gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.28, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.38);
             oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
           } catch (_) {}
         }
@@ -821,6 +821,7 @@
             card.appendChild(chat);
             chatButton.addEventListener("click", async () => {
               const opening = chatPanel.classList.contains("hidden");
+              if (opening && "Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} }
               chatPanel.classList.toggle("hidden", !opening);
               chatButton.textContent = opening ? "Close conversation" : "Open conversation";
               if (opening && !chatPanel.dataset.loaded) {
