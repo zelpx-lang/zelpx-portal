@@ -6,7 +6,7 @@
     const raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(raw, ch => ch.charCodeAt(0));
   }
-  window.ZELPXEnablePushForConversation = async function(db, conversationId, button) {
+  window.ZELPXEnablePushForConversation = async function(db, conversationId, button, recipientType = "contractor") {
     if (!conversationId || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       throw new Error("Push notifications are not supported by this browser.");
     }
@@ -20,7 +20,7 @@
       const subscription = await registration.pushManager.getSubscription() ||
         await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
       const { error } = await db.functions.invoke("send-chat-push", {
-        body: { action: "subscribe", conversation_id: conversationId, subscription: subscription.toJSON() }
+        body: { action: "subscribe", recipient_type: recipientType, conversation_id: conversationId, subscription: subscription.toJSON() }
       });
       if (error) throw error;
       button.textContent = "🔔 Chat notifications enabled";
