@@ -1,6 +1,29 @@
 (() => {
   "use strict";
   const VAPID_PUBLIC_KEY = "BClS3p1rqgYSceDWth12YNbU-ptxCU_nw-ZWX_zLaZv-2cr8Y7Mn7B97j5szad49e1unuvIvbl_F_E-DE3fG8J4";
+  const PUSH_STATE_KEY = "zelpx_push_enabled_v1";
+  function rememberPushEnabled(kind, id) {
+    try {
+      const state = JSON.parse(localStorage.getItem(PUSH_STATE_KEY) || "{}");
+      state[kind + (id ? ":" + id : "")] = true;
+      localStorage.setItem(PUSH_STATE_KEY, JSON.stringify(state));
+    } catch (_) {}
+  }
+  async function restorePushButton(button, kind, enabledText) {
+    if (!button) return;
+    try {
+      const state = JSON.parse(localStorage.getItem(PUSH_STATE_KEY) || "{}");
+      const remembered = !!state[kind];
+      const permissionGranted = "Notification" in window && Notification.permission === "granted";
+      const registration = ("serviceWorker" in navigator) ? await navigator.serviceWorker.getRegistration("/") : null;
+      const subscription = registration && await registration.pushManager.getSubscription();
+      if (remembered && permissionGranted && subscription) button.textContent = enabledText;
+    } catch (_) {}
+  }
+  document.addEventListener("DOMContentLoaded", () => {
+    restorePushButton(document.getElementById("enableContractorPushBtn"), "contractor_leads", "🔔 Lead alerts enabled");
+    restorePushButton(document.getElementById("enableAdminPushBtn"), "admin", "🔔 Admin notifications enabled");
+  });
   function urlBase64ToUint8Array(value) {
     const padding = "=".repeat((4 - value.length % 4) % 4);
     const raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
@@ -39,7 +62,7 @@
         body: { action: "contractor_subscribe", subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      if (button) button.textContent = "🔔 Lead alerts enabled";
+      rememberPushEnabled("contractor_leads");\n      if (button) button.textContent = "🔔 Lead alerts enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
@@ -59,7 +82,7 @@
         body: { action: "admin_subscribe", subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      if (button) button.textContent = "🔔 Admin notifications enabled";
+      rememberPushEnabled("admin");\n      if (button) button.textContent = "🔔 Admin notifications enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
@@ -79,7 +102,7 @@
         body: { action: "subscribe", recipient_type: recipientType, conversation_id: conversationId, subscription: subscription.toJSON() }
       });
       if (error) throw error;
-      if (button) button.textContent = "🔔 Chat notifications enabled";
+      rememberPushEnabled("chat:" + recipientType + ":" + conversationId);\n      if (button) button.textContent = "🔔 Chat notifications enabled";
       return true;
     } finally { if (button) button.disabled = false; }
   };
