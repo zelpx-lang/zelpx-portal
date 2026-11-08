@@ -513,7 +513,9 @@
       });
       // Quietly initialize sound and push while the contractor opens the chat.
       try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
-      // Push permission must be requested from an explicit user tap; the chat button above handles enrollment.
+      // Refresh an already-authorized subscription on every chat open; never prompt without a user tap.
+      try { if (Notification.permission === "granted" && typeof window.ZELPXRefreshPushForConversation === "function") await window.ZELPXRefreshPushForConversation(db, conversationId, "contractor"); }
+      catch (e) { pushStatus.textContent = "Notifications need attention: " + (e.message || "subscription refresh failed"); pushStatus.style.color = "#b42318"; }
       await refreshMessages();
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
