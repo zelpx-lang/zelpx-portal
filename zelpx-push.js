@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const VAPID_PUBLIC_KEY = "BKVLenWuqBhJx4Na2HXZg1tT6m3EJT-fD5lZf_Mtpm_42cr8Y7Mn7B97j5szad49e1unuvIvbl_F_E-DE3fG8J4";
+  const VAPID_PUBLIC_KEY = "BClS3p1rqgYSceDWth12YNbU-ptxCU_nw-ZWX_zLaZv-2cr8Y7Mn7B97j5szad49e1unuvIvbl_F_E-DE3fG8J4";
   function urlBase64ToUint8Array(value) {
     const padding = "=".repeat((4 - value.length % 4) % 4);
     const raw = atob((value + padding).replace(/-/g, "+").replace(/_/g, "/"));
