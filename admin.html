@@ -471,6 +471,14 @@
         } catch (e) { status.textContent = "Could not send message: " + e.message; } finally { send.disabled = false; }
       });
       await refreshMessages();
+      db.channel("contractor-chat-" + conversationId)
+        .on("postgres_changes", {
+          event: "INSERT", schema: "public", table: "lead_messages",
+          filter: "conversation_id=eq." + conversationId
+        }, payload => {
+          if (payload.new && payload.new.sender_user_id !== currentUser.id) refreshMessages().catch(console.error);
+        })
+        .subscribe();
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
       panel.append(refreshButton);
@@ -675,6 +683,14 @@
         }
         card.append(thread); list.append(card);
       });
+      if (window.zelpxAdminChatRealtime) db.removeChannel(window.zelpxAdminChatRealtime);
+      window.zelpxAdminChatRealtime = db.channel("admin-all-chat-messages")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "lead_messages" }, () => {
+          if (!window.zelpxAdminChatRefreshQueued) {
+            window.zelpxAdminChatRefreshQueued = true;
+            setTimeout(() => { window.zelpxAdminChatRefreshQueued = false; loadAdminChats(); }, 350);
+          }
+        }).subscribe();
     } catch (e) {
       list.textContent = "Could not load conversations: " + (e.message || "Unknown error");
       message("adminChatsMessage", "Check the administrator SELECT policies for lead_conversations and lead_messages. " + (e.message || ""), "error");

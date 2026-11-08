@@ -670,6 +670,15 @@
           catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
         });
         await refreshMessages();
+        const realtimeChannel = db.channel("customer-chat-" + conversation.id)
+          .on("postgres_changes", {
+            event: "INSERT", schema: "public", table: "lead_messages",
+            filter: "conversation_id=eq." + conversation.id
+          }, payload => {
+            if (payload.new && payload.new.sender_user_id !== session.user.id) refreshMessages().catch(console.error);
+          })
+          .subscribe();
+        panel.dataset.realtimeChannel = "customer-chat-" + conversation.id;
       } catch (error) {
         status.textContent = "Could not open conversation: " + (error.message || "Unknown error");
       }
