@@ -720,7 +720,6 @@
             });
             if (error) throw error; input.value = ""; status.textContent = "Message sent.";
             await refreshMessages();
-        const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
           } catch (error) { status.textContent = "Could not send message: " + (error.message || "Unknown error"); }
           finally { send.disabled = false; }
         });
@@ -728,7 +727,9 @@
           try { await refreshMessages(); status.textContent = "Messages refreshed."; }
           catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
         });
+        panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
         await refreshMessages();
+        const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
       } catch (error) {
         status.textContent = "Could not open conversation: " + (error.message || "Unknown error");
       }
