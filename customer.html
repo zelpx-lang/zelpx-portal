@@ -737,7 +737,9 @@
         panel.addEventListener("click", () => { try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx && !chatSoundContext) chatSoundContext = new AudioCtx(); if (chatSoundContext?.state === "suspended") chatSoundContext.resume(); } catch (_) {} }, { once: true });
         // Quietly initialize sound and push while the customer opens the chat.
         try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
-        // Push permission must be requested from an explicit user tap; the chat button above handles enrollment.
+        // Refresh an already-authorized subscription on every chat open; never prompt without a user tap.
+        try { if (Notification.permission === "granted" && typeof window.ZELPXRefreshPushForConversation === "function") await window.ZELPXRefreshPushForConversation(db, conversation.id, "customer"); }
+        catch (e) { pushStatus.textContent = "Notifications need attention: " + (e.message || "subscription refresh failed"); pushStatus.style.color = "#b42318"; }
         await refreshMessages();
         const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.offsetParent === null) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
       } catch (error) {
