@@ -370,14 +370,14 @@
 
       try {
         if (isLogin) {
-          const { error } = await db.auth.signInWithPassword({
-            email,
-            password
-          });
-
+          const { data, error } = await db.auth.signInWithPassword({ email, password });
           if (error) throw error;
-
-          await checkSession();
+          if (!data?.session || !data?.user) {
+            throw new Error("Login was accepted but no active session was returned. Please try again.");
+          }
+          // Use the session returned by signInWithPassword directly. This avoids
+          // immediately re-reading a potentially stale browser session.
+          await checkSession(data.session);
         } else {
           const fullName = $("fullName").value.trim();
           const phone = $("phone").value.trim();
@@ -482,12 +482,13 @@
       }
     });
 
-    async function checkSession() {
-      const { data, error } = await db.auth.getSession();
-
-      if (error) throw error;
-
-      const session = data.session;
+    async function checkSession(sessionOverride = undefined) {
+      let session = sessionOverride;
+      if (sessionOverride === undefined) {
+        const { data, error } = await db.auth.getSession();
+        if (error) throw error;
+        session = data.session;
+      }
 
       if (session) {
         $("authView").classList.add("hidden");
@@ -778,7 +779,8 @@
     $("refreshButton").addEventListener("click", loadRequests);
 
     $("logoutButton").addEventListener("click", async () => {
-      const { error } = await db.auth.signOut();
+      // Sign out only this browser session; do not revoke other active sessions.
+      const { error } = await db.auth.signOut({ scope: "local" });
 
       if (error) {
         showMessage("requestMessage", error.message, "error");
@@ -792,7 +794,7 @@
     });
 
     checkSession().catch((error) => {
-      showMessage("message", error.message, "error");
+      showMessage("message", error.message || "Could not restore your customer session. Please log in again.", "error");
     });
   </script>
   <script src="/zelpx-push.js"></script>
