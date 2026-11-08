@@ -51,6 +51,27 @@
       applicationServerKey: expectedKey
     });
   }
+  window.ZELPXEnableCustomerPurchasePush = async function(db, button) {
+    if (!( "serviceWorker" in navigator) || !( "PushManager" in window) || !( "Notification" in window)) {
+      throw new Error("Push notifications are not supported by this browser.");
+    }
+    if (button) button.disabled = true;
+    try {
+      const registration = await navigator.serviceWorker.register("/zelpx-sw.js", { scope: "/" });
+      if (Notification.permission !== "granted") {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") throw new Error("Allow notifications for this site in browser settings, then try again.");
+      }
+      const subscription = await getCurrentVapidSubscription(registration);
+      const { error } = await db.functions.invoke("send-chat-push", {
+        body: { action: "customer_purchase_subscribe", subscription: subscription.toJSON() }
+      });
+      if (error) throw error;
+      rememberPushEnabled("customer_purchases");
+      if (button) button.textContent = "✓ Purchase notifications enabled";
+      return true;
+    } finally { if (button) button.disabled = false; }
+  };
   window.ZELPXEnableContractorLeadPush = async function(db, button) {
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       throw new Error("Push notifications are not supported by this browser.");
