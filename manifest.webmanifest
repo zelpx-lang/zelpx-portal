@@ -1,0 +1,24 @@
+{
+  "id": "/",
+  "name": "ZELPX",
+  "short_name": "ZELPX",
+  "description": "ZELPX marketplace for customers and contractors",
+  "start_url": "/?source=android-app",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#f3f6fa",
+  "theme_color": "#10243a",
+  "icons": [
+    {
+      "src": "/zelpx-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
