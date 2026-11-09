@@ -13,7 +13,7 @@
   "backgroundColor": "#f3f6fa",
   "enableNotifications": true,
   "startUrl": "/customer",
-  "iconUrl": "https://app.zelpx.com/icons/zelpx-customer-512.svg",
+  "iconUrl": "https://app.zelpx.com/icons/zelpx-512.svg",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
