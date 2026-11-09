@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: zelpx-android-twa-v2
+  group: zelpx-android-twa-v3
   cancel-in-progress: false
 jobs:
   build:
