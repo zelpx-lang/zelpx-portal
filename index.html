@@ -701,7 +701,7 @@
     // behind the existing get_purchased_lead_contact RPC and is not exposed by this query.
     const purchasedLeadIds = [...new Set(purchases.map(item => item.lead_id).filter(Boolean))];
     const { data: serviceRows, error: serviceRowsError } = purchasedLeadIds.length
-      ? await db.from("leads").select("id,service_category,description,zip_code,urgency").in("id", purchasedLeadIds)
+      ? await db.from("leads").select("id,service_category,description,urgency").in("id", purchasedLeadIds)
       : { data: [], error: null };
     if (serviceRowsError) console.warn("Could not load purchased service details:", serviceRowsError.message);
     const servicesByLeadId = new Map((serviceRows || []).map(lead => [lead.id, lead]));
@@ -724,7 +724,6 @@
         const serviceMeta = document.createElement("p");
         serviceMeta.className = "muted";
         const metaParts = [];
-        if (service.zip_code) metaParts.push("ZIP: " + service.zip_code);
         if (service.urgency) metaParts.push("Urgency: " + service.urgency);
         serviceMeta.textContent = metaParts.join(" · ");
         if (metaParts.length) serviceDetails.append(serviceMeta);
