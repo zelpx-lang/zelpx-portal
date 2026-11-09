@@ -72,7 +72,9 @@ jobs:
           # Bubblewrap defaults these prompts to installing a private SDK/JDK,
           # which then fails because its separate SDK licenses are not accepted.
           set +o pipefail
-          { printf 'n\nn\n'; yes ''; } | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
+          # Bubblewrap asks for the existing JDK and Android SDK paths.
+          # setup-java exports JAVA_HOME; setup-android exports ANDROID_HOME.
+          { printf '%s\n%s\n' "$JAVA_HOME" "$ANDROID_HOME"; yes ''; } | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
