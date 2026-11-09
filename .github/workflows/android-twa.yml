@@ -6,10 +6,12 @@ on:
       - main
     paths:
       - .github/workflows/android-twa.yml
+      - twa-manifest.json
+      - icons/**
 permissions:
   contents: read
 concurrency:
-  group: zelpx-android-twa-v3
+  group: zelpx-android-twa-v4
   cancel-in-progress: false
 jobs:
   build:
