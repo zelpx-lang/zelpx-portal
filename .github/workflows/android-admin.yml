@@ -1,0 +1,99 @@
+name: Build ZELPX Admin Android
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/android-admin.yml
+      - twa-admin-manifest.json
+permissions:
+  contents: read
+concurrency:
+  group: zelpx-admin-android
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo 'Missing ANDROID_KEYSTORE_BASE64'; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo 'Missing ANDROID_KEYSTORE_PASSWORD'; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo 'Missing ANDROID_KEY_PASSWORD'; exit 1; }
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Bubblewrap
+        run: npm install --global @bubblewrap/cli
+      - name: Restore upload keystore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p android-admin
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android-admin/android-keystore
+          cp android-admin/android-keystore android-admin/android.keystore
+          chmod 600 android-admin/android-keystore android-admin/android.keystore
+          keytool -list -keystore android-admin/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
+      - name: Configure Bubblewrap toolchain
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.bubblewrap"
+          printf '%s\n' "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > "$HOME/.bubblewrap/config.json"
+          test -x "$JAVA_HOME/bin/java"
+          if [ ! -e "$ANDROID_HOME/tools" ]; then
+            ln -s "$ANDROID_HOME/cmdline-tools/latest" "$ANDROID_HOME/tools"
+          fi
+          test -x "$ANDROID_HOME/tools/bin/sdkmanager"
+      - name: Initialize admin TWA project
+        shell: bash
+        run: |
+          set +o pipefail
+          yes '' | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android-admin
+      - name: Apply ZELPX Admin settings
+        working-directory: android-admin
+        run: |
+          cp ../twa-admin-manifest.json ./twa-manifest.json
+          cp ./android.keystore ./android-keystore
+          bubblewrap update --skipVersionUpgrade
+      - name: Build signed admin APK and AAB
+        working-directory: android-admin
+        run: yes '' | bubblewrap build
+      - name: Upload admin release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelpx-admin-android-${{ github.run_number }}
+          path: |
+            android-admin/app-release-bundle.aab
+            android-admin/app-release-signed.apk
+          if-no-files-found: error
+          retention-days: 14
