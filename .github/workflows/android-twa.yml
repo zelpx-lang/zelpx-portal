@@ -68,7 +68,11 @@ jobs:
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          yes '' | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
+          # Use the JDK and Android SDK already installed by the workflow.
+          # Bubblewrap defaults these prompts to installing a private SDK/JDK,
+          # which then fails because its separate SDK licenses are not accepted.
+          set +o pipefail
+          { printf 'n\nn\n'; yes ''; } | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
