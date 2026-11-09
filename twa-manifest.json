@@ -24,15 +24,29 @@
   "shortcuts": [
     {
       "name": "Customer Portal",
+      "short_name": "Customer",
       "url": "/customer",
-      "chosenIconUrl": "https://app.zelpx.com/icons/zelpx-192.svg",
-      "shortName": "Customer"
+      "icons": [
+        {
+          "src": "https://app.zelpx.com/icons/zelpx-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ]
     },
     {
       "name": "Contractor Portal",
+      "short_name": "Contractor",
       "url": "/",
-      "chosenIconUrl": "https://app.zelpx.com/icons/zelpx-192.svg",
-      "shortName": "Contractor"
+      "icons": [
+        {
+          "src": "https://app.zelpx.com/icons/zelpx-192.svg",
+          "sizes": "192x192",
+          "type": "image/svg+xml",
+          "purpose": "any"
+        }
+      ]
     }
   ],
   "generatorApp": "bubblewrap",
