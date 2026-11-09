@@ -42,7 +42,11 @@ jobs:
           packages: platform-tools
       - name: Accept Android SDK licenses
         shell: bash
-        run: yes | sdkmanager --licenses
+        run: |
+          # sdkmanager exits after accepting all licenses; yes then receives SIGPIPE.
+          # Ignore the yes process' expected broken pipe and preserve sdkmanager's exit code.
+          set +o pipefail
+          yes | sdkmanager --licenses
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
