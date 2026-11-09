@@ -1,12 +1,6 @@
 name: Build ZELPX Android TWA
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - twa-manifest.json
-      - .github/workflows/android-twa.yml
-    branches:
-      - android/google-play-pwa-foundation
 permissions:
   contents: read
 concurrency:
