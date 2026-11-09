@@ -25,12 +25,14 @@
     {
       "name": "Customer Portal",
       "short_name": "Customer",
-      "url": "/customer"
+      "url": "/customer",
+      "chosenIconUrl": "https://app.zelpx.com/icons/zelpx-192.svg"
     },
     {
       "name": "Contractor Portal",
       "short_name": "Contractor",
-      "url": "/"
+      "url": "/",
+      "chosenIconUrl": "https://app.zelpx.com/icons/zelpx-192.svg"
     }
   ],
   "generatorApp": "bubblewrap",
