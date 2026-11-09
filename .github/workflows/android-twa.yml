@@ -1,6 +1,11 @@
 name: Build ZELPX Android TWA
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/android-twa.yml
 permissions:
   contents: read
 concurrency:
