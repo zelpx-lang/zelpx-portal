@@ -696,10 +696,45 @@
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
     const purchases = data || []; $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
+
+    // Load only the public service fields for purchased leads. Customer contact remains
+    // behind the existing get_purchased_lead_contact RPC and is not exposed by this query.
+    const purchasedLeadIds = [...new Set(purchases.map(item => item.lead_id).filter(Boolean))];
+    const { data: serviceRows, error: serviceRowsError } = purchasedLeadIds.length
+      ? await db.from("leads").select("id,service_category,description,zip_code,urgency").in("id", purchasedLeadIds)
+      : { data: [], error: null };
+    if (serviceRowsError) console.warn("Could not load purchased service details:", serviceRowsError.message);
+    const servicesByLeadId = new Map((serviceRows || []).map(lead => [lead.id, lead]));
+
     for (const item of purchases) {
+      const service = servicesByLeadId.get(item.lead_id);
       const card = document.createElement("article"); card.className = "lead";
-      const heading = document.createElement("h3"); heading.textContent = "Purchased lead"; card.append(heading);
-      const info = document.createElement("p"); info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); card.append(info);
+      const heading = document.createElement("h3");
+      heading.textContent = service?.service_category || "Purchased service";
+      card.append(heading);
+      const info = document.createElement("p");
+      info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString();
+      card.append(info);
+      const serviceDetails = document.createElement("div");
+      if (service) {
+        const description = document.createElement("p");
+        description.style.whiteSpace = "pre-wrap";
+        description.textContent = service.description || "No service description provided.";
+        serviceDetails.append(description);
+        const serviceMeta = document.createElement("p");
+        serviceMeta.className = "muted";
+        const metaParts = [];
+        if (service.zip_code) metaParts.push("ZIP: " + service.zip_code);
+        if (service.urgency) metaParts.push("Urgency: " + service.urgency);
+        serviceMeta.textContent = metaParts.join(" · ");
+        if (metaParts.length) serviceDetails.append(serviceMeta);
+      } else {
+        const unavailable = document.createElement("p");
+        unavailable.className = "muted";
+        unavailable.textContent = "Service details are temporarily unavailable. Refresh the page or contact ZELPX support.";
+        serviceDetails.append(unavailable);
+      }
+      card.append(serviceDetails);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
       const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
