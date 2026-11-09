@@ -7,7 +7,6 @@ on:
     paths:
       - .github/workflows/android-twa.yml
       - twa-manifest.json
-      - twa-manifest.json
       - icons/**
 permissions:
   contents: read
@@ -77,7 +76,12 @@ jobs:
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
           test -x "$JAVA_HOME/bin/java"
-          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/tools/bin/sdkmanager"
+          # Bubblewrap expects the legacy SDK layout: tools/bin/sdkmanager.
+          # GitHub's setup-android installs the modern cmdline-tools/latest layout.
+          if [ ! -e "$ANDROID_HOME/tools" ]; then
+            ln -s "$ANDROID_HOME/cmdline-tools/latest" "$ANDROID_HOME/tools"
+          fi
+          test -x "$ANDROID_HOME/tools/bin/sdkmanager"
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
