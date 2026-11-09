@@ -1,8 +1,8 @@
 {
   "packageId": "com.zelpx.app",
   "host": "app.zelpx.com",
-  "name": "ZELPX",
-  "launcherName": "ZELPX",
+  "name": "ZELPX Contractor",
+  "launcherName": "ZELPX Contractor",
   "display": "standalone",
   "themeColor": "#10243a",
   "themeColorDark": "#10243a",
