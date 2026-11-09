@@ -50,7 +50,8 @@ jobs:
         run: |
           mkdir -p android
           echo "$KEYSTORE_B64" | base64 --decode > android/android.keystore
-          chmod 600 android/android.keystore
+          cp android/android.keystore android/android-keystore
+          chmod 600 android/android.keystore android/android-keystore
           keytool -list -keystore android/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
       - name: Generate TWA project from the live PWA manifest
         shell: bash
@@ -64,7 +65,7 @@ jobs:
           bubblewrap update --skipVersionUpgrade
       - name: Build signed Android App Bundle
         working-directory: android
-        run: bubblewrap build
+        run: yes "" | bubblewrap build
       - name: Upload AAB and APK artifacts
         uses: actions/upload-artifact@v4
         with:
