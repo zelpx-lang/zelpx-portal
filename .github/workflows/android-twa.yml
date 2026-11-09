@@ -1,0 +1,71 @@
+name: Build ZELPX Android TWA
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: zelpx-android-twa
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo 'Missing ANDROID_KEYSTORE_BASE64'; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo 'Missing ANDROID_KEYSTORE_PASSWORD'; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo 'Missing ANDROID_KEY_PASSWORD'; exit 1; }
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Bubblewrap
+        run: npm install --global @bubblewrap/cli
+      - name: Restore upload keystore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p android
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android/android-keystore
+          cp android/android-keystore android/android.keystore
+          chmod 600 android/android-keystore android/android.keystore
+          keytool -list -keystore android/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
+      - name: Initialize TWA project from production manifest
+        shell: bash
+        run: |
+          yes '' | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
+      - name: Apply fixed ZELPX TWA settings
+        working-directory: android
+        run: |
+          cp ../twa-manifest.json ./twa-manifest.json
+          cp ./android.keystore ./android-keystore
+          bubblewrap update --skipVersionUpgrade
+      - name: Build signed APK and AAB
+        working-directory: android
+        run: yes '' | bubblewrap build
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelpx-android-${{ github.run_number }}
+          path: |
+            android/app-release-bundle.aab
+            android/app-release-signed.apk
+          if-no-files-found: error
+          retention-days: 14
