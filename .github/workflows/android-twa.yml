@@ -65,16 +65,22 @@ jobs:
           cp android/android-keystore android/android.keystore
           chmod 600 android/android-keystore android/android.keystore
           keytool -list -keystore android/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
+      - name: Configure Bubblewrap toolchain
+        shell: bash
+        run: |
+          # Avoid Bubblewrap's first-run interactive JDK/SDK setup entirely.
+          # Its config file must exist before "bubblewrap init" starts.
+          mkdir -p "$HOME/.bubblewrap"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          cat "$HOME/.bubblewrap/config.json"
+          test -x "$JAVA_HOME/bin/java"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" || test -x "$ANDROID_HOME/tools/bin/sdkmanager"
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          # Use the JDK and Android SDK already installed by the workflow.
-          # Bubblewrap defaults these prompts to installing a private SDK/JDK,
-          # which then fails because its separate SDK licenses are not accepted.
+          # Confirm manifest defaults while preserving Bubblewrap's preconfigured SDK paths.
           set +o pipefail
-          # Bubblewrap asks for the existing JDK and Android SDK paths.
-          # setup-java exports JAVA_HOME; setup-android exports ANDROID_HOME.
-          { printf '%s\n%s\n' "$JAVA_HOME" "$ANDROID_HOME"; yes ''; } | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
+          yes '' | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
