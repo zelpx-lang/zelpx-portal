@@ -839,6 +839,9 @@
         .select("id,user_id,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
+      const { data: serviceCategories, error: categoriesError } = await db.from("service_categories")
+        .select("name").eq("is_active", true).order("name");
+      if (categoriesError) throw categoriesError;
 
       const userIds = [...new Set((requests || []).map(r => r.user_id).filter(Boolean))];
       let profilesById = {};
@@ -895,6 +898,19 @@
         } else {
           const form = document.createElement("div");
           const fields = document.createElement("div"); fields.className = "grid";
+          const categoryWrap = document.createElement("div"), categoryLabel = document.createElement("label"), category = document.createElement("select");
+          categoryLabel.textContent = "Service category";
+          const categoryPlaceholder = document.createElement("option");
+          categoryPlaceholder.value = ""; categoryPlaceholder.textContent = "Choose a service";
+          category.append(categoryPlaceholder);
+          (serviceCategories || []).forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.name; option.textContent = item.name;
+            category.append(option);
+          });
+          const matchingCategory = [...category.options].find(option => option.value.toLowerCase() === String(request.service_type || "").toLowerCase());
+          if (matchingCategory) category.value = matchingCategory.value;
+          categoryLabel.append(category); categoryWrap.append(categoryLabel);
           const zipWrap = document.createElement("div"), zipLabel = document.createElement("label"), zip = document.createElement("input");
           zipLabel.textContent = "Verified ZIP code"; zip.maxLength = 10; zip.inputMode = "numeric"; zip.placeholder = "97201"; zip.value = "";
           zipLabel.append(zip); zipWrap.append(zipLabel);
@@ -914,19 +930,20 @@
           zipWrap.append(zipLookupNote);
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
-          fields.append(zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
+          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
           publish.addEventListener("click", async () => {
-            const zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
+            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
+            if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
             if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
             if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) { feedback.textContent = "Enter the verified city and 2-letter state code."; feedback.className = "message error"; return; }
             if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
               feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places."; feedback.className = "message error"; return;
             }
             const customerName = profile.full_name || "Unavailable";
-            if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + (request.service_type || "Home service") +
+            if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + categoryValue +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
               "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
               "\n\nOnly continue after verifying the customer's details.")) return;
@@ -934,7 +951,7 @@
             try {
               const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
                 p_request_id: request.id, p_zip_code: zipValue, p_city: cityValue, p_state: stateValue,
-                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100)
+                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue
               });
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
