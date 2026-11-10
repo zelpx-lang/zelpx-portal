@@ -648,6 +648,25 @@
       const note = document.createElement("p"); note.className = "subtitle"; note.textContent = "Answer what you can. You can leave unknown measurements blank and add photos or details below."; panel.append(note);
     }
     $("serviceType").addEventListener("change", renderServiceDetails);
+
+    // Carry the service and ZIP selected on the public homepage into the request form.
+    const landingParams = new URLSearchParams(window.location.search);
+    const landingService = landingParams.get("service");
+    const landingZip = landingParams.get("zip");
+    if (landingService) {
+      const serviceOption = [...$("serviceType").options].find(option =>
+        option.value.toLowerCase() === landingService.toLowerCase() ||
+        option.textContent.toLowerCase() === landingService.toLowerCase()
+      );
+      if (serviceOption) {
+        $("serviceType").value = serviceOption.value;
+        $("serviceType").dispatchEvent(new Event("change"));
+      }
+    }
+    if (landingZip && /^[0-9]{5}$/.test(landingZip)) {
+      $("serviceZip").value = landingZip;
+      lookupCustomerZip();
+    }
     function collectServiceDetails() {
       return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
         input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
