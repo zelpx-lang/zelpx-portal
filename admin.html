@@ -417,11 +417,13 @@
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    // Keep the admin dashboard hidden until the server-backed profile role is checked.
+    currentUser = user; hide($("appView")); hide($("topUser")); show($("authView"));
+    $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
-      currentUser = null;
+      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
       hide($("appView")); hide($("topUser")); show($("authView"));
       message("authMessage", "This account does not have administrator access.", "error");
       return;
@@ -430,6 +432,7 @@
       window.location.replace("/admin.html");
       return;
     }
+    hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) { await loadPendingContractors(); await loadAdminLeads(); await loadServiceRequests(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
