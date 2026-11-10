@@ -500,10 +500,9 @@
         </div>
         <p id="serviceZipStatus" class="subtitle">Enter a US ZIP code to look up city, state and approximate location.</p>
 
-        <label for="description">Describe the Service Needed</label>
+        <label for="description">Additional details (optional)</label>
         <textarea id="description"
-                  placeholder="Please describe the issue or work needed..."
-                  required minlength="5"></textarea>
+                  placeholder="Add anything else the contractor should know (optional)..."></textarea>
 
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
@@ -532,6 +531,19 @@
       <div class="request-tools">
         <label class="request-search-label" for="requestSearch">Search requests</label>
         <input id="requestSearch" type="search" placeholder="Try tile, painting, bathroom..." autocomplete="off">
+        <label class="request-search-label" for="requestServiceFilter">Service</label>
+        <select id="requestServiceFilter">
+          <option value="">All services</option>
+        </select>
+        <label class="request-search-label" for="requestStatusFilter">Status</label>
+        <select id="requestStatusFilter">
+          <option value="">All statuses</option>
+          <option value="new">New</option>
+          <option value="pending">Pending</option>
+          <option value="in progress">In progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
         <label class="request-search-label" for="requestSort">Sort by</label>
         <select id="requestSort">
           <option value="newest">Newest first</option>
@@ -881,7 +893,21 @@
         const label = document.createElement("label"); label.textContent = labelText;
         let input;
         if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = "any"; input.placeholder = "Enter amount"; }
-        else if (options === "Describe") { input = document.createElement("textarea"); input.rows = 2; input.placeholder = "Add details"; }
+        else if (options === "Describe") {
+          const presets = {
+            "Appliance/plumbing/electrical changes?": ["No changes", "Plumbing changes", "Electrical changes", "Appliance installation", "Several changes", "Not sure"],
+            "Leak or damage?": ["Active leak", "Missing or damaged shingles", "Storm damage", "Sagging roof", "No visible damage", "Inspection only", "Not sure"],
+            "Describe tasks": ["Furniture assembly", "TV or shelf mounting", "Minor home repairs", "Fixture replacement", "Multiple small jobs", "Other / not sure"],
+            "Stairs/access notes": ["Ground floor / easy access", "One flight of stairs", "Multiple flights of stairs", "Elevator available", "Narrow access", "Other / not sure"],
+            "Describe the service": ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"],
+            "Approximate size or quantity": ["Small job", "Medium job", "Large job", "Several items / areas", "Not sure"]
+          };
+          input = document.createElement("select");
+          const first = document.createElement("option"); first.value = ""; first.textContent = "Choose an option"; input.append(first);
+          (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"]).forEach(value => {
+            const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option);
+          });
+        }
         else { input = document.createElement("select"); const first = document.createElement("option"); first.value = ""; first.textContent = "Select / not sure"; input.append(first); options.split(", ").forEach(value => { const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option); }); }
         input.dataset.jobQuestion = labelText; label.append(input); panel.append(label);
       });
@@ -939,13 +965,13 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: "JOB DETAILS\\n" + collectServiceDetails() + "\\n\\nCUSTOMER DESCRIPTION\\n" + $("description").value.trim(),
+          description: "JOB DETAILS\\n" + collectServiceDetails() + ($("description").value.trim() ? "\\n\\nADDITIONAL CUSTOMER NOTES\\n" + $("description").value.trim() : ""),
           preferred_time: $("preferredTime").value || null
         };
 
         if (!request.service_type || !request.property_address || !request.service_city ||
             !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code) ||
-            !request.description) {
+            !request.service_type) {
           throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code and description.");
         }
 
@@ -1151,6 +1177,8 @@
           card.className = "request-card";
           card.dataset.requestCard = "1";
           card.dataset.createdAt = String(new Date(request.created_at).getTime());
+          card.dataset.serviceType = request.service_type || "";
+          card.dataset.requestStatus = String(request.status || "").toLocaleLowerCase();
 
           const title = document.createElement("strong");
           title.textContent = request.service_type;
@@ -1259,15 +1287,25 @@
     function applyRequestFilters() {
       const list = $("requestsList");
       const query = $("requestSearch").value.trim().toLocaleLowerCase();
+      const serviceFilter = $("requestServiceFilter").value;
+      const statusFilter = $("requestStatusFilter").value;
       const sortOrder = $("requestSort").value;
       const cards = [...list.querySelectorAll("[data-request-card='1']")];
+      const serviceSelect = $("requestServiceFilter");
+      const selectedService = serviceSelect.value;
+      const services = [...new Set(cards.map(card => card.dataset.serviceType).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+      serviceSelect.replaceChildren(new Option("All services", ""));
+      services.forEach(service => serviceSelect.add(new Option(service, service)));
+      serviceSelect.value = services.includes(selectedService) ? selectedService : "";
       cards.sort((a, b) => {
         const difference = Number(a.dataset.createdAt) - Number(b.dataset.createdAt);
         return sortOrder === "oldest" ? difference : -difference;
       });
       cards.forEach(card => {
-        const matches = !query || card.textContent.toLocaleLowerCase().includes(query);
-        card.hidden = !matches;
+        const matchesText = !query || card.textContent.toLocaleLowerCase().includes(query);
+        const matchesService = !serviceFilter || card.dataset.serviceType === serviceFilter;
+        const matchesStatus = !statusFilter || card.dataset.requestStatus.includes(statusFilter);
+        card.hidden = !(matchesText && matchesService && matchesStatus);
         list.appendChild(card);
       });
       const visibleCount = cards.filter(card => !card.hidden).length;
@@ -1289,6 +1327,8 @@
     }
 
     $("requestSearch").addEventListener("input", applyRequestFilters);
+    $("requestServiceFilter").addEventListener("change", applyRequestFilters);
+    $("requestStatusFilter").addEventListener("change", applyRequestFilters);
     $("requestSort").addEventListener("change", applyRequestFilters);
     $("refreshButton").addEventListener("click", loadRequests);
     $("logoutButton").addEventListener("click", async () => {
