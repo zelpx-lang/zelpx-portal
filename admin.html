@@ -288,6 +288,12 @@
 
     <section id="adminPanel" class="card hidden">
       <section class="lead">
+        <h2>Release email for re-registration</h2>
+        <p>Archive the old login for pashka_241@mail.ru, release its email and phone, and keep purchase and conversation history.</p>
+        <div class="actions"><button id="releaseContractorLoginBtn" type="button" class="danger">Release email for re-registration</button></div>
+        <div id="releaseContractorLoginMessage" class="message hidden" role="status" aria-live="polite"></div>
+      </section>
+      <section class="lead">
         <h2>Contractor approvals</h2>
         <p>New contractor accounts stay blocked until an administrator approves them.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
@@ -1115,6 +1121,21 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
+    $("releaseContractorLoginBtn").addEventListener("click", async () => {
+      if (!window.confirm("Release pashka_241@mail.ru and its old phone number for a new contractor registration? The old account will remain blocked and its history will be retained.")) return;
+      const btn = $("releaseContractorLoginBtn");
+      btn.disabled = true; btn.textContent = "Releasing…";
+      try {
+        const { data, error } = await db.functions.invoke("admin-release-contractor-login", { body: {} });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        message("releaseContractorLoginMessage", "Email and phone released. The old account remains blocked; history retained. You can now register again.", "success");
+        btn.textContent = "Email released";
+      } catch (e) {
+        message("releaseContractorLoginMessage", "Could not release email: " + (e.message || "Unknown error"), "error");
+        btn.disabled = false; btn.textContent = "Release email for re-registration";
+      }
+    });
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
