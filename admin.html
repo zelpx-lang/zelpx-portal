@@ -780,28 +780,33 @@
           no.type = "button";
           no.className = "secondary";
           no.textContent = "No";
-          yes.addEventListener("click", async () => {
-            setBusy(yes, true, "Approving…");
+          const finishReview = async (decision, button) => {
+            setBusy(button, true, decision === "approve" ? "Approving…" : "Rejecting…");
+            yes.disabled = true;
             no.disabled = true;
             try {
-              const { error: approveError } = await db.rpc("admin_approve_contractor", { p_contractor_id: contractor.id });
-              if (approveError) throw approveError;
-              message("pendingContractorsMessage", "Contractor approved. They can now sign in.", "success");
+              const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
+                body: { contractor_id: contractor.id, decision }
+              });
+              if (reviewError) throw reviewError;
+              if (data?.error) throw new Error(data.error);
+              const approved = decision === "approve";
+              const statusText = approved
+                ? "Contractor approved. They can now sign in and purchase leads."
+                : "Contractor rejected. Their account remains blocked.";
+              const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
+              message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
             } catch (e) {
-              message("pendingContractorsMessage", "Could not approve contractor: " + (e.message || "Unknown error"), "error");
+              message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
               yes.disabled = false;
               no.disabled = false;
               yes.textContent = "Yes";
+              no.textContent = "No";
             }
-          });
-          no.addEventListener("click", () => {
-            prompt.remove();
-            yes.remove();
-            no.remove();
-            approve.disabled = false;
-            approve.textContent = "Approve contractor";
-          });
+          };
+          yes.addEventListener("click", () => finishReview("approve", yes));
+          no.addEventListener("click", () => finishReview("reject", no));
           approve.disabled = true;
           approve.textContent = "Confirm below";
           actions.append(prompt, yes, no);
