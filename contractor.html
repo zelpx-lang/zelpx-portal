@@ -396,7 +396,15 @@
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
-    try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp(); }
+    try {
+      // Reject administrator accounts server-side before Supabase creates a session.
+      const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
+        body: { email, portal: "contractor" }
+      });
+      if (accessError) throw new Error("Could not verify account permissions. Please try again.");
+      if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the contractor portal.");
+      const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp();
+    }
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   async function signUp() {
