@@ -769,28 +769,40 @@
         const approve = document.createElement("button");
         approve.type = "button";
         approve.textContent = "Approve contractor";
+        approve.textContent = "Review license";
         approve.addEventListener("click", () => {
-          const prompt = document.createElement("p");
-          prompt.textContent = "Approve this contractor? They will be able to sign in to the contractor portal.";
-          prompt.style.fontWeight = "700";
-          const yes = document.createElement("button");
-          yes.type = "button";
-          yes.textContent = "Yes";
-          const no = document.createElement("button");
-          no.type = "button";
-          no.className = "secondary";
-          no.textContent = "No";
-          const finishReview = async (decision, button) => {
-            setBusy(button, true, decision === "approve" ? "Approving…" : "Rejecting…");
-            yes.disabled = true;
-            no.disabled = true;
+          if (actions.querySelector("select[data-contractor-decision]")) return;
+          const decision = document.createElement("select");
+          decision.dataset.contractorDecision = "true";
+          decision.setAttribute("aria-label", "Choose contractor license review decision");
+          decision.style.marginTop = "10px";
+          const placeholder = document.createElement("option");
+          placeholder.value = "";
+          placeholder.textContent = "Choose decision…";
+          placeholder.selected = true;
+          placeholder.disabled = true;
+          const yesOption = document.createElement("option");
+          yesOption.value = "approve";
+          yesOption.textContent = "Yes — license verified, approve registration";
+          const noOption = document.createElement("option");
+          noOption.value = "reject";
+          noOption.textContent = "No — license not verified, reject registration";
+          decision.append(placeholder, yesOption, noOption);
+          actions.append(decision);
+          decision.focus();
+          decision.addEventListener("change", async () => {
+            const choice = decision.value;
+            if (!choice) return;
+            approve.disabled = true;
+            decision.disabled = true;
+            setBusy(approve, true, choice === "approve" ? "Approving…" : "Rejecting…");
             try {
               const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
-                body: { contractor_id: contractor.id, decision }
+                body: { contractor_id: contractor.id, decision: choice }
               });
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
-              const approved = decision === "approve";
+              const approved = choice === "approve";
               const statusText = approved
                 ? "Contractor approved. They can now sign in and purchase leads."
                 : "Contractor rejected. Their account remains blocked.";
@@ -799,17 +811,12 @@
               await loadPendingContractors();
             } catch (e) {
               message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
-              yes.disabled = false;
-              no.disabled = false;
-              yes.textContent = "Yes";
-              no.textContent = "No";
+              decision.disabled = false;
+              decision.value = "";
+              approve.disabled = false;
+              approve.textContent = "Review license";
             }
-          };
-          yes.addEventListener("click", () => finishReview("approve", yes));
-          no.addEventListener("click", () => finishReview("reject", no));
-          approve.disabled = true;
-          approve.textContent = "Confirm below";
-          actions.append(prompt, yes, no);
+          });
         });
         actions.append(approve);
         card.append(actions);
