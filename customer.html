@@ -363,6 +363,34 @@
       .top-logout-button { min-width:88px; padding:9px 13px; font-size:13px; }
       .profile-panel { padding:15px; }
     }
+    .requests-heading h2 { text-align:left; margin:26px 0 4px; }
+    .requests-heading .subtitle { text-align:left; margin:0 0 14px; }
+    .request-tools {
+      display:grid; grid-template-columns:minmax(0,1fr) 170px;
+      gap:8px 12px; align-items:end; margin:14px 0 8px;
+      padding:14px; border:1px solid var(--customer-line);
+      border-radius:16px; background:#faf7f2;
+    }
+    .request-search-label { grid-column:auto; margin:0 0 -4px; }
+    .request-tools input { grid-column:1; }
+    .request-tools label[for="requestSort"] { grid-column:2; grid-row:1; }
+    .request-tools select { grid-column:2; grid-row:2; }
+    .request-results-count { color:var(--customer-muted); font-size:13px; margin:8px 2px 12px; }
+    .request-actions { display:flex; justify-content:flex-end; margin-top:14px; }
+    .request-delete-button {
+      width:auto; min-height:38px; margin:0; padding:9px 15px;
+      color:#9f2d20; background:#fff; border:1px solid #f0c8c2;
+      box-shadow:none; font-size:13px;
+    }
+    .request-delete-button:hover:not(:disabled) { color:#842018; background:#fff2ef; box-shadow:none; }
+    @media(max-width:600px) {
+      .request-tools { grid-template-columns:1fr; }
+      .request-search-label, .request-tools input,
+      .request-tools label[for="requestSort"], .request-tools select {
+        grid-column:1; grid-row:auto;
+      }
+    }
+
     @media(prefers-reduced-motion:reduce) {
       html { scroll-behavior:auto; }
       *,*::before,*::after { transition-duration:.01ms!important; }
@@ -495,7 +523,22 @@
         <p id="customerBackgroundChatAlertsStatus" class="subtitle">Notification status: checking browser permission…</p>
       </section>
 
-      <h2>My Service Requests</h2>
+      <div class="requests-heading">
+        <div>
+          <h2>My Service Requests</h2>
+          <p class="subtitle">Search and manage your past and current requests.</p>
+        </div>
+      </div>
+      <div class="request-tools">
+        <label class="request-search-label" for="requestSearch">Search requests</label>
+        <input id="requestSearch" type="search" placeholder="Try tile, painting, bathroom..." autocomplete="off">
+        <label class="request-search-label" for="requestSort">Sort by</label>
+        <select id="requestSort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
+      <div id="requestResultsCount" class="request-results-count" aria-live="polite"></div>
       <div id="requestsList">
         <p class="subtitle">Loading your requests...</p>
       </div>
@@ -1106,6 +1149,8 @@
         data.forEach((request) => {
           const card = document.createElement("div");
           card.className = "request-card";
+          card.dataset.requestCard = "1";
+          card.dataset.createdAt = String(new Date(request.created_at).getTime());
 
           const title = document.createElement("strong");
           title.textContent = request.service_type;
@@ -1133,6 +1178,38 @@
               new Date(request.preferred_time).toLocaleString();
             card.appendChild(preferred);
           }
+
+          const actions = document.createElement("div");
+          actions.className = "request-actions";
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "request-delete-button";
+          deleteButton.textContent = "Delete request";
+          deleteButton.addEventListener("click", async () => {
+            const confirmed = window.confirm("Delete this service request? This cannot be undone.");
+            if (!confirmed) return;
+            deleteButton.disabled = true;
+            deleteButton.textContent = "Deleting...";
+            try {
+              const { data: deletedRows, error: deleteError } = await db
+                .from("service_requests")
+                .delete()
+                .eq("id", request.id)
+                .eq("user_id", session.user.id)
+                .select("id");
+              if (deleteError) throw deleteError;
+              if (!deletedRows || deletedRows.length === 0) {
+                throw new Error("The request was not deleted. Your account may not have permission to delete requests.");
+              }
+              await loadRequests();
+            } catch (deleteError) {
+              window.alert(deleteError.message || "Could not delete this request. Please try again.");
+              deleteButton.disabled = false;
+              deleteButton.textContent = "Delete request";
+            }
+          });
+          actions.appendChild(deleteButton);
+          card.appendChild(actions);
 
           if (request.lead_id) {
             card.dataset.leadId = request.lead_id;
@@ -1172,12 +1249,47 @@
 
           list.appendChild(card);
         });
+        applyRequestFilters();
 
       } catch (error) {
         list.textContent = "Unable to load requests: " + error.message;
       }
     }
 
+    function applyRequestFilters() {
+      const list = $("requestsList");
+      const query = $("requestSearch").value.trim().toLocaleLowerCase();
+      const sortOrder = $("requestSort").value;
+      const cards = [...list.querySelectorAll("[data-request-card='1']")];
+      cards.sort((a, b) => {
+        const difference = Number(a.dataset.createdAt) - Number(b.dataset.createdAt);
+        return sortOrder === "oldest" ? difference : -difference;
+      });
+      cards.forEach(card => {
+        const matches = !query || card.textContent.toLocaleLowerCase().includes(query);
+        card.hidden = !matches;
+        list.appendChild(card);
+      });
+      const visibleCount = cards.filter(card => !card.hidden).length;
+      $("requestResultsCount").textContent = cards.length
+        ? visibleCount + " of " + cards.length + " requests"
+        : "";
+      let empty = $("requestSearchEmpty");
+      if (!visibleCount && cards.length) {
+        if (!empty) {
+          empty = document.createElement("p");
+          empty.id = "requestSearchEmpty";
+          empty.className = "subtitle";
+          empty.textContent = "No requests match your search. Try another word.";
+          list.appendChild(empty);
+        }
+      } else if (empty) {
+        empty.remove();
+      }
+    }
+
+    $("requestSearch").addEventListener("input", applyRequestFilters);
+    $("requestSort").addEventListener("change", applyRequestFilters);
     $("refreshButton").addEventListener("click", loadRequests);
     $("logoutButton").addEventListener("click", async () => {
       // Sign out only this browser session; do not revoke other active sessions.
