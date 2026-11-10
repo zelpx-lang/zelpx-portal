@@ -399,6 +399,7 @@
                autocomplete="current-password" required minlength="6">
 
         <button id="submitButton" type="submit">Create Account</button>
+        <div id="forgotPasswordRow" class="switch hidden"><a id="forgotPasswordLink" href="/recover.html">Forgot password?</a></div>
       </form>
 
       <div id="message" class="message" role="status"></div>
@@ -559,6 +560,7 @@
       $("submitButton").textContent = isLogin
         ? "Log In"
         : "Create Account";
+      $("forgotPasswordRow").classList.toggle("hidden", !isLogin);
 
       $("switchText").textContent = isLogin
         ? "Don't have an account?"
@@ -568,6 +570,8 @@
         ? "Create Account"
         : "Log In";
     }
+
+    $("forgotPasswordLink").addEventListener("click", (event) => { event.preventDefault(); const email = $("email").value.trim(); if (!email) { showMessage("message", "Enter your email address first.", "error"); return; } window.location.href = "/recover.html?email=" + encodeURIComponent(email); });
 
     $("switchLink").addEventListener("click", (event) => {
       event.preventDefault();
