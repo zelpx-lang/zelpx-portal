@@ -295,6 +295,14 @@
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
+      <section class="lead">
+        <h2>Contractors without a current license</h2>
+        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
+        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
+        <div id="unlicensedContractorsMessage" class="message hidden"></div>
+        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+      </section>
 <section class="lead">
         <h2>Customer service requests</h2>
         <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
@@ -435,7 +443,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadAdminLeads(); await loadServiceRequests(); }
+    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -866,6 +874,58 @@
     }
   }
 
+  async function loadUnlicensedContractors() {
+    if (!isAdmin) return;
+    const list = $("unlicensedContractorsList");
+    list.textContent = "Loading contractors…";
+    clearMessage("unlicensedContractorsMessage");
+    try {
+      const { data: contractors, error } = await db.rpc("admin_list_unlicensed_contractors");
+      if (error) throw error;
+      list.replaceChildren();
+      const count = contractors?.length || 0;
+      const alertBox = $("unlicensedContractorAlert");
+      if (alertBox) {
+        alertBox.className = count ? "message error" : "message hidden";
+        alertBox.textContent = count
+          ? `Attention: ${count} contractor account(s) in the database have no current license.`
+          : "";
+      }
+      if (!count) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No active or pending contractors without a current license.";
+        list.append(empty);
+        return;
+      }
+      contractors.forEach(contractor => {
+        const card = document.createElement("article");
+        card.className = "lead";
+        const title = document.createElement("h3");
+        title.textContent = contractor.company_name || "Contractor company";
+        card.append(title);
+        const details = [
+          ["Email", contractor.email || "Not provided"],
+          ["Status", contractor.verification_status || "Unknown"],
+          ["License", "No current license indicated"],
+          ["Location", [contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
+          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+        ];
+        details.forEach(([label, value]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          card.append(p);
+        });
+        list.append(card);
+      });
+    } catch (e) {
+      list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
+      message("unlicensedContractorsMessage", "Could not load unlicensed contractor records. " + (e.message || ""), "error");
+    }
+  }
+
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadServiceRequests() {
     if (!isAdmin) return;
@@ -1014,7 +1074,7 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadServiceRequests(); loadAdminLeads(); }
+    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadUnlicensedContractors(); loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
@@ -1027,7 +1087,7 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
