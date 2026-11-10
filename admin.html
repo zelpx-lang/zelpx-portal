@@ -287,6 +287,13 @@
     </section>
 
     <section id="adminPanel" class="card hidden">
+      <section class="lead">
+        <h2>Contractor approvals</h2>
+        <p>New contractor accounts stay blocked until an administrator approves them.</p>
+        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
+        <div id="pendingContractorsMessage" class="message hidden"></div>
+        <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
+      </section>
 <section class="lead">
         <h2>Customer service requests</h2>
         <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
@@ -424,7 +431,7 @@
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); }
+    if (isAdmin) { await loadPendingContractors(); await loadAdminLeads(); await loadServiceRequests(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -719,6 +726,69 @@
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
 
+  async function loadPendingContractors() {
+    if (!isAdmin) return;
+    const list = $("pendingContractorsList");
+    list.textContent = "Loading pending contractors…";
+    clearMessage("pendingContractorsMessage");
+    try {
+      const { data: contractors, error } = await db.rpc("admin_list_pending_contractors");
+      if (error) throw error;
+      list.replaceChildren();
+      if (!contractors?.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No contractors are waiting for approval.";
+        list.append(empty);
+        return;
+      }
+      contractors.forEach(contractor => {
+        const card = document.createElement("article");
+        card.className = "lead";
+        const title = document.createElement("h3");
+        title.textContent = contractor.company_name || "Contractor company";
+        card.append(title);
+        const details = [
+          ["Email", contractor.email || "Not provided"],
+          ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
+          ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
+          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+        ];
+        details.forEach(([label, value]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          card.append(p);
+        });
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const approve = document.createElement("button");
+        approve.type = "button";
+        approve.textContent = "Approve contractor";
+        approve.addEventListener("click", async () => {
+          if (!window.confirm("Approve this contractor? They will be able to sign in to the contractor portal.")) return;
+          setBusy(approve, true, "Approving…");
+          try {
+            const { error: approveError } = await db.rpc("admin_approve_contractor", { p_contractor_id: contractor.id });
+            if (approveError) throw approveError;
+            message("pendingContractorsMessage", "Contractor approved. They can now sign in.", "success");
+            await loadPendingContractors();
+          } catch (e) {
+            message("pendingContractorsMessage", "Could not approve contractor: " + (e.message || "Unknown error"), "error");
+            setBusy(approve, false);
+          }
+        });
+        actions.append(approve);
+        card.append(actions);
+        list.append(card);
+      });
+    } catch (e) {
+      list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
+      message("pendingContractorsMessage", "Administrator approval access is required. " + (e.message || ""), "error");
+    }
+  }
+
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadServiceRequests() {
     if (!isAdmin) return;
@@ -863,7 +933,7 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
