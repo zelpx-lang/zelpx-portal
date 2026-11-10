@@ -571,7 +571,7 @@
         : "Log In";
     }
 
-    $("forgotPasswordLink").addEventListener("click", (event) => { event.preventDefault(); const email = $("email").value.trim(); if (!email) { showMessage("message", "Enter your email address first.", "error"); return; } window.location.href = "/recover.html?email=" + encodeURIComponent(email); });
+    $("forgotPasswordLink").addEventListener("click", async (event) => { event.preventDefault(); const email = $("email").value.trim(); if (!email) { showMessage("message", "Enter your email address first.", "error"); return; } try { const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/recover.html" }); if (error) throw error; showMessage("message", "If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.", "success"); } catch (error) { showMessage("message", error.message || "Could not send reset email. Please try again.", "error"); } });
 
     $("switchLink").addEventListener("click", (event) => {
       event.preventDefault();
