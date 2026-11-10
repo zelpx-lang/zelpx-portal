@@ -537,8 +537,8 @@
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
-        <button id="requestProfileUpdateButton" type="button">Request Profile Update</button>
-        <button id="saveCustomerProfileButton" type="button" class="hidden">Confirm Profile Update</button>
+        <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
+        <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
         <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
         <div id="profileMessage" class="message" role="status"></div>
       </section>
@@ -878,7 +878,7 @@
         if (metadataError) throw metadataError;
 
         originalProfileValues = { fullName, phone };
-        showMessage("profileMessage", "Your profile has been updated successfully.", "success");
+        showMessage("profileMessage", "Your profile changes have been saved successfully.", "success");
         profileNameInput.readOnly = true;
         profilePhoneInput.readOnly = true;
         requestProfileUpdateButton.classList.remove("hidden");
@@ -888,7 +888,7 @@
         showMessage("profileMessage", error.message || "Could not update your profile.", "error");
       } finally {
         button.disabled = false;
-        button.textContent = "Confirm Profile Update";
+        button.textContent = "Save Changes";
       }
     });
 
