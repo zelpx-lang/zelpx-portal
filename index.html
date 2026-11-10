@@ -113,7 +113,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
         copy.className = "category-copy";
         copy.append(title, caption);
         link.append(icon, copy);
-        rows[Math.min(2, Math.floor(index / rowCount))].append(link);
+        rows[Math.min(3, Math.floor(index / rowCount))].append(link);
       });
     } catch (error) {
       console.warn("Could not load homepage services:", error);
