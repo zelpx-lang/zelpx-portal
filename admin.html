@@ -766,6 +766,33 @@
         });
         const actions = document.createElement("div");
         actions.className = "actions";
+        if (contractor.license_document_path) {
+          const viewDocument = document.createElement("button");
+          viewDocument.type = "button";
+          viewDocument.className = "secondary";
+          viewDocument.textContent = "View license photo / document";
+          viewDocument.addEventListener("click", async () => {
+            viewDocument.disabled = true;
+            try {
+              const { data, error: fileError } = await db.storage
+                .from("contractor-licenses")
+                .createSignedUrl(contractor.license_document_path, 300);
+              if (fileError) throw fileError;
+              if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
+              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+            } catch (e) {
+              message("pendingContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
+            } finally {
+              viewDocument.disabled = false;
+            }
+          });
+          actions.append(viewDocument);
+        } else {
+          const noDocument = document.createElement("p");
+          noDocument.className = "muted";
+          noDocument.textContent = "No license photo or document uploaded.";
+          actions.append(noDocument);
+        }
         const approve = document.createElement("button");
         approve.type = "button";
         approve.textContent = "Approve contractor";
