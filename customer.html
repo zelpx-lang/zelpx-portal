@@ -543,10 +543,29 @@
       }
 
       if (session) {
-        // Authentication is the gate for the customer portal. A profile
-        // lookup or an empty request list must never bounce a valid user back
-        // to the login form. Contractor accounts may also use this portal;
-        // do not rewrite their database role during customer sign-in.
+        // Administrator accounts must use the dedicated admin portal only.
+        let profile;
+        try {
+          const { data, error } = await db.from("profiles")
+            .select("role").eq("id", session.user.id).maybeSingle();
+          if (error) throw error;
+          profile = data;
+        } catch (profileError) {
+          await db.auth.signOut();
+          $("dashboardView").classList.add("hidden");
+          $("authView").classList.remove("hidden");
+          showMessage("message", "Could not verify account permissions. Please sign in again.", "error");
+          return;
+        }
+        if (profile?.role === "admin") {
+          await db.auth.signOut();
+          $("dashboardView").classList.add("hidden");
+          $("authView").classList.remove("hidden");
+          showMessage("message", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
+          return;
+        }
+
+        // Customers and contractors may use the customer portal; their roles are not changed.
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
         $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
