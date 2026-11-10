@@ -378,6 +378,26 @@
       background:var(--customer-orange); color:#fff; border-color:var(--customer-orange);
       box-shadow:0 6px 16px #ff6a2b33;
     }
+    .dashboard-home-grid {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px; margin:18px 0 8px;
+    }
+    .dashboard-home-card {
+      display:flex; flex-direction:column; align-items:flex-start;
+      gap:9px; min-height:150px; padding:18px;
+      border:1px solid var(--customer-line); border-radius:17px;
+      background:#fff; color:var(--customer-ink); text-align:left;
+      box-shadow:0 8px 24px -22px #3b2a1a66;
+    }
+    .dashboard-home-card:hover:not(:disabled) {
+      background:#fff8f3; border-color:#ffc5a9; color:var(--customer-ink);
+      box-shadow:0 8px 22px -16px #b9471766;
+    }
+    .dashboard-home-card strong { font-size:15px; }
+    .dashboard-home-card span:last-child {
+      color:var(--customer-muted); font-size:13px; font-weight:400; line-height:1.45;
+    }
+    .dashboard-home-icon { font-size:24px; line-height:1; }
     .dashboard-page[hidden] { display:none !important; }
     @media(max-width:600px) {
       .dashboard-menu { grid-template-columns:1fr; gap:8px; margin:16px 0 20px; }
@@ -462,13 +482,35 @@
 
       <p id="accountEmail"></p>
       <nav class="dashboard-menu" aria-label="Customer dashboard menu">
-        <button type="button" class="dashboard-menu-button active" data-dashboard-page="profile" aria-current="page">My Profile</button>
+        <button type="button" class="dashboard-menu-button active" data-dashboard-page="home" aria-current="page">Home</button>
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="profile">My Profile</button>
         <button type="button" class="dashboard-menu-button" data-dashboard-page="service">Request a Service</button>
         <button type="button" class="dashboard-menu-button" data-dashboard-page="requests">My Service Requests</button>
       </nav>
+      <div id="dashboardPage-home" class="dashboard-page">
+        <h2>Welcome to ZELPX</h2>
+        <p class="subtitle">Choose what you would like to do today.</p>
+        <div class="dashboard-home-grid">
+          <button type="button" class="dashboard-home-card" data-dashboard-page="profile">
+            <span class="dashboard-home-icon">👤</span>
+            <strong>My Profile</strong>
+            <span>View and update your contact information</span>
+          </button>
+          <button type="button" class="dashboard-home-card" data-dashboard-page="service">
+            <span class="dashboard-home-icon">＋</span>
+            <strong>Request a Service</strong>
+            <span>Tell us what work you need done</span>
+          </button>
+          <button type="button" class="dashboard-home-card" data-dashboard-page="requests">
+            <span class="dashboard-home-icon">📋</span>
+            <strong>My Service Requests</strong>
+            <span>View your submitted requests and messages</span>
+          </button>
+        </div>
+      </div>
       
 
-      <div id="dashboardPage-profile" class="dashboard-page">
+      <div id="dashboardPage-profile" class="dashboard-page" hidden>
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
         <label for="customerFullName">Full Name</label>
