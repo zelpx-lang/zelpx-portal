@@ -449,7 +449,10 @@
       return;
     }
     if (!IS_ADMIN_PORTAL && isAdmin) {
-      window.location.replace("/admin.html");
+      await db.auth.signOut();
+      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+      hide($("appView")); hide($("topUser")); show($("authView"));
+      message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
