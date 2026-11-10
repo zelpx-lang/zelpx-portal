@@ -366,15 +366,14 @@
     .requests-heading h2 { text-align:left; margin:26px 0 4px; }
     .requests-heading .subtitle { text-align:left; margin:0 0 14px; }
     .request-tools {
-      display:grid; grid-template-columns:minmax(0,1fr) 170px;
-      gap:8px 12px; align-items:end; margin:14px 0 8px;
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px; align-items:end; margin:14px 0 8px;
       padding:14px; border:1px solid var(--customer-line);
       border-radius:16px; background:#faf7f2;
     }
-    .request-search-label { grid-column:auto; margin:0 0 -4px; }
-    .request-tools input { grid-column:1; }
-    .request-tools label[for="requestSort"] { grid-column:2; grid-row:1; }
-    .request-tools select { grid-column:2; grid-row:2; }
+    .request-filter-field { min-width:0; }
+    .request-filter-field label { margin:0 0 6px; }
+    .request-filter-field select { width:100%; }
     .request-results-count { color:var(--customer-muted); font-size:13px; margin:8px 2px 12px; }
     .request-actions { display:flex; justify-content:flex-end; margin-top:14px; }
     .request-delete-button {
@@ -385,10 +384,6 @@
     .request-delete-button:hover:not(:disabled) { color:#842018; background:#fff2ef; box-shadow:none; }
     @media(max-width:600px) {
       .request-tools { grid-template-columns:1fr; }
-      .request-search-label, .request-tools input,
-      .request-tools label[for="requestSort"], .request-tools select {
-        grid-column:1; grid-row:auto;
-      }
     }
 
     @media(prefers-reduced-motion:reduce) {
@@ -525,30 +520,34 @@
       <div class="requests-heading">
         <div>
           <h2>My Service Requests</h2>
-          <p class="subtitle">Search and manage your past and current requests.</p>
+          <p class="subtitle">Manage your past and current requests.</p>
         </div>
       </div>
       <div class="request-tools">
-        <label class="request-search-label" for="requestSearch">Search requests</label>
-        <input id="requestSearch" type="search" placeholder="Try tile, painting, bathroom..." autocomplete="off">
-        <label class="request-search-label" for="requestServiceFilter">Service</label>
-        <select id="requestServiceFilter">
-          <option value="">All services</option>
-        </select>
-        <label class="request-search-label" for="requestStatusFilter">Status</label>
-        <select id="requestStatusFilter">
-          <option value="">All statuses</option>
-          <option value="new">New</option>
-          <option value="pending">Pending</option>
-          <option value="in progress">In progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <label class="request-search-label" for="requestSort">Sort by</label>
-        <select id="requestSort">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
+        <div class="request-filter-field">
+          <label for="requestServiceFilter">Service</label>
+          <select id="requestServiceFilter">
+            <option value="">All services</option>
+          </select>
+        </div>
+        <div class="request-filter-field">
+          <label for="requestStatusFilter">Status</label>
+          <select id="requestStatusFilter">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="pending">Pending</option>
+            <option value="in progress">In progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="request-filter-field">
+          <label for="requestSort">Sort by</label>
+          <select id="requestSort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
       </div>
       <div id="requestResultsCount" class="request-results-count" aria-live="polite"></div>
       <div id="requestsList">
@@ -1286,7 +1285,6 @@
 
     function applyRequestFilters() {
       const list = $("requestsList");
-      const query = $("requestSearch").value.trim().toLocaleLowerCase();
       const serviceFilter = $("requestServiceFilter").value;
       const statusFilter = $("requestStatusFilter").value;
       const sortOrder = $("requestSort").value;
@@ -1302,10 +1300,9 @@
         return sortOrder === "oldest" ? difference : -difference;
       });
       cards.forEach(card => {
-        const matchesText = !query || card.textContent.toLocaleLowerCase().includes(query);
         const matchesService = !serviceFilter || card.dataset.serviceType === serviceFilter;
         const matchesStatus = !statusFilter || card.dataset.requestStatus.includes(statusFilter);
-        card.hidden = !(matchesText && matchesService && matchesStatus);
+        card.hidden = !(matchesService && matchesStatus);
         list.appendChild(card);
       });
       const visibleCount = cards.filter(card => !card.hidden).length;
@@ -1326,7 +1323,6 @@
       }
     }
 
-    $("requestSearch").addEventListener("input", applyRequestFilters);
     $("requestServiceFilter").addEventListener("change", applyRequestFilters);
     $("requestStatusFilter").addEventListener("change", applyRequestFilters);
     $("requestSort").addEventListener("change", applyRequestFilters);
