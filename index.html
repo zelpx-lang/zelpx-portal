@@ -87,8 +87,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       if (!Array.isArray(data) || !data.length) throw new Error(payload.error || "No active services");
       serviceSelect.replaceChildren(new Option("Choose a service", ""));
       categoryGrid.replaceChildren();
-      const rowCount = Math.ceil(data.length / 4);
-      const rows = Array.from({ length: 4 }, () => {
+      const rowCount = Math.ceil(data.length / 5);
+      const rows = Array.from({ length: 5 }, () => {
         const row = document.createElement("div");
         row.className = "category-row";
         row.setAttribute("role", "group");
@@ -113,7 +113,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
         copy.className = "category-copy";
         copy.append(title, caption);
         link.append(icon, copy);
-        rows[Math.min(3, Math.floor(index / rowCount))].append(link);
+        rows[Math.min(4, Math.floor(index / rowCount))].append(link);
       });
     } catch (error) {
       console.warn("Could not load homepage services:", error);
