@@ -609,7 +609,7 @@
       if (lead.status === "available") { const privacy = document.createElement("span"); privacy.className = "pill"; privacy.textContent = "Contact details protected"; badges.append(privacy); }
       card.append(badges);
       const descTitle = document.createElement("h3"); descTitle.textContent = "Work details"; descTitle.style.marginTop = "16px"; card.append(descTitle);
-      const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description || "No work details provided."; card.append(desc);
+      const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description ? String(lead.description).replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n") : "No work details provided."; card.append(desc);
       const footer = document.createElement("div"); footer.className = "lead-footer";
       const date = document.createElement("span"); date.className = "lead-date"; date.textContent = lead.created_at ? "Posted " + new Date(lead.created_at).toLocaleDateString() : ""; footer.append(date);
       if (lead.status === "available") {
