@@ -918,6 +918,34 @@
           p.append(strong, document.createTextNode(String(value)));
           card.append(p);
         });
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger";
+        remove.textContent = "Remove account access";
+        remove.addEventListener("click", async () => {
+          const company = contractor.company_name || contractor.email || "this contractor";
+          if (!window.confirm("Disable this contractor's account access?\\n\\n" + company +
+            "\\n\\nThey will no longer be able to sign in. Their account record and purchase/transaction history will be retained.")) return;
+          remove.disabled = true;
+          remove.textContent = "Removing access…";
+          try {
+            const { data, error } = await db.functions.invoke("admin-remove-unlicensed-contractor", {
+              body: { contractor_id: contractor.id }
+            });
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+            message("unlicensedContractorsMessage", "Account access disabled for " + company + ". History retained.", "success");
+            await loadUnlicensedContractors();
+          } catch (e) {
+            message("unlicensedContractorsMessage", "Could not remove account access: " + (e.message || "Unknown error"), "error");
+            remove.disabled = false;
+            remove.textContent = "Remove account access";
+          }
+        });
+        actions.append(remove);
+        card.append(actions);
         list.append(card);
       });
     } catch (e) {
