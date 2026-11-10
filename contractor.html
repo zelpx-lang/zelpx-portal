@@ -393,7 +393,7 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
-  $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); const email = $("authEmail").value.trim(); if (!email) { message("authMessage", "Enter your email address first.", "error"); return; } window.location.href = "/recover.html?email=" + encodeURIComponent(email); });
+  $("forgotPasswordLink").addEventListener("click", async event => { event.preventDefault(); const email = $("authEmail").value.trim(); if (!email) { message("authMessage", "Enter your email address first.", "error"); return; } try { const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/recover.html" }); if (error) throw error; message("authMessage", "If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.", "success"); } catch (error) { message("authMessage", error.message || "Could not send reset email. Please try again.", "error"); } });
   async function signIn() {
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
