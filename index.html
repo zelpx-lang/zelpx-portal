@@ -37,7 +37,38 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const serviceSelect = document.getElementById("service");
   const categoryGrid = document.getElementById("categoryGrid");
-  const icons = ["🔧","⚡","❄️","🛁","🍽️","🏠","🧽","🌿","🪚","🪟","🧰","🚚"];
+  // Pick an illustration from the service name, never from its alphabetical position.
+  function serviceIcon(name) {
+    const s = String(name || "").toLowerCase();
+    const rules = [
+      [/plumb|drain|sewer|toilet|faucet|sink|water heater|well pump|sump pump|septic|leak detection/, "🚰"],
+      [/electric|wiring|outlet|switch|generator|solar panel/, "⚡"],
+      [/hvac|heating|cooling|air quality|duct|vent|insulation|weatherization|radiant floor/, "❄️"],
+      [/bath|shower|bathtub|tub|bathroom fixture/, "🛁"],
+      [/kitchen|countertop|cabinet|cupboard/, "🍽️"],
+      [/blind|shade|window|glass|mirror|door|screen installation|awning/, "🪟"],
+      [/carpet|upholstery|rug/, "🧶"],
+      [/clean|janitorial|washing|wash|polish|maid/, "🧽"],
+      [/roof|gutter|chimney|siding|stucco/, "🏠"],
+      [/paint|wallpaper|stain|coating/, "🎨"],
+      [/floor|tile|grout|parquet|hardwood|laminate|vinyl|epoxy/, "🪵"],
+      [/landscap|lawn|garden|tree|yard|weed|mulch|sod|turf|irrigation|sprinkler|stump/, "🌿"],
+      [/carpentry|carpenter|wood|framing|trim|staircase|railing|deck|fence|pergola|gazebo/, "🪚"],
+      [/moving|mover|packing|delivery|haul away|furniture/, "🚚"],
+      [/junk|dumpster|garbage|property cleanup|demolition|land clearing/, "🗑️"],
+      [/pest|termite|mosquito|rodent|animal removal|extermination/, "🐜"],
+      [/concrete|masonry|foundation|asphalt|paving|excavation|grading|welding|metal fabrication/, "🧱"],
+      [/locksmith|security|alarm|home automation|smart home/, "🔒"],
+      [/appliance|dishwasher|refrigerator|oven|washer|dryer/, "🔌"],
+      [/pool|spa|hot tub/, "🏊"],
+      [/fire|smoke|water damage|mold|asbestos|radon|restoration|remediation|odor removal/, "🛠️"],
+      [/architect|engineering|survey|inspection|appraisal|design|real estate/, "📐"],
+      [/handyman|general contracting|home remodeling|renovation|home accessibility/, "🧰"],
+      [/cleaning|organizing|storage/, "🧹"]
+    ];
+    const match = rules.find(([pattern]) => pattern.test(s));
+    return match ? match[1] : "🧰";
+  }
   async function loadServices() {
     try {
       const response = await fetch(SUPABASE_URL + "/functions/v1/public-service-categories", {
@@ -58,7 +89,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
         link.href = "/customer?service=" + encodeURIComponent(item.name);
         const icon = document.createElement("span");
         icon.className = "cat-icon";
-        icon.textContent = icons[index % icons.length];
+        icon.textContent = serviceIcon(item.name);
+        icon.setAttribute("aria-hidden", "true");
         const title = document.createElement("strong");
         title.textContent = item.name;
         const caption = document.createElement("small");
