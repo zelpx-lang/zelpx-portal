@@ -23,24 +23,60 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 <header><div class="wrap nav"><a class="logo" href="/">ZELPX</a><nav class="navlinks"><a href="#services">Explore services</a><a href="#how">How it works</a><a href="/contractor">For professionals</a></nav><div class="navright"><a class="btn outline small" href="/customer">Log in</a><a class="btn small" href="/customer">Get started</a></div></div></header>
 <main>
 <section class="hero"><div class="wrap hero-grid"><div><div class="eyebrow"><span class="dot"></span> Your home project, moving forward</div><h1>Find the right pro.<br><em>Get it done.</em></h1><p class="hero-copy">From quick fixes to big renovations, connect with local professionals who can help bring your project to life.</p>
-<form class="searchbox" id="serviceSearch"><div class="searchgrid"><div class="field"><label for="service">What do you need help with?</label><select id="service" required><option value="">Choose a service</option><option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Bathroom Remodeling</option><option>Kitchen Remodeling</option><option>Roofing</option><option>Painting</option><option>Flooring Installation</option><option>House Cleaning</option><option>Handyman</option><option>Landscaping</option><option>Junk Removal</option><option>Other</option></select></div><div class="field"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code" required></div><button class="btn" type="submit">Find a pro →</button></div></form>
+<form class="searchbox" id="serviceSearch"><div class="searchgrid"><div class="field"><label for="service">What do you need help with?</label><select id="service" required><option value="">Choose a service</option></select></div><div class="field"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code" required></div><button class="btn" type="submit">Find a pro →</button></div></form>
 <div class="trustline"><span>Local service pros</span><span>Simple project requests</span><span>One place to manage it</span></div></div>
 <div class="hero-art"><div class="art-glow"></div><div class="art-top"><strong>THE ZELPX DIFFERENCE</strong><span>LOCAL • SIMPLE • CONNECTED</span></div><div class="art-shape"></div><div class="art-card"><small>YOUR NEXT PROJECT</small><h3>A better way to<br>get home projects done.</h3><p style="color:#77746c;margin:0">Tell us what you need. We'll help you take the next step.</p><div class="art-row"><div class="avatars"><span class="avatar">Z</span><span class="avatar">P</span><span class="avatar">+</span></div><strong>Built around your project</strong></div></div></div></div></section>
-<section class="block" id="services"><div class="wrap"><div class="section-head"><div><div class="kicker">Explore services</div><h2>Help for every corner<br>of your home.</h2></div><p>Choose a service to get started. Share a few details about your project and manage your request from your customer account.</p></div><div class="category-grid">
-<a class="category" href="/customer?service=Plumbing"><span class="cat-icon">🔧</span><strong>Plumbing</strong><small>Repairs, installs & leaks</small></a>
-<a class="category" href="/customer?service=Electrical"><span class="cat-icon">⚡</span><strong>Electrical</strong><small>Wiring, fixtures & repairs</small></a>
-<a class="category" href="/customer?service=HVAC"><span class="cat-icon">❄️</span><strong>Heating & cooling</strong><small>Comfort in every season</small></a>
-<a class="category" href="/customer?service=Bathroom%20Remodeling"><span class="cat-icon">🛁</span><strong>Bathroom remodeling</strong><small>Refresh your space</small></a>
-<a class="category" href="/customer?service=Kitchen%20Remodeling"><span class="cat-icon">🍽️</span><strong>Kitchen remodeling</strong><small>Make room for better living</small></a>
-<a class="category" href="/customer?service=Roofing"><span class="cat-icon">🏠</span><strong>Roofing</strong><small>Protection from the top down</small></a>
-<a class="category" href="/customer?service=House%20Cleaning"><span class="cat-icon">🧽</span><strong>Home cleaning</strong><small>Routine & deep cleaning</small></a>
-<a class="category" href="/customer?service=Landscaping"><span class="cat-icon">🌿</span><strong>Landscaping</strong><small>Outdoor spaces that work</small></a>
-</div></div></section>
+<section class="block" id="services"><div class="wrap"><div class="section-head"><div><div class="kicker">Explore services</div><h2>Help for every corner<br>of your home.</h2></div><p>Choose a service to get started. Share a few details about your project and manage your request from your customer account.</p></div><div class="category-grid" id="categoryGrid"><p>Loading available services…</p></div></div></section>
 <section class="block" id="how" style="background:#fbf9f4"><div class="wrap"><div class="section-head"><div><div class="kicker">How ZELPX works</div><h2>Three simple steps<br>to get started.</h2></div><p>Keep your project details and conversations together, from your first request through the next steps.</p></div><div class="steps"><article class="step"><div class="stepnum">01 / TELL US</div><h3>Describe your project</h3><p>Choose a service, share the details and tell us where the work is needed.</p></article><article class="step"><div class="stepnum">02 / GET CONNECTED</div><h3>Connect with a pro</h3><p>Your request enters the ZELPX workflow so a suitable professional can follow up.</p></article><article class="step"><div class="stepnum">03 / MOVE FORWARD</div><h3>Manage it in one place</h3><p>Sign in to review requests, see updates and continue conversations.</p></article></div></div></section>
 <section class="block"><div class="wrap"><div class="pro-cta"><div><div class="kicker">For service professionals</div><h2>Grow your business with better opportunities.</h2><p>Join ZELPX to discover service requests, manage purchased leads and keep your customer conversations organized.</p></div><a class="btn" href="/contractor">Join as a pro →</a></div></div></section>
 </main>
 <footer><div class="wrap footrow"><a class="logo" href="/">ZELPX</a><div>© 2026 ZELPX. All rights reserved.</div><nav class="footlinks"><a href="/customer">Customer portal</a><a href="/contractor">Contractor portal</a></nav></div></footer>
 <script>
-document.getElementById("serviceSearch").addEventListener("submit",function(event){event.preventDefault();const service=document.getElementById("service").value;const zip=document.getElementById("zip").value.trim();if(!service||!/^[0-9]{5}$/.test(zip))return;location.href="/customer?service="+encodeURIComponent(service)+"&zip="+encodeURIComponent(zip)+"#requestForm";});
+(() => {
+  const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+  const serviceSelect = document.getElementById("service");
+  const categoryGrid = document.getElementById("categoryGrid");
+  const icons = ["🔧","⚡","❄️","🛁","🍽️","🏠","🧽","🌿","🪚","🪟","🧰","🚚"];
+  async function loadServices() {
+    try {
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data, error } = await client.from("service_categories")
+        .select("name").eq("is_active", true).order("name");
+      if (error) throw error;
+      if (!Array.isArray(data) || !data.length) throw new Error("No active services");
+      serviceSelect.replaceChildren(new Option("Choose a service", ""));
+      categoryGrid.replaceChildren();
+      data.forEach((item, index) => {
+        const option = new Option(item.name, item.name);
+        serviceSelect.add(option);
+        const link = document.createElement("a");
+        link.className = "category";
+        link.href = "/customer?service=" + encodeURIComponent(item.name);
+        const icon = document.createElement("span");
+        icon.className = "cat-icon";
+        icon.textContent = icons[index % icons.length];
+        const title = document.createElement("strong");
+        title.textContent = item.name;
+        const caption = document.createElement("small");
+        caption.textContent = "View service and request help";
+        link.append(icon, title, caption);
+        categoryGrid.append(link);
+      });
+    } catch (error) {
+      console.warn("Could not load homepage services:", error);
+      serviceSelect.replaceChildren(new Option("Services temporarily unavailable", ""));
+      categoryGrid.textContent = "Services are temporarily unavailable. Please try again shortly.";
+    }
+  }
+  loadServices();
+  document.getElementById("serviceSearch").addEventListener("submit",function(event){
+    event.preventDefault();
+    const service=serviceSelect.value;
+    const zip=document.getElementById("zip").value.trim();
+    if(!service||!/^[0-9]{5}$/.test(zip))return;
+    location.href="/customer?service="+encodeURIComponent(service)+"&zip="+encodeURIComponent(zip)+"#requestForm";
+  });
+})();
 </script>
 </body></html>
