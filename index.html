@@ -40,11 +40,14 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   const icons = ["🔧","⚡","❄️","🛁","🍽️","🏠","🧽","🌿","🪚","🪟","🧰","🚚"];
   async function loadServices() {
     try {
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data, error } = await client.from("service_categories")
-        .select("name").eq("is_active", true).order("name");
-      if (error) throw error;
-      if (!Array.isArray(data) || !data.length) throw new Error("No active services");
+      const response = await fetch(SUPABASE_URL + "/functions/v1/public-service-categories", {
+        method: "GET",
+        headers: { "apikey": SUPABASE_KEY }
+      });
+      if (!response.ok) throw new Error("Service catalog request failed (" + response.status + ")");
+      const payload = await response.json();
+      const data = payload.categories;
+      if (!Array.isArray(data) || !data.length) throw new Error(payload.error || "No active services");
       serviceSelect.replaceChildren(new Option("Choose a service", ""));
       categoryGrid.replaceChildren();
       data.forEach((item, index) => {
