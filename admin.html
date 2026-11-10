@@ -769,18 +769,42 @@
         const approve = document.createElement("button");
         approve.type = "button";
         approve.textContent = "Approve contractor";
-        approve.addEventListener("click", async () => {
-          if (!window.confirm("Approve this contractor? They will be able to sign in to the contractor portal.")) return;
-          setBusy(approve, true, "Approving…");
-          try {
-            const { error: approveError } = await db.rpc("admin_approve_contractor", { p_contractor_id: contractor.id });
-            if (approveError) throw approveError;
-            message("pendingContractorsMessage", "Contractor approved. They can now sign in.", "success");
-            await loadPendingContractors();
-          } catch (e) {
-            message("pendingContractorsMessage", "Could not approve contractor: " + (e.message || "Unknown error"), "error");
-            setBusy(approve, false);
-          }
+        approve.addEventListener("click", () => {
+          const prompt = document.createElement("p");
+          prompt.textContent = "Approve this contractor? They will be able to sign in to the contractor portal.";
+          prompt.style.fontWeight = "700";
+          const yes = document.createElement("button");
+          yes.type = "button";
+          yes.textContent = "Yes";
+          const no = document.createElement("button");
+          no.type = "button";
+          no.className = "secondary";
+          no.textContent = "No";
+          yes.addEventListener("click", async () => {
+            setBusy(yes, true, "Approving…");
+            no.disabled = true;
+            try {
+              const { error: approveError } = await db.rpc("admin_approve_contractor", { p_contractor_id: contractor.id });
+              if (approveError) throw approveError;
+              message("pendingContractorsMessage", "Contractor approved. They can now sign in.", "success");
+              await loadPendingContractors();
+            } catch (e) {
+              message("pendingContractorsMessage", "Could not approve contractor: " + (e.message || "Unknown error"), "error");
+              yes.disabled = false;
+              no.disabled = false;
+              yes.textContent = "Yes";
+            }
+          });
+          no.addEventListener("click", () => {
+            prompt.remove();
+            yes.remove();
+            no.remove();
+            approve.disabled = false;
+            approve.textContent = "Approve contractor";
+          });
+          approve.disabled = true;
+          approve.textContent = "Confirm below";
+          actions.append(prompt, yes, no);
         });
         actions.append(approve);
         card.append(actions);
