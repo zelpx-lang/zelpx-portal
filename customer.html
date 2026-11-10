@@ -532,12 +532,14 @@
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
         <label for="customerFullName">Full Name</label>
-        <input id="customerFullName" type="text" autocomplete="name" required>
+        <input id="customerFullName" type="text" autocomplete="name" required readonly>
         <label for="customerPhone">Phone Number</label>
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
-               placeholder="+1 (555) 555-5555" required>
+               placeholder="+1 (555) 555-5555" required readonly>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
-        <button id="saveCustomerProfileButton" type="button">Save Profile</button>
+        <button id="requestProfileUpdateButton" type="button">Request Profile Update</button>
+        <button id="saveCustomerProfileButton" type="button" class="hidden">Confirm Profile Update</button>
+        <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
         <div id="profileMessage" class="message" role="status"></div>
       </section>
       </div>
@@ -812,11 +814,40 @@
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
     }
 
-    $("saveCustomerProfileButton").addEventListener("click", async () => {
-      const button = $("saveCustomerProfileButton");
+    const profileNameInput = $("customerFullName");
+    const profilePhoneInput = $("customerPhone");
+    const requestProfileUpdateButton = $("requestProfileUpdateButton");
+    const confirmProfileUpdateButton = $("saveCustomerProfileButton");
+    const cancelProfileUpdateButton = $("cancelProfileUpdateButton");
+    let originalProfileValues = { fullName: "", phone: "" };
+
+    requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
-      const fullName = $("customerFullName").value.trim();
-      const phone = $("customerPhone").value.trim();
+      originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
+      profileNameInput.readOnly = false;
+      profilePhoneInput.readOnly = false;
+      requestProfileUpdateButton.classList.add("hidden");
+      confirmProfileUpdateButton.classList.remove("hidden");
+      cancelProfileUpdateButton.classList.remove("hidden");
+      profileNameInput.focus();
+    });
+
+    cancelProfileUpdateButton.addEventListener("click", () => {
+      profileNameInput.value = originalProfileValues.fullName;
+      profilePhoneInput.value = originalProfileValues.phone;
+      profileNameInput.readOnly = true;
+      profilePhoneInput.readOnly = true;
+      requestProfileUpdateButton.classList.remove("hidden");
+      confirmProfileUpdateButton.classList.add("hidden");
+      cancelProfileUpdateButton.classList.add("hidden");
+      clearMessage("profileMessage");
+    });
+
+    confirmProfileUpdateButton.addEventListener("click", async () => {
+      const button = confirmProfileUpdateButton;
+      clearMessage("profileMessage");
+      const fullName = profileNameInput.value.trim();
+      const phone = profilePhoneInput.value.trim();
 
       if (!fullName) {
         showMessage("profileMessage", "Please enter your full name.", "error");
@@ -828,7 +859,7 @@
       }
 
       button.disabled = true;
-      button.textContent = "Saving...";
+      button.textContent = "Updating...";
       try {
         const { data: sessionData, error: sessionError } = await db.auth.getSession();
         if (sessionError) throw sessionError;
@@ -846,12 +877,18 @@
         });
         if (metadataError) throw metadataError;
 
-        showMessage("profileMessage", "Your profile has been saved.", "success");
+        originalProfileValues = { fullName, phone };
+        showMessage("profileMessage", "Your profile has been updated successfully.", "success");
+        profileNameInput.readOnly = true;
+        profilePhoneInput.readOnly = true;
+        requestProfileUpdateButton.classList.remove("hidden");
+        confirmProfileUpdateButton.classList.add("hidden");
+        cancelProfileUpdateButton.classList.add("hidden");
       } catch (error) {
-        showMessage("profileMessage", error.message || "Could not save your profile.", "error");
+        showMessage("profileMessage", error.message || "Could not update your profile.", "error");
       } finally {
         button.disabled = false;
-        button.textContent = "Save Profile";
+        button.textContent = "Confirm Profile Update";
       }
     });
 
