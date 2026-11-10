@@ -230,6 +230,7 @@
     </div>
     <div class="actions">
       <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
+      <a id="forgotPasswordLink" href="/recover.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
     </div>
     <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
@@ -385,6 +386,7 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
+  $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); const email = $("authEmail").value.trim(); if (!email) { message("authMessage", "Enter your email address first.", "error"); return; } window.location.href = "/recover.html?email=" + encodeURIComponent(email); });
   async function signIn() {
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
