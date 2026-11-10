@@ -422,6 +422,12 @@
 
       try {
         if (isLogin) {
+          // Check the account role on the server before creating any auth session.
+          const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
+            body: { email, portal: "customer" }
+          });
+          if (accessError) throw new Error("Could not verify account permissions. Please try again.");
+          if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the customer portal.");
           const { data, error } = await db.auth.signInWithPassword({ email, password });
           if (error) throw error;
           if (!data?.session || !data?.user) {
