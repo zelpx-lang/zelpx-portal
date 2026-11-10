@@ -363,6 +363,26 @@
       .top-logout-button { min-width:88px; padding:9px 13px; font-size:13px; }
       .profile-panel { padding:15px; }
     }
+    .dashboard-menu {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px; margin:20px 0 22px;
+    }
+    .dashboard-menu-button {
+      width:100%; min-height:54px; margin:0; padding:11px 12px;
+      border:1px solid var(--customer-line); background:#fff;
+      color:var(--customer-ink); box-shadow:none; font-size:14px;
+      line-height:1.3; border-radius:14px;
+    }
+    .dashboard-menu-button:hover:not(:disabled) { background:#fff4ed; color:#b94717; box-shadow:none; }
+    .dashboard-menu-button.active {
+      background:var(--customer-orange); color:#fff; border-color:var(--customer-orange);
+      box-shadow:0 6px 16px #ff6a2b33;
+    }
+    .dashboard-page[hidden] { display:none !important; }
+    @media(max-width:600px) {
+      .dashboard-menu { grid-template-columns:1fr; gap:8px; margin:16px 0 20px; }
+      .dashboard-menu-button { min-height:48px; text-align:left; padding:13px 16px; }
+    }
     .requests-heading h2 { text-align:left; margin:26px 0 4px; }
     .requests-heading .subtitle { text-align:left; margin:0 0 14px; }
     .request-tools {
@@ -441,8 +461,14 @@
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
       <p id="accountEmail"></p>
+      <nav class="dashboard-menu" aria-label="Customer dashboard menu">
+        <button type="button" class="dashboard-menu-button active" data-dashboard-page="profile" aria-current="page">My Profile</button>
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="service">Request a Service</button>
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="requests">My Service Requests</button>
+      </nav>
       
 
+      <div id="dashboardPage-profile" class="dashboard-page">
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
         <label for="customerFullName">Full Name</label>
@@ -454,9 +480,9 @@
         <button id="saveCustomerProfileButton" type="button">Save Profile</button>
         <div id="profileMessage" class="message" role="status"></div>
       </section>
+      </div>
 
-      <hr class="section-divider">
-
+      <div id="dashboardPage-service" class="dashboard-page" hidden>
       <h2>Request a Service</h2>
       <p class="subtitle">
         Tell us what service you need. Our team will review your request.
@@ -516,7 +542,9 @@
         <p>Chat notifications are set up automatically when you open a conversation and allow notifications in your browser. No setup button is needed.</p>
         <p id="customerBackgroundChatAlertsStatus" class="subtitle">Notification status: checking browser permission…</p>
       </section>
+      </div>
 
+      <div id="dashboardPage-requests" class="dashboard-page" hidden>
       <div class="requests-heading">
         <div>
           <h2>My Service Requests</h2>
@@ -557,6 +585,7 @@
       <button id="refreshButton" type="button" class="secondary-button">
         Refresh Requests
       </button>
+      </div>
 
     </section>
   </main>
@@ -1340,6 +1369,22 @@
       $("requestForm").reset();
       setMode(false);
       await checkSession();
+    });
+
+    document.querySelectorAll("[data-dashboard-page]").forEach(button => {
+      button.addEventListener("click", () => {
+        const selectedPage = button.dataset.dashboardPage;
+        document.querySelectorAll(".dashboard-page").forEach(page => {
+          page.hidden = page.id !== "dashboardPage-" + selectedPage;
+        });
+        document.querySelectorAll("[data-dashboard-page]").forEach(item => {
+          const active = item === button;
+          item.classList.toggle("active", active);
+          if (active) item.setAttribute("aria-current", "page");
+          else item.removeAttribute("aria-current");
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
     });
 
     async function loadCustomerServiceCategories() {
