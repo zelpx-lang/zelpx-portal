@@ -290,6 +290,7 @@
       <section class="lead">
         <h2>Contractor approvals</h2>
         <p>New contractor accounts stay blocked until an administrator approves them.</p>
+        <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
@@ -738,6 +739,16 @@
       const { data: contractors, error } = await db.rpc("admin_list_pending_contractors");
       if (error) throw error;
       list.replaceChildren();
+      const alertBox = $("contractorRegistrationAlert");
+      const pendingCount = contractors?.length || 0;
+      const withoutLicense = (contractors || []).filter(c => c.has_license !== true).length;
+      if (alertBox) {
+        alertBox.classList.toggle("hidden", pendingCount === 0);
+        alertBox.className = pendingCount ? "message error" : "message hidden";
+        alertBox.textContent = pendingCount
+          ? `New contractor registrations: ${pendingCount}. Without a current license: ${withoutLicense}. Review the accounts below.`
+          : "";
+      }
       if (!contractors?.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
