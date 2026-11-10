@@ -920,7 +920,7 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); }
+    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
