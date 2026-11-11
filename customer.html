@@ -1078,7 +1078,7 @@
       "Pressure Washing": ["мойка под давлением","мойка фасада","мойка driveway","pressure wash"],
       "Pest Control": ["насекомые","вредители","таракан","мыши","грызуны","дезинсекция","pest"]
     };
-    const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
     function serviceEditDistance(a, b) {
       if (Math.abs(a.length - b.length) > 2) return 99;
       let previous = Array.from({length:b.length + 1}, (_, index) => index);
