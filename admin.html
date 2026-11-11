@@ -700,6 +700,11 @@
     const raw = zipInput.value.trim();
     const zip = raw.replace(/[^0-9]/g, "").slice(0, 5);
     if (zip.length !== 5) return;
+    if (zipInput.dataset.lookedUpZip !== zip) {
+      delete zipInput.dataset.latitude;
+      delete zipInput.dataset.longitude;
+      delete zipInput.dataset.lookedUpZip;
+    }
     if (statusElement) { statusElement.textContent = "Looking up ZIP code…"; statusElement.className = "muted"; }
     try {
       const response = await fetch("https://api.zippopotam.us/us/" + zip);
@@ -1152,9 +1157,20 @@
               "\n\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
-              const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
-                p_request_id: request.id, p_zip_code: zipValue, p_city: cityValue, p_state: stateValue,
-                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue
+              // Resolve ZIP coordinates before publishing so contractor radius filtering can work.
+            const zipLookupInput = document.createElement("input");
+            zipLookupInput.value = zipValue;
+            await lookupUsZip(zipLookupInput, city, state, zipLookupNote);
+            const latitude = Number(zipLookupInput.dataset.latitude);
+            const longitude = Number(zipLookupInput.dataset.longitude);
+            if (zipLookupInput.dataset.lookedUpZip !== zipValue.slice(0, 5) ||
+                !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+              throw new Error("Could not determine coordinates for this ZIP code. Verify the ZIP and try again.");
+            }
+            const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
+                p_request_id: request.id, p_zip_code: zipValue, p_city: city.value.trim(), p_state: state.value.trim().toUpperCase(),
+                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
+                p_latitude: latitude, p_longitude: longitude
               });
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
