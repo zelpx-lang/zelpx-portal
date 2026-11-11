@@ -1585,10 +1585,8 @@
         return;
       }
 
-      $("authForm").reset();
-      $("requestForm").reset();
-      setMode(false);
-      await checkSession();
+      // Return customers directly to the public ZELPX homepage after logout.
+      window.location.replace("/");
     });
 
     document.querySelectorAll("[data-dashboard-page]").forEach(button => {
