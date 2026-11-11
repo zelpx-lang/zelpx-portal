@@ -640,7 +640,6 @@
       <p id="accountEmail"></p>
       <nav class="dashboard-menu" aria-label="Customer dashboard menu">
         <button type="button" class="dashboard-menu-button" data-dashboard-page="profile">My Profile</button>
-        <button type="button" class="dashboard-menu-button" data-dashboard-page="service">Request a Service</button>
         <button type="button" class="dashboard-menu-button" data-dashboard-page="requests">My Service Requests</button>
       </nav>
       <div id="dashboardPage-home" class="dashboard-page">
@@ -651,11 +650,6 @@
             <span class="dashboard-home-icon">👤</span>
             <strong>My Profile</strong>
             <span>View and update your contact information</span>
-          </button>
-          <button type="button" class="dashboard-home-card" data-dashboard-page="service">
-            <span class="dashboard-home-icon">＋</span>
-            <strong>Request a Service</strong>
-            <span>Tell us what work you need done</span>
           </button>
           <button type="button" class="dashboard-home-card" data-dashboard-page="requests">
             <span class="dashboard-home-icon">📋</span>
@@ -1082,7 +1076,7 @@
         // take them straight to that prefilled request form after login/registration.
         const pendingService = new URLSearchParams(window.location.search).get("service");
         const pendingZip = new URLSearchParams(window.location.search).get("zip");
-        if (pendingService || pendingZip || window.location.hash === "#requestForm") {
+        if (pendingService || pendingZip) {
           const servicePageButton = document.querySelector(".dashboard-menu-button[data-dashboard-page=\"service\"]");
           if (servicePageButton) servicePageButton.click();
           window.setTimeout(() => {
