@@ -891,10 +891,12 @@
               });
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
-              const approved = choice === "approve";
-              const statusText = approved
-                ? "Contractor approved. They can now sign in and purchase leads."
-                : "Contractor rejected. Their account remains blocked.";
+              const approved = choice !== "reject";
+              const statusText = choice === "approve_without_license"
+                ? "Contractor allowed without license verification. They can now sign in and purchase leads."
+                : approved
+                  ? "Contractor approved after license verification. They can now sign in and purchase leads."
+                  : "Contractor rejected. Their account remains blocked.";
               const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
               message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
