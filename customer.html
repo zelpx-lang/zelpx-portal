@@ -1068,7 +1068,35 @@
       "Doors & Windows": ["двери","окна"],
       "HVAC": ["отопление","кондиционер","вентиляция"]
     };
-    const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").replace(/[^\\p{L}\\p{N}]+/gu, " ");
+    const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    function serviceEditDistance(a, b) {
+      if (Math.abs(a.length - b.length) > 2) return 99;
+      let previous = Array.from({length:b.length + 1}, (_, index) => index);
+      for (let i = 1; i <= a.length; i++) {
+        const current = [i];
+        for (let j = 1; j <= b.length; j++) {
+          current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        }
+        previous = current;
+      }
+      return previous[b.length];
+    }
+    function serviceTermScore(term, query) {
+      if (!term || !query) return 99;
+      if (term === query) return 0;
+      if (term.startsWith(query)) return 1;
+      const termWords = term.split(" "), queryWords = query.split(" ");
+      if (termWords.some(word => word.startsWith(query))) return 2;
+      if (term.includes(query)) return 3;
+      if (queryWords.every(qw => termWords.some(tw => tw.startsWith(qw) || tw.includes(qw)))) return 4;
+      const distances = termWords.map(word => serviceEditDistance(word, query));
+      const bestDistance = Math.min(...distances);
+      if (bestDistance <= (query.length >= 7 ? 2 : 1)) return 5 + bestDistance;
+      const compactTerm = term.replace(/ /g, "");
+      const compactQuery = query.replace(/ /g, "");
+      const compactDistance = serviceEditDistance(compactTerm, compactQuery);
+      return compactDistance <= (compactQuery.length >= 8 ? 2 : 1) ? 7 + compactDistance : 99;
+    }
     function updateServiceSuggestions() {
       const input = $("serviceSearch"), panel = $("serviceSuggestions");
       const query = normalizeServiceSearch(input.value);
@@ -1076,20 +1104,15 @@
       if (!query) { panel.classList.add("hidden"); input.setAttribute("aria-expanded","false"); return; }
       const options = [...$("serviceType").options].filter(option => option.value);
       const matches = options.map(option => {
-        const name = normalizeServiceSearch(option.value);
-        const terms = [name, ...(serviceAliases[option.value] || []).map(normalizeServiceSearch)];
-        const score = terms.reduce((best, term) => {
-          if (term === query) return Math.min(best,0);
-          if (term.startsWith(query)) return Math.min(best,1);
-          if (term.split(" ").some(word => word.startsWith(query))) return Math.min(best,2);
-          if (term.includes(query)) return Math.min(best,3);
-          return best;
-        },99);
+        const terms = [normalizeServiceSearch(option.value), ...(serviceAliases[option.value] || []).map(normalizeServiceSearch)];
+        const score = Math.min(...terms.map(term => serviceTermScore(term, query)));
         return {option,score};
-      }).filter(item => item.score < 99).sort((a,b) => a.score-b.score || a.option.value.localeCompare(b.option.value)).slice(0,8);
+      }).filter(item => item.score < 99)
+        .sort((a,b) => a.score-b.score || a.option.value.localeCompare(b.option.value))
+        .slice(0,8);
       if (!matches.length) {
         const empty = document.createElement("p"); empty.style.padding="10px 14px";
-        empty.textContent="No matching services. Try another word or choose from the list.";
+        empty.textContent="No close matches yet. Try another word or choose from the full list.";
         panel.append(empty);
       }
       matches.forEach(({option}) => {
