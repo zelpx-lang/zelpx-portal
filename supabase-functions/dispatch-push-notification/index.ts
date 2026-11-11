@@ -49,6 +49,8 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Push delivery is not configured" }, 503);
   }
 
+  let claimedOutboxId: number | null = null;
+  let adminClient: ReturnType<typeof createClient> | null = null;
   try {
     const payload = await req.json();
     const record = payload?.record;
@@ -60,16 +62,17 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    adminClient = admin;
 
-    const { data: row, error: rowError } = await admin
-      .from("push_notification_outbox")
-      .select("id,event_type,recipient_type,recipient_id,conversation_id,title,body,target_url,delivered_at,attempt_count")
-      .eq("id", outboxId)
-      .maybeSingle();
-
-    if (rowError || !row) return json({ error: "Notification event not found" }, 404);
+    // Atomically claim the event so webhook retries/concurrent deliveries
+    // cannot send the same notification twice.
+    const { data: claimedRows, error: claimError } = await admin
+      .rpc("claim_push_notification", { p_notification_id: outboxId });
+    if (claimError) throw new Error("Could not claim notification event");
+    const row = claimedRows?.[0];
+    if (!row) return json({ success: true, duplicate_or_in_progress: true, sent: 0 });
+    claimedOutboxId = outboxId;
     const event = row as OutboxRow;
-    if (event.delivered_at) return json({ success: true, duplicate: true, sent: 0 });
 
     let subscriptions: Array<{ id: string; endpoint: string; subscription: unknown; table: string }> = [];
 
@@ -117,7 +120,7 @@ Deno.serve(async (req: Request) => {
 
     if (!subscriptions.length) {
       await admin.from("push_notification_outbox")
-        .update({ delivered_at: new Date().toISOString(), attempt_count: event.attempt_count + 1, last_error: null })
+        .update({ delivered_at: new Date().toISOString(), processing_at: null, last_error: null })
         .eq("id", event.id).is("delivered_at", null);
       return json({ success: true, sent: 0, reason: "no_subscriptions" });
     }
@@ -157,8 +160,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const update = {
-      attempt_count: event.attempt_count + 1,
       delivered_at: sent > 0 || failures.length === 0 ? new Date().toISOString() : null,
+      processing_at: null,
       last_error: failures.length ? failures.slice(0, 3).join(",").slice(0, 300) : null,
     };
     const { error: updateError } = await admin.from("push_notification_outbox")
@@ -167,6 +170,11 @@ Deno.serve(async (req: Request) => {
 
     return json({ success: true, sent, removed_expired: stale.length, retryable_failures: failures.length });
   } catch (error) {
+    if (adminClient && claimedOutboxId !== null) {
+      await adminClient.from("push_notification_outbox")
+        .update({ processing_at: null, last_error: "dispatch_error" })
+        .eq("id", claimedOutboxId).is("delivered_at", null);
+    }
     console.error("ZELPX push dispatch failed:", error instanceof Error ? error.message : "unknown error");
     return json({ error: "Notification dispatch failed" }, 500);
   }
