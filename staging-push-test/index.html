@@ -81,7 +81,7 @@
     }
     try {
       const result = action === "signup"
-        ? await db.auth.signUp({ email, password })
+        ? await db.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/staging-push-test/" } })
         : await db.auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
       if (result.data.session) {
