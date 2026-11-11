@@ -24,12 +24,12 @@
 - Ни один реальный push не отправлялся.
 
 ## Почему фактическая отправка пока выключена
-В Supabase-проекте `zelpx-portal` ещё не настроены отдельные staging VAPID-ключи и `ZELPX_PUSH_WEBHOOK_SECRET`. Production secrets намеренно не копировались. Edge Function пока добавлена в GitHub, но не развёрнута в Supabase; это исключает случайную отправку уведомлений реальным пользователям.
+В Supabase-проекте `zelpx-portal` ещё не настроены отдельные staging VAPID-ключи и `ZELPX_PUSH_WEBHOOK_SECRET`. Production secrets намеренно не копировались. Edge Function развёрнута в отдельном проекте `zelpx-portal` (ACTIVE, verify_jwt=false), но фактическая доставка выключена: без отдельного `ZELPX_PUSH_WEBHOOK_SECRET` она отклоняет вызовы, а без VAPID-ключей не может отправить push. Database Webhook пока не настроен. Это исключает случайную отправку уведомлений реальным пользователям.
 
 Перед включением доставки нужно:
 1. Сгенерировать отдельную VAPID-пару для staging.
 2. Добавить в Edge Function Secrets staging-проекта: `ZELPX_PUSH_WEBHOOK_SECRET` (случайное значение минимум 32 символа), `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
-3. Развернуть функцию `dispatch-push-notification` с `verify_jwt=false`; она сама проверяет заголовок `x-zelpx-push-secret`.
+3. Функция `dispatch-push-notification` уже развёрнута с `verify_jwt=false`; после добавления secrets нужно проверить вызов с заголовком `x-zelpx-push-secret`.
 4. Настроить Database Webhook на INSERT в `public.push_notification_outbox`, направив его в эту функцию и передав отдельный staging secret в заголовке.
 5. Подключить staging frontend к staging URL и publishable key, создать тестовые аккаунты и подписки.
 6. Проверить доставку на тестовых устройствах и отказ доступа между аккаунтами. Только после этого рассматривать Preview deployment.
