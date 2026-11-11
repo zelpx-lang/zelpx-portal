@@ -906,32 +906,6 @@
         });
         actions.append(approve);
         card.append(actions);
-        if (!request.lead_id && request.status === "new" &&
-            (!request.payment_status || request.payment_status === "unpaid") &&
-            !request.purchased_by && !request.purchased_at) {
-          const deleteButton = document.createElement("button");
-          deleteButton.type = "button"; deleteButton.className = "danger";
-          deleteButton.textContent = "Delete request";
-          deleteButton.style.marginTop = "12px";
-          deleteButton.addEventListener("click", async () => {
-            const customerLabel = profile.full_name || "this customer";
-            if (!window.confirm("Delete this unpublished customer request?\\n\\nCustomer: " + customerLabel +
-              "\\nService: " + (request.service_type || "Home service") +
-              "\\n\\nOnly this request will be deleted. The customer account and other requests will remain.")) return;
-            setBusy(deleteButton, true, "Deleting…");
-            try {
-              const { data, error } = await db.rpc("admin_delete_unpublished_service_request", { p_request_id: request.id });
-              if (error) throw error;
-              if (!data?.success) throw new Error("The request was not deleted.");
-              message("serviceRequestsMessage", "Customer request deleted. Customer account and other requests were kept.", "success");
-              await loadServiceRequests();
-            } catch (error) {
-              message("serviceRequestsMessage", "Could not delete request: " + (error.message || "Unknown error"), "error");
-              setBusy(deleteButton, false);
-            }
-          });
-          card.append(deleteButton);
-        }
         list.append(card);
       });
     } catch (e) {
