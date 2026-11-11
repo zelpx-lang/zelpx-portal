@@ -709,6 +709,7 @@
       if (places[0]) {
         zipInput.dataset.latitude = places[0].latitude || "";
         zipInput.dataset.longitude = places[0].longitude || "";
+        zipInput.dataset.lookedUpZip = zip;
       }
       if (!places.length) throw new Error("No city found for this ZIP code");
       // Prefer the first official place; keep the inputs editable in case the address uses another locality.
@@ -736,10 +737,22 @@
     if (!customerName || !customerPhone || !customerStreet || !customerCity || !customerState) return message("adminMessage", "Enter the customer's name, phone, street address, city, and state.", "error");
     const button = $("createLeadBtn"); setBusy(button, true, "Creating…");
     try {
+      const zip5 = zip.slice(0, 5);
+      if ($("leadZip").dataset.lookedUpZip !== zip5 ||
+          !$("leadZip").dataset.latitude || !$("leadZip").dataset.longitude) {
+        await lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup"));
+      }
+      const latitude = Number($("leadZip").dataset.latitude);
+      const longitude = Number($("leadZip").dataset.longitude);
+      if ($("leadZip").dataset.lookedUpZip !== zip5 ||
+          !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new Error("Could not verify ZIP coordinates. Please check the ZIP code and try again.");
+      }
       const { error } = await db.rpc("admin_create_lead_with_contact", {
         p_service_category: category, p_zip_code: zip, p_urgency: $("leadUrgency").value, p_price_cents: Math.round(price * 100),
         p_description: $("leadDescription").value.trim(), p_customer_name: customerName, p_phone: customerPhone,
-        p_email: customerEmail || null, p_street_address: customerStreet, p_city: customerCity, p_state: customerState
+        p_email: customerEmail || null, p_street_address: customerStreet, p_city: customerCity, p_state: customerState,
+        p_latitude: latitude, p_longitude: longitude
       });
       if (error) throw error; $("leadForm").reset();
       message("adminMessage", "Lead created successfully. It is now visible to contractors. Customer contact details are stored privately.", "success");
