@@ -35,7 +35,10 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 (() => {
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
-  const serviceInput = document.getElementById("service");\n  const suggestions = document.getElementById("homeServiceSuggestions");\n  let availableServices = [];\n  let selectedService = "";
+  const serviceInput = document.getElementById("service");
+  const suggestions = document.getElementById("homeServiceSuggestions");
+  let availableServices = [];
+  let selectedService = "";
   const categoryGrid = document.getElementById("categoryGrid");
   // Pick an illustration from the service name, never from its alphabetical position.
   function serviceIcon(name) {
@@ -83,9 +86,10 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       });
       if (!response.ok) throw new Error("Service catalog request failed (" + response.status + ")");
       const payload = await response.json();
-      const data = payload.categories;\n      availableServices = data.map(item => item.name);
-      if (!Array.isArray(data) || !data.length) throw new Error(payload.error || "No active services");
-      serviceInput.placeholder = "Start typing a service…";
+      const data = Array.isArray(payload.categories) ? payload.categories : [];
+      if (!data.length) throw new Error(payload.error || "No active services");
+      availableServices = data.map(item => item.name);
+      serviceInput.placeholder = "Search home services…";
       categoryGrid.replaceChildren();
       const rowCount = Math.ceil(data.length / 5);
       const rows = Array.from({ length: 5 }, () => {
@@ -96,8 +100,6 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
         return row;
       });
       data.forEach((item, index) => {
-        const option = new Option(item.name, item.name);
-        serviceSelect.add(option);
         const link = document.createElement("a");
         link.className = "category";
         link.href = "/customer?service=" + encodeURIComponent(item.name);
@@ -151,9 +153,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
     const query=normalize(serviceInput.value);
     selectedService="";
     suggestions.replaceChildren();
-    if(!query){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");return;}
-    const matches=availableServices.map(name=>({name,score:Math.min(score(normalize(name),query),...(aliases[name]||[]).map(a=>score(normalize(a),query)))}))
-      .filter(x=>x.score<99).sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name)).slice(0,7);
+    const matches=availableServices.map(name=>({name,score:query ? Math.min(score(normalize(name),query),...(aliases[name]||[]).map(a=>score(normalize(a),query))) : 50}))
+      .filter(x=>!query || x.score<99).sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name)).slice(0,8);
     matches.forEach(item=>{
       const button=document.createElement("button");button.type="button";button.setAttribute("role","option");button.textContent=item.name;
       button.addEventListener("click",()=>{selectedService=item.name;serviceInput.value=item.name;suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");});
@@ -162,6 +163,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
     suggestions.hidden=!matches.length;
     serviceInput.setAttribute("aria-expanded",String(matches.length>0));
   }
+  serviceInput.addEventListener("focus",showSuggestions);
   serviceInput.addEventListener("input",showSuggestions);
   serviceInput.addEventListener("keydown",event=>{
     if(event.key==="Escape"){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");}
