@@ -446,6 +446,11 @@
       html { scroll-behavior:auto; }
       *,*::before,*::after { transition-duration:.01ms!important; }
     }
+    .service-search-wrap { position:relative; }
+    .service-suggestions { position:relative; margin-top:4px; max-height:230px; overflow-y:auto; border:1px solid #d5dce5; border-radius:8px; background:#fff; box-shadow:0 5px 15px rgba(0,0,0,.08); z-index:5; }
+    .service-suggestion { display:block; width:100%; text-align:left; background:#fff; color:#18212f; border:0; border-bottom:1px solid #edf0f4; border-radius:0; padding:12px 14px; cursor:pointer; font:inherit; }
+    .service-suggestion:hover,.service-suggestion:focus { background:#eaf2fb; }
+    .service-search-hint { color:#667085; font-size:13px; margin:6px 0 12px; }
   </style>
 </head>
 
@@ -551,6 +556,12 @@
       </p>
 
       <form id="requestForm">
+        <label for="serviceSearch">Find a service / Найти услугу</label>
+        <div class="service-search-wrap">
+          <input id="serviceSearch" type="search" placeholder="Start typing: tile, painting, плитка, покраска..." autocomplete="off" aria-autocomplete="list" aria-controls="serviceSuggestions" aria-expanded="false">
+          <div id="serviceSuggestions" class="service-suggestions hidden" role="listbox"></div>
+        </div>
+        <p class="service-search-hint">Type a few letters and tap a matching service, or choose from the full list below.</p>
         <label for="serviceType">Service Type</label>
         <select id="serviceType" required>
           <option value="">Select a service</option>
@@ -1039,6 +1050,76 @@
       const note = document.createElement("p"); note.className = "subtitle"; note.textContent = "Answer what you can. You can leave unknown measurements blank and add photos or details below."; panel.append(note);
     }
     $("serviceType").addEventListener("change", renderServiceDetails);
+    // Live service suggestions use the currently available service categories.
+    const serviceAliases = {
+      "Tile Installation": ["укладка плитки","плитка","кафель","tile","tiling"],
+      "Painting": ["покраска","покрасить","краска","маляр","painting","paint"],
+      "Flooring Installation": ["укладка пола","полы","ламинат","паркет","flooring"],
+      "Bathroom Remodeling": ["ремонт ванной","ванная","санузел"],
+      "Kitchen Remodeling": ["ремонт кухни","кухня"],
+      "Plumbing": ["сантехник","сантехника","трубы","кран"],
+      "Electrical": ["электрик","электрика","проводка"],
+      "Roofing": ["крыша","кровля"],
+      "Drywall & Framing": ["гипсокартон","стены"],
+      "House Cleaning": ["уборка","клининг"],
+      "Window Cleaning": ["мойка окон","окна"],
+      "Concrete & Foundation": ["бетон","фундамент"],
+      "Decks & Fences": ["забор","терраса"],
+      "Doors & Windows": ["двери","окна"],
+      "HVAC": ["отопление","кондиционер","вентиляция"]
+    };
+    const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").replace(/[^\\p{L}\\p{N}]+/gu, " ");
+    function updateServiceSuggestions() {
+      const input = $("serviceSearch"), panel = $("serviceSuggestions");
+      const query = normalizeServiceSearch(input.value);
+      panel.replaceChildren();
+      if (!query) { panel.classList.add("hidden"); input.setAttribute("aria-expanded","false"); return; }
+      const options = [...$("serviceType").options].filter(option => option.value);
+      const matches = options.map(option => {
+        const name = normalizeServiceSearch(option.value);
+        const terms = [name, ...(serviceAliases[option.value] || []).map(normalizeServiceSearch)];
+        const score = terms.reduce((best, term) => {
+          if (term === query) return Math.min(best,0);
+          if (term.startsWith(query)) return Math.min(best,1);
+          if (term.split(" ").some(word => word.startsWith(query))) return Math.min(best,2);
+          if (term.includes(query)) return Math.min(best,3);
+          return best;
+        },99);
+        return {option,score};
+      }).filter(item => item.score < 99).sort((a,b) => a.score-b.score || a.option.value.localeCompare(b.option.value)).slice(0,8);
+      if (!matches.length) {
+        const empty = document.createElement("p"); empty.style.padding="10px 14px";
+        empty.textContent="No matching services. Try another word or choose from the list.";
+        panel.append(empty);
+      }
+      matches.forEach(({option}) => {
+        const button=document.createElement("button"); button.type="button"; button.className="service-suggestion"; button.setAttribute("role","option");
+        button.textContent=option.textContent;
+        button.addEventListener("click", () => {
+          $("serviceType").value=option.value;
+          input.value=option.textContent;
+          panel.classList.add("hidden"); input.setAttribute("aria-expanded","false");
+          $("serviceType").dispatchEvent(new Event("change"));
+        });
+        panel.append(button);
+      });
+      panel.classList.remove("hidden"); input.setAttribute("aria-expanded","true");
+    }
+    $("serviceSearch").addEventListener("input",updateServiceSuggestions);
+    $("serviceSearch").addEventListener("keydown",event => {
+      if(event.key==="Escape") { $("serviceSuggestions").classList.add("hidden"); $("serviceSearch").setAttribute("aria-expanded","false"); }
+      if(event.key==="Enter" && !$("serviceSuggestions").classList.contains("hidden")) {
+        const first=$("serviceSuggestions").querySelector("button");
+        if(first) {event.preventDefault();first.click();}
+      }
+    });
+    $("serviceType").addEventListener("change", () => {
+      const selected=$("serviceType").selectedOptions[0];
+      $("serviceSearch").value=selected?.value ? selected.textContent : "";
+      $("serviceSuggestions").classList.add("hidden");
+      $("serviceSearch").setAttribute("aria-expanded","false");
+    });
+
 
     // Carry the service and ZIP selected on the public homepage into the request form.
     const landingParams = new URLSearchParams(window.location.search);
