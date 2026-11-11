@@ -452,13 +452,6 @@
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
-    if (!IS_ADMIN_PORTAL && !isAdmin && currentContractor?.verification_status !== "verified") {
-      await db.auth.signOut();
-      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null;
-      hide($("appView")); hide($("topUser")); show($("authView"));
-      message("authMessage", "Your contractor account is awaiting administrator approval. You can sign in after it is approved.", "error");
-      return;
-    }
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
       currentUser = null;
