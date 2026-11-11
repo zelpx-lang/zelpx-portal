@@ -304,6 +304,18 @@
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
       <section class="lead">
+        <h2>Contractor account access</h2>
+        <p>Allow or block contractor portal access without deleting accounts, purchases, or conversations.</p>
+        <div class="actions"><button id="refreshAllContractorsBtn" type="button" class="secondary">Refresh contractors</button></div>
+        <div id="allContractorsList"><p class="muted">Loading contractors…</p></div>
+      </section>
+      <section class="lead">
+        <h2>Password recovery activity</h2>
+        <p>Recent contractor password changes completed through the recovery link.</p>
+        <div class="actions"><button id="refreshRecoveryEventsBtn" type="button" class="secondary">Refresh activity</button></div>
+        <div id="recoveryEventsList"><p class="muted">Loading recovery activity…</p></div>
+      </section>
+      <section class="lead">
         <h2>Contractors without a current license</h2>
         <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
         <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
@@ -457,7 +469,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); }
+    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAllContractors(); await loadRecoveryEvents(); await loadAdminLeads(); await loadServiceRequests(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -750,6 +762,54 @@
       body.append(tr);
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
+  }
+
+  async function loadAllContractors() {
+    const list = $("allContractorsList");
+    list.textContent = "Loading contractors…";
+    try {
+      const { data, error } = await db.rpc("admin_list_all_contractors");
+      if (error) throw error;
+      list.replaceChildren();
+      if (!data?.length) { list.textContent = "No contractor accounts found."; return; }
+      data.forEach(contractor => {
+        const card = document.createElement("article"); card.className = "lead";
+        const title = document.createElement("h3"); title.textContent = contractor.company_name || "Contractor";
+        const info = document.createElement("p");
+        info.textContent = (contractor.email || "No email") + " · " + (contractor.verification_status || "unknown") + (contractor.has_license ? " · License indicated" : " · No license");
+        const status = document.createElement("p"); status.className = "muted";
+        status.textContent = contractor.account_access_enabled ? "Portal access: allowed" : "Portal access: blocked";
+        const btn = document.createElement("button"); btn.type = "button";
+        btn.className = contractor.account_access_enabled ? "danger" : "secondary";
+        btn.textContent = contractor.account_access_enabled ? "Block access" : "Allow access";
+        btn.addEventListener("click", async () => {
+          const enable = !contractor.account_access_enabled;
+          btn.disabled = true; btn.textContent = enable ? "Allowing…" : "Blocking…";
+          try {
+            const { error: updateError } = await db.rpc("admin_set_contractor_access", { p_contractor_id: contractor.id, p_enabled: enable });
+            if (updateError) throw updateError;
+            await loadAllContractors();
+          } catch (e) { btn.disabled = false; btn.textContent = enable ? "Allow access" : "Block access"; message("pendingContractorsMessage", "Could not update contractor access: " + (e.message || "Unknown error"), "error"); }
+        });
+        card.append(title, info, status, btn); list.append(card);
+      });
+    } catch (e) { list.textContent = "Could not load contractors: " + (e.message || "Unknown error"); }
+  }
+
+  async function loadRecoveryEvents() {
+    const list = $("recoveryEventsList");
+    list.textContent = "Loading recovery activity…";
+    try {
+      const { data, error } = await db.rpc("admin_list_contractor_password_recoveries");
+      if (error) throw error;
+      list.replaceChildren();
+      if (!data?.length) { list.textContent = "No contractor password recoveries recorded yet."; return; }
+      data.forEach(event => {
+        const p = document.createElement("p");
+        p.textContent = (event.company_name || "Contractor") + " · " + (event.email || "No email") + " · " + new Date(event.recovered_at).toLocaleString();
+        list.append(p);
+      });
+    } catch (e) { list.textContent = "Could not load recovery activity: " + (e.message || "Unknown error"); }
   }
 
   async function loadPendingContractors() {
@@ -1157,7 +1217,7 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadUnlicensedContractors(); loadServiceRequests(); loadAdminLeads(); }
+    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadUnlicensedContractors(); loadAllContractors(); loadRecoveryEvents(); loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
@@ -1198,7 +1258,7 @@
     });
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
     $("requestSearch").addEventListener("input", loadServiceRequests);
-    $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshAllContractorsBtn").addEventListener("click", loadAllContractors); $("refreshRecoveryEventsBtn").addEventListener("click", loadRecoveryEvents); $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
