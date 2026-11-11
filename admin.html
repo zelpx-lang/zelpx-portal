@@ -870,10 +870,13 @@
           const yesOption = document.createElement("option");
           yesOption.value = "approve";
           yesOption.textContent = "Yes — license verified, approve registration";
+          const waiveOption = document.createElement("option");
+          waiveOption.value = "approve_without_license";
+          waiveOption.textContent = "Allow contractor without license verification";
           const noOption = document.createElement("option");
           noOption.value = "reject";
           noOption.textContent = "No — license not verified, reject registration";
-          decision.append(placeholder, yesOption, noOption);
+          decision.append(placeholder, yesOption, waiveOption, noOption);
           actions.append(decision);
           decision.focus();
           decision.addEventListener("change", async () => {
@@ -881,7 +884,7 @@
             if (!choice) return;
             approve.disabled = true;
             decision.disabled = true;
-            setBusy(approve, true, choice === "approve" ? "Approving…" : "Rejecting…");
+            setBusy(approve, true, choice === "reject" ? "Rejecting…" : "Approving…");
             try {
               const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
                 body: { contractor_id: contractor.id, decision: choice }
