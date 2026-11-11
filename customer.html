@@ -1052,21 +1052,31 @@
     $("serviceType").addEventListener("change", renderServiceDetails);
     // Live service suggestions use the currently available service categories.
     const serviceAliases = {
-      "Tile Installation": ["укладка плитки","плитка","кафель","tile","tiling"],
-      "Painting": ["покраска","покрасить","краска","маляр","painting","paint"],
-      "Flooring Installation": ["укладка пола","полы","ламинат","паркет","flooring"],
-      "Bathroom Remodeling": ["ремонт ванной","ванная","санузел"],
-      "Kitchen Remodeling": ["ремонт кухни","кухня"],
-      "Plumbing": ["сантехник","сантехника","трубы","кран"],
-      "Electrical": ["электрик","электрика","проводка"],
-      "Roofing": ["крыша","кровля"],
-      "Drywall & Framing": ["гипсокартон","стены"],
-      "House Cleaning": ["уборка","клининг"],
-      "Window Cleaning": ["мойка окон","окна"],
-      "Concrete & Foundation": ["бетон","фундамент"],
-      "Decks & Fences": ["забор","терраса"],
-      "Doors & Windows": ["двери","окна"],
-      "HVAC": ["отопление","кондиционер","вентиляция"]
+      "Tile Installation": ["укладка плитки","плитка","кафель","плиточник","положить плитку","замена плитки","tile","tiling","tile floor"],
+      "Painting": ["покраска","покрасить","краска","маляр","малярные работы","покраска стен","покраска потолка","paint","painting"],
+      "Flooring Installation": ["укладка пола","полы","ламинат","паркет","виниловый пол","напольное покрытие","flooring","floor","hardwood floor"],
+      "Carpet Installation": ["ковролин","ковер","ковровое покрытие","carpet"],
+      "Bathroom Remodeling": ["ремонт ванной","ванная","санузел","душевая","ванна","bathroom remodel"],
+      "Kitchen Remodeling": ["ремонт кухни","кухня","кухонный ремонт","kitchen remodel"],
+      "Plumbing": ["сантехник","сантехника","трубы","кран","протечка","унитаз","раковина","водопровод","plumber"],
+      "Electrical": ["электрик","электрика","проводка","розетка","выключатель","свет","освещение","electrician"],
+      "Roofing": ["крыша","кровля","крыша ремонт","черепица","roof"],
+      "Gutters": ["желоба","водосток","водосточная система","gutter"],
+      "Drywall & Framing": ["гипсокартон","стены","перегородки","штукатурка","drywall"],
+      "House Cleaning": ["уборка","клининг","убрать дом","дом уборка","cleaning","house cleaner"],
+      "Deep Cleaning": ["генеральная уборка","глубокая уборка","deep clean"],
+      "Window Cleaning": ["мойка окон","мыть окна","окна помыть","window wash"],
+      "Concrete & Foundation": ["бетон","фундамент","заливка бетона","бетонные работы","concrete"],
+      "Decks & Fences": ["забор","терраса","настил","ограждение","fence","deck"],
+      "Doors & Windows": ["двери","окна","установка двери","замена окон","door","window"],
+      "HVAC": ["отопление","кондиционер","вентиляция","печь","тепловой насос","air conditioning","heating"],
+      "Landscaping": ["ландшафт","ландшафтный дизайн","озеленение","двор","landscape"],
+      "Lawn Care": ["газон","стрижка травы","покос травы","уход за газоном","lawn"],
+      "Tree Service": ["дерево","обрезка деревьев","спил дерева","удаление дерева","tree trimming"],
+      "Moving": ["переезд","перевозка мебели","грузчики","moving"],
+      "Junk Removal": ["вывоз мусора","мусор","хлам","утилизация","junk"],
+      "Pressure Washing": ["мойка под давлением","мойка фасада","мойка driveway","pressure wash"],
+      "Pest Control": ["насекомые","вредители","таракан","мыши","грызуны","дезинсекция","pest"]
     };
     const normalizeServiceSearch = (value) => String(value || "").toLocaleLowerCase().trim().replace(/ё/g, "е").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
     function serviceEditDistance(a, b) {
@@ -1074,9 +1084,7 @@
       let previous = Array.from({length:b.length + 1}, (_, index) => index);
       for (let i = 1; i <= a.length; i++) {
         const current = [i];
-        for (let j = 1; j <= b.length; j++) {
-          current[j] = Math.min(current[j - 1] + 1, previous[j] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-        }
+        for (let j = 1; j <= b.length; j++) current[j] = Math.min(current[j-1]+1, previous[j]+1, previous[j-1]+(a[i-1]===b[j-1]?0:1));
         previous = current;
       }
       return previous[b.length];
@@ -1085,17 +1093,17 @@
       if (!term || !query) return 99;
       if (term === query) return 0;
       if (term.startsWith(query)) return 1;
-      const termWords = term.split(" "), queryWords = query.split(" ");
-      if (termWords.some(word => word.startsWith(query))) return 2;
+      const words = term.split(" "), queryWords = query.split(" ");
+      if (words.some(word => word.startsWith(query))) return 2;
       if (term.includes(query)) return 3;
-      if (queryWords.every(qw => termWords.some(tw => tw.startsWith(qw) || tw.includes(qw)))) return 4;
-      const distances = termWords.map(word => serviceEditDistance(word, query));
-      const bestDistance = Math.min(...distances);
-      if (bestDistance <= (query.length >= 7 ? 2 : 1)) return 5 + bestDistance;
-      const compactTerm = term.replace(/ /g, "");
-      const compactQuery = query.replace(/ /g, "");
-      const compactDistance = serviceEditDistance(compactTerm, compactQuery);
-      return compactDistance <= (compactQuery.length >= 8 ? 2 : 1) ? 7 + compactDistance : 99;
+      const matchedWords = queryWords.filter(q => words.some(word => word.startsWith(q) || word.includes(q)));
+      if (matchedWords.length === queryWords.length) return 4;
+      if (matchedWords.length) return 5 + (queryWords.length - matchedWords.length);
+      if (query.length >= 3) {
+        const distance = Math.min(...words.map(word => serviceEditDistance(word, query)));
+        if (distance <= (query.length >= 7 ? 2 : 1)) return 7 + distance;
+      }
+      return 99;
     }
     function updateServiceSuggestions() {
       const input = $("serviceSearch"), panel = $("serviceSuggestions");
@@ -1105,22 +1113,20 @@
       const options = [...$("serviceType").options].filter(option => option.value);
       const matches = options.map(option => {
         const terms = [normalizeServiceSearch(option.value), ...(serviceAliases[option.value] || []).map(normalizeServiceSearch)];
-        const score = Math.min(...terms.map(term => serviceTermScore(term, query)));
-        return {option,score};
+        return {option,score:Math.min(...terms.map(term => serviceTermScore(term,query)))};
       }).filter(item => item.score < 99)
         .sort((a,b) => a.score-b.score || a.option.value.localeCompare(b.option.value))
-        .slice(0,8);
+        .slice(0,7);
       if (!matches.length) {
         const empty = document.createElement("p"); empty.style.padding="10px 14px";
-        empty.textContent="No close matches yet. Try another word or choose from the full list.";
+        empty.textContent="No close matches yet. Try a different word or keep typing.";
         panel.append(empty);
       }
       matches.forEach(({option}) => {
         const button=document.createElement("button"); button.type="button"; button.className="service-suggestion"; button.setAttribute("role","option");
         button.textContent=option.textContent;
         button.addEventListener("click", () => {
-          $("serviceType").value=option.value;
-          input.value=option.textContent;
+          $("serviceType").value=option.value; input.value=option.textContent;
           panel.classList.add("hidden"); input.setAttribute("aria-expanded","false");
           $("serviceType").dispatchEvent(new Event("change"));
         });
