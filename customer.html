@@ -945,6 +945,19 @@
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
         await loadRequests(session);
+        // If the customer arrived from the public homepage with a selected service,
+        // take them straight to that prefilled request form after login/registration.
+        const pendingService = new URLSearchParams(window.location.search).get("service");
+        const pendingZip = new URLSearchParams(window.location.search).get("zip");
+        if (pendingService || pendingZip) {
+          const servicePageButton = document.querySelector(".dashboard-menu-button[data-dashboard-page=\"service\"]");
+          if (servicePageButton) servicePageButton.click();
+          window.setTimeout(() => {
+            const requestForm = $("requestForm");
+            if (requestForm) requestForm.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 80);
+          history.replaceState({}, "", window.location.pathname + "#requestForm");
+        }
         if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "customer");
         const alertStatus = $("customerBackgroundChatAlertsStatus");
         if (alertStatus && "Notification" in window) {
