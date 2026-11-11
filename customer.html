@@ -451,6 +451,139 @@
     .service-suggestion { display:block; width:100%; text-align:left; background:#fff; color:#18212f; border:0; border-bottom:1px solid #edf0f4; border-radius:0; padding:12px 14px; cursor:pointer; font:inherit; }
     .service-suggestion:hover,.service-suggestion:focus { background:#eaf2fb; }
     .service-search-hint { color:#667085; font-size:13px; margin:6px 0 12px; }
+  
+    /* ZELPX customer dashboard refresh: clean white + blue system */
+    :root {
+      --customer-ink:#14233b;
+      --customer-orange:#2563eb;
+      --customer-orange-dark:#1d4ed8;
+      --customer-paper:#f3f7fc;
+      --customer-line:#dce6f2;
+      --customer-muted:#64748b;
+      --customer-soft:#eaf2ff;
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 50% -12%, #e4efff 0, transparent 44%),
+        #f3f7fc;
+      color:#14233b;
+    }
+    .container {
+      background:#fff;
+      border-color:#e1eaf5;
+      border-radius:24px;
+      box-shadow:0 20px 55px -34px rgba(31,65,115,.30);
+    }
+    .logo { color:#14233b; }
+    .logo::after { background:#2563eb; }
+    h1,h2 { color:#14233b; }
+    .subtitle,.customer-chat-status,.request-results-count { color:#64748b; }
+    label { color:#42536b; }
+    input,select,textarea {
+      border-color:#d8e3f0;
+      border-radius:12px;
+      background:#fff;
+      color:#14233b;
+    }
+    input:focus,select:focus,textarea:focus {
+      outline:3px solid rgba(37,99,235,.15);
+      border-color:#2563eb;
+    }
+    button {
+      background:#2563eb;
+      box-shadow:0 6px 16px rgba(37,99,235,.18);
+    }
+    button:hover:not(:disabled) {
+      background:#1d4ed8;
+      box-shadow:0 8px 20px rgba(37,99,235,.22);
+    }
+    .secondary-button,.top-logout-button {
+      color:#24364f;
+      background:#fff;
+      border:1px solid #d8e3f0;
+      box-shadow:none;
+    }
+    .secondary-button:hover:not(:disabled),.top-logout-button:hover:not(:disabled) {
+      color:#1d4ed8;
+      background:#f4f8ff;
+      box-shadow:none;
+    }
+    .switch a { color:#1d4ed8; }
+    .error { color:#a12b36; background:#fff1f2; }
+    .success { color:#176b43; background:#ecfdf3; }
+    .request-card,.dashboard-home-card {
+      border-color:#e0e9f4;
+      background:#fff;
+      box-shadow:0 8px 24px -22px rgba(31,65,115,.30);
+    }
+    .request-card strong,.dashboard-home-card strong { color:#14233b; }
+    .status {
+      color:#1d4ed8;
+      background:#eaf2ff;
+    }
+    .section-divider { border-top-color:#e3ebf5; }
+    .dashboard-topbar {
+      background:rgba(255,255,255,.96);
+      border-bottom-color:#e3ebf5;
+    }
+    .dashboard-home-button {
+      color:#fff;
+      background:#2563eb;
+      box-shadow:0 5px 14px rgba(37,99,235,.18);
+    }
+    .dashboard-home-button:hover:not(:disabled) { background:#1d4ed8; }
+    .profile-panel,.customer-chat,.request-tools {
+      background:#f7faff;
+      border-color:#e0e9f4;
+    }
+    .customer-chat-messages {
+      background:#fff;
+      border-color:#e0e9f4;
+    }
+    .customer-chat-bubble.customer { background:#e3efff; }
+    .customer-chat-bubble.contractor { background:#f0f4f8; }
+    .dashboard-menu-button {
+      color:#263b57;
+      background:#fff;
+      border-color:#dce6f2;
+    }
+    .dashboard-menu-button:hover:not(:disabled) {
+      color:#1d4ed8;
+      background:#f0f6ff;
+    }
+    .dashboard-menu-button.active {
+      color:#fff;
+      background:#2563eb;
+      border-color:#2563eb;
+      box-shadow:0 6px 16px rgba(37,99,235,.18);
+    }
+    .dashboard-home-card:hover:not(:disabled) {
+      background:#f7faff;
+      border-color:#b9d2fa;
+      color:#14233b;
+    }
+    .dashboard-home-card span:last-child { color:#64748b; }
+    .request-delete-button {
+      color:#a12b36;
+      background:#fff;
+      border-color:#f0c9ce;
+      box-shadow:none;
+    }
+    .request-delete-button:hover:not(:disabled) {
+      color:#84202b;
+      background:#fff4f5;
+      box-shadow:none;
+    }
+    .service-suggestions {
+      border-color:#d8e3f0;
+      box-shadow:0 8px 22px rgba(31,65,115,.12);
+    }
+    .service-suggestion:hover,.service-suggestion:focus { background:#eef5ff; }
+    button:focus-visible,a:focus-visible {
+      outline:3px solid rgba(37,99,235,.35);
+      outline-offset:3px;
+    }
+
   </style>
 </head>
 
