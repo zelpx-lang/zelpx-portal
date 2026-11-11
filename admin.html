@@ -288,6 +288,17 @@
     </section>
 
     <section id="adminPanel" class="card hidden">
+      <h2>Administrator workspace</h2>
+      <p class="muted">Choose a section. Each tool opens on its own page.</p>
+      <nav class="tabs admin-page-nav" aria-label="Administrator pages">
+        <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
+        <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
+        <button type="button" data-admin-page="adminRequestsPage">Customer service requests</button>
+        <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">Verify and publish as lead</button>
+      </nav>
+      <section id="adminApprovalsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
       <section class="lead">
         <h2>Contractor approvals</h2>
         <p>New contractor accounts stay blocked until an administrator approves them.</p>
@@ -296,26 +307,22 @@
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
-      <section class="lead">
-        <h2>Contractors without a current license</h2>
-        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
-      </section>
-<section class="lead">
-        <h2>Customer service requests</h2>
-        <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
-        <div class="grid" style="margin:14px 0">
-          <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
-          <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
-        </div>
-        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button><span id="requestCount" class="muted"></span></div>
-        <div id="serviceRequestsMessage" class="message hidden"></div>
-        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
-      </section>
 
+      </section>
+      <section id="adminUnlicensedPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+      
+      </section>
+      <section id="adminRequestsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Customer service requests</h2>
+          <p>View customer requests submitted through the customer portal. To verify details and publish a request as a contractor lead, open the separate verification page.</p>
+          <button type="button" data-admin-page="adminVerifyLeadPage">Go to Verify and publish as lead</button>
+        </section>
+      </section>
+      <section id="adminCreateLeadPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
       <h2>Admin — create a lead</h2>
       <p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p>
       <div id="adminMessage" class="message hidden"></div>
@@ -344,6 +351,32 @@
         </div>
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
+
+      </section>
+      <section id="adminVerifyLeadPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+<section class="lead">
+        <h2>Contractors without a current license</h2>
+        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
+        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
+        <div id="unlicensedContractorsMessage" class="message hidden"></div>
+        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+      </section>
+<section class="lead">
+        <h2>Customer service requests</h2>
+        <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
+        <div class="grid" style="margin:14px 0">
+          <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
+          <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
+        </div>
+        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button><span id="requestCount" class="muted"></span></div>
+        <div id="serviceRequestsMessage" class="message hidden"></div>
+        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
+      </section>
+
+
+      </section>
     </section>
   </section>
 </main>
@@ -1146,17 +1179,36 @@
     }
   }
 
+  function showAdminPage(pageId) {
+    if (!isAdmin) return;
+    document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
+    document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
+    window.scrollTo({ top:0, behavior:"smooth" });
+    if (pageId === "adminApprovalsPage") loadPendingContractors();
+    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
+    if (pageId === "adminVerifyLeadPage") loadServiceRequests();
+    if (pageId === "adminCreateLeadPage") loadCategories();
+  }
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
+    if (tabId === "adminPanel" && isAdmin) {
+      document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
+      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
+    }
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadPendingContractors(); loadUnlicensedContractors(); loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
+    document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
+    document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
+      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
+      window.scrollTo({ top:0, behavior:"smooth" });
+    }));
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
