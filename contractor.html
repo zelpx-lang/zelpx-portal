@@ -452,6 +452,13 @@
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
+    if (!IS_ADMIN_PORTAL && !isAdmin && currentContractor?.account_access_enabled === false) {
+      await db.auth.signOut();
+      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null;
+      hide($("appView")); hide($("topUser")); show($("authView"));
+      message("authMessage", "Your contractor portal access is currently blocked by ZELPX administration.", "error");
+      return;
+    }
     if (!IS_ADMIN_PORTAL && !isAdmin && currentContractor?.verification_status !== "verified") {
       await db.auth.signOut();
       currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null;
@@ -484,7 +491,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,account_access_enabled,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
