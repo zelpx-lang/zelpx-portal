@@ -57,8 +57,9 @@
       if (!recoveryReady && !data.session) throw new Error("This recovery link is invalid or expired. Request a new password reset email.");
       const {error} = await db.auth.updateUser({password});
       if (error) throw error;
-      say("Password updated successfully. You can now sign in with your new password.", "success");
+      say("Password updated successfully. Opening your contractor dashboard…", "success");
       form.reset();
+      setTimeout(() => { window.location.replace("/contractor"); }, 700);
     } catch (error) { say(error.message || "Could not update password. Request a new recovery email.", "error"); }
     finally { button.disabled = false; button.textContent = "Save new password"; }
   });
