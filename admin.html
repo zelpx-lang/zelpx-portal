@@ -809,8 +809,16 @@
         const title = document.createElement("h3");
         title.textContent = contractor.company_name || "Contractor company";
         card.append(title);
+        const accessLabel = contractor.verification_status === "verified"
+          ? (contractor.has_license === true
+              ? "ACCESS ALLOWED — license verified"
+              : "ACCESS ALLOWED — administrator exception (no license)")
+          : contractor.verification_status === "rejected"
+            ? "ACCESS DENIED — rejected by administrator"
+            : "NO ACCESS — awaiting administrator decision";
         const details = [
           ["Email", contractor.email || "Not provided"],
+          ["Lead access", accessLabel],
           ["Current approval status", contractor.verification_status || "Unknown"],
           ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
