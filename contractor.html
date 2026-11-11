@@ -1073,8 +1073,13 @@
     if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
-    await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
-    hide($("appView")); hide($("topUser")); show($("authView"));
+    const { error } = await db.auth.signOut({ scope: "local" });
+    if (error) {
+      message("authMessage", error.message || "Could not sign out. Please try again.", "error");
+      return;
+    }
+    currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+    window.location.replace("/");
   }
   function wireEvents() {
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
