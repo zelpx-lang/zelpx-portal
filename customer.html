@@ -997,7 +997,7 @@
         showMessage("profileMessage", "Please enter your full name.", "error");
         return;
       }
-      if (!phone || phone.replace(/\\D/g, "").length < 7) {
+      if (!phone || phone.replace(/\D/g, "").length < 7) {
         showMessage("profileMessage", "Please enter a valid phone number.", "error");
         return;
       }
@@ -1082,7 +1082,7 @@
         // take them straight to that prefilled request form after login/registration.
         const pendingService = new URLSearchParams(window.location.search).get("service");
         const pendingZip = new URLSearchParams(window.location.search).get("zip");
-        if (pendingService || pendingZip) {
+        if (pendingService || pendingZip || window.location.hash === "#requestForm") {
           const servicePageButton = document.querySelector(".dashboard-menu-button[data-dashboard-page=\"service\"]");
           if (servicePageButton) servicePageButton.click();
           window.setTimeout(() => {
@@ -1317,7 +1317,7 @@
     function collectServiceDetails() {
       return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
         input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
-      ).join("\\n");
+      ).join("\n");
     }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1346,14 +1346,13 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: "JOB DETAILS\\n" + collectServiceDetails() + ($("description").value.trim() ? "\\n\\nADDITIONAL CUSTOMER NOTES\\n" + $("description").value.trim() : ""),
+          description: "JOB DETAILS\n" + collectServiceDetails() + ($("description").value.trim() ? "\n\nADDITIONAL CUSTOMER NOTES\n" + $("description").value.trim() : ""),
           preferred_time: $("preferredTime").value || null
         };
 
         if (!request.service_type || !request.property_address || !request.service_city ||
-            !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code) ||
-            !request.service_type) {
-          throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code and description.");
+            !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code)) {
+          throw new Error("Please complete the service type and address, city, 2-letter state, and 5-digit ZIP code.");
         }
 
         const { error } = await db
