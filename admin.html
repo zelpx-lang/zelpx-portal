@@ -778,20 +778,26 @@
         const info = document.createElement("p");
         info.textContent = (contractor.email || "No email") + " · " + (contractor.verification_status || "unknown") + (contractor.has_license ? " · License indicated" : " · No license");
         const status = document.createElement("p"); status.className = "muted";
-        status.textContent = contractor.account_access_enabled ? "Portal access: allowed" : "Portal access: blocked";
-        const btn = document.createElement("button"); btn.type = "button";
-        btn.className = contractor.account_access_enabled ? "danger" : "secondary";
-        btn.textContent = contractor.account_access_enabled ? "Block access" : "Allow access";
-        btn.addEventListener("click", async () => {
-          const enable = !contractor.account_access_enabled;
-          btn.disabled = true; btn.textContent = enable ? "Allowing…" : "Blocking…";
-          try {
-            const { error: updateError } = await db.rpc("admin_set_contractor_access", { p_contractor_id: contractor.id, p_enabled: enable });
-            if (updateError) throw updateError;
-            await loadAllContractors();
-          } catch (e) { btn.disabled = false; btn.textContent = enable ? "Allow access" : "Block access"; message("pendingContractorsMessage", "Could not update contractor access: " + (e.message || "Unknown error"), "error"); }
-        });
-        card.append(title, info, status, btn); list.append(card);
+        status.textContent = contractor.verification_status !== "verified"
+          ? "Portal access: awaiting administrator approval"
+          : (contractor.account_access_enabled ? "Portal access: allowed" : "Portal access: blocked");
+        card.append(title, info, status);
+        if (contractor.verification_status === "verified") {
+          const btn = document.createElement("button"); btn.type = "button";
+          btn.className = contractor.account_access_enabled ? "danger" : "secondary";
+          btn.textContent = contractor.account_access_enabled ? "Block access" : "Allow access";
+          btn.addEventListener("click", async () => {
+            const enable = !contractor.account_access_enabled;
+            btn.disabled = true; btn.textContent = enable ? "Allowing…" : "Blocking…";
+            try {
+              const { error: updateError } = await db.rpc("admin_set_contractor_access", { p_contractor_id: contractor.id, p_enabled: enable });
+              if (updateError) throw updateError;
+              await loadAllContractors();
+            } catch (e) { btn.disabled = false; btn.textContent = enable ? "Allow access" : "Block access"; message("pendingContractorsMessage", "Could not update contractor access: " + (e.message || "Unknown error"), "error"); }
+          });
+          card.append(btn);
+        }
+        list.append(card);
       });
     } catch (e) { list.textContent = "Could not load contractors: " + (e.message || "Unknown error"); }
   }
