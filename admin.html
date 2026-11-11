@@ -89,6 +89,64 @@
       .statrow { grid-template-columns:1fr; } .stat { display:flex; justify-content:space-between; align-items:center; gap:8px; }
       .stat strong { font-size:20px; } .leadhead { flex-direction:column; } .price { white-space:normal; } }
     @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+    /* Administrator menu: unmistakable action buttons */
+    body.admin-mode .admin-page-nav {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      width:100%;
+      max-width:none;
+      padding:0;
+      margin:22px 0;
+      background:transparent;
+      border-radius:0;
+    }
+    body.admin-mode .admin-page-nav button {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      width:100%;
+      min-height:88px;
+      padding:20px 22px;
+      border:2px solid #ff6a2b;
+      border-radius:18px;
+      background:#fffdfa;
+      color:#15171c;
+      box-shadow:0 5px 0 #e9d7ca,0 10px 24px #3b2a1a12;
+      font-size:16px;
+      font-weight:800;
+      line-height:1.35;
+      text-align:left;
+      white-space:normal;
+    }
+    body.admin-mode .admin-page-nav button::after {
+      content:"›";
+      display:grid;
+      place-items:center;
+      flex:0 0 34px;
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      background:#ff6a2b;
+      color:white;
+      font-size:27px;
+      line-height:1;
+    }
+    body.admin-mode .admin-page-nav button:hover:not(:disabled) {
+      transform:translateY(-2px);
+      background:#fff3ec;
+      border-color:#f25a1a;
+      box-shadow:0 7px 0 #e9d7ca,0 14px 28px #3b2a1a1c;
+    }
+    body.admin-mode .admin-page-nav button:active { transform:translateY(1px); box-shadow:0 2px 0 #e9d7ca; }
+    body.admin-mode .admin-page-nav button.active { background:#fff0e8; color:#15171c; border-color:#c94b17; }
+    body.admin-mode .admin-page-nav button.active::after { content:"✓"; }
+    body.admin-mode .admin-page [data-admin-home] { margin:0 0 16px; }
+    @media(max-width:700px) {
+      body.admin-mode .admin-page-nav { grid-template-columns:1fr; gap:11px; }
+      body.admin-mode .admin-page-nav button { min-height:76px; padding:17px 18px; font-size:15px; }
+    }
     /* ===== ZELPX redesign v2: warm paper + ink + orange ===== */
     :root { --navy:#15171c; --ink:#15171c; --blue:#ff6a2b; --bg:#f6f2ec; --line:#e7e0d5; --muted:#6f6a62; --green:#0f8a5f; --red:#c2321f; --radius:20px; --page-width:1080px; --accent-soft:#fff0e8; }
     body { font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; letter-spacing:-.005em; }
