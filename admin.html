@@ -291,7 +291,8 @@
       <section class="lead">
         <h2>Release email for re-registration</h2>
         <p>Archive the old login for pashka_241@mail.ru, release its email and phone, and keep purchase and conversation history.</p>
-        <div class="actions"><button id="releaseContractorLoginBtn" type="button" class="danger">Release email for re-registration</button></div>
+        <div class="actions" id="releaseContractorActions"><button id="releaseContractorLoginBtn" type="button" class="danger">Release email for re-registration</button></div>
+        <div class="actions hidden" id="releaseContractorConfirm"><span style="font-weight:700;align-self:center">Are you sure?</span><button id="confirmReleaseContractorBtn" type="button" class="danger">Yes</button><button id="cancelReleaseContractorBtn" type="button" class="secondary">No</button></div>
         <div id="releaseContractorLoginMessage" class="message hidden" role="status" aria-live="polite"></div>
       </section>
       <section class="lead">
@@ -1169,19 +1170,30 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("releaseContractorLoginBtn").addEventListener("click", async () => {
-      if (!window.confirm("Release pashka_241@mail.ru and its old phone number for a new contractor registration? The old account will remain blocked and its history will be retained.")) return;
-      const btn = $("releaseContractorLoginBtn");
+    $("releaseContractorLoginBtn").addEventListener("click", () => {
+      $("releaseContractorActions").classList.add("hidden");
+      $("releaseContractorConfirm").classList.remove("hidden");
+      $("releaseContractorLoginMessage").classList.add("hidden");
+    });
+    $("cancelReleaseContractorBtn").addEventListener("click", () => {
+      $("releaseContractorConfirm").classList.add("hidden");
+      $("releaseContractorActions").classList.remove("hidden");
+    });
+    $("confirmReleaseContractorBtn").addEventListener("click", async () => {
+      const btn = $("confirmReleaseContractorBtn");
       btn.disabled = true; btn.textContent = "Releasing…";
       try {
         const { data, error } = await db.functions.invoke("admin-release-contractor-login", { body: {} });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         message("releaseContractorLoginMessage", "Email and phone released. The old account remains blocked; history retained. You can now register again.", "success");
-        btn.textContent = "Email released";
+        $("releaseContractorConfirm").classList.add("hidden");
+        $("releaseContractorActions").classList.remove("hidden");
+        $("releaseContractorLoginBtn").disabled = true;
+        $("releaseContractorLoginBtn").textContent = "Email released";
       } catch (e) {
         message("releaseContractorLoginMessage", "Could not release email: " + (e.message || "Unknown error"), "error");
-        btn.disabled = false; btn.textContent = "Release email for re-registration";
+        btn.disabled = false; btn.textContent = "Yes";
       }
     });
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
