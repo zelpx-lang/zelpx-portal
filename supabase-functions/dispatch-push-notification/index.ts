@@ -3,6 +3,7 @@ import webpush from "npm:web-push@3.6.7";
 
 type OutboxRow = {
   id: number;
+  source_id: string;
   event_type: "new_lead" | "new_chat_message";
   recipient_type: "customer" | "contractor";
   recipient_id: string;
