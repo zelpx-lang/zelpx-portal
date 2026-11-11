@@ -973,31 +973,40 @@
         });
         const actions = document.createElement("div");
         actions.className = "actions";
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "danger";
-        remove.textContent = "Remove account access";
-        remove.addEventListener("click", async () => {
+        const allowed = contractor.verification_status === "verified";
+        const accessStatus = document.createElement("p");
+        accessStatus.className = allowed ? "message success" : "message error";
+        accessStatus.textContent = allowed ? "Lead access: ALLOWED" : "Lead access: BLOCKED";
+        card.append(accessStatus);
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = allowed ? "danger" : "";
+        toggle.textContent = allowed ? "Block account access" : "Allow account access";
+        toggle.addEventListener("click", async () => {
           const company = contractor.company_name || contractor.email || "this contractor";
-          if (!window.confirm("Disable this contractor's account access?\\n\\n" + company +
-            "\\n\\nThey will no longer be able to sign in. Their account record and purchase/transaction history will be retained.")) return;
-          remove.disabled = true;
-          remove.textContent = "Removing access…";
+          const action = allowed ? "block" : "allow";
+          const prompt = allowed
+            ? "Block this contractor from viewing and purchasing leads? Their login, account, and transaction history will remain."
+            : "Allow this contractor to view and purchase eligible leads? Their account must still meet location and other lead requirements.";
+          if (!window.confirm(prompt + "\\n\\n" + company)) return;
+          toggle.disabled = true;
+          toggle.textContent = allowed ? "Blocking…" : "Allowing…";
           try {
             const { data, error } = await db.functions.invoke("admin-remove-unlicensed-contractor", {
-              body: { contractor_id: contractor.id }
+              body: { contractor_id: contractor.id, action }
             });
             if (error) throw error;
             if (data?.error) throw new Error(data.error);
-            message("unlicensedContractorsMessage", "Account access disabled for " + company + ". History retained.", "success");
+            message("unlicensedContractorsMessage",
+              (action === "allow" ? "Lead access allowed for " : "Lead access blocked for ") + company + ". Login and history unchanged.", "success");
             await loadUnlicensedContractors();
           } catch (e) {
-            message("unlicensedContractorsMessage", "Could not remove account access: " + (e.message || "Unknown error"), "error");
-            remove.disabled = false;
-            remove.textContent = "Remove account access";
+            message("unlicensedContractorsMessage", "Could not change lead access: " + (e.message || "Unknown error"), "error");
+            toggle.disabled = false;
+            toggle.textContent = allowed ? "Block account access" : "Allow account access";
           }
         });
-        actions.append(remove);
+        actions.append(toggle);
         card.append(actions);
         list.append(card);
       });
