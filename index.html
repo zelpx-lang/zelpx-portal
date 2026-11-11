@@ -17,13 +17,13 @@ section.block{padding:76px 0}.section-head{display:flex;justify-content:space-be
 footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-size:13px}.footrow{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}.footlinks{display:flex;gap:20px;flex-wrap:wrap}
 @media(max-width:850px){.hero-grid{grid-template-columns:1fr;gap:35px}.hero-art{min-height:370px}.category-row>.category{flex-basis:33vw;min-width:187px;max-width:260px}.navlinks{display:none}.hero{padding:55px 0}.section-head{align-items:flex-start;flex-direction:column}.pro-cta{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){.wrap{width:calc(100% - 30px)}header{height:68px}.logo{font-size:24px}.navright .outline{display:none}.hero{padding:42px 0}.hero-copy{font-size:16px}.searchgrid{grid-template-columns:1fr;gap:7px}.field{padding:7px 10px;border-bottom:1px solid var(--line)}.searchbox .btn{width:100%}.hero-art{min-height:330px;padding:20px}.art-card{left:24px;right:24px;top:125px}.art-shape{inset:75px 18px 20px}.category-grid{gap:7px}.category-row{gap:8px}.category-row>.category{flex:0 0 calc((100vw - 50px)/3);min-width:0;max-width:none}.category-grid>.category{height:92px;min-height:0;padding:8px;gap:5px;scroll-snap-align:start;flex-direction:column;align-items:flex-start;justify-content:center}.category .cat-icon{flex:0 0 23px;width:23px;height:23px;font-size:13px}.category-copy{width:100%;min-width:0}.category strong{font-size:11px;line-height:1.2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere}.category small{display:none}.category{height:92px;min-height:0;padding:8px}.steps{grid-template-columns:1fr}.block{padding:54px 0!important}.pro-cta{padding:28px 22px}.trustline{gap:10px 18px}}
-</style>
+ .service-field{position:relative}.home-suggestions{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:260px;overflow:auto;background:#fffefa;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px #31271922}.home-suggestions button{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;color:var(--ink);cursor:pointer}.home-suggestions button:hover,.home-suggestions button:focus{background:var(--soft)}</style>
 </head>
 <body>
 <header><div class="wrap nav"><a class="logo" href="/">ZELPX</a><nav class="navlinks"><a href="#services">Explore services</a><a href="#how">How it works</a><a href="/contractor">For professionals</a></nav><div class="navright"><a class="btn outline small" href="/customer">Log in</a><a class="btn small" href="/customer">Get started</a></div></div></header>
 <main>
 <section class="hero"><div class="wrap hero-grid"><div><div class="eyebrow"><span class="dot"></span> Your home project, moving forward</div><h1>Find the right pro.<br><em>Get it done.</em></h1><p class="hero-copy">From quick fixes to big renovations, connect with local professionals who can help bring your project to life.</p>
-<form class="searchbox" id="serviceSearch"><div class="searchgrid"><div class="field"><label for="service">What do you need help with?</label><select id="service" required><option value="">Choose a service</option></select></div><div class="field"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code" required></div><button class="btn" type="submit">Find a pro →</button></div></form>
+<form class="searchbox" id="serviceSearch"><div class="searchgrid"><div class="field service-field"><label for="service">What do you need help with?</label><input id="service" type="search" placeholder="e.g. painting, плитка..." autocomplete="off" aria-autocomplete="list" aria-controls="homeServiceSuggestions" aria-expanded="false" required><div id="homeServiceSuggestions" class="home-suggestions" role="listbox" hidden></div></div><div class="field"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code" required></div><button class="btn" type="submit">Find a pro →</button></div></form>
 <div class="trustline"><span>Local service pros</span><span>Simple project requests</span><span>One place to manage it</span></div></div>
 <div class="hero-art"><div class="art-glow"></div><div class="art-top"><strong>THE ZELPX DIFFERENCE</strong><span>LOCAL • SIMPLE • CONNECTED</span></div><div class="art-shape"></div><div class="art-card"><small>YOUR NEXT PROJECT</small><h3>A better way to<br>get home projects done.</h3><p style="color:#77746c;margin:0">Tell us what you need. We'll help you take the next step.</p><div class="art-row"><div class="avatars"><span class="avatar">Z</span><span class="avatar">P</span><span class="avatar">+</span></div><strong>Built around your project</strong></div></div></div></div></section>
 <section class="block" id="services"><div class="wrap"><div class="section-head"><div><div class="kicker">Explore services</div><h2>Help for every corner<br>of your home.</h2></div><p>Choose a service to get started. Share a few details about your project and manage your request from your customer account.</p></div><div class="category-grid" id="categoryGrid"><p>Loading available services…</p></div></div></section>
@@ -35,7 +35,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 (() => {
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
-  const serviceSelect = document.getElementById("service");
+  const serviceInput = document.getElementById("service");\n  const suggestions = document.getElementById("homeServiceSuggestions");\n  let availableServices = [];\n  let selectedService = "";
   const categoryGrid = document.getElementById("categoryGrid");
   // Pick an illustration from the service name, never from its alphabetical position.
   function serviceIcon(name) {
@@ -83,9 +83,9 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       });
       if (!response.ok) throw new Error("Service catalog request failed (" + response.status + ")");
       const payload = await response.json();
-      const data = payload.categories;
+      const data = payload.categories;\n      availableServices = data.map(item => item.name);
       if (!Array.isArray(data) || !data.length) throw new Error(payload.error || "No active services");
-      serviceSelect.replaceChildren(new Option("Choose a service", ""));
+      serviceInput.placeholder = "Start typing a service…";
       categoryGrid.replaceChildren();
       const rowCount = Math.ceil(data.length / 5);
       const rows = Array.from({ length: 5 }, () => {
@@ -117,16 +117,64 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       });
     } catch (error) {
       console.warn("Could not load homepage services:", error);
-      serviceSelect.replaceChildren(new Option("Services temporarily unavailable", ""));
+      serviceInput.placeholder = "Services temporarily unavailable";
       categoryGrid.textContent = "Services are temporarily unavailable. Please try again shortly.";
     }
   }
   loadServices();
+  const aliases = {
+    "Tile Installation":["укладка плитки","плитка","кафель","плиточник","положить плитку","tile","tiling"],
+    "Painting":["покраска","покрасить","маляр","малярные работы","покраска стен","paint"],
+    "Flooring Installation":["укладка пола","ламинат","паркет","полы","flooring"],
+    "Plumbing":["сантехник","сантехника","трубы","кран","протечка","plumber"],
+    "Electrical":["электрик","электрика","проводка","розетка","electrician"],
+    "Roofing":["крыша","кровля","черепица","roof"],
+    "House Cleaning":["уборка","клининг","убрать дом","cleaning"],
+    "Bathroom Remodeling":["ремонт ванной","ванная","санузел"],
+    "Kitchen Remodeling":["ремонт кухни","кухня"],
+    "Landscaping":["ландшафт","озеленение","двор"],
+    "Moving":["переезд","грузчики"],
+    "Junk Removal":["вывоз мусора","хлам"]
+  };
+  const normalize = value => String(value||"").toLocaleLowerCase().replace(/ё/g,"е").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  function score(term, query) {
+    if (!term || !query) return 99;
+    if (term===query) return 0;
+    if (term.startsWith(query)) return 1;
+    const words=term.split(" "), qs=query.split(" ");
+    if(words.some(w=>w.startsWith(query)))return 2;
+    if(term.includes(query))return 3;
+    const matched=qs.filter(q=>words.some(w=>w.startsWith(q)||w.includes(q)));
+    return matched.length===qs.length?4:matched.length?6:99;
+  }
+  function showSuggestions() {
+    const query=normalize(serviceInput.value);
+    selectedService="";
+    suggestions.replaceChildren();
+    if(!query){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");return;}
+    const matches=availableServices.map(name=>({name,score:Math.min(score(normalize(name),query),...(aliases[name]||[]).map(a=>score(normalize(a),query)))}))
+      .filter(x=>x.score<99).sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name)).slice(0,7);
+    matches.forEach(item=>{
+      const button=document.createElement("button");button.type="button";button.setAttribute("role","option");button.textContent=item.name;
+      button.addEventListener("click",()=>{selectedService=item.name;serviceInput.value=item.name;suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");});
+      suggestions.append(button);
+    });
+    suggestions.hidden=!matches.length;
+    serviceInput.setAttribute("aria-expanded",String(matches.length>0));
+  }
+  serviceInput.addEventListener("input",showSuggestions);
+  serviceInput.addEventListener("keydown",event=>{
+    if(event.key==="Escape"){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");}
+    if(event.key==="Enter"&&!suggestions.hidden){const first=suggestions.querySelector("button");if(first){event.preventDefault();first.click();}}
+  });
   document.getElementById("serviceSearch").addEventListener("submit",function(event){
     event.preventDefault();
-    const service=serviceSelect.value;
+    const typed=normalize(serviceInput.value);
+    const service=selectedService || availableServices.find(name=>normalize(name)===typed) ||
+      availableServices.map(name=>({name,score:Math.min(score(normalize(name),typed),...(aliases[name]||[]).map(a=>score(normalize(a),typed)))})).filter(x=>x.score<99).sort((a,b)=>a.score-b.score)[0]?.name;
     const zip=document.getElementById("zip").value.trim();
-    if(!service||!/^[0-9]{5}$/.test(zip))return;
+    if(!service){serviceInput.focus();showSuggestions();return;}
+    if(!/^[0-9]{5}$/.test(zip)){document.getElementById("zip").focus();return;}
     location.href="/customer?service="+encodeURIComponent(service)+"&zip="+encodeURIComponent(zip)+"#requestForm";
   });
 })();
