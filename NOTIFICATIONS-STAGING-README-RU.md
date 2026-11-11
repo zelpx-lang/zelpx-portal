@@ -1,62 +1,64 @@
-# ZELPX — isolated push-notification staging
+# ZELPX — изолированная staging-среда push-уведомлений
 
-## Environment boundaries
-- Supabase staging project: `uxqykfrzowprkemokhfo` (`zelpx-portal`).
-- Production Supabase project `zsrnjkndgbchfxibxiyd` (`zelpx-database`) was not modified.
-- Production VAPID credentials and push subscriptions were not copied.
-- The staging test page uses its own service-worker scope under `/staging-push-test/`; it does not replace the production root service worker or the existing `zelpx-push.js`.
+## Границы окружений
+- Отдельный Supabase staging-проект: `uxqykfrzowprkemokhfo` (`zelpx-portal`).
+- Production Supabase `zsrnjkndgbchfxibxiyd` (`zelpx-database`) не изменялся.
+- Production VAPID-ключи и подписки пользователей не копировались.
+- Тестовая страница использует отдельную область service worker `/staging-push-test/`; существующие Production `zelpx-push.js` и корневой service worker не изменяются.
 
-## Implemented
-- `supabase-notifications-staging.sql`: minimal test schema, event outbox, eligibility routing, and generic message copy.
-- `supabase-notifications-staging-hardening.sql`: atomic outbox claim, retry lock, server-only RLS policies and indexes.
-- `supabase-notifications-staging-webhook.sql`: Vault-backed Database Webhook trigger and isolated test-device subscriptions.
-- `supabase-functions/dispatch-push-notification/index.ts`: authenticated webhook dispatcher and Web Push sender.
-- `supabase-functions/staging-push-test/index.ts`: JWT-authenticated test-device registration, removal and self-test endpoint.
-- `staging-push-test/index.html` + `staging-push-test/sw.js`: isolated browser test page and scoped service worker.
+## Что реализовано
+- `supabase-notifications-staging.sql` — минимальная тестовая схема, outbox и правила маршрутизации событий.
+- `supabase-notifications-staging-hardening.sql` — атомарная блокировка outbox, защита от дублей, RLS и индексы.
+- `supabase-notifications-staging-webhook.sql` — Database Webhook через Vault и таблица подписок тестовых устройств.
+- `supabase-functions/dispatch-push-notification/index.ts` — серверная отправка push-уведомлений.
+- `supabase-functions/staging-push-test/index.ts` — регистрация тестового устройства, удаление подписки и отправка тестового push.
+- `staging-push-test/index.html` и `staging-push-test/sw.js` — изолированная страница тестирования и отдельный service worker.
 
-## Runtime secrets
-Four independent staging-only values are stored encrypted in Supabase Vault:
+## Секреты
+В Supabase Vault сохранены четыре независимых staging-секрета:
 - `zelpx_push_webhook_secret`
 - `zelpx_vapid_public_key`
 - `zelpx_vapid_private_key`
 - `zelpx_vapid_subject`
 
-The VAPID subject is the public Zelpex website URL. No secret values are stored in GitHub or in the SQL migration files. The runtime RPC `get_push_runtime_secrets()` is executable only by `service_role`.
+VAPID subject указывает на публичный сайт Zelpex. Значения секретов не хранятся в GitHub или SQL-файлах. RPC `get_push_runtime_secrets()` доступна только роли `service_role`.
 
-## Deployed Edge Functions
-- `dispatch-push-notification`: ACTIVE, `verify_jwt=false`; it authenticates the database webhook using the high-entropy Vault secret.
-- `staging-push-test`: ACTIVE, `verify_jwt=true`; it requires a valid staging Auth user session and only sends a test notification to that user's own registered endpoints.
+## Развёрнутые Edge Functions
+- `dispatch-push-notification` — ACTIVE, `verify_jwt=false`; проверяет отдельный длинный webhook-секрет из Vault.
+- `staging-push-test` — ACTIVE, `verify_jwt=true`; требует действующую staging Auth-сессию и отправляет тестовое уведомление только на устройства этого аккаунта.
 
-## Event and security behaviour
-1. A new lead creates outbox events only for contractors with `verification_status='verified'` and matching ZIP, valid distance radius, or matching city/state when coordinates are unavailable.
-2. New chat messages route to the other conversation participant.
-3. Chat push bodies are generic. Message text, phone numbers, addresses and private lead details are never placed in push payloads.
-4. Events are deduplicated by event type, source row and recipient.
-5. `claim_push_notification` atomically locks each outbox event for five minutes to prevent concurrent duplicate dispatch.
-6. Expired push endpoints (404/410) are removed.
-7. The public test endpoint checks the JWT and binds each device subscription to the authenticated user. It rejects endpoints outside the supported HTTPS push-service hosts.
-8. Direct `anon` and `authenticated` access to the subscription and outbox tables is revoked; the server role is used for writes.
+## Логика и безопасность
+1. Новый лид создаёт события только для подрядчиков со статусом `verified`, если совпадает ZIP, расстояние попадает в радиус обслуживания или совпадают город и штат при отсутствии координат.
+2. Сообщение в чате создаёт уведомление для второго участника диалога.
+3. Текст сообщения, телефоны, адреса и приватные данные лида не включаются в push payload.
+4. Дубли предотвращаются уникальным ключом по типу события, исходной записи и получателю.
+5. `claim_push_notification` атомарно блокирует событие на пять минут, предотвращая параллельную повторную отправку.
+6. Устаревшие push-endpoints с ответом 404/410 удаляются.
+7. Тестовый endpoint проверяет JWT, привязывает подписку к текущему пользователю и принимает только HTTPS push endpoints известных провайдеров.
+8. Прямой доступ ролей `anon` и `authenticated` к outbox и таблицам подписок закрыт; серверные операции выполняются через `service_role`.
 
-## Verification completed
-- Synthetic contractor matching test: two eligible verified contractors received lead outbox events; a verified contractor outside the radius and a pending contractor did not.
-- Synthetic chat tests: customer-to-contractor and contractor-to-customer events were queued; private message text was not included.
-- Atomic claim test: first claim succeeded, concurrent second claim returned no row.
-- Database webhook to Edge Function: 8 requests returned HTTP 200; all 8 synthetic outbox events closed successfully, with 0 pending and 0 processing.
-- No browser subscriptions were registered at the time of backend verification, so no external push notification was sent.
+## Что проверено
+- Тест географии: два подходящих проверенных подрядчика получили события; подрядчик вне радиуса и подрядчик со статусом pending исключены.
+- Тест чата: события клиента и подрядчика направлены противоположному участнику; приватный текст не попал в уведомление.
+- Тест блокировки: первый claim успешен, второй параллельный claim не получил запись.
+- Webhook базы → Edge Function: 8 запросов вернули HTTP 200; все 8 синтетических событий обработаны, 0 осталось в ожидании и 0 в обработке.
+- На момент серверных тестов реальные браузерные подписки ещё не были зарегистрированы, поэтому внешние push-уведомления не отправлялись.
 
-## Test on a real browser/device
-Open `/staging-push-test/` on the feature-branch Preview deployment over HTTPS:
-1. Create a separate test account in the staging project (do not use a Production account/password).
-2. If email confirmation is enabled, confirm the email and return to the same Preview page to sign in.
-3. Press **Enable push on this device** and allow browser notifications.
-4. Press **Send a test notification**. The page should report one accepted device, and the browser should show a generic ZELPX staging notification.
-5. Test on a second browser/device by signing in with the same staging test account and repeating steps 3–4.
-6. Use **Remove this device subscription** to revoke a test endpoint.
+## Как проверить на реальном устройстве
+Откройте `/staging-push-test/` на HTTPS Preview-деплое feature-ветки:
+1. Создайте отдельную тестовую учётную запись в staging-проекте. Не используйте пароль от Production.
+2. Если включено подтверждение email, подтвердите адрес и вернитесь на ту же Preview-страницу для входа.
+3. Нажмите **Enable push on this device** и разрешите уведомления браузера.
+4. Нажмите **Send a test notification**. Страница должна сообщить об успешной отправке на одно устройство; браузер должен показать тестовое уведомление ZELPX.
+5. Для второго устройства войдите в ту же staging-учётную запись и повторите шаги 3–4.
+6. Кнопка **Remove this device subscription** удаляет тестовую подписку.
 
-The page is served by the feature-branch Vercel Preview, not the Production custom domain. The Preview deployment is protected by Vercel SSO. It does not change the Production domain or environment variables.
+Страница доступна на Vercel Preview feature-ветки, защищённой Vercel SSO. Production-домен и Production-переменные окружения не меняются.
 
-## Remaining integration work
-The browser test verifies the VAPID pair, device registration and actual delivery. It does not yet connect the existing Production customer/contractor screens to the staging Auth project. To test real lead/chat workflows end-to-end, the staging frontend must be configured with staging credentials and a test contractor/customer fixture, then register the subscriptions in `contractor_push_subscriptions` and `chat_push_subscriptions`. Do not change the Production frontend's existing VAPID key or `send-chat-push` function as part of this staging task.
+## Что остаётся для полного end-to-end теста
+Тестовая страница проверяет VAPID, регистрацию устройства и фактическую доставку push. Она пока не подключает существующие Production customer/contractor страницы к staging Auth. Для сквозной проверки лидов и чата нужно отдельно настроить staging frontend, создать тестовые профили клиента и подрядчика и зарегистрировать их подписки в `contractor_push_subscriptions` и `chat_push_subscriptions`.
 
-## Safety
-No Production migrations, Production Edge Functions, Stripe settings, Vercel Production environment variables or Production deployments were changed. No merge to `main` was performed.
+Не меняйте Production VAPID key и Production `send-chat-push` в рамках staging-проверки.
+
+## Безопасность
+Production-миграции, Production Edge Functions, Stripe, Vercel Production environment variables и Production deployments не менялись. Слияние с `main` не выполнялось.
