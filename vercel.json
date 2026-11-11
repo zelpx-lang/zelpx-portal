@@ -1,7 +1,31 @@
 {
   "rewrites": [
-    { "source": "/contractor", "destination": "/contractor.html" },
-    { "source": "/customer", "destination": "/customer.html" },
-    { "source": "/customer-chat", "destination": "/customer-chat.html" }
+    {
+      "source": "/contractor",
+      "destination": "/contractor.html"
+    },
+    {
+      "source": "/customer",
+      "destination": "/customer.html"
+    },
+    {
+      "source": "/customer-chat",
+      "destination": "/customer-chat.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/admin.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, max-age=0"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    }
   ]
 }
