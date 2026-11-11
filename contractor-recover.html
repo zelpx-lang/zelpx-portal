@@ -57,9 +57,6 @@
       if (!recoveryReady && !data.session) throw new Error("This recovery link is invalid or expired. Request a new password reset email.");
       const {error} = await db.auth.updateUser({password});
       if (error) throw error;
-      await db.rpc("record_contractor_password_recovery");
-      const { error: notificationError } = await db.functions.invoke("notify-admin-contractor-password-recovery");
-      if (notificationError) console.warn("Administrator push notification was not sent:", notificationError.message);
       say("Password updated successfully. You can now sign in with your new password.", "success");
       form.reset();
     } catch (error) { say(error.message || "Could not update password. Request a new recovery email.", "error"); }
