@@ -287,7 +287,7 @@
       <div class="actions"><button id="saveCompanyBtn">Save company details</button></div>
     </section>
 
-    <section id="adminPanel" class="card hidden">
+        <section id="adminPanel" class="card hidden">
       <h2>Administrator workspace</h2>
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
@@ -299,7 +299,7 @@
       </nav>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-      <section class="lead">
+        <section class="lead">
         <h2>Contractor approvals</h2>
         <p>New contractor accounts stay blocked until an administrator approves them.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
@@ -307,23 +307,29 @@
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
-
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-      
+        <section class="lead">
+        <h2>Contractors without a current license</h2>
+        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
+        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
+        <div id="unlicensedContractorsMessage" class="message hidden"></div>
+        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+      </section>
       </section>
       <section id="adminRequestsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
           <h2>Customer service requests</h2>
-          <p>View customer requests submitted through the customer portal. To verify details and publish a request as a contractor lead, open the separate verification page.</p>
-          <button type="button" data-admin-page="adminVerifyLeadPage">Go to Verify and publish as lead</button>
+          <p>Review all customer requests submitted through the customer portal. Requests awaiting review can be verified and published from the separate verification page.</p>
+          <button type="button" data-admin-page="adminVerifyLeadPage">Open verification and publishing</button>
         </section>
       </section>
       <section id="adminCreateLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-      <h2>Admin — create a lead</h2>
+        <h2>Admin — create a lead</h2>
       <p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p>
       <div id="adminMessage" class="message hidden"></div>
       <form id="leadForm">
@@ -351,19 +357,10 @@
         </div>
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
-
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-<section class="lead">
-        <h2>Contractors without a current license</h2>
-        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
-      </section>
-<section class="lead">
+        <section class="lead">
         <h2>Customer service requests</h2>
         <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
         <div class="grid" style="margin:14px 0">
@@ -374,8 +371,6 @@
         <div id="serviceRequestsMessage" class="message hidden"></div>
         <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
       </section>
-
-
       </section>
     </section>
   </section>
