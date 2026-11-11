@@ -793,13 +793,13 @@
         alertBox.classList.toggle("hidden", pendingCount === 0);
         alertBox.className = pendingCount ? "message error" : "message hidden";
         alertBox.textContent = pendingCount
-          ? `New contractor registrations: ${pendingCount}. Without a current license: ${withoutLicense}. Review the accounts below.`
+          ? `Contractors for license review: ${pendingCount}. Without a current license: ${withoutLicense}. Check each account and record your decision.`
           : "";
       }
       if (!contractors?.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = "No contractors are waiting for approval.";
+        empty.textContent = "No contractor accounts found for license review.";
         list.append(empty);
         return;
       }
@@ -811,6 +811,7 @@
         card.append(title);
         const details = [
           ["Email", contractor.email || "Not provided"],
+          ["Current approval status", contractor.verification_status || "Unknown"],
           ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
           ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
