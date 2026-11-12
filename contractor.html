@@ -604,7 +604,7 @@
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
-      const card = document.createElement("article"); card.className = "lead"; card.dataset.leadId = item.lead_id; card.id = "lead-" + lead.id;
+      const card = document.createElement("article"); card.className = "lead"; card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
       const head = document.createElement("div"); head.className = "leadhead";
       const left = document.createElement("div"), title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
       const meta = document.createElement("div"); meta.className = "muted"; meta.textContent = "ZIP " + (lead.zip_code || "Area not specified");
