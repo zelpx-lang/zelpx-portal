@@ -50,6 +50,8 @@ jobs:
           cp android/android-keystore android/android.keystore
           chmod 600 android/android-keystore android/android.keystore
           keytool -list -keystore android/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
+      - name: Set up Android SDK and accept licenses
+        uses: android-actions/setup-android@v3
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
