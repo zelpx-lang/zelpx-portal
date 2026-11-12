@@ -1,6 +1,9 @@
 name: Build ZELPX Android TWA
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - android/google-play-twa-current-main
 permissions:
   contents: read
 concurrency:
