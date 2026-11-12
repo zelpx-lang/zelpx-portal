@@ -672,8 +672,10 @@
         } catch (_) {}
       }
       async function refreshMessages() {
-        const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
+        const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
         if (error) throw error;
+        const { error: readError } = await db.rpc("mark_contractor_messages_read", { p_conversation_id: conversationId });
+        if (readError) console.error("Could not mark customer messages as read:", readError);
         const currentIds = new Set((data || []).map(item => item.id));
         if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "contractor")) playIncomingChatSound();
         knownMessageIds = currentIds;
@@ -684,7 +686,9 @@
           const sender = document.createElement("strong"); sender.textContent = item.sender_type === "contractor" ? "YOU" : "CUSTOMER";
           const text = document.createElement("div"); text.textContent = item.message;
           const time = document.createElement("div"); time.className = "chatmeta"; time.textContent = new Date(item.created_at).toLocaleString();
-          bubble.append(sender, text, time); messagesBox.append(bubble);
+          bubble.append(sender, text, time);
+          if (item.sender_type === "contractor" && item.customer_read_at) { const read = document.createElement("div"); read.className = "chatmeta"; read.textContent = "Read by customer"; bubble.append(read); }
+          messagesBox.append(bubble);
         }); messagesBox.scrollTop = messagesBox.scrollHeight;
       }
       form.addEventListener("submit", async event => {
