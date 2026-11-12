@@ -101,7 +101,7 @@ jobs:
           curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null
           # Bubblewrap uses an interactive terminal prompt; provide a PTY so it
           # can receive the production host and accept the remaining defaults.
-          { printf 'app.zelpx.com\\n'; yes '' | head -n 40; } | script -q -e -c 'stty -echo; bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android' /dev/null
+          { printf 'app.zelpx.com\n'; yes '' | head -n 40; } | script -q -e -c 'stty -echo; bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android' /dev/null
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
           node -e "const m=require('./android/twa-manifest.json'); if(m.host !== 'app.zelpx.com') { console.error('Unexpected TWA host:',m.host); process.exit(1); } console.log('TWA host:',m.host,'startUrl:',m.startUrl,'packageId:',m.packageId);"
       - name: Apply fixed ZELPX TWA settings
