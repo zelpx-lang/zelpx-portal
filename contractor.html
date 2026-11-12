@@ -764,7 +764,7 @@
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
         if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
         contactBox.replaceChildren(); const contactTitle = document.createElement("h3"); contactTitle.textContent = "Customer contact details"; contactBox.append(contactTitle);
-        [["Name",contact.customer_name],["Phone",contact.phone],["Email",contact.email],["Street address",contact.street_address],["City",contact.city],["State",contact.state]].forEach(([label,value]) => {
+        [["Name",contact.customer_name],["Phone",contact.phone],["Email",contact.email],["Street address",contact.street_address],["City",contact.city],["State",contact.state],["ZIP Code",contact.zip_code]].forEach(([label,value]) => {
           if (!value) return; const p = document.createElement("p"), strong = document.createElement("strong"); strong.textContent = label + ": "; p.append(strong, document.createTextNode(String(value))); contactBox.append(p);
         });
       } catch (e) {
