@@ -1,4 +1,4 @@
-name: Build ZELPX Android TWA # remove optional shortcuts
+name: Build ZELPX Android TWA # use Bubblewrap-managed SDK
 on:
   workflow_dispatch:
   push:
@@ -54,12 +54,11 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
-      - name: Configure Bubblewrap to use preinstalled Android SDK
+      - name: Use Bubblewrap-managed Android SDK
         shell: bash
         run: |
-          mkdir -p "$HOME/.bubblewrap"
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
-          cat "$HOME/.bubblewrap/config.json"
+          rm -f "$HOME/.bubblewrap/config.json"
+          rm -rf "$HOME/.bubblewrap/android-sdk" "$HOME/.bubblewrap/android-commandlinetools"
       - name: Prepare build manifest with available ZELPX icons
         shell: bash
         run: |
