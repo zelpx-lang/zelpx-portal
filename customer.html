@@ -1533,7 +1533,7 @@
             const chatButton = document.createElement("button");
             chatButton.type = "button"; chatButton.className = "secondary-button";
             chatButton.textContent = "Open conversation";
-            const unreadCount = unreadByLead.get(request.lead_id) || 0;
+            let unreadCount = unreadByLead.get(request.lead_id) || 0;
             if (unreadCount) {
               chatButton.textContent = "New message (" + unreadCount + ") · Open conversation";
               chatButton.style.borderColor = "#ff6a2b";
@@ -1556,11 +1556,23 @@
                 } catch (_) {}
               }
               chatPanel.classList.toggle("hidden", !opening);
-              chatButton.textContent = opening ? "Close conversation" : (unreadCount ? "New message (" + unreadCount + ") · Open conversation" : "Open conversation");
-              if (opening) { chatButton.style.borderColor = ""; chatButton.style.color = ""; chatButton.style.fontWeight = ""; }
-              if (opening && !chatPanel.dataset.loaded) {
-                await openCustomerConversation(request.lead_id, chatPanel);
-                chatPanel.dataset.loaded = "1";
+              if (opening) {
+                chatButton.textContent = "Close conversation";
+                chatButton.style.borderColor = "";
+                chatButton.style.color = "";
+                chatButton.style.fontWeight = "";
+                if (!chatPanel.dataset.loaded) {
+                  await openCustomerConversation(request.lead_id, chatPanel);
+                  chatPanel.dataset.loaded = "1";
+                }
+                if (unreadCount > 0) {
+                  unreadCount = 0;
+                  chatButton.textContent = "Close conversation";
+                }
+              } else {
+                chatButton.textContent = unreadCount > 0
+                  ? "New message (" + unreadCount + ") · Open conversation"
+                  : "No more messages";
               }
             });
           }
