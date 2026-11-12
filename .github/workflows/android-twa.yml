@@ -99,9 +99,53 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null
-          # Bubblewrap uses an interactive terminal prompt; provide a PTY so it
-          # can receive the production host and accept the remaining defaults.
-          { printf 'app.zelpx.com\n'; yes '' | head -n 40; } | script -q -e -c 'stty -echo; bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android' /dev/null
+          # Bubblewrap's init wizard requires a real interactive TTY. Use Expect
+          # to answer each prompt explicitly instead of piping text into Inquirer.
+          sudo apt-get update
+          sudo apt-get install -y expect
+          expect <<'EXPECT'
+          set timeout 180
+          log_user 1
+          spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
+          expect -re {Domain:}
+          send -- "app.zelpx.com\\r"
+          expect -re {URL path:}
+          send -- "/\\r"
+          expect -re {(App|Application) name:}
+          send -- "ZELPX\\r"
+          expect -re {Launcher name:}
+          send -- "ZELPX\\r"
+          expect -re {Package ID:}
+          send -- "com.zelpx.app\\r"
+          expect -re {Version code:}
+          send -- "1\\r"
+          expect -re {Display mode:}
+          send -- "\\r"
+          expect -re {Orientation:}
+          send -- "\\r"
+          expect -re {Theme color:}
+          send -- "\\r"
+          expect -re {Background color:}
+          send -- "\\r"
+          expect -re {Icon URL:}
+          send -- "\\r"
+          expect -re {Maskable icon URL:}
+          send -- "\\r"
+          expect {
+            -re {Shortcuts} { send -- "\\r"; exp_continue }
+            -re {Monochrome icon URL:} { send -- "\\r" }
+            timeout { puts stderr "Timed out waiting for Bubblewrap optional icon prompt"; exit 1 }
+          }
+          expect -re {Play Billing}
+          send -- "\\r"
+          expect -re {Location Delegation}
+          send -- "\\r"
+          expect -re {Key path:}
+          send -- "\\r"
+          expect -re {Key alias:}
+          send -- "\\r"
+          expect eof
+          EXPECT
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
           node -e "const m=require('./android/twa-manifest.json'); if(m.host !== 'app.zelpx.com') { console.error('Unexpected TWA host:',m.host); process.exit(1); } console.log('TWA host:',m.host,'startUrl:',m.startUrl,'packageId:',m.packageId);"
       - name: Apply fixed ZELPX TWA settings
