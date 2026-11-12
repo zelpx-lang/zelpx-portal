@@ -60,10 +60,17 @@ jobs:
           mkdir -p "$HOME/.bubblewrap"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
+      - name: Prepare build manifest with available ZELPX icons
+        shell: bash
+        run: |
+          curl -fsSL https://app.zelpx.com/manifest.webmanifest -o zelpx-build-manifest.json
+          jq '(.icons[] | .src) |= (if endswith("192.svg") then "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg" else "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-512.svg" end) | (.shortcuts[]?.icons[]?.src) |= "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"' zelpx-build-manifest.json > zelpx-build-manifest.tmp
+          mv zelpx-build-manifest.tmp zelpx-build-manifest.json
+          cat zelpx-build-manifest.json
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          yes '' | bubblewrap init --manifest=https://app.zelpx.com/manifest.webmanifest --directory=android
+          yes '' | bubblewrap init --manifest=./zelpx-build-manifest.json --directory=android
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
