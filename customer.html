@@ -1428,6 +1428,22 @@
 
         if (error) throw error;
 
+        const requestLeadIds = (data || []).map(item => item.lead_id).filter(Boolean);
+        const unreadByLead = new Map();
+        if (requestLeadIds.length) {
+          const { data: conversations, error: conversationsError } = await db.from("lead_conversations").select("id,lead_id").in("lead_id", requestLeadIds);
+          if (conversationsError) console.warn("Unread chat status unavailable:", conversationsError.message);
+          else if (conversations?.length) {
+            const conversationIds = conversations.map(item => item.id);
+            const { data: unreadMessages, error: unreadError } = await db.from("lead_messages").select("conversation_id").in("conversation_id", conversationIds).eq("sender_type", "contractor").is("customer_read_at", null);
+            if (unreadError) console.warn("Unread chat status unavailable:", unreadError.message);
+            else {
+              const leadByConversation = new Map(conversations.map(item => [item.id, item.lead_id]));
+              (unreadMessages || []).forEach(message => { const leadId = leadByConversation.get(message.conversation_id); if (leadId) unreadByLead.set(leadId, (unreadByLead.get(leadId) || 0) + 1); });
+            }
+          }
+        }
+
         list.replaceChildren();
 
         if (!data || data.length === 0) {
@@ -1517,6 +1533,13 @@
             const chatButton = document.createElement("button");
             chatButton.type = "button"; chatButton.className = "secondary-button";
             chatButton.textContent = "Open conversation";
+            const unreadCount = unreadByLead.get(request.lead_id) || 0;
+            if (unreadCount) {
+              chatButton.textContent = "New message (" + unreadCount + ") · Open conversation";
+              chatButton.style.borderColor = "#ff6a2b";
+              chatButton.style.color = "#c2410c";
+              chatButton.style.fontWeight = "800";
+            }
             chatButton.dataset.openChat = "1";
             const chatPanel = document.createElement("div");
             chatPanel.className = "hidden";
@@ -1533,7 +1556,8 @@
                 } catch (_) {}
               }
               chatPanel.classList.toggle("hidden", !opening);
-              chatButton.textContent = opening ? "Close conversation" : "Open conversation";
+              chatButton.textContent = opening ? "Close conversation" : (unreadCount ? "New message (" + unreadCount + ") · Open conversation" : "Open conversation");
+              if (opening) { chatButton.style.borderColor = ""; chatButton.style.color = ""; chatButton.style.fontWeight = ""; }
               if (opening && !chatPanel.dataset.loaded) {
                 await openCustomerConversation(request.lead_id, chatPanel);
                 chatPanel.dataset.loaded = "1";
