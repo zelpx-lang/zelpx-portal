@@ -70,7 +70,8 @@ jobs:
           echo "Using sdkmanager: $SDKMANAGER"
           mkdir -p "$SDK_ROOT/bin" "$HOME/.bubblewrap"
           ln -sfn "$SDKMANAGER" "$SDK_ROOT/bin/sdkmanager"
-          chmod +x "$SDKMANAGER"
+          # The SDK is preinstalled and read-only on the runner; do not chmod it.
+          test -x "$SDKMANAGER" || { echo "sdkmanager is not executable: $SDKMANAGER"; ls -l "$SDKMANAGER"; exit 1; }
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$SDK_ROOT" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
           "$SDKMANAGER" --version
