@@ -722,6 +722,21 @@
     const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id).order("purchased_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
     const purchases = data || []; $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
+    const unreadByLead = new Map();
+    const purchaseLeadIds = purchases.map(item => item.lead_id).filter(Boolean);
+    if (purchaseLeadIds.length) {
+      const { data: conversations, error: conversationsError } = await db.from("lead_conversations").select("id,lead_id").in("lead_id", purchaseLeadIds);
+      if (conversationsError) { console.warn("Unread chat status unavailable:", conversationsError.message); }
+      else if (conversations?.length) {
+        const conversationIds = conversations.map(item => item.id);
+        const { data: unreadMessages, error: unreadError } = await db.from("lead_messages").select("conversation_id").in("conversation_id", conversationIds).eq("sender_type", "customer").is("contractor_read_at", null);
+        if (unreadError) console.warn("Unread chat status unavailable:", unreadError.message);
+        else {
+          const leadByConversation = new Map(conversations.map(item => [item.id, item.lead_id]));
+          (unreadMessages || []).forEach(message => { const leadId = leadByConversation.get(message.conversation_id); if (leadId) unreadByLead.set(leadId, (unreadByLead.get(leadId) || 0) + 1); });
+        }
+      }
+    }
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
 
     for (const item of purchases) {
@@ -735,9 +750,14 @@
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
       const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
+      const unreadCount = unreadByLead.get(item.lead_id) || 0;
+      if (unreadCount) {
+        const unreadBadge = document.createElement("span"); unreadBadge.className = "pill urgent"; unreadBadge.textContent = unreadCount + " unread message" + (unreadCount === 1 ? "" : "s"); unreadBadge.style.marginLeft = "10px";
+        chatButton.after(unreadBadge);
+      }
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
-        if (chatPanel.classList.contains("hidden")) { if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
+        if (chatPanel.classList.contains("hidden")) { chatButton.parentElement.querySelectorAll(".pill.urgent").forEach(badge => badge.remove()); if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
         else { hide(chatPanel); chatButton.textContent = "Open customer chat"; }
       });
       card.append(chatButton, chatPanel); list.append(card);
