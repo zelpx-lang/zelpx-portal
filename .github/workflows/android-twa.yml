@@ -54,11 +54,13 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
-      - name: Use Bubblewrap-managed Android SDK
+      - name: Configure Bubblewrap to use preinstalled Android tools
         shell: bash
         run: |
-          rm -f "$HOME/.bubblewrap/config.json"
-          rm -rf "$HOME/.bubblewrap/android-sdk" "$HOME/.bubblewrap/android-commandlinetools"
+          mkdir -p "$HOME/.bubblewrap"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          cat "$HOME/.bubblewrap/config.json"
+          bubblewrap doctor
       - name: Prepare build manifest with available ZELPX icons
         shell: bash
         run: |
@@ -69,7 +71,7 @@ jobs:
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          printf 'n\nn\n' | bubblewrap init --manifest=https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/zelpx-build-manifest.json --directory=android
+          bubblewrap init --manifest=https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/zelpx-build-manifest.json --directory=android
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
