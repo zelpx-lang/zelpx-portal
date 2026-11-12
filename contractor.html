@@ -751,16 +751,18 @@
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
       const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
       const unreadCount = unreadByLead.get(item.lead_id) || 0;
+      const unreadBadge = document.createElement("span");
       if (unreadCount) {
-        const unreadBadge = document.createElement("span"); unreadBadge.className = "pill urgent"; unreadBadge.textContent = unreadCount + " unread message" + (unreadCount === 1 ? "" : "s"); unreadBadge.style.marginLeft = "10px";
-        chatButton.after(unreadBadge);
+        unreadBadge.className = "pill urgent";
+        unreadBadge.textContent = unreadCount + " unread message" + (unreadCount === 1 ? "" : "s");
+        unreadBadge.style.marginLeft = "10px";
       }
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
         if (chatPanel.classList.contains("hidden")) { chatButton.parentElement.querySelectorAll(".pill.urgent").forEach(badge => badge.remove()); if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
         else { hide(chatPanel); chatButton.textContent = "Open customer chat"; }
       });
-      card.append(chatButton, chatPanel); list.append(card);
+      card.append(chatButton); if (unreadCount) card.append(unreadBadge); card.append(chatPanel); list.append(card);
       try {
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
         if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
