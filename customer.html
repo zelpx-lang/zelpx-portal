@@ -1654,7 +1654,17 @@
     }
 
     loadCustomerServiceCategories();
-    checkSession().catch((error) => {
+    (async () => {
+      const notificationParams = new URLSearchParams(window.location.search);
+      if (notificationParams.get("reauth") === "1") {
+        const { error: signOutError } = await db.auth.signOut({ scope: "local" });
+        if (signOutError) throw signOutError;
+        notificationParams.delete("reauth");
+        const cleanQuery = notificationParams.toString();
+        history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
+      }
+      await checkSession();
+    })().catch((error) => {
       showMessage("message", error.message || "Could not restore your customer session. Please log in again.", "error");
     });
   </script>
