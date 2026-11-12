@@ -107,38 +107,39 @@ jobs:
           set timeout 180
           log_user 1
           spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
-          expect -re {Domain:}
+          # Match the live prompt and its default, not the same label in help text.
+          expect -re {Domain:.*\(127\.0\.0\.1:8765\)}
           send -- "app.zelpx.com\r"
-          expect -re {URL path:}
+          expect -re {URL path:.*\(/)}
           send -- "/\r"
-          expect -re {(App|Application) name:}
+          expect -re {Application name:.*\(ZELPX\)}
           send -- "ZELPX\r"
-          expect -re {Launcher name:}
+          expect -re {Short name:.*\(ZELPX\)}
           send -- "ZELPX\r"
-          expect -re {Package ID:}
+          expect -re {Application ID:.*\(1_8765\.0\.0\.127\.twa\)}
           send -- "com.zelpx.app\r"
           expect -re {Version code:}
           send -- "1\r"
-          expect -re {Display mode:}
+          expect -re {Display mode:.*\(standalone\)}
           send -- "\r"
-          expect -re {Orientation:}
+          expect -re {Orientation:.*\(portrait\)}
           send -- "\r"
           expect -re {Theme color:}
-          send -- "\r"
+          send -- "#10243a\r"
           expect -re {Background color:}
-          send -- "\r"
+          send -- "#f3f6fa\r"
           expect -re {Icon URL:}
           send -- "\r"
           expect -re {Maskable icon URL:}
           send -- "\r"
           expect {
-            -re {Shortcuts} { send -- "\r"; exp_continue }
+            -re {Shortcuts.*\(.*\)} { send -- "\r"; exp_continue }
             -re {Monochrome icon URL:} { send -- "\r" }
             timeout { puts stderr "Timed out waiting for Bubblewrap optional icon prompt"; exit 1 }
           }
-          expect -re {Play Billing}
+          expect -re {Play Billing.*\(.*\)}
           send -- "\r"
-          expect -re {Location Delegation}
+          expect -re {Location Delegation.*\(.*\)}
           send -- "\r"
           expect -re {Key path:}
           send -- "\r"
