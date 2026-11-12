@@ -1304,11 +1304,21 @@
         const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
         form.append(input, send);
         const chatActions = document.createElement("div");
-        chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "10px"; chatActions.style.alignItems = "center";
+        chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "8px"; chatActions.style.alignItems = "center"; chatActions.style.marginTop = "10px";
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
         const closeChat = document.createElement("button"); closeChat.type = "button";
         closeChat.className = "secondary-button"; closeChat.textContent = "Close customer chat";
+        [refresh, closeChat].forEach(button => {
+          button.style.padding = "8px 12px";
+          button.style.minHeight = "36px";
+          button.style.fontSize = "13px";
+          button.style.lineHeight = "1.2";
+          button.style.borderRadius = "10px";
+          button.style.width = "auto";
+          button.style.margin = "0";
+          button.style.whiteSpace = "nowrap";
+        });
         closeChat.addEventListener("click", () => {
           const toggle = panel.parentElement?.querySelector("[data-open-chat='1']");
           panel.classList.add("hidden");
