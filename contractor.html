@@ -1113,7 +1113,16 @@
   async function start() {
     wireEvents();
     try {
-      initClient(); const { data: { session } } = await db.auth.getSession();
+      initClient();
+      const notificationParams = new URLSearchParams(window.location.search);
+      if (notificationParams.get("reauth") === "1") {
+        const { error: signOutError } = await db.auth.signOut({ scope: "local" });
+        if (signOutError) throw signOutError;
+        notificationParams.delete("reauth");
+        const cleanQuery = notificationParams.toString();
+        history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
+      }
+      const { data: { session } } = await db.auth.getSession();
       if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
