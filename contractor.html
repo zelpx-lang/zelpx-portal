@@ -708,7 +708,7 @@
       catch (e) { pushStatus.textContent = "Notifications need attention: " + (e.message || "subscription refresh failed"); pushStatus.style.color = "#b42318"; }
       await refreshMessages();
       const chatActions = document.createElement("div");
-      chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "10px"; chatActions.style.alignItems = "center";
+      chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "8px"; chatActions.style.alignItems = "center"; chatActions.style.marginTop = "10px";
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
       const closeChatButton = document.createElement("button"); closeChatButton.type = "button"; closeChatButton.className = "secondary"; closeChatButton.textContent = "Close customer chat";
@@ -716,6 +716,16 @@
         panel.classList.add("hidden");
         const toggle = panel.parentElement?.querySelector("button");
         if (toggle) { toggle.hidden = false; toggle.textContent = "Open customer chat"; }
+      });
+      [refreshButton, closeChatButton].forEach(button => {
+        button.style.padding = "8px 12px";
+        button.style.minHeight = "36px";
+        button.style.fontSize = "13px";
+        button.style.lineHeight = "1.2";
+        button.style.borderRadius = "10px";
+        button.style.width = "auto";
+        button.style.margin = "0";
+        button.style.whiteSpace = "nowrap";
       });
       chatActions.append(refreshButton, closeChatButton);
       panel.append(chatActions);
