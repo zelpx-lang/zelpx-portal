@@ -70,7 +70,7 @@ jobs:
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          yes '' | bubblewrap init --manifest=./zelpx-build-manifest.json --directory=android
+          yes '' | bubblewrap init --manifest=https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/zelpx-build-manifest.json --directory=android
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
