@@ -768,8 +768,11 @@
       }
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
-        if (chatPanel.classList.contains("hidden")) { chatButton.parentElement.querySelectorAll(".pill.urgent").forEach(badge => badge.remove()); if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
-        else { hide(chatPanel); chatButton.textContent = "Open customer chat"; }
+        if (!chatPanel.classList.contains("hidden")) return;
+        chatButton.parentElement.querySelectorAll(".pill.urgent").forEach(badge => badge.remove());
+        if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} }
+        show(chatPanel); chatButton.textContent = "Customer chat open";
+        await openContractorChat(item.lead_id, chatPanel);
       });
       card.append(chatButton); if (unreadCount) card.append(unreadBadge); card.append(chatPanel); list.append(card);
       try {
