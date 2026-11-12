@@ -104,47 +104,52 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y expect
           expect <<'EXPECT'
-          set timeout 180
+          set timeout 120
           log_user 1
-          spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
-          # Match the live prompt and its default, not the same label in help text.
-          expect -re {Domain:.*\(127\.0\.0\.1:8765\)}
-          send -- "app.zelpx.com\r"
-          expect -re {URL path:.*\(/\)}
-          send -- "/\r"
-          expect -re {Application name:.*\(ZELPX\)}
-          send -- "ZELPX\r"
-          expect -re {Short name:.*\(ZELPX\)}
-          send -- "ZELPX\r"
-          expect -re {Application ID:.*\(1_8765\.0\.0\.127\.twa\)}
-          send -- "com.zelpx.app\r"
-          expect -re {Version code:}
-          send -- "1\r"
-          expect -re {Display mode:.*\(standalone\)}
-          send -- "\r"
-          expect -re {Orientation:.*\(portrait\)}
-          send -- "\r"
-          expect -re {Theme color:}
-          send -- "#10243a\r"
-          expect -re {Background color:}
-          send -- "#f3f6fa\r"
-          expect -re {Icon URL:}
-          send -- "\r"
-          expect -re {Maskable icon URL:}
-          send -- "\r"
-          expect {
-            -re {Shortcuts.*\(.*\)} { send -- "\r"; exp_continue }
-            -re {Monochrome icon URL:} { send -- "\r" }
-            timeout { puts stderr "Timed out waiting for Bubblewrap optional icon prompt"; exit 1 }
+          proc wait_for {pattern description} {
+            expect {
+              -re $pattern {}
+              timeout { puts stderr "Timed out waiting for: $description"; exit 1 }
+              eof { puts stderr "Bubblewrap exited while waiting for: $description"; exit 1 }
+            }
           }
-          expect -re {Play Billing.*\(.*\)}
-          send -- "\r"
-          expect -re {Location Delegation.*\(.*\)}
-          send -- "\r"
-          expect -re {Key path:}
-          send -- "\r"
-          expect -re {Key alias:}
-          send -- "\r"
+          spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
+          wait_for {Domain:.*\\(127\\.0\\.0\\.1:8765\\)} "Domain prompt"
+          send -- "app.zelpx.com\\r"
+          wait_for {URL path:.*\\(/\\)} "URL path prompt"
+          send -- "/\\r"
+          wait_for {Application name:.*\\(ZELPX\\)} "Application name prompt"
+          send -- "ZELPX\\r"
+          wait_for {Short name:.*\\(ZELPX\\)} "Short name prompt"
+          send -- "ZELPX\\r"
+          wait_for {Application ID:.*\\(1_8765\\.0\\.0\\.127\\.twa\\)} "Application ID prompt"
+          send -- "com.zelpx.app\\r"
+          wait_for {Starting version code for the new app version:} "Version code prompt"
+          send -- "1\\r"
+          wait_for {Display mode:.*Use arrow keys} "Display mode prompt"
+          send -- "\\r"
+          wait_for {Orientation:.*Use arrow keys} "Orientation prompt"
+          send -- "\\r"
+          wait_for {Status bar color:.*\\(#10243A\\)} "Status bar color prompt"
+          send -- "#10243a\\r"
+          wait_for {Splash screen color:.*\\(#F3F6FA\\)} "Splash screen color prompt"
+          send -- "#f3f6fa\\r"
+          wait_for {Icon URL:.*zelpx-512\\.svg} "Launcher icon prompt"
+          send -- "\\r"
+          wait_for {Maskable icon URL:.*zelpx-512\\.svg} "Maskable icon prompt"
+          send -- "\\r"
+          wait_for {Include app shortcuts\\?.*\\(Y/n\\)} "App shortcuts prompt"
+          send -- "\\r"
+          wait_for {Monochrome icon URL:.*\\(\\)} "Monochrome icon prompt"
+          send -- "\\r"
+          wait_for {Include support for Play Billing\\?.*\\(y/N\\)} "Play Billing prompt"
+          send -- "\\r"
+          wait_for {Request geolocation permission\\?.*\\(y/N\\)} "Geolocation prompt"
+          send -- "\\r"
+          wait_for {Key store location:.*android\\.keystore} "Keystore location prompt"
+          send -- "\\r"
+          wait_for {Key name:.*\\(android\\)} "Keystore alias prompt"
+          send -- "\\r"
           expect eof
           EXPECT
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
