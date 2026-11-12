@@ -1,4 +1,4 @@
-name: Build ZELPX Android TWA # cloud TWA build
+name: Build ZELPX Android TWA # shortcut icon manifest fix
 on:
   workflow_dispatch:
   push:
