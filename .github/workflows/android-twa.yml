@@ -108,42 +108,42 @@ jobs:
           log_user 1
           spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
           expect -re {Domain:}
-          send -- "app.zelpx.com\\r"
+          send -- "app.zelpx.com\r"
           expect -re {URL path:}
-          send -- "/\\r"
+          send -- "/\r"
           expect -re {(App|Application) name:}
-          send -- "ZELPX\\r"
+          send -- "ZELPX\r"
           expect -re {Launcher name:}
-          send -- "ZELPX\\r"
+          send -- "ZELPX\r"
           expect -re {Package ID:}
-          send -- "com.zelpx.app\\r"
+          send -- "com.zelpx.app\r"
           expect -re {Version code:}
-          send -- "1\\r"
+          send -- "1\r"
           expect -re {Display mode:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Orientation:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Theme color:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Background color:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Icon URL:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Maskable icon URL:}
-          send -- "\\r"
+          send -- "\r"
           expect {
-            -re {Shortcuts} { send -- "\\r"; exp_continue }
-            -re {Monochrome icon URL:} { send -- "\\r" }
+            -re {Shortcuts} { send -- "\r"; exp_continue }
+            -re {Monochrome icon URL:} { send -- "\r" }
             timeout { puts stderr "Timed out waiting for Bubblewrap optional icon prompt"; exit 1 }
           }
           expect -re {Play Billing}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Location Delegation}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Key path:}
-          send -- "\\r"
+          send -- "\r"
           expect -re {Key alias:}
-          send -- "\\r"
+          send -- "\r"
           expect eof
           EXPECT
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
