@@ -54,6 +54,12 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
+      - name: Configure Bubblewrap to use preinstalled Android SDK
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.bubblewrap"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          cat "$HOME/.bubblewrap/config.json"
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
