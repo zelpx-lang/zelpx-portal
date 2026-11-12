@@ -78,7 +78,20 @@ jobs:
       - name: Initialize TWA project from production manifest
         shell: bash
         run: |
-          bubblewrap init --manifest=https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/zelpx-build-manifest.json --directory=android
+          # The manifest is generated during this job, so it is not available at
+          # the raw.githubusercontent.com URL. Serve the generated file locally
+          # for Bubblewrap's manifest fetch.
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "$GITHUB_WORKSPACE" >/tmp/zelpx-manifest-server.log 2>&1 &
+          MANIFEST_SERVER_PID=$!
+          trap 'kill "$MANIFEST_SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null
+          bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
