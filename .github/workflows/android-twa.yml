@@ -1,4 +1,4 @@
-name: Build ZELPX Android TWA # shortcut icon manifest fix
+name: Build ZELPX Android TWA # remove optional shortcuts
 on:
   workflow_dispatch:
   push:
