@@ -1312,7 +1312,7 @@
         closeChat.addEventListener("click", () => {
           const toggle = panel.parentElement?.querySelector("[data-open-chat='1']");
           panel.classList.add("hidden");
-          if (toggle) toggle.textContent = "No more messages";
+          if (toggle) { toggle.hidden = false; toggle.textContent = "No more messages"; }
         });
         chatActions.append(refresh, closeChat);
         panel.replaceChildren(messagesBox, form, chatActions, status);
@@ -1567,6 +1567,7 @@
                 } catch (_) {}
               }
               chatPanel.classList.remove("hidden");
+              chatButton.hidden = true;
               if (opening) {
                 chatButton.textContent = "Conversation open";
                 chatButton.style.borderColor = "";
