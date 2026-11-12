@@ -1303,9 +1303,19 @@
         input.placeholder = "Write your message to the contractor…";
         const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
         form.append(input, send);
+        const chatActions = document.createElement("div");
+        chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "10px"; chatActions.style.alignItems = "center";
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
-        panel.replaceChildren(messagesBox, form, refresh, status);
+        const closeChat = document.createElement("button"); closeChat.type = "button";
+        closeChat.className = "secondary-button"; closeChat.textContent = "Close customer chat";
+        closeChat.addEventListener("click", () => {
+          const toggle = panel.parentElement?.querySelector("[data-open-chat='1']");
+          panel.classList.add("hidden");
+          if (toggle) toggle.textContent = "No more messages";
+        });
+        chatActions.append(refresh, closeChat);
+        panel.replaceChildren(messagesBox, form, chatActions, status);
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
