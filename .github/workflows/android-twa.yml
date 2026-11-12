@@ -1,4 +1,4 @@
-name: Build ZELPX Android TWA # rebuild with Bubblewrap-managed SDK
+name: Build ZELPX Android TWA # link sdkmanager path for Bubblewrap
 on:
   workflow_dispatch:
   push:
@@ -58,6 +58,12 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$HOME/.bubblewrap"
+          # Bubblewrap expects sdkmanager at ANDROID_HOME/bin/sdkmanager.
+          # GitHub's Android SDK ships it under cmdline-tools/<version>/bin.
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -mindepth 2 -maxdepth 2 -type f -name sdkmanager | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER" || { echo 'Android sdkmanager was not found'; exit 1; }
+          SDK_BIN="$(dirname "$SDKMANAGER")"
+          ln -sfn "$SDK_BIN" "$ANDROID_HOME/bin"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
           bubblewrap doctor
