@@ -672,10 +672,13 @@
         } catch (_) {}
       }
       async function refreshMessages() {
-        const { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
+        let { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
         if (error) throw error;
         const { error: readError } = await db.rpc("mark_contractor_messages_read", { p_conversation_id: conversationId });
-        if (readError) console.error("Could not mark customer messages as read:", readError);
+        if (readError) throw readError;
+        // Re-read after the receipt update so the latest status is rendered immediately.
+        ({ data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200));
+        if (error) throw error;
         const currentIds = new Set((data || []).map(item => item.id));
         if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "contractor")) playIncomingChatSound();
         knownMessageIds = currentIds;
