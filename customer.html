@@ -1557,6 +1557,7 @@
             card.appendChild(chat);
             chatButton.addEventListener("click", async () => {
               const opening = chatPanel.classList.contains("hidden");
+              if (!opening) return;
               if (opening && "Notification" in window && Notification.permission === "default") {
                 try {
                   const permission = await Notification.requestPermission();
@@ -1565,9 +1566,9 @@
                   }
                 } catch (_) {}
               }
-              chatPanel.classList.toggle("hidden", !opening);
+              chatPanel.classList.remove("hidden");
               if (opening) {
-                chatButton.textContent = "Close conversation";
+                chatButton.textContent = "Conversation open";
                 chatButton.style.borderColor = "";
                 chatButton.style.color = "";
                 chatButton.style.fontWeight = "";
