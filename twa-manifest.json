@@ -21,20 +21,6 @@
   },
   "appVersionCode": 1,
   "appVersionName": "1.0.0",
-  "shortcuts": [
-    {
-      "name": "Customer Portal",
-      "short_name": "Customer",
-      "url": "/customer",
-      "chosenIconUrl": "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"
-    },
-    {
-      "name": "Contractor Portal",
-      "short_name": "Contractor",
-      "url": "/",
-      "chosenIconUrl": "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"
-    }
-  ],
   "generatorApp": "bubblewrap",
   "webManifestUrl": "https://app.zelpx.com/manifest.webmanifest",
   "fallbackType": "customtabs",
