@@ -110,7 +110,7 @@ jobs:
           # Match the live prompt and its default, not the same label in help text.
           expect -re {Domain:.*\(127\.0\.0\.1:8765\)}
           send -- "app.zelpx.com\r"
-          expect -re {URL path:.*\(/)}
+          expect -re {URL path:.*\(/\)}
           send -- "/\r"
           expect -re {Application name:.*\(ZELPX\)}
           send -- "ZELPX\r"
