@@ -13,7 +13,7 @@
   "backgroundColor": "#f3f6fa",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://app.zelpx.com/icons/zelpx-512.svg",
+  "iconUrl": "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-512.svg",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
@@ -25,12 +25,14 @@
     {
       "name": "Customer Portal",
       "short_name": "Customer",
-      "url": "/customer"
+      "url": "/customer",
+      "chosenIconUrl": "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"
     },
     {
       "name": "Contractor Portal",
       "short_name": "Contractor",
-      "url": "/"
+      "url": "/",
+      "chosenIconUrl": "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"
     }
   ],
   "generatorApp": "bubblewrap",
