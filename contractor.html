@@ -707,9 +707,18 @@
       try { if (Notification.permission === "granted" && typeof window.ZELPXRefreshPushForConversation === "function") await window.ZELPXRefreshPushForConversation(db, conversationId, "contractor"); }
       catch (e) { pushStatus.textContent = "Notifications need attention: " + (e.message || "subscription refresh failed"); pushStatus.style.color = "#b42318"; }
       await refreshMessages();
+      const chatActions = document.createElement("div");
+      chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "10px"; chatActions.style.alignItems = "center";
       const refreshButton = document.createElement("button"); refreshButton.type = "button"; refreshButton.className = "secondary"; refreshButton.textContent = "Refresh messages";
       refreshButton.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (e) { status.textContent = "Could not refresh messages: " + e.message; } });
-      panel.append(refreshButton);
+      const closeChatButton = document.createElement("button"); closeChatButton.type = "button"; closeChatButton.className = "secondary"; closeChatButton.textContent = "Close customer chat";
+      closeChatButton.addEventListener("click", () => {
+        panel.classList.add("hidden");
+        const toggle = panel.parentElement?.querySelector("button");
+        if (toggle) toggle.textContent = "Open customer chat";
+      });
+      chatActions.append(refreshButton, closeChatButton);
+      panel.append(chatActions);
       const chatPoll = window.setInterval(() => { if (!panel.isConnected || panel.classList.contains("hidden")) { window.clearInterval(chatPoll); return; } refreshMessages().catch(() => {}); }, 4000);
     } catch (e) {
       panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
