@@ -60,13 +60,20 @@ jobs:
           mkdir -p "$HOME/.bubblewrap"
           # Bubblewrap expects sdkmanager at ANDROID_HOME/bin/sdkmanager.
           # GitHub's Android SDK ships it under cmdline-tools/<version>/bin.
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -mindepth 3 -maxdepth 3 -type f -name sdkmanager | sort -V | tail -n 1)"
-          test -n "$SDKMANAGER" || { echo 'Android sdkmanager was not found under cmdline-tools/<version>/bin'; find "$ANDROID_HOME/cmdline-tools" -maxdepth 4 -type f -name sdkmanager -print; exit 1; }
-          mkdir -p "$ANDROID_HOME/bin"
-          ln -sfn "$SDKMANAGER" "$ANDROID_HOME/bin/sdkmanager"
-          chmod +x "$ANDROID_HOME/bin/sdkmanager"
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          set -euxo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT" || { echo 'ANDROID_HOME and ANDROID_SDK_ROOT are both unset'; env | sort | grep -E 'ANDROID|JAVA' || true; exit 1; }
+          echo "Android SDK root: $SDK_ROOT"
+          test -d "$SDK_ROOT" || { echo "Android SDK directory does not exist: $SDK_ROOT"; exit 1; }
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' 2>/dev/null | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER" || { echo 'sdkmanager was not found'; find "$SDK_ROOT" -type f -name sdkmanager -print || true; exit 1; }
+          echo "Using sdkmanager: $SDKMANAGER"
+          mkdir -p "$SDK_ROOT/bin" "$HOME/.bubblewrap"
+          ln -sfn "$SDKMANAGER" "$SDK_ROOT/bin/sdkmanager"
+          chmod +x "$SDKMANAGER"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$SDK_ROOT" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
+          "$SDKMANAGER" --version
           bubblewrap doctor
       - name: Prepare build manifest with available ZELPX icons
         shell: bash
