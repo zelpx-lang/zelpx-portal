@@ -954,9 +954,10 @@
               }
               chatPanel.classList.toggle("hidden", !opening);
               chatButton.textContent = opening ? "Close conversation" : "Open conversation";
-              if (opening && !chatPanel.dataset.loaded) {
+              if (opening) {
+                // Re-check the conversation every time the customer opens chat.
+                // The contractor may have created it after the customer's first visit.
                 await openCustomerConversation(request.lead_id, chatPanel);
-                chatPanel.dataset.loaded = "1";
               }
             });
           }
