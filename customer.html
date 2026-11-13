@@ -1713,6 +1713,14 @@
           card.appendChild(details);
           summary.addEventListener("click", () => {
             const opening = details.classList.contains("hidden");
+            if (opening) {
+              list.querySelectorAll(".request-details").forEach(panel => panel.classList.add("hidden"));
+              list.querySelectorAll(".request-summary").forEach(button => {
+                button.setAttribute("aria-expanded", "false");
+                const icon = button.querySelector(".request-summary-chevron");
+                if (icon) icon.textContent = "＋";
+              });
+            }
             details.classList.toggle("hidden", !opening);
             summary.setAttribute("aria-expanded", String(opening));
             chevron.textContent = opening ? "−" : "＋";
