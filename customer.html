@@ -325,8 +325,6 @@
     #requestsList .request-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
     #requestsList .request-summary-chevron { flex:0 0 auto; color:var(--customer-muted); font-size:16px; }
     #requestsList .request-details { padding:8px 10px 12px; border-top:1px solid var(--customer-line); }
-    #requestsList .request-details-close { display:block; width:auto; min-width:110px; margin:12px 0 0 auto; padding:8px 18px; border:1px solid var(--customer-line); border-radius:999px; background:#fff; color:var(--customer-ink); font-size:13px; font-weight:750; }
-    #requestsList .request-details-close:hover { background:#faf4ed; }
     #requestsList .request-details > p { margin:5px 0; font-size:12px; line-height:1.4; color:var(--customer-muted); }
     #requestsList .request-details .request-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:8px; }
     #requestsList .request-details .request-actions .status { margin-right:auto; font-size:10px; padding:4px 9px; }
@@ -1715,17 +1713,6 @@
             });
           }
 
-          const closeDetailsButton = document.createElement("button");
-          closeDetailsButton.type = "button";
-          closeDetailsButton.className = "request-details-close";
-          closeDetailsButton.textContent = "Close";
-          closeDetailsButton.addEventListener("click", () => {
-            details.classList.add("hidden");
-            summary.setAttribute("aria-expanded", "false");
-            chevron.textContent = "＋";
-            summary.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          });
-          details.appendChild(closeDetailsButton);
           card.appendChild(details);
           summary.addEventListener("click", () => {
             const opening = details.classList.contains("hidden");
