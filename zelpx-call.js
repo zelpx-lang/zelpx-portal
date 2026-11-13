@@ -24,6 +24,7 @@
     bar.append(callBtn, answerBtn, rejectBtn, endBtn, state, audio);
     host.prepend(bar);
 
+    const clientInstanceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (String(Date.now()) + "-" + Math.random().toString(36).slice(2));
     let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [];
     let ringContext = null, ringOscillators = [], ringTimer = null;
     let ringbackOscillators = [], ringbackTimer = null;
@@ -124,7 +125,7 @@
     }
     const signal = async (event, data) => {
       if (!channel) throw new Error("Call channel is not connected.");
-      const result = await channel.send({ type:"broadcast", event:"call_signal", payload:{ ...data, kind:event, sender:userId, role } });
+      const result = await channel.send({ type:"broadcast", event:"call_signal", payload:{ ...data, kind:event, sender:userId, senderClientId:clientInstanceId, role } });
       if (result !== "ok") throw new Error("Call signal could not be sent (" + result + ").");
     };
     async function ensurePeer() {
@@ -195,7 +196,9 @@
       // supabase-js Broadcast callback envelope is { event, payload }.
       const p = raw?.payload;
       const event = p?.kind;
-      if (!p || p.sender===userId) return;
+      // Ignore only this browser instance. The same account may be signed in on
+      // two phones (customer/contractor testing); those devices must receive calls.
+      if (!p || p.senderClientId===clientInstanceId) return;
       try {
         if (event==="invite" && !activeCallId && !pendingOffer && p.description?.type==="offer") {
           pendingOffer={callId:p.callId,description:p.description};
