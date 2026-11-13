@@ -749,7 +749,7 @@
           const bubble = document.createElement("div"); bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
           const sender = document.createElement("strong"); sender.textContent = item.sender_type === "contractor" ? "YOU" : "CUSTOMER";
           const text = document.createElement("div");
-          const audioMatch = String(item.message || "").match(/^\\[\\[ZELPX_AUDIO:(.+)\\]\\]$/);
+          const audioMatch = String(item.message || "").match(/^\[\[ZELPX_AUDIO:(.+)\]\]$/);
           if (audioMatch) {
             const player = document.createElement("audio"); player.controls = true; player.preload = "none"; player.style.display = "block"; player.style.width = "min(100%, 320px)"; player.style.marginTop = "6px";
             text.appendChild(player);
