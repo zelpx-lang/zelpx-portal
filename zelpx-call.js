@@ -163,6 +163,17 @@
         activeCallId = crypto.randomUUID(); localDescriptionSent = false; localIceQueue = [];
         await ensurePeer();
         await pc.setLocalDescription(await pc.createOffer({ offerToReceiveAudio:true }));
+        // Deliver a Web Push alert in addition to the live Realtime invite.
+        // This lets Android show an incoming-call notification when the chat is backgrounded.
+        try {
+          const { data: pushResult, error: pushError } = await db.functions.invoke("send-chat-push", {
+            body: { action:"incoming_call", conversation_id:conversationId, call_id:activeCallId, caller_role:role }
+          });
+          if (pushError) console.warn("ZELPX incoming-call push failed:", pushError.message);
+          else if (pushResult?.sent === 0) console.warn("ZELPX incoming-call push not delivered:", pushResult.reason || "no active recipient subscription");
+        } catch (pushError) {
+          console.warn("ZELPX incoming-call push failed:", pushError);
+        }
         await signal("invite", { callId:activeCallId, description:pc.localDescription });
         localDescriptionSent = true;
         for (const candidate of localIceQueue.splice(0)) await signal("ice", { callId:activeCallId, candidate });
