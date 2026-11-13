@@ -1150,9 +1150,14 @@
           checkLabels.forEach(([key, label]) => {
             const item = document.createElement("li");
             const passed = verification.checks?.[key] === true;
-            const flagged = ["same_customer_duplicate","duplicate_description","high_submission_frequency"].includes(key) ? passed : !passed;
-            item.textContent = label + ": " + (flagged ? "Needs attention" : "OK");
-            item.style.color = flagged ? "#a15c00" : "#147d55";
+            if (key === "phone_sms_confirmed" && !passed) {
+              item.textContent = label + ": SMS verification is not configured yet";
+              item.style.color = "#667085";
+            } else {
+              const flagged = ["same_customer_duplicate","duplicate_description","high_submission_frequency"].includes(key) ? passed : !passed;
+              item.textContent = label + ": " + (flagged ? "Needs attention" : "OK");
+              item.style.color = flagged ? "#a15c00" : "#147d55";
+            }
             checkList.append(item);
           });
           const photos = document.createElement("p"); photos.className = "muted";
