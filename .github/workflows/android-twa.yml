@@ -154,6 +154,9 @@ jobs:
           EXPECT
           test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
           node -e "const m=require('./android/twa-manifest.json'); if(m.host !== 'app.zelpx.com') { console.error('Unexpected TWA host:',m.host); process.exit(1); } console.log('TWA host:',m.host,'startUrl:',m.startUrl,'packageId:',m.packageId);"
+      - name: Apply isolated native incoming-call prototype
+        shell: bash
+        run: bash android-call-native/apply-native-call-overlay.sh
       - name: Apply fixed ZELPX TWA settings
         working-directory: android
         run: |
