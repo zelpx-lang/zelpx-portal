@@ -230,6 +230,7 @@
 <div class="footer">ZELPX — contractor lead marketplace</div>
 
   <script src="/zelpx-push.js"></script>
+<script src="/zelpx-call.js"></script>
 <script>
 (() => {
   "use strict";
@@ -480,6 +481,15 @@
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
+      const callHost = document.createElement("div");
+      panel.append(callHost);
+      try {
+        window.ZELPXAttachAudioCall({ db, conversationId, userId: currentUser.id, role: "contractor", host: callHost });
+      } catch (callError) {
+        const callErrorText = document.createElement("p"); callErrorText.className = "error";
+        callErrorText.textContent = "Audio calling is unavailable: " + (callError.message || "setup error");
+        panel.append(callErrorText);
+      }
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
       let knownMessageIds = null;
       let chatSoundContext = null;
