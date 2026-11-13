@@ -167,7 +167,7 @@
         // This lets Android show an incoming-call notification when the chat is backgrounded.
         try {
           const { data: pushResult, error: pushError } = await db.functions.invoke("send-chat-push", {
-            body: { action:"incoming_call", conversation_id:conversationId, call_id:activeCallId, caller_role:role }
+            body: { action:"incoming_call", conversation_id:conversationId, call_id:activeCallId, caller_role:role, client_origin:window.location.origin }
           });
           if (pushError) console.warn("ZELPX incoming-call push failed:", pushError.message);
           else if (pushResult?.sent === 0) console.warn("ZELPX incoming-call push not delivered:", pushResult.reason || "no active recipient subscription");
