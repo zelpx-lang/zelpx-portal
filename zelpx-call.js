@@ -25,8 +25,60 @@
     host.prepend(bar);
 
     let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [];
+    let ringContext = null, ringOscillators = [], ringTimer = null;
     const topic = "zelpx-call:" + conversationId;
     const setStatus = (s) => { state.textContent = s; };
+    function unlockCallSound() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        ringContext ||= new AudioContextClass();
+        if (ringContext.state === "suspended") ringContext.resume().catch(() => {});
+      } catch (_) {}
+    }
+    host.addEventListener("pointerdown", unlockCallSound, { once: true });
+    function stopRingtone() {
+      if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
+      ringOscillators.forEach(osc => { try { osc.stop(); } catch (_) {} });
+      ringOscillators = [];
+    }
+    function startRingtone() {
+      stopRingtone();
+      unlockCallSound();
+      if (!ringContext) return;
+      const playBurst = () => {
+        if (!ringContext || ringContext.state !== "running") return;
+        [0, 0.22].forEach(offset => {
+          const osc = ringContext.createOscillator();
+          const gain = ringContext.createGain();
+          osc.type = "sine";
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.0001, ringContext.currentTime + offset);
+          gain.gain.linearRampToValueAtTime(0.16, ringContext.currentTime + offset + 0.025);
+          gain.gain.setValueAtTime(0.16, ringContext.currentTime + offset + 0.13);
+          gain.gain.linearRampToValueAtTime(0.0001, ringContext.currentTime + offset + 0.18);
+          osc.connect(gain); gain.connect(ringContext.destination);
+          osc.start(ringContext.currentTime + offset);
+          osc.stop(ringContext.currentTime + offset + 0.19);
+          ringOscillators.push(osc);
+        });
+      };
+      playBurst();
+      ringTimer = setInterval(playBurst, 1400);
+    }
+    function showIncomingCallNotification() {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      try {
+        const note = new Notification("Incoming ZELPX audio call", {
+          body: "A customer or contractor is calling you.",
+          tag: "zelpx-call-" + conversationId,
+          renotify: true,
+          requireInteraction: true,
+          vibrate: [500, 250, 500]
+        });
+        note.onclick = () => { window.focus(); note.close(); };
+      } catch (_) {}
+    }
     const signal = async (event, data) => {
       if (!channel) throw new Error("Call channel is not connected.");
       const result = await channel.send({ type:"broadcast", event:"call_signal", payload:{ ...data, kind:event, sender:userId, role } });
@@ -49,6 +101,7 @@
     async function cleanup(message) {
       const oldId = activeCallId;
       activeCallId = null; pendingOffer = null; queuedIce = [];
+      stopRingtone();
       if (pc) { pc.onicecandidate=null; pc.ontrack=null; pc.close(); pc=null; }
       if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
       audio.srcObject=null;
@@ -101,6 +154,8 @@
         if (event==="invite" && !activeCallId && !pendingOffer && p.description?.type==="offer") {
           pendingOffer={callId:p.callId,description:p.description};
           setStatus("Incoming audio call…");
+          startRingtone();
+          showIncomingCallNotification();
           callBtn.style.display="none"; answerBtn.style.display=rejectBtn.style.display="inline-block";
         } else if (event==="ice" && pendingOffer && p.callId===pendingOffer.callId && !activeCallId && p.candidate) {
           queuedIce.push(p.candidate);
