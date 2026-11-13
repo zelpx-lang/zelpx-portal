@@ -1458,7 +1458,7 @@
           .subscribe(status => { if (status === "SUBSCRIBED") callButton.disabled = false; else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { callButton.disabled = true; callButton.title = "Call service unavailable"; } });
         const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
         refresh.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); } });
-        panel.replaceChildren(messagesBox, form, refresh, status);
+        panel.replaceChildren(messagesBox, callPanel, form, refresh, status);
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
