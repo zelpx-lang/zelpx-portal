@@ -26,6 +26,7 @@
 
     let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [];
     let ringContext = null, ringOscillators = [], ringTimer = null;
+    let ringbackOscillators = [], ringbackTimer = null;
     const topic = "zelpx-call:" + conversationId;
     const setStatus = (s) => { state.textContent = s; };
     function unlockCallSound() {
@@ -69,6 +70,37 @@
       playBurst();
       ringTimer = setInterval(playBurst, 1400);
     }
+    function stopRingback() {
+      if (ringbackTimer) { clearInterval(ringbackTimer); ringbackTimer = null; }
+      ringbackOscillators.forEach(osc => { try { osc.stop(); } catch (_) {} });
+      ringbackOscillators = [];
+    }
+    // Caller-side US-style ringback: two soft tones while waiting for an answer.
+    function startRingback() {
+      stopRingback();
+      unlockCallSound();
+      if (!ringContext) return;
+      const playBurst = () => {
+        if (!ringContext || ringContext.state !== "running" || !activeCallId) return;
+        [440, 480].forEach(frequency => {
+          const osc = ringContext.createOscillator();
+          const gain = ringContext.createGain();
+          const now = ringContext.currentTime;
+          osc.type = "sine";
+          osc.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(0.055, now + 0.08);
+          gain.gain.setValueAtTime(0.055, now + 1.75);
+          gain.gain.linearRampToValueAtTime(0.0001, now + 1.9);
+          osc.connect(gain); gain.connect(ringContext.destination);
+          osc.start(now);
+          osc.stop(now + 1.91);
+          ringbackOscillators.push(osc);
+        });
+      };
+      playBurst();
+      ringbackTimer = setInterval(playBurst, 6000);
+    }
     function showIncomingCallNotification() {
       if (!("Notification" in window) || Notification.permission !== "granted") return;
       try {
@@ -102,7 +134,7 @@
       pc.ontrack = e => { audio.srcObject = e.streams[0]; audio.play().catch(()=>setStatus("Tap the page once to enable audio playback.")); };
       pc.onconnectionstatechange = () => {
         if (!pc) return;
-        if (pc.connectionState === "connected") setStatus("Connected — audio call");
+        if (pc.connectionState === "connected") { stopRingback(); setStatus("Connected — audio call"); }
         if (["failed","disconnected"].includes(pc.connectionState)) setStatus("Connection interrupted. Check your network and try again.");
       };
       localStream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }, video:false });
@@ -113,6 +145,7 @@
       const oldId = activeCallId;
       activeCallId = null; pendingOffer = null; queuedIce = [];
       stopRingtone();
+      stopRingback();
       if (pc) { pc.onicecandidate=null; pc.ontrack=null; pc.close(); pc=null; }
       if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
       audio.srcObject=null;
@@ -130,6 +163,7 @@
         await pc.setLocalDescription(await pc.createOffer({ offerToReceiveAudio:true }));
         await signal("invite", { callId:activeCallId, description:pc.localDescription });
         callBtn.style.display="none"; endBtn.style.display="inline-block";
+        startRingback();
         setStatus("Calling… waiting for the other person to answer.");
       } catch(e) { await cleanup("Could not start call: " + (e.message || "permission denied")); }
     });
