@@ -44,6 +44,22 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   function serviceIcon(name) {
     const s = String(name || "").toLowerCase();
     const rules = [
+      // Exact category-specific icons come first so broad rules cannot mislabel them.
+      [/air quality testing|indoor air quality/, "🌬️"],
+      [/appliance haul away|appliance removal/, "🚚"],
+      [/appliance installation/, "🔌"],
+      [/engineering services|engineering|architect|survey/, "📐"],
+      [/epoxy flooring|epoxy floor/, "🧪"],
+      [/excavation|earthmoving|trenching/, "🚜"],
+      [/hardwood flooring|wood flooring|floor installation/, "🪵"],
+      [/heating system installation|heater installation|furnace installation/, "🔥"],
+      [/heating system repair|heater repair|furnace repair/, "🔧"],
+      [/odor removal|odor control|smell removal/, "🌬️"],
+      [/office cleaning|commercial office cleaning/, "🧹"],
+      [/office maintenance|facility maintenance/, "🧰"],
+      [/snow plowing|snow plow/, "🚜"],
+      [/snow removal|snow shoveling/, "❄️"],
+      [/sod installation|sod laying/, "🌱"],
       [/plumb|drain|sewer|toilet|faucet|sink|water heater|well pump|sump pump|septic|leak detection/, "🚰"],
       [/electric|wiring|outlet|switch|generator|solar panel/, "⚡"],
       [/hvac|heating|cooling|air quality|duct|vent|insulation|weatherization|radiant floor/, "❄️"],
