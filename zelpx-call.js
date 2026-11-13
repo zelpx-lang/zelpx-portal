@@ -123,6 +123,7 @@
       } catch(e) { await cleanup("Could not start call: " + (e.message || "permission denied")); }
     });
     answerBtn.addEventListener("click", async () => {
+      stopRingtone();
       answerBtn.disabled=true;
       try {
         if (!pendingOffer) throw new Error("This call is no longer available.");
