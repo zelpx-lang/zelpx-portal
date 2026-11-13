@@ -11,6 +11,10 @@
     {
       "source": "/customer-chat",
       "destination": "/customer-chat.html"
+    },
+    {
+      "source": "/browse-jobs",
+      "destination": "/browse-jobs.html"
     }
   ],
   "headers": [
