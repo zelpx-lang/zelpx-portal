@@ -199,3 +199,5 @@ jobs:
             android/app-release-signed.apk
           if-no-files-found: error
           retention-days: 14
+
+# Rebuild after Firebase Android configuration secret was added.
