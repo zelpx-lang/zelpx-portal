@@ -93,30 +93,34 @@
       await cleanup("Call ended.");
     });
     const onSignal = async raw => {
-      const p=raw?.payload || raw;
+      // supabase-js Broadcast callback envelope is { event, payload }.
+      const event = raw?.event;
+      const p = raw?.payload;
       if (!p || p.sender===userId) return;
       try {
-        if (p.event==="invite" && !activeCallId && !pendingOffer && p.description?.type==="offer") {
+        if (event==="invite" && !activeCallId && !pendingOffer && p.description?.type==="offer") {
           pendingOffer={callId:p.callId,description:p.description};
           setStatus("Incoming audio call…");
           callBtn.style.display="none"; answerBtn.style.display=rejectBtn.style.display="inline-block";
-        } else if (p.event==="ice" && pendingOffer && p.callId===pendingOffer.callId && !activeCallId && p.candidate) {
+        } else if (event==="ice" && pendingOffer && p.callId===pendingOffer.callId && !activeCallId && p.candidate) {
           queuedIce.push(p.candidate);
         } else if (!activeCallId || p.callId!==activeCallId) return;
-        else if (p.event==="answer" && p.description?.type==="answer" && pc) {
+        else if (event==="answer" && p.description?.type==="answer" && pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(p.description));
           for (const candidate of queuedIce.splice(0)) await pc.addIceCandidate(new RTCIceCandidate(candidate));
           setStatus("Connecting…");
-        } else if (p.event==="ice" && p.candidate && pc) {
+        } else if (event==="ice" && p.candidate && pc) {
           if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(p.candidate));
           else queuedIce.push(p.candidate);
-        } else if (p.event==="reject") {
+        } else if (event==="reject") {
           await cleanup("The other person declined the call.");
-        } else if (p.event==="hangup") {
+        } else if (event==="hangup") {
           await cleanup("The other person ended the call.");
         }
       } catch(e) { setStatus("Call error: " + (e.message || "signal failed")); }
     };
+    // Explicitly refresh the JWT used for private Realtime authorization.
+    Promise.resolve(db.realtime.setAuth()).catch(err=>setStatus("Call authorization failed: " + (err?.message || "sign-in required")));
     channel=db.channel(topic,{config:{private:true}})
       .on("broadcast",{event:"call_signal"},onSignal)
       .subscribe((status,err)=>{
