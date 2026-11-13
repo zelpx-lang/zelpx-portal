@@ -100,6 +100,8 @@
           pendingOffer={callId:p.callId,description:p.description};
           setStatus("Incoming audio call…");
           callBtn.style.display="none"; answerBtn.style.display=rejectBtn.style.display="inline-block";
+        } else if (p.event==="ice" && pendingOffer && p.callId===pendingOffer.callId && !activeCallId && p.candidate) {
+          queuedIce.push(p.candidate);
         } else if (!activeCallId || p.callId!==activeCallId) return;
         else if (p.event==="answer" && p.description?.type==="answer" && pc) {
           await pc.setRemoteDescription(new RTCSessionDescription(p.description));
