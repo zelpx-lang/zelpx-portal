@@ -25,7 +25,7 @@
     host.prepend(bar);
 
     const clientInstanceId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (String(Date.now()) + "-" + Math.random().toString(36).slice(2));
-    let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [];
+    let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [], localIceQueue = [], channelReady = false, localDescriptionSent = false;
     let ringContext = null, ringOscillators = [], ringTimer = null;
     let ringbackOscillators = [], ringbackTimer = null;
     const topic = "zelpx-call:" + conversationId;
@@ -131,7 +131,7 @@
     async function ensurePeer() {
       if (pc) return pc;
       pc = new RTCPeerConnection({ iceServers: STUN });
-      pc.onicecandidate = e => { if (e.candidate && activeCallId) signal("ice", { callId:activeCallId, candidate:e.candidate.toJSON() }).catch(err=>setStatus(err.message)); };
+      pc.onicecandidate = e => { if (!e.candidate || !activeCallId) return; const candidate = e.candidate.toJSON(); if (!localDescriptionSent) { localIceQueue.push(candidate); return; } signal("ice", { callId:activeCallId, candidate }).catch(err=>setStatus(err.message)); };
       pc.ontrack = e => { audio.srcObject = e.streams[0]; audio.play().catch(()=>setStatus("Tap the page once to enable audio playback.")); };
       pc.onconnectionstatechange = () => {
         if (!pc) return;
@@ -144,7 +144,7 @@
     }
     async function cleanup(message) {
       const oldId = activeCallId;
-      activeCallId = null; pendingOffer = null; queuedIce = [];
+      activeCallId = null; pendingOffer = null; queuedIce = []; localIceQueue = []; localDescriptionSent = false;
       stopRingtone();
       stopRingback();
       if (pc) { pc.onicecandidate=null; pc.ontrack=null; pc.close(); pc=null; }
@@ -159,10 +159,13 @@
       callBtn.disabled=true;
       try {
         if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error("This browser does not support audio calling. Open ZELPX in Chrome over HTTPS.");
-        activeCallId = crypto.randomUUID();
+        if (!channelReady) throw new Error("Call service is not connected yet. Wait a moment and try again.");
+        activeCallId = crypto.randomUUID(); localDescriptionSent = false; localIceQueue = [];
         await ensurePeer();
         await pc.setLocalDescription(await pc.createOffer({ offerToReceiveAudio:true }));
         await signal("invite", { callId:activeCallId, description:pc.localDescription });
+        localDescriptionSent = true;
+        for (const candidate of localIceQueue.splice(0)) await signal("ice", { callId:activeCallId, candidate });
         callBtn.style.display="none"; endBtn.style.display="inline-block";
         startRingback();
         setStatus("Calling… waiting for the other person to answer.");
@@ -173,12 +176,14 @@
       answerBtn.disabled=true;
       try {
         if (!pendingOffer) throw new Error("This call is no longer available.");
-        activeCallId=pendingOffer.callId;
+        activeCallId=pendingOffer.callId; localDescriptionSent = false; localIceQueue = [];
         await ensurePeer();
         await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.description));
         for (const candidate of queuedIce.splice(0)) await pc.addIceCandidate(new RTCIceCandidate(candidate));
         const answer=await pc.createAnswer(); await pc.setLocalDescription(answer);
         await signal("answer", { callId:activeCallId, description:pc.localDescription });
+        localDescriptionSent = true;
+        for (const candidate of localIceQueue.splice(0)) await signal("ice", { callId:activeCallId, candidate });
         answerBtn.style.display=rejectBtn.style.display="none"; endBtn.style.display="inline-block"; callBtn.style.display="none";
         setStatus("Connecting…");
       } catch(e) { await cleanup("Could not answer: " + (e.message || "unknown error")); }
@@ -223,6 +228,8 @@
         }
       } catch(e) { setStatus("Call error: " + (e.message || "signal failed")); }
     };
+    callBtn.disabled = true;
+    setStatus("Connecting call service…");
     // Refresh the signed-in user's JWT BEFORE joining the private Realtime channel.
     // Subscribing before setAuth resolves can leave the recipient unable to receive broadcasts.
     (async () => {
@@ -231,9 +238,9 @@
         channel = db.channel(topic,{config:{private:true}})
           .on("broadcast",{event:"call_signal"},onSignal)
           .subscribe((status,err)=>{
-            if(status==="SUBSCRIBED") setStatus("Audio calling ready while this chat is open.");
-            else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT") setStatus("Call connection unavailable: " + (err?.message || status));
-            else if(status==="CLOSED") setStatus("Call connection closed. Reopen this chat.");
+            if(status==="SUBSCRIBED") { channelReady = true; callBtn.disabled = false; setStatus("Audio calling ready while this chat is open."); }
+            else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT") { channelReady = false; callBtn.disabled = true; setStatus("Call connection unavailable: " + (err?.message || status)); }
+            else if(status==="CLOSED") { channelReady = false; callBtn.disabled = true; setStatus("Call connection closed. Reopen this chat."); }
           });
       } catch (err) {
         setStatus("Call authorization failed: " + (err?.message || "sign-in required"));
