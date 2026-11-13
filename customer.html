@@ -1696,7 +1696,17 @@
                   chatPanel.dataset.loaded = "1";
                 }
                 if (unreadCount > 0) {
+                  const clearedUnread = unreadCount;
                   unreadCount = 0;
+                  unreadBell.textContent = "";
+                  unreadBell.classList.remove("has-unread");
+                  unreadBell.setAttribute("aria-label", "No unread messages");
+                  unreadBell.title = "";
+                  totalUnreadChats = Math.max(0, totalUnreadChats - clearedUnread);
+                  if (requestsTab) {
+                    requestsTab.textContent = totalUnreadChats ? "🔔 My Service Requests (" + totalUnreadChats + ")" : "My Service Requests";
+                    requestsTab.setAttribute("aria-label", totalUnreadChats ? "My Service Requests, " + totalUnreadChats + " unread chat messages" : "My Service Requests");
+                  }
                   chatButton.textContent = "Close conversation";
                 }
               } else {
