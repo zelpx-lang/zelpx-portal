@@ -24,7 +24,7 @@
     bar.append(callBtn, answerBtn, rejectBtn, endBtn, state, audio);
     host.prepend(bar);
 
-    let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false;
+    let channel, pc, localStream, activeCallId = null, pendingOffer = null, closed = false, queuedIce = [];
     const topic = "zelpx-call:" + conversationId;
     const setStatus = (s) => { state.textContent = s; };
     const signal = async (event, data) => {
@@ -48,7 +48,7 @@
     }
     async function cleanup(message) {
       const oldId = activeCallId;
-      activeCallId = null; pendingOffer = null;
+      activeCallId = null; pendingOffer = null; queuedIce = [];
       if (pc) { pc.onicecandidate=null; pc.ontrack=null; pc.close(); pc=null; }
       if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
       audio.srcObject=null;
@@ -76,6 +76,7 @@
         activeCallId=pendingOffer.callId;
         await ensurePeer();
         await pc.setRemoteDescription(new RTCSessionDescription(pendingOffer.description));
+        for (const candidate of queuedIce.splice(0)) await pc.addIceCandidate(new RTCIceCandidate(candidate));
         const answer=await pc.createAnswer(); await pc.setLocalDescription(answer);
         await signal("answer", { callId:activeCallId, description:pc.localDescription });
         answerBtn.style.display=rejectBtn.style.display="none"; endBtn.style.display="inline-block"; callBtn.style.display="none";
@@ -101,9 +102,12 @@
           callBtn.style.display="none"; answerBtn.style.display=rejectBtn.style.display="inline-block";
         } else if (!activeCallId || p.callId!==activeCallId) return;
         else if (p.event==="answer" && p.description?.type==="answer" && pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(p.description)); setStatus("Connecting…");
+          await pc.setRemoteDescription(new RTCSessionDescription(p.description));
+          for (const candidate of queuedIce.splice(0)) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          setStatus("Connecting…");
         } else if (p.event==="ice" && p.candidate && pc) {
-          await pc.addIceCandidate(new RTCIceCandidate(p.candidate));
+          if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(p.candidate));
+          else queuedIce.push(p.candidate);
         } else if (p.event==="reject") {
           await cleanup("The other person declined the call.");
         } else if (p.event==="hangup") {
