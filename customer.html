@@ -1438,8 +1438,7 @@
         });
         rejectCall.addEventListener("click", () => { stopIncomingCallAlert(); sendCallSignal("hangup", {}); window.__zelpxIncomingOffer = null; closeCallUi("Call declined."); });
         endCall.addEventListener("click", () => { sendCallSignal("hangup", {}); closeCallUi("Call ended."); });
-        callChannel = db.channel(callTopic, { config: { private: true } })
-                      function stopIncomingCallAlert() {
+        function stopIncomingCallAlert() {
               if (window.__zelpxCallToneTimer) { clearInterval(window.__zelpxCallToneTimer); window.__zelpxCallToneTimer = null; }
               if (window.__zelpxCallToneContext) { try { window.__zelpxCallToneContext.close(); } catch (_) {} window.__zelpxCallToneContext = null; }
               if (navigator.vibrate) navigator.vibrate(0);
@@ -1457,6 +1456,8 @@
               } catch (_) {}
               if ("Notification" in window && Notification.permission === "granted") { try { const notice = new Notification("Incoming ZELPX call", { body: "Your contractor is calling you.", tag: "zelpx-call-" + activeCallId, renotify: true, requireInteraction: true }); notice.onclick = () => { window.focus(); notice.close(); }; } catch (_) {} }
             }
+callChannel = db.channel(callTopic, { config: { private: true } })
+                      
 .on("broadcast", { event: "offer" }, async ({ payload }) => {
             if (payload.sender === myCallUserId) return;
             if (peer) { await sendCallSignal("busy", {}); return; }
