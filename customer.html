@@ -323,14 +323,14 @@
     #requestsList .request-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--customer-ink); box-shadow:none; text-align:left; }
     #requestsList .request-summary:hover { background:#faf4ed; box-shadow:none; }
     #requestsList .request-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
-    #requestsList .request-summary-meta { flex:0 0 auto; }
-    #requestsList .request-summary-meta .status { font-size:10px; padding:3px 7px; }
     #requestsList .request-summary-chevron { flex:0 0 auto; color:var(--customer-muted); font-size:16px; }
     #requestsList .request-details { padding:8px 10px 12px; border-top:1px solid var(--customer-line); }
     #requestsList .request-details-close { display:block; width:auto; min-width:110px; margin:12px 0 0 auto; padding:8px 18px; border:1px solid var(--customer-line); border-radius:999px; background:#fff; color:var(--customer-ink); font-size:13px; font-weight:750; }
     #requestsList .request-details-close:hover { background:#faf4ed; }
     #requestsList .request-details > p { margin:5px 0; font-size:12px; line-height:1.4; color:var(--customer-muted); }
-    #requestsList .request-details .request-actions { margin-top:8px; }
+    #requestsList .request-details .request-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:8px; }
+    #requestsList .request-details .request-actions .status { margin-right:auto; font-size:10px; padding:4px 9px; }
+    #requestsList .request-details .request-actions .request-delete-button { margin:0; }
     #requestsList .request-details .customer-chat { margin-top:8px; padding:9px; border-radius:10px; }
     @media(max-width:600px) { #requestsList .request-summary { min-height:44px; padding:7px 8px; } #requestsList .request-details { padding:7px 8px 10px; } }
     #requestsList > .request-card {
@@ -1613,9 +1613,8 @@
           const summaryTitle = document.createElement("strong");
           summaryTitle.className = "request-summary-title";
           summaryTitle.textContent = request.service_type || "Service request";
-          const summaryMeta = document.createElement("span"); summaryMeta.className = "request-summary-meta"; summaryMeta.append(status);
           const chevron = document.createElement("span"); chevron.className = "request-summary-chevron"; chevron.textContent = "＋";
-          summary.append(summaryTitle, summaryMeta, chevron); card.appendChild(summary);
+          summary.append(summaryTitle, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
 
@@ -1655,7 +1654,7 @@
               deleteButton.textContent = "Delete request";
             }
           });
-          actions.appendChild(deleteButton);
+          actions.append(status, deleteButton);
           details.appendChild(actions);
 
           if (request.lead_id) {
