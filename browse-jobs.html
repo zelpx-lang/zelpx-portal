@@ -9,10 +9,10 @@
 <style>
 :root{--ink:#171816;--muted:#716e66;--paper:#f7f4ee;--white:#fffefa;--line:#e8e1d6;--orange:#f36b38;--soft:#fff0e8;--green:#167653}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-header{height:78px;background:#fbf9f4;border-bottom:1px solid var(--line);display:flex;align-items:center}
+header{height:78px;position:sticky;top:0;z-index:20;background:#fbf9f4;border-bottom:1px solid var(--line);display:flex;align-items:center}
 .wrap{width:min(760px,calc(100% - 28px));margin:auto}.navwrap{width:min(1180px,calc(100% - 48px));margin:auto}.nav{display:flex;align-items:center;justify-content:space-between;gap:24px}.logo{font-size:27px;font-weight:950;letter-spacing:.13em}.navlinks{display:flex;align-items:center;gap:30px;font-size:14px;font-weight:650}.navlinks a,.navright a{font-size:14px;font-weight:650;text-decoration:none;color:var(--ink)}.navright{display:flex;align-items:center;gap:12px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border-radius:999px;border:1px solid transparent;background:var(--orange);color:white!important;font-weight:750;cursor:pointer}.btn:hover{background:#df5727}.btn.outline{background:transparent;color:var(--ink)!important;border-color:#cfc8bc}.btn.small{min-height:40px;padding:0 17px;font-size:14px}
 main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.intro h1{font-size:clamp(27px,6vw,38px);line-height:1.05;letter-spacing:-.045em;margin:6px 0}.intro p{color:var(--muted);margin:0;font-size:14px}
-.filters{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0 12px;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.filters{position:sticky;top:78px;z-index:5;background:var(--paper);padding:10px 0 12px;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
 .filters input,.filters select{min-width:0;width:100%;height:43px;border:1px solid var(--line);border-radius:12px;padding:0 11px;background:var(--white);color:var(--ink);font:inherit;outline:none}
 .filters input:focus,.filters select:focus{border-color:var(--orange);box-shadow:0 0 0 3px #f36b3820}
 .refresh{height:43px;border:0;border-radius:12px;background:var(--ink);color:#fff;padding:0 13px;font-weight:800;cursor:pointer}
