@@ -339,6 +339,7 @@
   </main>
 
   <script src="/zelpx-push.js"></script>
+  <script src="/zelpx-call.js"></script>
   <script>
     const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
@@ -764,7 +765,13 @@
         form.append(input, send);
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
-        panel.replaceChildren(messagesBox, form, refresh, status);
+        const callHost = document.createElement("div");
+        panel.replaceChildren(callHost, messagesBox, form, refresh, status);
+        try {
+          window.ZELPXAttachAudioCall({ db, conversationId: conversation.id, userId: session.user.id, role: "customer", host: callHost });
+        } catch (callError) {
+          status.textContent = "Audio calling is unavailable: " + (callError.message || "setup error");
+        }
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
