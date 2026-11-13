@@ -18,8 +18,19 @@ main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);fon
 .refresh{height:43px;border:0;border-radius:12px;background:var(--ink);color:#fff;padding:0 13px;font-weight:800;cursor:pointer}
 .meta{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;margin:0 1px 9px}.live{display:inline-flex;align-items:center;gap:6px}.live:before{content:"";width:7px;height:7px;background:#21966a;border-radius:50%;box-shadow:0 0 0 3px #21966a20}
 .list{display:flex;flex-direction:column;gap:8px;max-height:58vh;min-height:180px;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 10px 1px;scrollbar-width:thin;scrollbar-color:#c9bfb1 transparent}
-.job{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;box-shadow:0 2px 8px #31271908}
-.job h2{font-size:15px;line-height:1.2;margin:0 0 5px;font-weight:850}.details{display:flex;gap:7px 12px;flex-wrap:wrap;color:var(--muted);font-size:12px}.price{font-weight:900;font-size:16px;white-space:nowrap;color:var(--ink)}.claim{display:inline-flex;margin-top:8px;color:var(--orange);font-size:12px;font-weight:850}
+.job{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:0;box-shadow:0 2px 8px #31271908;overflow:hidden}
+.job-summary{width:100%;min-height:64px;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 12px;border:0;background:transparent;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.job-summary:hover{background:#fff8f2}
+.job-summary-main{min-width:0}.job h2{font-size:15px;line-height:1.2;margin:0 0 4px;font-weight:850}.job-summary-meta{color:var(--muted);font-size:12px}
+.price{font-weight:900;font-size:16px;white-space:nowrap;color:var(--ink)}.open-label{color:var(--orange);font-size:12px;font-weight:850;white-space:nowrap}
+.job-details{padding:10px 13px 13px;border-top:1px solid var(--line);background:#fffdfa}
+.details{display:flex;gap:7px 12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.job-details p{margin:8px 0;color:var(--muted);font-size:12px;line-height:1.45}
+.job-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.claim{display:inline-flex;color:var(--orange);font-size:13px;font-weight:850}
+.close-job{min-height:36px;border:1px solid var(--line);border-radius:10px;padding:0 14px;background:#fff;color:var(--ink);font-weight:800;cursor:pointer}
+.hidden{display:none!important}
+@media(max-width:480px){.job-summary{min-height:58px;gap:7px;padding:9px 10px}.job h2{font-size:14px}.price{font-size:14px}.open-label{font-size:11px}.job-details{padding:9px 11px 11px}}
 .note{background:#fff8f2;border:1px solid #f4dfd2;border-radius:12px;padding:11px 13px;color:#6e5143;font-size:12px;margin-top:10px}
 .state{background:var(--white);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:14px}
 @media(max-width:850px){.navlinks{display:none}}\n@media(max-width:560px){.navwrap{width:calc(100% - 30px)}.logo{font-size:24px}.navright .outline{display:none}}\n@media(max-width:480px){.filters{grid-template-columns:1fr 1fr}.refresh{grid-column:1/-1;height:38px}.list{max-height:62vh}.job{padding:11px}.price{font-size:15px}}
@@ -53,9 +64,16 @@ main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);fon
    if(!filtered.length){list.innerHTML='<div class="state">No available jobs match these filters.</div>';return;}
    list.innerHTML=filtered.map(x=>{
      const place=[x.service_city,x.service_state].filter(Boolean).join(", ");
-     const when=x.created_at?new Date(x.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
-     return '<article class="job"><div><h2>'+esc(x.service_category)+'</h2><div class="details"><span>ZIP '+esc(x.zip_code)+'</span>'+(place?'<span>'+esc(place)+'</span>':"")+(when?'<span>Posted '+esc(when)+'</span>':"")+'</div><a class="claim" href="/contractor">Sign in to claim →</a></div><div class="price">'+money(x.price_cents)+'</div></article>';
+     const when=x.created_at?new Date(x.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not specified";
+     const urgency=x.urgency?String(x.urgency).replace(/_/g," "):"Not specified";
+     return '<article class="job"><button class="job-summary" type="button" aria-expanded="false"><span class="job-summary-main"><h2>'+esc(x.service_category||"Home service") + '</h2><span class="job-summary-meta">ZIP '+esc(x.zip_code||"Not specified") + '</span></span><span class="price">'+money(x.price_cents)+'</span><span class="open-label">Open ＋</span></button><div class="job-details hidden"><div class="details"><span><strong>Service:</strong> '+esc(x.service_category||"Home service")+'</span><span><strong>ZIP:</strong> '+esc(x.zip_code||"Not specified")+'</span>'+(place?'<span><strong>Area:</strong> '+esc(place)+'</span>':"")+'<span><strong>Posted:</strong> '+esc(when)+'</span><span><strong>Urgency:</strong> '+esc(urgency)+'</span><span><strong>Lead price:</strong> '+money(x.price_cents)+'</span></div><p>Sign in to your contractor account to view the full request details and contact the customer after claiming this lead.</p><div class="job-actions"><a class="claim" href="/contractor">Sign in to claim →</a><button class="close-job" type="button">Close</button></div></div></article>';
    }).join("");
+   list.querySelectorAll(".job").forEach(card=>{
+     const opener=card.querySelector(".job-summary"),details=card.querySelector(".job-details"),label=card.querySelector(".open-label"),closer=card.querySelector(".close-job");
+     const close=()=>{details.classList.add("hidden");opener.setAttribute("aria-expanded","false");label.textContent="Open ＋";};
+     opener.addEventListener("click",()=>{const opening=details.classList.contains("hidden");if(opening){list.querySelectorAll(".job-details").forEach(el=>el.classList.add("hidden"));list.querySelectorAll(".job-summary").forEach(el=>{el.setAttribute("aria-expanded","false");const t=el.querySelector(".open-label");if(t)t.textContent="Open ＋";});details.classList.remove("hidden");opener.setAttribute("aria-expanded","true");label.textContent="Close −";}else close();});
+     closer.addEventListener("click",close);
+   });
  }
  async function load(){
    if(busy)return;busy=true;
