@@ -716,7 +716,36 @@
       const messagesBox = document.createElement("div"); messagesBox.className = "chatmessages"; messagesBox.textContent = "Loading messages…"; panel.append(messagesBox);
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
-      const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
+      const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
+      const voiceButton = document.createElement("button"); voiceButton.type = "button"; voiceButton.className = "secondary"; voiceButton.textContent = "🎙 Record voice"; voiceButton.style.marginTop = "8px";
+      form.append(textarea, voiceButton, send); panel.append(form);
+      let voiceRecorder = null, voiceChunks = [], voiceStream = null, voiceTimer = null;
+      voiceButton.addEventListener("click", async () => {
+        try {
+          if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("Voice recording is not supported in this browser.");
+          if (voiceRecorder?.state === "recording") { voiceRecorder.stop(); voiceButton.disabled = true; voiceButton.textContent = "Saving voice…"; return; }
+          voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mimeType = ["audio/webm;codecs=opus","audio/mp4","audio/ogg;codecs=opus"].find(type => MediaRecorder.isTypeSupported(type)) || "";
+          voiceRecorder = new MediaRecorder(voiceStream, mimeType ? { mimeType } : undefined); voiceChunks = [];
+          voiceRecorder.ondataavailable = event => { if (event.data?.size) voiceChunks.push(event.data); };
+          voiceRecorder.onstop = async () => {
+            try {
+              const blob = new Blob(voiceChunks, { type: voiceRecorder.mimeType || "audio/webm" });
+              if (!blob.size || blob.size > 5 * 1024 * 1024) throw new Error("Voice message must be non-empty and under 5 MB.");
+              const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+              const path = conversationId + "/" + currentUser.id + "/" + Date.now() + "." + ext;
+              status.textContent = "Uploading voice message…";
+              const { error: uploadError } = await db.storage.from("lead-chat-audio").upload(path, blob, { contentType: blob.type.split(";")[0], upsert: false }); if (uploadError) throw uploadError;
+              const { error: insertError } = await db.from("lead_messages").insert({ conversation_id: conversationId, sender_type: "contractor", sender_user_id: currentUser.id, message: "[[ZELPX_AUDIO:" + path + "]]" });
+              if (insertError) { await db.storage.from("lead-chat-audio").remove([path]); throw insertError; }
+              status.textContent = "Voice message sent."; await refreshMessages();
+            } catch (error) { status.textContent = "Could not send voice message: " + (error.message || "Unknown error"); }
+            finally { clearTimeout(voiceTimer); voiceStream?.getTracks().forEach(track => track.stop()); voiceStream = null; voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; }
+          };
+          voiceRecorder.start(); voiceButton.textContent = "■ Stop recording"; status.textContent = "Recording… (maximum 2 minutes)";
+          voiceTimer = window.setTimeout(() => { if (voiceRecorder?.state === "recording") voiceRecorder.stop(); }, 120000);
+        } catch (error) { voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; status.textContent = error.message || "Microphone permission is required."; }
+      });
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
       let knownMessageIds = null;
       let chatSoundContext = null;
