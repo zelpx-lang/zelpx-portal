@@ -26,28 +26,40 @@ self.addEventListener("push", event => {
     renotify: true,
     silent: false,
     requireInteraction: data.requireInteraction === true,
-    vibrate: [500, 250, 500],
-    data: { url: getSafeNotificationUrl(data.url) }
+    vibrate: [1000, 500, 1000, 500, 1000],
+    actions: [
+      { action: "answer", title: "Answer" },
+      { action: "decline", title: "Decline" }
+    ],
+    data: {
+      url: getSafeNotificationUrl(data.url),
+      callId: data.call_id || null,
+      conversationId: data.conversation_id || null,
+      isIncomingCall: String(data.tag || "").startsWith("zelpx-incoming-call-")
+    }
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const target = getSafeNotificationUrl(event.notification.data && event.notification.data.url);
+  const notificationData = event.notification.data || {};
+  const targetUrl = new URL(getSafeNotificationUrl(notificationData.url));
+  if (notificationData.isIncomingCall) {
+    targetUrl.searchParams.set("call_action", event.action === "decline" ? "decline" : "answer");
+    if (notificationData.callId) targetUrl.searchParams.set("call_id", notificationData.callId);
+  }
+  const target = targetUrl.href;
   event.waitUntil((async () => {
-    const targetUrl = new URL(target);
     const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    // Reuse only a window on the production origin. A preview deployment may
-    // still be open, but it must never receive a cross-origin navigate call.
     for (const client of clientsList) {
       try {
-        if (new URL(client.url).origin === ZELPX_ORIGIN) {
+        if (new URL(client.url).origin === targetUrl.origin) {
           if ("navigate" in client) await client.navigate(target);
           return await client.focus();
         }
       } catch (_) {}
     }
-    if (self.clients.openWindow) await self.clients.openWindow(targetUrl.href);
+    if (self.clients.openWindow) await self.clients.openWindow(target);
   })());
 });
