@@ -298,6 +298,7 @@
         <div><label for="profileCompany">Company name</label><input id="profileCompany"></div>
         <div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
         <div><label for="profileServiceAddress">Business street address</label><input id="profileServiceAddress" autocomplete="street-address"></div>
+        <p id="contractorAddressVerificationStatus" class="muted" style="grid-column:1/-1">Business address is checked when you save your company profile.</p>
         <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><input id="profileServiceState" maxlength="2" autocomplete="address-level1"></div>
@@ -855,6 +856,40 @@
       }
     }
   }
+
+  async function verifyContractorBusinessAddress() {
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+    if (sessionError) throw sessionError;
+    const session = sessionData.session;
+    if (!session) throw new Error("Please sign in again to verify your business address.");
+    const status = $("contractorAddressVerificationStatus");
+    if (status) { status.textContent = "Verifying business street address…"; status.className = "muted"; }
+    const response = await fetch(SUPABASE_URL + "/functions/v1/verify-service-address", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + session.access_token
+      },
+      body: JSON.stringify({
+        purpose: "contractor_profile",
+        address: $("profileServiceAddress").value.trim(),
+        city: $("profileServiceCity").value.trim(),
+        state: $("profileServiceState").value.trim().toUpperCase(),
+        zip: $("profileServiceZip").value.trim().slice(0,5)
+      })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.verified !== true) {
+      if (status) { status.textContent = result.error || "Business address could not be verified."; status.className = "message error"; }
+      throw new Error(result.error || "Business address verification failed.");
+    }
+    $("profileServiceZip").dataset.latitude = String(result.latitude || "");
+    $("profileServiceZip").dataset.longitude = String(result.longitude || "");
+    if (status) { status.textContent = "Business address matched. ZIP code and state confirmed."; status.className = "message success"; }
+    return result;
+  }
+
   async function saveCompany() {
     clearMessage("appMessage");
     try {
@@ -863,6 +898,7 @@
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
       if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Enter business street address, city, state, and a valid 5-digit ZIP code.");
+      await verifyContractorBusinessAddress();
       if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id); if (pErr) throw pErr;
