@@ -898,11 +898,11 @@
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
       if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Enter business street address, city, state, and a valid 5-digit ZIP code.");
-      await verifyContractorBusinessAddress();
       if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id); if (pErr) throw pErr;
       if (currentContractor) {
+        await verifyContractorBusinessAddress();
         let license_document_path = currentContractor.license_document_path || null;
         const file = $("licenseDocument").files?.[0];
         if (file) {
