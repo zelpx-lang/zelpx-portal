@@ -24,7 +24,8 @@ self.addEventListener("push", event => {
     tag: data.tag || "zelpx-notification",
     renotify: true,
     silent: false,
-    vibrate: [200, 100, 200],
+    requireInteraction: data.requireInteraction === true,
+    vibrate: [500, 250, 500],
     data: { url: getSafeNotificationUrl(data.url) }
   };
   event.waitUntil(self.registration.showNotification(title, options));
