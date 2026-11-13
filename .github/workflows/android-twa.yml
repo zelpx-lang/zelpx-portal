@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - android/google-play-twa-current-main
+      - feature/android-call-prototype
 permissions:
   contents: read
 concurrency:
@@ -163,6 +163,18 @@ jobs:
       - name: Build signed APK and AAB
         working-directory: android
         run: yes '' | bubblewrap build
+      - name: Upload generated Android project source (without signing keys)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelpx-android-project-source-${{ github.run_number }}
+          path: |
+            android/**
+            !android/android-keystore
+            !android/android.keystore
+            !android/app/build/**
+            !android/.gradle/**
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
