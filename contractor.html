@@ -732,7 +732,7 @@
       const myCallUserId = currentUser.id;
       const callTopic = "zelpx-call:" + conversationId;
       const sendCallSignal = (event, payload) => callChannel?.send({ type: "broadcast", event, payload: { ...payload, sender: myCallUserId, callId: activeCallId } });
-      function closeCallUi(message) {
+      function closeCallUi(message) { stopIncomingCallAlert();
         if (peer) { peer.ontrack = peer.onicecandidate = peer.onconnectionstatechange = null; peer.close(); peer = null; }
         if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
         pendingIce = []; activeCallId = null; callStatus.textContent = message || "Call ended."; callPanel.style.display = "none"; callButton.disabled = false; callButton.textContent = "☎ Call";
@@ -757,7 +757,7 @@
           callStatus.textContent = "Calling… waiting for the other person.";
         } catch (error) { closeCallUi(error.message || "Could not start call."); callPanel.style.display = "flex"; }
       });
-      acceptCall.addEventListener("click", async () => {
+      acceptCall.addEventListener("click", async () => { stopIncomingCallAlert();
         try {
           if (!window.__zelpxIncomingOffer) return;
           acceptCall.disabled = true; await createCallPeer();
@@ -769,13 +769,31 @@
         } catch (error) { closeCallUi(error.message || "Could not answer."); }
         finally { acceptCall.disabled = false; }
       });
-      rejectCall.addEventListener("click", () => { sendCallSignal("hangup", {}); window.__zelpxIncomingOffer = null; closeCallUi("Call declined."); });
+      rejectCall.addEventListener("click", () => { stopIncomingCallAlert(); sendCallSignal("hangup", {}); window.__zelpxIncomingOffer = null; closeCallUi("Call declined."); });
       endCall.addEventListener("click", () => { sendCallSignal("hangup", {}); closeCallUi("Call ended."); });
       callChannel = db.channel(callTopic, { config: { private: true } })
-        .on("broadcast", { event: "offer" }, async ({ payload }) => {
+                  function stopIncomingCallAlert() {
+            if (window.__zelpxCallToneTimer) { clearInterval(window.__zelpxCallToneTimer); window.__zelpxCallToneTimer = null; }
+            if (window.__zelpxCallToneContext) { try { window.__zelpxCallToneContext.close(); } catch (_) {} window.__zelpxCallToneContext = null; }
+            if (navigator.vibrate) navigator.vibrate(0);
+          }
+          function alertIncomingCall() {
+            stopIncomingCallAlert();
+            if (navigator.vibrate) navigator.vibrate([500,250,500,250,900]);
+            try {
+              const Ctx = window.AudioContext || window.webkitAudioContext;
+              if (Ctx) {
+                const ctx = new Ctx(); window.__zelpxCallToneContext = ctx;
+                const ring = () => { if (ctx.state === "closed") return; [880,660].forEach((hz,index) => { const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.frequency.value=hz; gain.gain.setValueAtTime(0.0001,ctx.currentTime+index*0.22); gain.gain.exponentialRampToValueAtTime(0.16,ctx.currentTime+index*0.22+0.03); gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+index*0.22+0.18); osc.connect(gain); gain.connect(ctx.destination); osc.start(ctx.currentTime+index*0.22); osc.stop(ctx.currentTime+index*0.22+0.2); }); };
+                ctx.resume().then(() => { ring(); window.__zelpxCallToneTimer=setInterval(ring,1800); }).catch(()=>{});
+              }
+            } catch (_) {}
+            if ("Notification" in window && Notification.permission === "granted") { try { const notice = new Notification("Incoming ZELPX call", { body: "Your customer is calling you.", tag: "zelpx-call-" + activeCallId, renotify: true, requireInteraction: true }); notice.onclick = () => { window.focus(); notice.close(); }; } catch (_) {} }
+          }
+.on("broadcast", { event: "offer" }, async ({ payload }) => {
           if (payload.sender === myCallUserId) return;
           if (peer) { await sendCallSignal("busy", {}); return; }
-          activeCallId = payload.callId; window.__zelpxIncomingOffer = payload; callPanel.style.display = "flex"; callStatus.textContent = "Incoming call…"; acceptCall.style.display = "inline-block"; rejectCall.style.display = "inline-block"; endCall.style.display = "none"; callButton.disabled = true;
+          activeCallId = payload.callId; window.__zelpxIncomingOffer = payload; callPanel.style.display = "flex"; callStatus.textContent = "Incoming call…"; acceptCall.style.display = "inline-block"; rejectCall.style.display = "inline-block"; endCall.style.display = "none"; callButton.disabled = true; alertIncomingCall();
         })
         .on("broadcast", { event: "answer" }, async ({ payload }) => {
           if (payload.sender === myCallUserId || payload.callId !== activeCallId || !peer) return;
