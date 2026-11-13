@@ -300,7 +300,7 @@
         <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">Verify and publish as lead</button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
       </nav>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -358,8 +358,13 @@
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-        <h2>Customer service requests</h2>
-        <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
+        <h2>ZELPX Fraud Protection</h2>
+        <p>Automatic checks run when a customer submits or edits a request. Risk signals help you review suspicious activity; every request still requires your manual approval before it becomes a contractor lead.</p>
+        <div id="fraudProtectionSummary" class="request-card" style="margin:14px 0">
+          <strong>Automatic verification checks</strong>
+          <p class="muted">Email confirmation · SMS phone confirmation · duplicate requests · ZIP format · repeated descriptions · submission frequency</p>
+          <p class="muted">ZIP existence is checked during the administrator's publish step. Photo reuse is not available yet because the customer request form currently has no photo upload.</p>
+        </div>
         <div class="grid" style="margin:14px 0">
           <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
           <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
@@ -1038,6 +1043,19 @@
         .select("id,user_id,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
+      const requestIds = (requests || []).map(request => request.id);
+      let verificationByRequest = {};
+      if (requestIds.length) {
+        const { data: verificationRows, error: verificationError } = await db
+          .from("lead_verification_checks")
+          .select("request_id,risk_score,risk_level,checks,checked_at")
+          .in("request_id", requestIds);
+        if (verificationError) {
+          console.warn("Automatic verification results could not be loaded:", verificationError.message);
+        } else {
+          (verificationRows || []).forEach(row => { verificationByRequest[row.request_id] = row; });
+        }
+      }
       const { data: serviceCategories, error: categoriesError } = await db.from("service_categories")
         .select("name").eq("is_active", true).order("name");
       if (categoriesError) throw categoriesError;
@@ -1100,6 +1118,51 @@
         });
         const description = document.createElement("p"); description.style.whiteSpace = "pre-wrap";
         description.textContent = request.description || "No description provided."; card.append(description);
+
+        const verification = verificationByRequest[request.id];
+        const verificationBox = document.createElement("div");
+        verificationBox.className = "request-card";
+        verificationBox.style.margin = "14px 0";
+        const verificationTitle = document.createElement("strong");
+        verificationTitle.textContent = "Automatic verification";
+        verificationBox.append(verificationTitle);
+        if (!verification) {
+          const pending = document.createElement("p"); pending.className = "muted";
+          pending.textContent = "No automatic result found. Refresh the request list or review manually.";
+          verificationBox.append(pending);
+        } else {
+          const risk = document.createElement("p");
+          risk.textContent = "Risk: " + verification.risk_level.toUpperCase() + " · Score " + verification.risk_score + "/100";
+          risk.style.fontWeight = "700";
+          risk.style.color = verification.risk_level === "high" ? "#b42318" : verification.risk_level === "review" ? "#a15c00" : "#147d55";
+          verificationBox.append(risk);
+          const checkLabels = [
+            ["email_confirmed", "Email confirmed"],
+            ["phone_sms_confirmed", "Phone confirmed by SMS"],
+            ["zip_format_valid", "ZIP format valid"],
+            ["same_customer_duplicate", "Possible repeat request from same customer"],
+            ["duplicate_description", "Repeated description detected"],
+            ["high_submission_frequency", "Multiple requests within 24 hours"]
+          ];
+          const checkList = document.createElement("ul");
+          checkList.style.margin = "8px 0";
+          checkList.style.paddingLeft = "20px";
+          checkLabels.forEach(([key, label]) => {
+            const item = document.createElement("li");
+            const passed = verification.checks?.[key] === true;
+            const flagged = ["same_customer_duplicate","duplicate_description","high_submission_frequency"].includes(key) ? passed : !passed;
+            item.textContent = label + ": " + (flagged ? "Needs attention" : "OK");
+            item.style.color = flagged ? "#a15c00" : "#147d55";
+            checkList.append(item);
+          });
+          const photos = document.createElement("p"); photos.className = "muted";
+          photos.textContent = "Photo reuse: not checked — customer photo upload is not enabled yet.";
+          verificationBox.append(checkList, photos);
+          const checkedAt = document.createElement("p"); checkedAt.className = "muted";
+          checkedAt.textContent = "Checked: " + new Date(verification.checked_at).toLocaleString();
+          verificationBox.append(checkedAt);
+        }
+        card.append(verificationBox);
 
         if (request.lead_id || request.status === "published") {
           const note = document.createElement("p"); note.className = "message success";
