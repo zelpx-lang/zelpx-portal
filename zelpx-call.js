@@ -36,7 +36,10 @@
         if (ringContext.state === "suspended") ringContext.resume().catch(() => {});
       } catch (_) {}
     }
-    host.addEventListener("pointerdown", unlockCallSound, { once: true });
+    // Android Chrome unlocks Web Audio only after a real user gesture on the page.
+    // The recipient may tap "Open conversation", not the call bar itself.
+    document.addEventListener("pointerdown", unlockCallSound, { once: true, capture: true });
+    document.addEventListener("touchstart", unlockCallSound, { once: true, capture: true, passive: true });
     function stopRingtone() {
       if (ringTimer) { clearInterval(ringTimer); ringTimer = null; }
       ringOscillators.forEach(osc => { try { osc.stop(); } catch (_) {} });
@@ -69,14 +72,22 @@
     function showIncomingCallNotification() {
       if (!("Notification" in window) || Notification.permission !== "granted") return;
       try {
-        const note = new Notification("Incoming ZELPX audio call", {
+        const options = {
           body: "A customer or contractor is calling you.",
           tag: "zelpx-call-" + conversationId,
           renotify: true,
           requireInteraction: true,
           vibrate: [500, 250, 500]
-        });
-        note.onclick = () => { window.focus(); note.close(); };
+        };
+        if (navigator.serviceWorker?.getRegistration) {
+          navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg?.showNotification) return reg.showNotification("Incoming ZELPX audio call", options);
+            return new Notification("Incoming ZELPX audio call", options);
+          }).catch(() => {});
+        } else {
+          const note = new Notification("Incoming ZELPX audio call", options);
+          note.onclick = () => { window.focus(); note.close(); };
+        }
       } catch (_) {}
     }
     const signal = async (event, data) => {
