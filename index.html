@@ -169,16 +169,32 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
     if(event.key==="Escape"){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");}
     if(event.key==="Enter"&&!suggestions.hidden){const first=suggestions.querySelector("button");if(first){event.preventDefault();first.click();}}
   });
-  document.getElementById("serviceSearch").addEventListener("submit",function(event){
+  document.getElementById("serviceSearch").addEventListener("submit",async function(event){
     event.preventDefault();
     const typed=normalize(serviceInput.value);
     const service=selectedService || availableServices.find(name=>normalize(name)===typed) ||
       availableServices.map(name=>({name,score:Math.min(score(normalize(name),typed),...(aliases[name]||[]).map(a=>score(normalize(a),typed)))})).filter(x=>x.score<99).sort((a,b)=>a.score-b.score)[0]?.name;
-    const zip=document.getElementById("zip").value.trim();
+    const zipInput=document.getElementById("zip");
+    const zip=zipInput.value.trim();
     if(!service){serviceInput.focus();showSuggestions();return;}
-    if(!/^[0-9]{5}$/.test(zip)){document.getElementById("zip").focus();return;}
-    location.href="/customer?service="+encodeURIComponent(service)+"&zip="+encodeURIComponent(zip)+"#requestForm";
+    if(!/^[0-9]{5}$/.test(zip)){zipInput.setCustomValidity("Enter a valid 5-digit US ZIP code.");zipInput.reportValidity();zipInput.focus();return;}
+    zipInput.setCustomValidity("");
+    const submitButton=this.querySelector('button[type="submit"]');
+    submitButton.disabled=true;submitButton.textContent="Checking ZIP…";
+    try{
+      const response=await fetch("https://api.zippopotam.us/us/"+encodeURIComponent(zip),{headers:{Accept:"application/json"}});
+      if(!response.ok)throw new Error("ZIP_NOT_FOUND");
+      const data=await response.json();
+      if(data["country abbreviation"]!=="US"||String(data["post code"])!==zip||!Array.isArray(data.places)||!data.places.length)throw new Error("ZIP_NOT_FOUND");
+      location.href="/customer?service="+encodeURIComponent(service)+"&zip="+encodeURIComponent(zip)+"#requestForm";
+    }catch(error){
+      alert(error.message==="ZIP_NOT_FOUND"?"This ZIP code was not found in the US ZIP database. Please enter a valid US ZIP code.":"We cannot verify this ZIP code right now. Please try again in a moment.");
+      zipInput.focus();
+    }finally{
+      submitButton.disabled=false;submitButton.textContent="Find a pro →";
+    }
   });
+  document.getElementById("zip").addEventListener("input",function(){this.setCustomValidity("");});
 })();
 </script>
 </body></html>
