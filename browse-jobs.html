@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f4ee">
+<title>Available Home Service Jobs | ZELPX</title>
+<meta name="description" content="Browse available home service jobs near you on ZELPX. Customer contact information stays private.">
+<style>
+:root{--ink:#171816;--muted:#716e66;--paper:#f7f4ee;--white:#fffefa;--line:#e8e1d6;--orange:#f36b38;--soft:#fff0e8;--green:#167653}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{height:62px;background:#fbf9f4;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.wrap{width:min(760px,calc(100% - 28px));margin:auto}.nav{display:flex;align-items:center;justify-content:space-between}.logo{font-size:23px;font-weight:950;letter-spacing:.14em}.nav a{font-size:13px;font-weight:700}
+main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);font-size:11px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.intro h1{font-size:clamp(27px,6vw,38px);line-height:1.05;letter-spacing:-.045em;margin:6px 0}.intro p{color:var(--muted);margin:0;font-size:14px}
+.filters{position:sticky;top:0;z-index:5;background:var(--paper);padding:10px 0 12px;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+.filters input,.filters select{min-width:0;width:100%;height:43px;border:1px solid var(--line);border-radius:12px;padding:0 11px;background:var(--white);color:var(--ink);font:inherit;outline:none}
+.filters input:focus,.filters select:focus{border-color:var(--orange);box-shadow:0 0 0 3px #f36b3820}
+.refresh{height:43px;border:0;border-radius:12px;background:var(--ink);color:#fff;padding:0 13px;font-weight:800;cursor:pointer}
+.meta{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;margin:0 1px 9px}.live{display:inline-flex;align-items:center;gap:6px}.live:before{content:"";width:7px;height:7px;background:#21966a;border-radius:50%;box-shadow:0 0 0 3px #21966a20}
+.list{display:flex;flex-direction:column;gap:8px;max-height:58vh;min-height:180px;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 10px 1px;scrollbar-width:thin;scrollbar-color:#c9bfb1 transparent}
+.job{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;box-shadow:0 2px 8px #31271908}
+.job h2{font-size:15px;line-height:1.2;margin:0 0 5px;font-weight:850}.details{display:flex;gap:7px 12px;flex-wrap:wrap;color:var(--muted);font-size:12px}.price{font-weight:900;font-size:16px;white-space:nowrap;color:var(--ink)}.claim{display:inline-flex;margin-top:8px;color:var(--orange);font-size:12px;font-weight:850}
+.note{background:#fff8f2;border:1px solid #f4dfd2;border-radius:12px;padding:11px 13px;color:#6e5143;font-size:12px;margin-top:10px}
+.state{background:var(--white);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:14px}
+@media(max-width:480px){.filters{grid-template-columns:1fr 1fr}.refresh{grid-column:1/-1;height:38px}.list{max-height:62vh}.job{padding:11px}.price{font-size:15px}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="logo" href="/">ZELPX</a><a href="/">Home</a></div></header>
+<main class="wrap">
+<section class="intro"><div class="eyebrow">Open opportunities</div><h1>Available home service jobs</h1><p>Browse current requests. Customer contact details stay private until you sign in and claim a lead.</p></section>
+<section class="filters" aria-label="Filter available jobs">
+<input id="zipFilter" inputmode="numeric" maxlength="5" placeholder="ZIP code" aria-label="Filter by ZIP code">
+<select id="categoryFilter" aria-label="Filter by category"><option value="">All categories</option></select>
+<button class="refresh" id="refreshBtn" type="button">↻ Refresh</button>
+</section>
+<div class="meta"><span id="resultCount">Loading available jobs…</span><span class="live">Live list · updates every 30 sec</span></div>
+<section class="list" id="jobsList" aria-live="polite"><div class="state">Loading available jobs…</div></section>
+<div class="note">For privacy, this public page only shows the service category, ZIP code, city (when available), and lead price. Customer names, phone numbers, email addresses, street addresses, and project descriptions are never displayed.</div>
+</main>
+<script>
+(() => {
+ const URL="https://zsrnjkndgbchfxibxiyd.supabase.co";
+ const KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+ const list=document.getElementById("jobsList"),zip=document.getElementById("zipFilter"),category=document.getElementById("categoryFilter"),count=document.getElementById("resultCount");
+ let rows=[],busy=false;
+ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
+ function render(){
+   const z=zip.value.trim(),cat=category.value;
+   const filtered=rows.filter(x=>(!z||String(x.zip_code||"").startsWith(z))&&(!cat||x.service_category===cat));
+   count.textContent=filtered.length+" available "+(filtered.length===1?"job":"jobs");
+   if(!filtered.length){list.innerHTML='<div class="state">No available jobs match these filters.</div>';return;}
+   list.innerHTML=filtered.map(x=>{
+     const place=[x.service_city,x.service_state].filter(Boolean).join(", ");
+     const when=x.created_at?new Date(x.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+     return '<article class="job"><div><h2>'+esc(x.service_category)+'</h2><div class="details"><span>ZIP '+esc(x.zip_code)+'</span>'+(place?'<span>'+esc(place)+'</span>':"")+(when?'<span>Posted '+esc(when)+'</span>':"")+'</div><a class="claim" href="/contractor">Sign in to claim →</a></div><div class="price">'+money(x.price_cents)+'</div></article>';
+   }).join("");
+ }
+ async function load(){
+   if(busy)return;busy=true;
+   try{
+     const r=await fetch(URL+"/rest/v1/public_available_leads?select=id,service_category,zip_code,service_city,service_state,price_cents,created_at,urgency&order=created_at.desc&limit=250",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
+     if(!r.ok)throw new Error("Request failed ("+r.status+")");
+     const data=await r.json();rows=Array.isArray(data)?data:[];
+     const selected=category.value, cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
+     category.innerHTML='<option value="">All categories</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+     category.value=cats.includes(selected)?selected:"";
+     render();
+   }catch(e){console.error(e);if(!rows.length)list.innerHTML='<div class="state">The job list is temporarily unavailable. Please try again.</div>';count.textContent="Could not refresh jobs";}
+   finally{busy=false;}
+ }
+ zip.addEventListener("input",render);category.addEventListener("change",render);
+ document.getElementById("refreshBtn").addEventListener("click",load);
+ load();setInterval(load,30000);
+})();
+</script>
+</body></html>
