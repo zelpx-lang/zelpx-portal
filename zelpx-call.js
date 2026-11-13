@@ -29,7 +29,7 @@
     const setStatus = (s) => { state.textContent = s; };
     const signal = async (event, data) => {
       if (!channel) throw new Error("Call channel is not connected.");
-      const result = await channel.send({ type:"broadcast", event, payload:{ ...data, sender:userId, role } });
+      const result = await channel.send({ type:"broadcast", event:"call_signal", payload:{ ...data, kind:event, sender:userId, role } });
       if (result !== "ok") throw new Error("Call signal could not be sent (" + result + ").");
     };
     async function ensurePeer() {
@@ -94,8 +94,8 @@
     });
     const onSignal = async raw => {
       // supabase-js Broadcast callback envelope is { event, payload }.
-      const event = raw?.event;
       const p = raw?.payload;
+      const event = p?.kind;
       if (!p || p.sender===userId) return;
       try {
         if (event==="invite" && !activeCallId && !pendingOffer && p.description?.type==="offer") {
