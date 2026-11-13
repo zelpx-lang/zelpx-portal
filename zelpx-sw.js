@@ -1,10 +1,11 @@
 const ZELPX_ORIGIN = "https://app.zelpx.com";
+const ZELPX_ALLOWED_ORIGINS = new Set([ZELPX_ORIGIN, "https://zelpx-portal-f65iurntk-zelpx.vercel.app", "https://zelpx-portal-git-feature-android-call-prototype-zelpx.vercel.app"]);
 
 function getSafeNotificationUrl(value) {
   try {
     const parsed = new URL(typeof value === "string" ? value : "/", ZELPX_ORIGIN);
     // Never send users to temporary Vercel preview deployments or another host.
-    if (parsed.origin !== ZELPX_ORIGIN) {
+    if (!ZELPX_ALLOWED_ORIGINS.has(parsed.origin)) {
       return new URL(parsed.pathname + parsed.search + parsed.hash, ZELPX_ORIGIN).href;
     }
     return parsed.href;
