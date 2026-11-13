@@ -1615,7 +1615,7 @@
             chatIntro.textContent = "Your private conversation for this service request.";
             const chatButton = document.createElement("button");
             chatButton.type = "button"; chatButton.className = "secondary-button";
-            chatButton.textContent = "🔔 Open chat";
+            chatButton.textContent = "Open conversation";
             let unreadCount = unreadByLead.get(request.lead_id) || 0;
             if (unreadCount) {
               chatButton.textContent = "🔔 New message (" + unreadCount + ") · Open chat";
@@ -1657,7 +1657,7 @@
               } else {
                 chatButton.textContent = unreadCount > 0
                   ? "🔔 New message (" + unreadCount + ") · Open chat"
-                  : "🔔 Open chat";
+                  : "Open conversation";
               }
             });
           }
