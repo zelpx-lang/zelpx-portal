@@ -109,24 +109,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
         link.href = "/customer?service=" + encodeURIComponent(item.name);
         const icon = document.createElement("span");
         icon.className = "cat-icon";
-        const artIndex = ({
-          "air quality testing": 0, "appliance haul away": 1, "appliance installation": 2,
-          "fireplace installation and repair": 3, "floor cleaning": 4, "floor installation or replacement": 5,
-          "kitchen remodeling": 6, "laminate floor cleaning": 7, "laminate flooring installation": 8,
-          "roof repair": 9, "roof replacement": 10, "roofing": 11
-        })[String(item.name || "").trim().toLowerCase()];
-        if (Number.isInteger(artIndex)) {
-          icon.classList.add("cat-art");
-          const sheet = artIndex < 6 ? "/category-art-top.webp" : "/category-art-bottom.webp";
-          const cell = artIndex % 6;
-          icon.style.backgroundImage = "url('" + sheet + "')";
-          icon.style.backgroundSize = "300% 200%";
-          icon.style.backgroundPosition = ((cell % 3) * 50) + "% " + (Math.floor(cell / 3) * 100) + "%";
-          icon.style.backgroundRepeat = "no-repeat";
-          icon.style.backgroundColor = "#fff";
-        } else {
-          icon.innerHTML = serviceIllustration(item.name);
-        }
+        icon.innerHTML = serviceIllustration(item.name);
         icon.setAttribute("aria-hidden", "true");
         const title = document.createElement("strong");
         title.textContent = item.name;
