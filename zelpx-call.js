@@ -163,6 +163,15 @@
         activeCallId = crypto.randomUUID(); localDescriptionSent = false; localIceQueue = [];
         await ensurePeer();
         await pc.setLocalDescription(await pc.createOffer({ offerToReceiveAudio:true }));
+        const { error: inviteSaveError } = await db.from("call_invitations").insert({
+          call_id: activeCallId,
+          conversation_id: conversationId,
+          caller_user_id: userId,
+          caller_role: role,
+          offer: pc.localDescription.toJSON(),
+          status: "ringing"
+        });
+        if (inviteSaveError) throw new Error("Could not save incoming call invitation: " + inviteSaveError.message);
         // Deliver a Web Push alert in addition to the live Realtime invite.
         // This lets Android show an incoming-call notification when the chat is backgrounded.
         try {
@@ -193,6 +202,7 @@
         for (const candidate of queuedIce.splice(0)) await pc.addIceCandidate(new RTCIceCandidate(candidate));
         const answer=await pc.createAnswer(); await pc.setLocalDescription(answer);
         await signal("answer", { callId:activeCallId, description:pc.localDescription });
+        await db.from("call_invitations").update({ status:"accepted", updated_at:new Date().toISOString() }).eq("call_id",activeCallId);
         localDescriptionSent = true;
         for (const candidate of localIceQueue.splice(0)) await signal("ice", { callId:activeCallId, candidate });
         answerBtn.style.display=rejectBtn.style.display="none"; endBtn.style.display="inline-block"; callBtn.style.display="none";
@@ -201,11 +211,11 @@
       finally { answerBtn.disabled=false; }
     });
     rejectBtn.addEventListener("click", async () => {
-      try { if (pendingOffer) await signal("reject",{callId:pendingOffer.callId}); } catch(_) {}
+      try { if (pendingOffer) { await signal("reject",{callId:pendingOffer.callId}); await db.from("call_invitations").update({ status:"declined", updated_at:new Date().toISOString() }).eq("call_id",pendingOffer.callId); } } catch(_) {}
       await cleanup("Call declined.");
     });
     endBtn.addEventListener("click", async () => {
-      try { if (activeCallId) await signal("hangup",{callId:activeCallId}); } catch(_) {}
+      try { if (activeCallId) { await signal("hangup",{callId:activeCallId}); await db.from("call_invitations").update({ status:"ended", updated_at:new Date().toISOString() }).eq("call_id",activeCallId); } } catch(_) {}
       await cleanup("Call ended.");
     });
     const onSignal = async raw => {
@@ -249,7 +259,24 @@
         channel = db.channel(topic,{config:{private:true}})
           .on("broadcast",{event:"call_signal"},onSignal)
           .subscribe((status,err)=>{
-            if(status==="SUBSCRIBED") { channelReady = true; callBtn.disabled = false; setStatus("Audio calling ready while this chat is open."); }
+            if(status==="SUBSCRIBED") {
+              channelReady = true; callBtn.disabled = false; setStatus("Audio calling ready while this chat is open.");
+              db.from("call_invitations").select("call_id,offer,caller_user_id,created_at")
+                .eq("conversation_id",conversationId).eq("status","ringing")
+                .gte("created_at",new Date(Date.now()-60000).toISOString())
+                .order("created_at",{ascending:false}).limit(1).maybeSingle()
+                .then(({data,error})=>{
+                  if(error) { console.warn("Could not check pending call invitation:",error.message); return; }
+                  if(data && data.caller_user_id!==userId && !activeCallId && !pendingOffer && data.offer?.type==="offer") {
+                    pendingOffer={callId:data.call_id,description:data.offer};
+                    setStatus("Incoming audio call… tap Answer.");
+                    startRingtone();
+                    showIncomingCallNotification();
+                    callBtn.style.display="none";
+                    answerBtn.style.display=rejectBtn.style.display="inline-block";
+                  }
+                });
+            }
             else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT") { channelReady = false; callBtn.disabled = true; setStatus("Call connection unavailable: " + (err?.message || status)); }
             else if(status==="CLOSED") { channelReady = false; callBtn.disabled = true; setStatus("Call connection closed. Reopen this chat."); }
           });
