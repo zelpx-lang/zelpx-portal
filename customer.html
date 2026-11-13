@@ -1451,7 +1451,7 @@
             const sender = document.createElement("strong");
             sender.textContent = item.sender_type === "customer" ? "YOU" : "CONTRACTOR";
             const body = document.createElement("div");
-            const audioMatch = String(item.message || "").match(/^\\[\\[ZELPX_AUDIO:(.+)\\]\\]$/);
+            const audioMatch = String(item.message || "").match(/^\[\[ZELPX_AUDIO:(.+)\]\]$/);
             if (audioMatch) {
               const player = document.createElement("audio"); player.controls = true; player.preload = "none"; player.style.display = "block"; player.style.width = "min(100%, 320px)"; player.style.marginTop = "6px";
               body.appendChild(player);
