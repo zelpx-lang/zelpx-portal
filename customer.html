@@ -1384,100 +1384,58 @@
         const input = document.createElement("textarea"); input.maxLength = 5000; input.required = true;
         input.placeholder = "Write your message to the contractor…";
         const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
-        const callButton = document.createElement("button"); callButton.type = "button"; callButton.className = "secondary-button"; callButton.textContent = "☎ Call"; callButton.style.minHeight = "40px";
-        form.append(input, callButton, send);
-
-        let callChannel = null, peer = null, localStream = null, pendingIce = [], activeCallId = null;
-        const callPanel = document.createElement("div");
-        callPanel.style.cssText = "display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;margin:8px 0;border:1px solid #e3a04b;border-radius:10px;background:#fff8ed";
-        const callStatus = document.createElement("span"); callStatus.style.flex = "1 1 100%";
-        const acceptCall = document.createElement("button"); acceptCall.type = "button"; acceptCall.textContent = "Accept";
-        const rejectCall = document.createElement("button"); rejectCall.type = "button"; rejectCall.textContent = "Decline"; rejectCall.className = "secondary";
-        const endCall = document.createElement("button"); endCall.type = "button"; endCall.textContent = "End call"; endCall.className = "secondary";
-        callPanel.append(callStatus, acceptCall, rejectCall, endCall);
-        form.before(callPanel);
-        const myCallUserId = session.user.id;
-        const callTopic = "zelpx-call:" + conversation.id;
-        const sendCallSignal = (event, payload) => callChannel?.send({ type: "broadcast", event, payload: { ...payload, sender: myCallUserId, callId: activeCallId } });
-        function closeCallUi(message) { stopIncomingCallAlert();
-          if (peer) { peer.ontrack = peer.onicecandidate = peer.onconnectionstatechange = null; peer.close(); peer = null; }
-          if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
-          pendingIce = []; activeCallId = null; callStatus.textContent = message || "Call ended."; callPanel.style.display = "none"; callButton.disabled = false; callButton.textContent = "☎ Call";
-        }
-        async function createCallPeer() {
-          peer = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] });
-          peer.onicecandidate = event => { if (event.candidate) sendCallSignal("ice", { candidate: event.candidate }); };
-          peer.ontrack = event => { let audio = callPanel.querySelector("audio"); if (!audio) { audio = document.createElement("audio"); audio.autoplay = true; audio.playsInline = true; callPanel.append(audio); } audio.srcObject = event.streams[0]; audio.play().catch(() => {}); };
-          peer.onconnectionstatechange = () => { if (peer && ["failed","disconnected","closed"].includes(peer.connectionState)) closeCallUi("Call disconnected."); };
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
-          return peer;
-        }
-        callButton.addEventListener("click", async () => {
+        const voiceButton = document.createElement("button"); voiceButton.type = "button"; voiceButton.className = "secondary-button"; voiceButton.textContent = "🎙 Record voice"; voiceButton.style.minHeight = "40px";
+        form.append(input, voiceButton, send);
+        let voiceRecorder = null, voiceChunks = [], voiceStream = null, voiceTimer = null;
+        voiceButton.addEventListener("click", async () => {
           try {
-            if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error("Calling is not supported in this browser. Please use HTTPS in Chrome or Safari.");
-            if (!callChannel) throw new Error("Call connection is not ready. Close and reopen this chat.");
-            callButton.disabled = true; callStatus.textContent = "Calling…"; callPanel.style.display = "flex"; activeCallId = crypto.randomUUID();
-            await createCallPeer();
-            const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
-            await sendCallSignal("offer", { description: peer.localDescription });
-            callStatus.textContent = "Calling… waiting for the other person.";
-          } catch (error) { closeCallUi(error.message || "Could not start call."); callPanel.style.display = "flex"; }
-        });
-        acceptCall.addEventListener("click", async () => { stopIncomingCallAlert();
-          try {
-            if (!window.__zelpxIncomingOffer) return;
-            acceptCall.disabled = true; await createCallPeer();
-            await peer.setRemoteDescription(window.__zelpxIncomingOffer.description);
-            for (const candidate of pendingIce) await peer.addIceCandidate(candidate); pendingIce = [];
-            const answer = await peer.createAnswer(); await peer.setLocalDescription(answer);
-            await sendCallSignal("answer", { description: peer.localDescription });
-            window.__zelpxIncomingOffer = null; callStatus.textContent = "Connected. You can talk now."; rejectCall.style.display = "none"; acceptCall.style.display = "none"; endCall.style.display = "inline-block";
-          } catch (error) { closeCallUi(error.message || "Could not answer."); }
-          finally { acceptCall.disabled = false; }
-        });
-        rejectCall.addEventListener("click", () => { stopIncomingCallAlert(); sendCallSignal("hangup", {}); window.__zelpxIncomingOffer = null; closeCallUi("Call declined."); });
-        endCall.addEventListener("click", () => { sendCallSignal("hangup", {}); closeCallUi("Call ended."); });
-        function stopIncomingCallAlert() {
-              if (window.__zelpxCallToneTimer) { clearInterval(window.__zelpxCallToneTimer); window.__zelpxCallToneTimer = null; }
-              if (window.__zelpxCallToneContext) { try { window.__zelpxCallToneContext.close(); } catch (_) {} window.__zelpxCallToneContext = null; }
-              if (navigator.vibrate) navigator.vibrate(0);
-            }
-            function alertIncomingCall() {
-              stopIncomingCallAlert();
-              if (navigator.vibrate) navigator.vibrate([500,250,500,250,900]);
+            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("Voice recording is not supported in this browser.");
+            if (voiceRecorder?.state === "recording") { voiceRecorder.stop(); voiceButton.disabled = true; voiceButton.textContent = "Saving voice…"; return; }
+            voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mimeType = ["audio/webm;codecs=opus","audio/mp4","audio/ogg;codecs=opus"].find(type => MediaRecorder.isTypeSupported(type)) || "";
+            voiceRecorder = new MediaRecorder(voiceStream, mimeType ? { mimeType } : undefined); voiceChunks = [];
+            voiceRecorder.ondataavailable = event => { if (event.data?.size) voiceChunks.push(event.data); };
+            voiceRecorder.onstop = async () => {
               try {
-                const Ctx = window.AudioContext || window.webkitAudioContext;
-                if (Ctx) {
-                  const ctx = new Ctx(); window.__zelpxCallToneContext = ctx;
-                  const ring = () => { if (ctx.state === "closed") return; [880,660].forEach((hz,index) => { const osc=ctx.createOscillator(), gain=ctx.createGain(); osc.frequency.value=hz; gain.gain.setValueAtTime(0.0001,ctx.currentTime+index*0.22); gain.gain.exponentialRampToValueAtTime(0.16,ctx.currentTime+index*0.22+0.03); gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+index*0.22+0.18); osc.connect(gain); gain.connect(ctx.destination); osc.start(ctx.currentTime+index*0.22); osc.stop(ctx.currentTime+index*0.22+0.2); }); };
-                  ctx.resume().then(() => { ring(); window.__zelpxCallToneTimer=setInterval(ring,1800); }).catch(()=>{});
-                }
-              } catch (_) {}
-              if ("Notification" in window && Notification.permission === "granted") { try { const notice = new Notification("Incoming ZELPX call", { body: "Your contractor is calling you.", tag: "zelpx-call-" + activeCallId, renotify: true, requireInteraction: true }); notice.onclick = () => { window.focus(); notice.close(); }; } catch (_) {} }
-            }
-callChannel = db.channel(callTopic, { config: { private: true } })
-                      
-.on("broadcast", { event: "offer" }, async ({ payload }) => {
-            if (payload.sender === myCallUserId) return;
-            if (peer) { await sendCallSignal("busy", {}); return; }
-            activeCallId = payload.callId; window.__zelpxIncomingOffer = payload; callPanel.style.display = "flex"; callStatus.textContent = "Incoming call…"; acceptCall.style.display = "inline-block"; rejectCall.style.display = "inline-block"; endCall.style.display = "none"; callButton.disabled = true; alertIncomingCall();
-          })
-          .on("broadcast", { event: "answer" }, async ({ payload }) => {
-            if (payload.sender === myCallUserId || payload.callId !== activeCallId || !peer) return;
-            await peer.setRemoteDescription(payload.description); for (const candidate of pendingIce) await peer.addIceCandidate(candidate); pendingIce = [];
-            callStatus.textContent = "Connected. You can talk now."; acceptCall.style.display = "none"; rejectCall.style.display = "none"; endCall.style.display = "inline-block";
-          })
-          .on("broadcast", { event: "ice" }, async ({ payload }) => {
-            if (payload.sender === myCallUserId || payload.callId !== activeCallId || !payload.candidate) return;
-            if (peer?.remoteDescription) await peer.addIceCandidate(payload.candidate); else pendingIce.push(payload.candidate);
-          })
-          .on("broadcast", { event: "hangup" }, ({ payload }) => { if (payload.sender !== myCallUserId && payload.callId === activeCallId) closeCallUi("The other person ended the call."); })
-          .on("broadcast", { event: "busy" }, ({ payload }) => { if (payload.sender !== myCallUserId && payload.callId === activeCallId) closeCallUi("The other person is busy."); })
-          .subscribe(status => { if (status === "SUBSCRIBED") callButton.disabled = false; else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { callButton.disabled = true; callButton.title = "Call service unavailable"; } });
-        const refresh = document.createElement("button"); refresh.type = "button"; refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
-        refresh.addEventListener("click", async () => { try { await refreshMessages(); status.textContent = "Messages refreshed."; } catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); } });
-        panel.replaceChildren(messagesBox, callPanel, form, refresh, status);
+                const blob = new Blob(voiceChunks, { type: voiceRecorder.mimeType || "audio/webm" });
+                if (!blob.size || blob.size > 5 * 1024 * 1024) throw new Error("Voice message must be non-empty and under 5 MB.");
+                const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+                const path = conversation.id + "/" + session.user.id + "/" + Date.now() + "." + ext;
+                status.textContent = "Uploading voice message…";
+                const { error: uploadError } = await db.storage.from("lead-chat-audio").upload(path, blob, { contentType: blob.type.split(";")[0], upsert: false }); if (uploadError) throw uploadError;
+                const { error: insertError } = await db.from("lead_messages").insert({ conversation_id: conversation.id, sender_type: "customer", sender_user_id: session.user.id, message: "[[ZELPX_AUDIO:" + path + "]]" });
+                if (insertError) { await db.storage.from("lead-chat-audio").remove([path]); throw insertError; }
+                status.textContent = "Voice message sent."; await refreshMessages();
+              } catch (error) { status.textContent = "Could not send voice message: " + (error.message || "Unknown error"); }
+              finally { clearTimeout(voiceTimer); voiceStream?.getTracks().forEach(track => track.stop()); voiceStream = null; voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; }
+            };
+            voiceRecorder.start(); voiceButton.textContent = "■ Stop recording"; status.textContent = "Recording… (maximum 2 minutes)";
+            voiceTimer = window.setTimeout(() => { if (voiceRecorder?.state === "recording") voiceRecorder.stop(); }, 120000);
+          } catch (error) { voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; status.textContent = error.message || "Microphone permission is required."; }
+        });
+        const chatActions = document.createElement("div");
+        chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "8px"; chatActions.style.alignItems = "center"; chatActions.style.marginTop = "10px";
+        const refresh = document.createElement("button"); refresh.type = "button";
+        refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
+        const closeChat = document.createElement("button"); closeChat.type = "button";
+        closeChat.className = "secondary-button"; closeChat.textContent = "Close customer chat";
+        [refresh, closeChat].forEach(button => {
+          button.style.padding = "8px 12px";
+          button.style.minHeight = "36px";
+          button.style.fontSize = "13px";
+          button.style.lineHeight = "1.2";
+          button.style.borderRadius = "10px";
+          button.style.width = "auto";
+          button.style.margin = "0";
+          button.style.whiteSpace = "nowrap";
+        });
+        closeChat.addEventListener("click", () => {
+          const toggle = panel.parentElement?.querySelector("[data-open-chat='1']");
+          panel.classList.add("hidden");
+          if (toggle) { toggle.hidden = false; toggle.textContent = "No more messages"; }
+        });
+        chatActions.append(refresh, closeChat);
+        panel.replaceChildren(messagesBox, form, chatActions, status);
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
