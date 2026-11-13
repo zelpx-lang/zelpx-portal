@@ -208,6 +208,24 @@
       #leadsList .lead-date:last-child:not(:first-child) { grid-column:2; grid-row:4; }
     }
   
+    /* Compact expandable lead rows */
+    #leadsList .lead.lead-compact { display:block; padding:0; margin:7px 0; border-radius:15px; box-shadow:0 5px 16px -15px #3b2a1a66; }
+    #leadsList .lead.lead-compact::before { top:9px; bottom:9px; }
+    #leadsList .lead-summary { width:100%; min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 13px 9px 17px; border:0; border-radius:15px; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
+    #leadsList .lead-summary:hover:not(:disabled) { background:#faf4ed; color:var(--ink); box-shadow:none; transform:none; }
+    #leadsList .lead-summary-main { display:flex; min-width:0; flex-direction:column; gap:1px; }
+    #leadsList .lead-summary-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+    #leadsList .lead-summary-zip { color:var(--muted); font-size:12px; font-weight:500; }
+    #leadsList .lead-summary-side { display:flex; align-items:center; gap:12px; flex:0 0 auto; }
+    #leadsList .lead-summary-price { color:#c2410c; background:var(--accent-soft); border-radius:999px; padding:4px 10px; font-size:14px; }
+    #leadsList .lead-summary-chevron { color:var(--muted); font-size:18px; line-height:1; }
+    #leadsList .lead-details { padding:0 14px 12px 17px; border-top:1px solid var(--line); }
+    #leadsList .lead-details .lead-badges { margin:9px 0; }
+    #leadsList .lead-details-label { margin:8px 0 3px!important; font-size:11px!important; color:var(--muted)!important; text-transform:uppercase; letter-spacing:.06em; }
+    #leadsList .lead-details-description { margin:0; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--ink); }
+    #leadsList .lead-details .lead-footer { margin-top:10px; padding-top:9px; }
+    #leadsList .lead-details .lead-footer button { min-height:38px; padding:8px 17px; font-size:13px; }
+    @media(max-width:700px) { #leadsList .lead-summary { min-height:50px; padding:8px 11px 8px 15px; } #leadsList .lead-details { padding:0 11px 11px 15px; } }
     .password-field { position:relative; width:100%; }
     .password-field input { width:100%; padding-right:52px; }
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
@@ -605,30 +623,37 @@
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
-      const card = document.createElement("article"); card.className = "lead"; card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
-      const head = document.createElement("div"); head.className = "leadhead";
-      const left = document.createElement("div"), title = document.createElement("h3"); title.textContent = lead.service_category || "Home service";
-      const meta = document.createElement("div"); meta.className = "muted"; meta.textContent = "ZIP " + (lead.zip_code || "Area not specified");
-      left.append(title, meta);
-      const priceWrap = document.createElement("div"), priceLabel = document.createElement("div"); priceLabel.className = "lead-price-label"; priceLabel.textContent = "Lead price";
-      const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents); priceWrap.append(priceLabel, price);
-      head.append(left, priceWrap); card.append(head);
+      const card = document.createElement("article"); card.className = "lead lead-compact"; card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
+      const summary = document.createElement("button"); summary.type = "button"; summary.className = "lead-summary"; summary.setAttribute("aria-expanded", "false");
+      const summaryMain = document.createElement("span"); summaryMain.className = "lead-summary-main";
+      const title = document.createElement("strong"); title.className = "lead-summary-title"; title.textContent = lead.service_category || "Home service";
+      const zip = document.createElement("span"); zip.className = "lead-summary-zip"; zip.textContent = "ZIP " + (lead.zip_code || "Area not specified");
+      summaryMain.append(title, zip);
+      const summarySide = document.createElement("span"); summarySide.className = "lead-summary-side";
+      const price = document.createElement("strong"); price.className = "lead-summary-price"; price.textContent = money(lead.price_cents);
+      const chevron = document.createElement("span"); chevron.className = "lead-summary-chevron"; chevron.textContent = "＋";
+      summarySide.append(price, chevron); summary.append(summaryMain, summarySide); card.append(summary);
+      const details = document.createElement("div"); details.className = "lead-details hidden";
       const badges = document.createElement("div"); badges.className = "lead-badges";
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; badges.append(status);
       if (lead.urgency === "urgent") { const urgent = document.createElement("span"); urgent.className = "pill urgent"; urgent.textContent = "Urgent"; badges.append(urgent); }
       if (lead.status === "available") { const privacy = document.createElement("span"); privacy.className = "pill"; privacy.textContent = "Contact details protected"; badges.append(privacy); }
-      card.append(badges);
-      const descTitle = document.createElement("h3"); descTitle.textContent = "Work details"; descTitle.style.marginTop = "16px"; card.append(descTitle);
-      const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description ? String(lead.description).replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n") : "No work details provided."; card.append(desc);
+      const descTitle = document.createElement("h3"); descTitle.className = "lead-details-label"; descTitle.textContent = "Work details";
+      const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = lead.description ? String(lead.description).replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n") : "No work details provided.";
       const footer = document.createElement("div"); footer.className = "lead-footer";
       const date = document.createElement("span"); date.className = "lead-date"; date.textContent = lead.created_at ? "Posted " + new Date(lead.created_at).toLocaleDateString() : ""; footer.append(date);
       if (lead.status === "available") {
         const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "View & Buy Lead";
         buyButton.addEventListener("click", () => buyLead(lead, buyButton)); footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
-      card.append(footer); list.append(card);
+      details.append(badges, descTitle, desc, footer); card.append(details);
+      summary.addEventListener("click", () => {
+        const opening = details.classList.contains("hidden");
+        details.classList.toggle("hidden", !opening); summary.setAttribute("aria-expanded", String(opening)); chevron.textContent = opening ? "−" : "＋";
+      });
+      list.append(card);
       const requestedLead = new URLSearchParams(window.location.search).get("lead");
-      if (requestedLead === lead.id) { card.scrollIntoView({ behavior:"smooth", block:"center" }); card.style.outline = "3px solid #2563eb"; window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel"); }
+      if (requestedLead === lead.id) { details.classList.remove("hidden"); summary.setAttribute("aria-expanded", "true"); chevron.textContent = "−"; card.scrollIntoView({ behavior:"smooth", block:"center" }); window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel"); }
     });
   }
   async function refreshLeadsForDevice() {
