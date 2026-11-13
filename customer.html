@@ -1505,6 +1505,7 @@
 
         const requestLeadIds = (data || []).map(item => item.lead_id).filter(Boolean);
         const unreadByLead = new Map();
+        let totalUnreadChats = 0;
         if (requestLeadIds.length) {
           const { data: conversations, error: conversationsError } = await db.from("lead_conversations").select("id,lead_id").in("lead_id", requestLeadIds);
           if (conversationsError) console.warn("Unread chat status unavailable:", conversationsError.message);
@@ -1515,8 +1516,15 @@
             else {
               const leadByConversation = new Map(conversations.map(item => [item.id, item.lead_id]));
               (unreadMessages || []).forEach(message => { const leadId = leadByConversation.get(message.conversation_id); if (leadId) unreadByLead.set(leadId, (unreadByLead.get(leadId) || 0) + 1); });
+              totalUnreadChats = (unreadMessages || []).length;
             }
           }
+        }
+
+        const requestsTab = document.querySelector('[data-dashboard-page="requests"]');
+        if (requestsTab) {
+          requestsTab.textContent = totalUnreadChats ? "🔔 My Service Requests (" + totalUnreadChats + ")" : "My Service Requests";
+          requestsTab.setAttribute("aria-label", totalUnreadChats ? "My Service Requests, " + totalUnreadChats + " unread chat messages" : "My Service Requests");
         }
 
         list.replaceChildren();
@@ -1607,10 +1615,10 @@
             chatIntro.textContent = "Your private conversation for this service request.";
             const chatButton = document.createElement("button");
             chatButton.type = "button"; chatButton.className = "secondary-button";
-            chatButton.textContent = "Open conversation";
+            chatButton.textContent = "🔔 Open chat";
             let unreadCount = unreadByLead.get(request.lead_id) || 0;
             if (unreadCount) {
-              chatButton.textContent = "New message (" + unreadCount + ") · Open conversation";
+              chatButton.textContent = "🔔 New message (" + unreadCount + ") · Open chat";
               chatButton.style.borderColor = "#ff6a2b";
               chatButton.style.color = "#c2410c";
               chatButton.style.fontWeight = "800";
@@ -1648,8 +1656,8 @@
                 }
               } else {
                 chatButton.textContent = unreadCount > 0
-                  ? "New message (" + unreadCount + ") · Open conversation"
-                  : "No more messages";
+                  ? "🔔 New message (" + unreadCount + ") · Open chat"
+                  : "🔔 Open chat";
               }
             });
           }
