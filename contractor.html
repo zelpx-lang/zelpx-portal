@@ -789,6 +789,49 @@
         .on("broadcast", { event: "hangup" }, ({ payload }) => { if (payload.sender !== myCallUserId && payload.callId === activeCallId) closeCallUi("The other person ended the call."); })
         .on("broadcast", { event: "busy" }, ({ payload }) => { if (payload.sender !== myCallUserId && payload.callId === activeCallId) closeCallUi("The other person is busy."); })
         .subscribe(status => { if (status === "SUBSCRIBED") callButton.disabled = false; else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") { callButton.disabled = true; callButton.title = "Call service unavailable"; } });
+      let knownMessageIds = null;
+      let chatSoundContext = null;
+      function playIncomingChatSound() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          chatSoundContext ||= new AudioCtx();
+          if (chatSoundContext.state === "suspended") chatSoundContext.resume();
+          const oscillator = chatSoundContext.createOscillator(); const gain = chatSoundContext.createGain();
+          oscillator.type = "sine"; oscillator.frequency.setValueAtTime(880, chatSoundContext.currentTime); oscillator.frequency.setValueAtTime(660, chatSoundContext.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.0001, chatSoundContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.28, chatSoundContext.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, chatSoundContext.currentTime + 0.38);
+          oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
+        } catch (_) {}
+      }
+      async function refreshMessages() {
+        let { data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200);
+        if (error) throw error;
+        const { error: readError } = await db.rpc("mark_contractor_messages_read", { p_conversation_id: conversationId });
+        if (readError) throw readError;
+        // Re-read after the receipt update so the latest status is rendered immediately.
+        ({ data, error } = await db.from("lead_messages").select("id,sender_type,message,created_at,customer_read_at,contractor_read_at").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(200));
+        if (error) throw error;
+        const currentIds = new Set((data || []).map(item => item.id));
+        if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "contractor")) playIncomingChatSound();
+        knownMessageIds = currentIds;
+        messagesBox.replaceChildren();
+        if (!data?.length) { const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet. Send the first message."; messagesBox.append(empty); return; }
+        data.forEach(item => {
+          const bubble = document.createElement("div"); bubble.className = "chatbubble " + (item.sender_type === "contractor" ? "contractor" : "customer");
+          const sender = document.createElement("strong"); sender.textContent = item.sender_type === "contractor" ? "YOU" : "CUSTOMER";
+          const text = document.createElement("div");
+          const audioMatch = String(item.message || "").match(/^\[\[ZELPX_AUDIO:(.+)\]\]$/);
+          if (audioMatch) {
+            const player = document.createElement("audio"); player.controls = true; player.preload = "none"; player.style.display = "block"; player.style.width = "min(100%, 320px)"; player.style.marginTop = "6px";
+            text.appendChild(player);
+            db.storage.from("lead-chat-audio").createSignedUrl(audioMatch[1], 3600).then(({ data: signed, error: signError }) => { if (signError) throw signError; player.src = signed.signedUrl; }).catch(() => { text.textContent = "Voice message unavailable."; });
+          } else { text.textContent = item.message || ""; }
+          const time = document.createElement("div"); time.className = "chatmeta"; time.textContent = new Date(item.created_at).toLocaleString();
+          bubble.append(sender, text, time);
+          if (item.sender_type === "contractor" && item.customer_read_at) { const read = document.createElement("div"); read.className = "chatmeta"; read.textContent = "Read by customer"; bubble.append(read); }
+          messagesBox.append(bubble);
+        }); messagesBox.scrollTop = messagesBox.scrollHeight;
+      }
       form.addEventListener("submit", async event => {
         event.preventDefault(); const text = textarea.value.trim(); if (!text) return; send.disabled = true; status.textContent = "Sending…";
         try {
