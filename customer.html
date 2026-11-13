@@ -333,35 +333,15 @@
     #requestsList .request-details .request-actions .request-delete-button { margin:0; }
     #requestsList .request-details .customer-chat { margin-top:8px; padding:9px; border-radius:10px; }
     @media(max-width:600px) { #requestsList .request-summary { min-height:44px; padding:7px 8px; } #requestsList .request-details { padding:7px 8px 10px; } }
-    #requestsList > .request-card {
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
-      column-gap:10px;
-      row-gap:3px;
-      align-items:start;
-      padding:9px 11px;
-      margin:0;
-      border:0;
-      border-bottom:1px solid var(--customer-line);
-      border-radius:0;
-      background:transparent;
-      box-shadow:none;
-    }
-    #requestsList > .request-card > strong { font-size:14px; line-height:1.25; }
-    #requestsList > .request-card > br { display:none; }
-    #requestsList > .request-card > .status { justify-self:end; white-space:nowrap; font-size:11px; padding:3px 8px; }
-    #requestsList > .request-card > p { grid-column:1 / -1; margin:1px 0; font-size:12px; line-height:1.3; color:var(--customer-muted); }
-    #requestsList > .request-card > .request-actions,
-    #requestsList > .request-card > .customer-chat { grid-column:1 / -1; }
-    #requestsList > .request-card > .customer-chat { margin-top:4px; padding:7px; border-radius:10px; }
-    #requestsList > .request-card > .request-actions { margin-top:2px; }
     #requestsList > .request-card:last-child { border-bottom:0; }
-    #requestsList .request-delete-button { min-height:32px; padding:6px 11px; font-size:11px; }
-    #requestsList .customer-chat > button { min-height:34px; padding:7px 12px; font-size:12px; }
-    @media(max-width:600px) {
-      #requestsList > .request-card { padding:8px 7px; column-gap:6px; }
-      #requestsList > .request-card > .status { font-size:10px; padding:3px 7px; }
-    }
+    #requestsList .request-delete-button { min-height:36px; padding:7px 13px; font-size:12px; }
+    #requestsList .customer-chat > button { min-height:40px; padding:8px 14px; font-size:13px; }
+    #requestsList .request-details .request-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    #requestsList .request-details .request-actions .status { margin-right:auto; font-size:11px; padding:5px 10px; }
+    #requestsList .request-details > p { margin:9px 0; font-size:13px; line-height:1.55; color:var(--customer-muted); overflow-wrap:anywhere; }
+    #requestsList .request-details .request-description { white-space:pre-wrap; }
+    #requestsList .request-details .request-label { color:var(--customer-ink); font-weight:750; }
+    @media(max-width:600px) { #requestsList .request-summary { min-height:48px; padding:9px 10px; } #requestsList .request-details { padding:12px 10px 14px; } }
     .status {
       background:var(--customer-soft);
       color:#c2410c;
@@ -1598,10 +1578,14 @@
           status.textContent = request.status;
 
           const address = document.createElement("p");
-          address.textContent = "Address: " + request.property_address;
+          const addressLabel = document.createElement("span"); addressLabel.className = "request-label"; addressLabel.textContent = "Address: ";
+          address.append(addressLabel, document.createTextNode(request.property_address || "Not provided"));
 
           const description = document.createElement("p");
-          description.textContent = "Description: " + request.description;
+          description.className = "request-description";
+          const descriptionLabel = document.createElement("span"); descriptionLabel.className = "request-label"; descriptionLabel.textContent = "Project details";
+          const descriptionText = String(request.description || "No additional details provided.").replace(/\\\\r\\\\n/g, "\\n").replace(/\\\\n/g, "\\n").replace(/\\\\r/g, "\\n");
+          description.append(descriptionLabel, document.createTextNode("\\n" + descriptionText));
 
           const date = document.createElement("p");
           date.textContent = "Submitted: " +
