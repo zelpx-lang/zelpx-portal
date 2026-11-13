@@ -220,14 +220,22 @@
         }
       } catch(e) { setStatus("Call error: " + (e.message || "signal failed")); }
     };
-    // Explicitly refresh the JWT used for private Realtime authorization.
-    Promise.resolve(db.realtime.setAuth()).catch(err=>setStatus("Call authorization failed: " + (err?.message || "sign-in required")));
-    channel=db.channel(topic,{config:{private:true}})
-      .on("broadcast",{event:"call_signal"},onSignal)
-      .subscribe((status,err)=>{
-        if(status==="SUBSCRIBED") setStatus("Audio calling ready while this chat is open.");
-        else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT") setStatus("Call connection unavailable: " + (err?.message || status));
-      });
+    // Refresh the signed-in user's JWT BEFORE joining the private Realtime channel.
+    // Subscribing before setAuth resolves can leave the recipient unable to receive broadcasts.
+    (async () => {
+      try {
+        if (db.realtime?.setAuth) await db.realtime.setAuth();
+        channel = db.channel(topic,{config:{private:true}})
+          .on("broadcast",{event:"call_signal"},onSignal)
+          .subscribe((status,err)=>{
+            if(status==="SUBSCRIBED") setStatus("Audio calling ready while this chat is open.");
+            else if(status==="CHANNEL_ERROR" || status==="TIMED_OUT") setStatus("Call connection unavailable: " + (err?.message || status));
+            else if(status==="CLOSED") setStatus("Call connection closed. Reopen this chat.");
+          });
+      } catch (err) {
+        setStatus("Call authorization failed: " + (err?.message || "sign-in required"));
+      }
+    })();
     const teardown=async()=>{
       if(closed)return; closed=true;
       try { if(activeCallId) await signal("hangup",{callId:activeCallId}); } catch(_) {}
