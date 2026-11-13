@@ -317,6 +317,34 @@
       box-shadow:0 8px 24px -22px #3b2a1a66;
     }
     .request-card strong { color:var(--customer-ink); }
+    /* Compact list layout for customer service requests only. */
+    #requestsList > .request-card {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      column-gap:14px;
+      row-gap:5px;
+      align-items:start;
+      padding:14px 16px;
+      margin:0;
+      border:0;
+      border-bottom:1px solid var(--customer-line);
+      border-radius:0;
+      background:transparent;
+      box-shadow:none;
+    }
+    #requestsList > .request-card > strong { font-size:16px; line-height:1.35; }
+    #requestsList > .request-card > br { display:none; }
+    #requestsList > .request-card > .status { justify-self:end; white-space:nowrap; }
+    #requestsList > .request-card > p { grid-column:1 / -1; margin:2px 0; font-size:14px; line-height:1.4; color:var(--customer-muted); }
+    #requestsList > .request-card > .request-actions,
+    #requestsList > .request-card > .customer-chat { grid-column:1 / -1; }
+    #requestsList > .request-card > .customer-chat { margin-top:7px; padding:10px; border-radius:12px; }
+    #requestsList > .request-card > .request-actions { margin-top:4px; }
+    #requestsList > .request-card:last-child { border-bottom:0; }
+    @media(max-width:600px) {
+      #requestsList > .request-card { padding:13px 10px; column-gap:8px; }
+      #requestsList > .request-card > .status { font-size:12px; padding:5px 9px; }
+    }
     .status {
       background:var(--customer-soft);
       color:#c2410c;
