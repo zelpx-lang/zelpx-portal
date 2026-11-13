@@ -321,10 +321,10 @@
     #requestsList > .request-card {
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
-      column-gap:14px;
-      row-gap:5px;
+      column-gap:10px;
+      row-gap:3px;
       align-items:start;
-      padding:14px 16px;
+      padding:9px 11px;
       margin:0;
       border:0;
       border-bottom:1px solid var(--customer-line);
@@ -332,18 +332,20 @@
       background:transparent;
       box-shadow:none;
     }
-    #requestsList > .request-card > strong { font-size:16px; line-height:1.35; }
+    #requestsList > .request-card > strong { font-size:14px; line-height:1.25; }
     #requestsList > .request-card > br { display:none; }
-    #requestsList > .request-card > .status { justify-self:end; white-space:nowrap; }
-    #requestsList > .request-card > p { grid-column:1 / -1; margin:2px 0; font-size:14px; line-height:1.4; color:var(--customer-muted); }
+    #requestsList > .request-card > .status { justify-self:end; white-space:nowrap; font-size:11px; padding:3px 8px; }
+    #requestsList > .request-card > p { grid-column:1 / -1; margin:1px 0; font-size:12px; line-height:1.3; color:var(--customer-muted); }
     #requestsList > .request-card > .request-actions,
     #requestsList > .request-card > .customer-chat { grid-column:1 / -1; }
-    #requestsList > .request-card > .customer-chat { margin-top:7px; padding:10px; border-radius:12px; }
-    #requestsList > .request-card > .request-actions { margin-top:4px; }
+    #requestsList > .request-card > .customer-chat { margin-top:4px; padding:7px; border-radius:10px; }
+    #requestsList > .request-card > .request-actions { margin-top:2px; }
     #requestsList > .request-card:last-child { border-bottom:0; }
+    #requestsList .request-delete-button { min-height:32px; padding:6px 11px; font-size:11px; }
+    #requestsList .customer-chat > button { min-height:34px; padding:7px 12px; font-size:12px; }
     @media(max-width:600px) {
-      #requestsList > .request-card { padding:13px 10px; column-gap:8px; }
-      #requestsList > .request-card > .status { font-size:12px; padding:5px 9px; }
+      #requestsList > .request-card { padding:8px 7px; column-gap:6px; }
+      #requestsList > .request-card > .status { font-size:10px; padding:3px 7px; }
     }
     .status {
       background:var(--customer-soft);
