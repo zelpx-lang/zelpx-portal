@@ -6,24 +6,49 @@ APP="$ANDROID/app"
 test -f "$APP/src/main/AndroidManifest.xml"
 mkdir -p "$APP/src/main/java/com/zelpx/app"
 cp "$ROOT/android-call-native/src/main/java/com/zelpx/app/"*.java "$APP/src/main/java/com/zelpx/app/"
-python3 - "$APP/build.gradle" "$APP/src/main/AndroidManifest.xml" <<'PY'
+
+python3 - "$ANDROID/build.gradle" "$APP/build.gradle" "$APP/src/main/AndroidManifest.xml" <<'PY'
 from pathlib import Path
 import sys
-gradle = Path(sys.argv[1])
-manifest = Path(sys.argv[2])
-g = gradle.read_text()
-dep = "implementation platform('com.google.firebase:firebase-bom:33.7.0')"
-if dep not in g:
-    g = g.replace("dependencies {", "dependencies {\n    implementation 'androidx.core:core:1.15.0'\n    " + dep + "\n    implementation 'com.google.firebase:firebase-messaging'\n", 1)
-    gradle.write_text(g)
+root_gradle, app_gradle, manifest = map(Path, sys.argv[1:])
+root = root_gradle.read_text()
+app = app_gradle.read_text()
 m = manifest.read_text()
+
+# Add Google Services Gradle plugin to the generated root buildscript.
+classpath = "classpath 'com.google.gms:google-services:4.4.2'"
+if classpath not in root:
+    root = root.replace("dependencies {", "dependencies {\n        " + classpath, 1)
+    root_gradle.write_text(root)
+
+# Bubblewrap currently generates a plugins DSL with no dependencies block.
+if "com.google.firebase:firebase-messaging" not in app:
+    app += """
+\ndependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+}
+"""
+# Apply Google Services only when a protected google-services.json was supplied.
+if "com.google.gms.google-services" not in app:
+    app += """
+\nif (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    println 'ZELPX: Firebase config not supplied; FCM runtime is not enabled in this build.'
+}
+"""
+app_gradle.write_text(app)
+
 permissions = [
     '<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>',
-    '<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>'
+    '<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>',
+    '<uses-permission android:name="android.permission.VIBRATE"/>'
 ]
-for p in permissions:
-    if p not in m:
-        m = m.replace('<application', p + '\n    <application', 1)
+for permission in permissions:
+    if permission not in m:
+        m = m.replace('<application', permission + '\n    <application', 1)
 service = """        <activity android:name=".IncomingCallActivity" android:exported="false"
             android:showWhenLocked="true" android:turnScreenOn="true"
             android:excludeFromRecents="true" />
