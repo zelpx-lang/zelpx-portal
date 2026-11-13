@@ -165,6 +165,13 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   }
   serviceInput.addEventListener("focus",showSuggestions);
   serviceInput.addEventListener("input",showSuggestions);
+  // Close the service suggestions with one tap anywhere outside the search field.
+  document.addEventListener("pointerdown",event=>{
+    if(!event.target.closest(".service-field")&&!suggestions.hidden){
+      suggestions.hidden=true;
+      serviceInput.setAttribute("aria-expanded","false");
+    }
+  });
   serviceInput.addEventListener("keydown",event=>{
     if(event.key==="Escape"){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");}
     if(event.key==="Enter"&&!suggestions.hidden){const first=suggestions.querySelector("button");if(first){event.preventDefault();first.click();}}
