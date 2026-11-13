@@ -324,6 +324,8 @@
     #requestsList .request-summary:hover { background:#faf4ed; box-shadow:none; }
     #requestsList .request-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
     #requestsList .request-summary-chevron { flex:0 0 auto; color:var(--customer-muted); font-size:16px; }
+    #requestsList .request-unread-bell { flex:0 0 auto; min-width:0; color:#c2410c; font-size:13px; font-weight:800; white-space:nowrap; }
+    #requestsList .request-unread-bell.has-unread { padding:4px 7px; border-radius:999px; background:#fff0e8; }
     #requestsList .request-details { padding:8px 10px 12px; border-top:1px solid var(--customer-line); }
     #requestsList .request-details-close { display:block; width:auto; min-width:110px; margin:12px 0 0 auto; padding:8px 18px; border:1px solid var(--customer-line); border-radius:999px; background:#fff; color:var(--customer-ink); font-size:13px; font-weight:750; }
     #requestsList .request-details-close:hover { background:#faf4ed; }
@@ -1597,8 +1599,14 @@
           const summaryTitle = document.createElement("strong");
           summaryTitle.className = "request-summary-title";
           summaryTitle.textContent = request.service_type || "Service request";
+          const unreadCountForRequest = request.lead_id ? (unreadByLead.get(request.lead_id) || 0) : 0;
+          const unreadBell = document.createElement("span");
+          unreadBell.className = "request-unread-bell" + (unreadCountForRequest ? " has-unread" : "");
+          unreadBell.setAttribute("aria-label", unreadCountForRequest ? unreadCountForRequest + " unread chat messages" : "No unread messages");
+          unreadBell.title = unreadCountForRequest ? "New unread contractor message — open the order to view chat" : "";
+          unreadBell.textContent = unreadCountForRequest ? "🔔" + (unreadCountForRequest > 1 ? " " + unreadCountForRequest : "") : "";
           const chevron = document.createElement("span"); chevron.className = "request-summary-chevron"; chevron.textContent = "＋";
-          summary.append(summaryTitle, chevron); card.appendChild(summary);
+          summary.append(summaryTitle, unreadBell, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
 
