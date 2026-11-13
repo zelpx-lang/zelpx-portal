@@ -318,6 +318,19 @@
     }
     .request-card strong { color:var(--customer-ink); }
     /* Compact list layout for customer service requests only. */
+    /* Customer requests: compact rows that expand to show full order and chat */
+    #requestsList > .request-card { display:block; padding:0; margin:0; border:0; border-bottom:1px solid var(--customer-line); border-radius:0; background:transparent; box-shadow:none; }
+    #requestsList .request-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--customer-ink); box-shadow:none; text-align:left; }
+    #requestsList .request-summary:hover { background:#faf4ed; box-shadow:none; }
+    #requestsList .request-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #requestsList .request-summary-meta { flex:0 0 auto; }
+    #requestsList .request-summary-meta .status { font-size:10px; padding:3px 7px; }
+    #requestsList .request-summary-chevron { flex:0 0 auto; color:var(--customer-muted); font-size:16px; }
+    #requestsList .request-details { padding:8px 10px 12px; border-top:1px solid var(--customer-line); }
+    #requestsList .request-details > p { margin:5px 0; font-size:12px; line-height:1.4; color:var(--customer-muted); }
+    #requestsList .request-details .request-actions { margin-top:8px; }
+    #requestsList .request-details .customer-chat { margin-top:8px; padding:9px; border-radius:10px; }
+    @media(max-width:600px) { #requestsList .request-summary { min-height:44px; padding:7px 8px; } #requestsList .request-details { padding:7px 8px 10px; } }
     #requestsList > .request-card {
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
@@ -1592,14 +1605,23 @@
           date.textContent = "Submitted: " +
             new Date(request.created_at).toLocaleString();
 
-          card.append(title, document.createElement("br"), status,
-                      address, description, date);
+          const summary = document.createElement("button");
+          summary.type = "button"; summary.className = "request-summary";
+          summary.setAttribute("aria-expanded", "false");
+          const summaryTitle = document.createElement("strong");
+          summaryTitle.className = "request-summary-title";
+          summaryTitle.textContent = request.service_type || "Service request";
+          const summaryMeta = document.createElement("span"); summaryMeta.className = "request-summary-meta"; summaryMeta.append(status);
+          const chevron = document.createElement("span"); chevron.className = "request-summary-chevron"; chevron.textContent = "＋";
+          summary.append(summaryTitle, summaryMeta, chevron); card.appendChild(summary);
+          const details = document.createElement("div"); details.className = "request-details hidden";
+          details.append(address, description, date);
 
           if (request.preferred_time) {
             const preferred = document.createElement("p");
             preferred.textContent = "Preferred time: " +
               new Date(request.preferred_time).toLocaleString();
-            card.appendChild(preferred);
+            details.appendChild(preferred);
           }
 
           const actions = document.createElement("div");
@@ -1632,7 +1654,7 @@
             }
           });
           actions.appendChild(deleteButton);
-          card.appendChild(actions);
+          details.appendChild(actions);
 
           if (request.lead_id) {
             card.dataset.leadId = request.lead_id;
@@ -1657,7 +1679,7 @@
             const chatPanel = document.createElement("div");
             chatPanel.className = "hidden";
             chat.append(chatTitle, chatIntro, chatButton, chatPanel);
-            card.appendChild(chat);
+            details.appendChild(chat);
             chatButton.addEventListener("click", async () => {
               const opening = chatPanel.classList.contains("hidden");
               if (!opening) return;
@@ -1692,6 +1714,13 @@
             });
           }
 
+          card.appendChild(details);
+          summary.addEventListener("click", () => {
+            const opening = details.classList.contains("hidden");
+            details.classList.toggle("hidden", !opening);
+            summary.setAttribute("aria-expanded", String(opening));
+            chevron.textContent = opening ? "−" : "＋";
+          });
           list.appendChild(card);
         });
         applyRequestFilters();
