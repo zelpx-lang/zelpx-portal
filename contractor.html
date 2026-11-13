@@ -630,6 +630,41 @@
       if (requestedLead === lead.id) { card.scrollIntoView({ behavior:"smooth", block:"center" }); card.style.outline = "3px solid #2563eb"; window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel"); }
     });
   }
+  async function refreshLeadsForDevice() {
+    const button = $("refreshLeadsBtn");
+    if (button) { button.disabled = true; button.textContent = "Refreshing…"; }
+    try {
+      // Revalidate the saved Supabase session on this device before applying RLS.
+      const { data: sessionData, error: sessionError } = await db.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (sessionData?.session) {
+        const { error: refreshError } = await db.auth.refreshSession();
+        if (refreshError) throw refreshError;
+      }
+      const { data: userData, error: userError } = await db.auth.getUser();
+      if (userError) throw userError;
+      if (!userData?.user) {
+        currentUser = null;
+        hide($("appView")); hide($("topUser")); show($("authView"));
+        message("authMessage", "Your session expired. Please sign in again.", "error");
+        return;
+      }
+      if (!currentUser || currentUser.id !== userData.user.id) {
+        currentUser = userData.user;
+        await loadApp();
+      } else {
+        currentUser = userData.user;
+        await loadLeads();
+      }
+    } catch (error) {
+      const list = $("leadsList");
+      if (list) list.textContent = "Could not refresh leads: " + (error?.message || "Please sign in again.");
+      $("leadResultsCount").textContent = "Refresh failed";
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "Refresh leads"; }
+    }
+  }
+
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
     const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
@@ -1141,7 +1176,7 @@
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
-    $("refreshLeadsBtn").addEventListener("click", loadLeads);
+    $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
     $("leadSearch").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
