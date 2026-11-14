@@ -374,6 +374,19 @@
           <div class="actions"><button id="saveSpecialtiesBtn" type="button">Save my services</button><button id="resetSpecialtiesBtn" type="button" class="secondary">Discard changes</button></div>
           <div id="specialtiesMessage" class="message hidden" role="status" aria-live="polite"></div>
         </div>
+        <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
+          <h3 style="margin:0 0 5px">Work types & license requirements</h3>
+          <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
+          <div class="grid">
+            <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
+            <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select></div>
+          </div>
+          <label for="professionSearch">Find a profession</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
+          <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
+          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
+          <div class="actions"><button id="saveProfessionQualificationsBtn" type="button">Save work types</button></div>
+          <p class="muted" style="font-size:12px;margin:8px 0 0">Important: ZELPX does not issue legal approvals. “Not required” applies only to the described scope and does not replace city permits, business registration, insurance, or individual trade certificates. Unverified states are never treated as license-free.</p>
+        </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
@@ -588,6 +601,7 @@
     $("profileInsurancePolicy").value = contractor?.insurance_policy_number || "";
     $("profileInsuranceExpiration").value = contractor?.insurance_expiration_date || "";
     await loadContractorServiceCategories();
+    await loadProfessionQualifications();
     $("insuranceDocumentStatus").textContent = contractor?.insurance_document_path
       ? "Insurance certificate on file · Review: " + String(contractor.insurance_review_status || "pending").replaceAll("_"," ") + ". Select a new file to replace it."
       : "No insurance certificate uploaded yet.";
@@ -677,6 +691,107 @@
       $("specialtiesMessage").className = "message error";
       $("specialtiesMessage").textContent = error.message || "Could not save your service categories.";
     } finally { setBusy(button, false); }
+  }
+
+  let professionCatalog = [], selectedProfessionIds = new Set(), savedProfessionIds = new Set();
+  let professionRuleRows = [];
+  async function loadProfessionQualifications() {
+    const stateSelect = $("professionState");
+    if (!stateSelect.options.length) {
+      const { data: states, error: statesError } = await db.from("us_states").select("state_code,state_name").eq("is_active",true).order("state_name");
+      if (statesError) throw statesError;
+      stateSelect.replaceChildren();
+      (states || []).forEach(item => { const option=document.createElement("option"); option.value=item.state_code; option.textContent=item.state_name; stateSelect.append(option); });
+    }
+    const currentState = (currentContractor?.service_state || "OR").toUpperCase();
+    if ([...stateSelect.options].some(o=>o.value===currentState)) stateSelect.value=currentState;
+    const [professionsResult, qualificationsResult] = await Promise.all([
+      db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
+      db.from("contractor_profession_qualifications").select("profession_id,state_code,work_role,verification_status,license_number,license_type").eq("contractor_id",currentContractor.id).eq("state_code",stateSelect.value)
+    ]);
+    if(professionsResult.error) throw professionsResult.error;
+    if(qualificationsResult.error) throw qualificationsResult.error;
+    professionCatalog=professionsResult.data||[];
+    const saved=qualificationsResult.data||[];
+    selectedProfessionIds=new Set(saved.map(x=>x.profession_id));
+    savedProfessionIds=new Set(selectedProfessionIds);
+    $("professionWorkRole").value=saved[0]?.work_role||"independent";
+    renderProfessionOptions();
+    await refreshProfessionRules();
+  }
+  function renderProfessionOptions() {
+    const root=$("professionOptions"), query=($("professionSearch").value||"").trim().toLowerCase();
+    root.replaceChildren();
+    const matches=professionCatalog.filter(p=>(p.profession_name+" "+p.category_name).toLowerCase().includes(query));
+    matches.forEach(p=>{
+      const label=document.createElement("label");
+      label.style.cssText="display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
+      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=selectedProfessionIds.has(p.id);
+      cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
+      cb.addEventListener("change",()=>{if(cb.checked)selectedProfessionIds.add(p.id);else selectedProfessionIds.delete(p.id);});
+      const name=document.createElement("span"); name.textContent=p.profession_name; label.append(cb,name); root.append(label);
+    });
+    if(!matches.length) root.textContent="No professions match your search.";
+  }
+  async function refreshProfessionRules() {
+    const state=$("professionState").value;
+    if(!state) return;
+    const {data,error}=await db.from("state_profession_rules")
+      .select("profession_id,requirement_status,jurisdiction_level,rule_summary,licensing_authority,official_source_url,verified_on")
+      .eq("state_code",state).eq("jurisdiction_level","state");
+    if(error) throw error;
+    professionRuleRows=data||[];
+    const chosen=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
+    const summary=$("professionComplianceSummary"); summary.replaceChildren();
+    if(!chosen.length){summary.textContent="Select one or more professions to see the state requirements.";return;}
+    chosen.forEach(p=>{
+      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
+      const row=document.createElement("div"); row.style.margin="7px 0";
+      const strong=document.createElement("strong"); strong.textContent=p.profession_name+": ";
+      const status=document.createElement("span");
+      const key=rule?.requirement_status||"unverified";
+      status.textContent=({required:"LICENSE / REGISTRATION REQUIRED",conditional:"CONDITIONAL — REVIEW SCOPE",not_required:"NOT REQUIRED FOR DESCRIBED SCOPE",local_only:"LOCAL RULES APPLY",unverified:"NOT YET VERIFIED"})[key]||"NOT YET VERIFIED";
+      row.append(strong,status);
+      const detail=document.createElement("div"); detail.style.fontSize="12px"; detail.style.marginTop="2px";
+      detail.textContent=rule?.rule_summary||"No verified state rule is available yet. Do not assume this work is license-free.";
+      row.append(detail);
+      if(rule?.official_source_url){const a=document.createElement("a");a.href=rule.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(rule.licensing_authority||"State authority");a.style.fontSize="12px";row.append(a);}
+      summary.append(row);
+    });
+    if($("professionWorkRole").value==="employee"){
+      const note=document.createElement("p");note.style.fontSize="12px";note.textContent="Employee mode: this records the trades you want to work in. Your employer may need contractor registration, and you may still need an individual trade certificate, apprenticeship status, or permit for regulated tasks.";summary.append(note);
+    }
+  }
+  async function saveProfessionQualifications() {
+    if(!currentContractor) return message("specialtiesMessage","Contractor profile not found.","error");
+    if(!selectedProfessionIds.size) return message("professionComplianceSummary","Select at least one profession before saving.","error");
+    const button=$("saveProfessionQualificationsBtn"); setBusy(button,true,"Saving…");
+    try {
+      await refreshProfessionRules();
+      const state=$("professionState").value, role=$("professionWorkRole").value;
+      const selected=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
+      const rules=professionRuleRows;
+      const rows=selected.map(p=>{
+        const rule=rules.find(r=>r.profession_id===p.id);
+        const requires=rule?.requirement_status==="required"||rule?.requirement_status==="conditional";
+        return {contractor_id:currentContractor.id,profession_id:p.id,state_code:state,work_role:role,
+          license_required_at_registration:requires,
+          verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
+      });
+      const {error:deleteError}=await db.from("contractor_profession_qualifications").delete().eq("contractor_id",currentContractor.id).eq("state_code",state);
+      if(deleteError) throw deleteError;
+      const {error:insertError}=await db.from("contractor_profession_qualifications").insert(rows);
+      if(insertError) {
+        if(savedProfessionIds.size) await db.from("contractor_profession_qualifications").insert([...savedProfessionIds].map(profession_id=>({contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role})));
+        throw insertError;
+      }
+      savedProfessionIds=new Set(selectedProfessionIds);
+      const {data:updatedRules}=await db.from("state_profession_rules").select("profession_id,requirement_status").eq("state_code",state).eq("jurisdiction_level","state");
+      professionRuleRows=updatedRules||[];
+      await refreshProfessionRules();
+      message("professionComplianceSummary","Your work types were saved. License checks remain subject to administrator verification and official state rules.","success");
+    } catch(e) { message("professionComplianceSummary","Could not save work types: "+(e.message||"Unknown error"),"error"); }
+    finally {setBusy(button,false);}
   }
 
   async function addCredits() {
@@ -1528,6 +1643,10 @@
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("specialtySearch").addEventListener("input", renderSpecialtyOptions);
+    $("professionSearch").addEventListener("input",renderProfessionOptions);
+    $("professionState").addEventListener("change",refreshProfessionRules);
+    $("professionWorkRole").addEventListener("change",refreshProfessionRules);
+    $("saveProfessionQualificationsBtn").addEventListener("click",saveProfessionQualifications);
     $("saveSpecialtiesBtn").addEventListener("click", saveContractorServiceCategories);
     $("resetSpecialtiesBtn").addEventListener("click", () => {
       selectedContractorCategoryIds = new Set(savedContractorCategoryIds);
