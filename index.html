@@ -176,7 +176,9 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   serviceInput.addEventListener("input",showSuggestions);
   // Close the dropdown when the user taps anywhere outside the service field.
   document.addEventListener("pointerdown",event=>{
-    if(!event.target.closest(".service-field")){
+    // Any tap outside an actual suggestion closes the list, including a tap
+    // back inside the search field. Tapping a suggestion selects it instead.
+    if(!event.target.closest("#homeServiceSuggestions button")){
       suggestions.hidden=true;
       serviceInput.setAttribute("aria-expanded","false");
     }
