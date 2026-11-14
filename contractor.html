@@ -558,12 +558,12 @@
     const licenseAnswer=$("hasLicense").value;
     const visibleProfessions=signupProfessionCatalog.filter(p=>{
       const rule=signupRuleRows.find(r=>r.profession_id===p.id);
-      return licenseAnswer!=="no" || rule?.eligibility_status==="allowed_no_individual_license";
+      return licenseAnswer==="yes" || rule?.eligibility_status==="allowed_no_individual_license";
     });
     // Remove previously selected items that are no longer eligible for this answer.
     const visibleIds=new Set(visibleProfessions.map(p=>p.id));
     [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
-    if(licenseAnswer==="no" && !visibleProfessions.length){
+    if(licenseAnswer!=="yes" && !visibleProfessions.length){
       root.textContent="No professions are cleared for registration without a license in this state. Select Yes and provide a valid credential, or choose a profession after its requirements are verified.";
       return;
     }
