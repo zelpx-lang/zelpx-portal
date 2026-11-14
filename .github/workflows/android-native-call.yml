@@ -160,6 +160,23 @@ jobs:
           cp ../twa-manifest.json ./twa-manifest.json
           cp ./android.keystore ./android-keystore
           bubblewrap update --skipVersionUpgrade
+      - name: Validate native Android source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s android-native-call/google-services.json
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/TokenRegistration.kt
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/TokenRegistrationActivity.kt
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/ZelpxMessagingService.kt
+          python3 -m py_compile android-native-call/scripts/integrate_native_call.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path('android-native-call/google-services.json').read_text())
+          ids = {c['client_info']['android_client_info']['package_name'] for c in cfg.get('client', [])}
+          assert 'com.zelpx.app' in ids, f'Firebase package mismatch: {sorted(ids)}'
+          print('Firebase Android package verified: com.zelpx.app')
+          PY
       - name: Integrate isolated native FCM call scaffold
         run: python3 android-native-call/scripts/integrate_native_call.py
       - name: Build signed APK and AAB
