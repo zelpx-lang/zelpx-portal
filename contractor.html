@@ -879,6 +879,56 @@
       panel.replaceChildren(); const errorText = document.createElement("p"); errorText.className = "error"; errorText.textContent = "Chat could not be opened: " + e.message; panel.append(errorText);
     }
   }
+  async function refreshPurchaseUnreadIndicators() {
+    if (!currentContractor || document.hidden) return;
+    const purchasesPanel = $("purchasesPanel");
+    if (!purchasesPanel || purchasesPanel.classList.contains("hidden")) return;
+    try {
+      const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
+        .select("lead_id").eq("contractor_id", currentContractor.id).limit(100);
+      if (purchasesError) throw purchasesError;
+      const leadIds = (purchases || []).map(item => item.lead_id).filter(Boolean);
+      const unreadByLead = new Map();
+      if (leadIds.length) {
+        const { data: conversations, error: conversationsError } = await db.from("lead_conversations")
+          .select("id,lead_id").in("lead_id", leadIds);
+        if (conversationsError) throw conversationsError;
+        const conversationIds = (conversations || []).map(item => item.id);
+        if (conversationIds.length) {
+          const { data: unreadMessages, error: unreadError } = await db.from("lead_messages")
+            .select("conversation_id").in("conversation_id", conversationIds)
+            .eq("sender_type", "customer").is("contractor_read_at", null);
+          if (unreadError) throw unreadError;
+          const leadByConversation = new Map((conversations || []).map(item => [item.id, item.lead_id]));
+          (unreadMessages || []).forEach(message => {
+            const leadId = leadByConversation.get(message.conversation_id);
+            if (leadId) unreadByLead.set(leadId, (unreadByLead.get(leadId) || 0) + 1);
+          });
+        }
+      }
+      let totalUnread = 0;
+      document.querySelectorAll("#purchasesList > .purchase-row").forEach(card => {
+        const leadId = card.dataset.leadId;
+        const count = unreadByLead.get(leadId) || 0;
+        totalUnread += count;
+        const badge = card.querySelector(".purchase-unread");
+        if (!badge) return;
+        badge.classList.toggle("has-unread", count > 0);
+        badge.textContent = count ? "🔔 " + count : "";
+        badge.title = count ? count + " unread customer messages" : "";
+        if (count) badge.setAttribute("aria-label", count + " unread customer messages");
+        else badge.setAttribute("aria-label", "No unread messages");
+      });
+      const purchasesTab = document.querySelector('.tabs button[data-tab="purchasesPanel"]');
+      if (purchasesTab) {
+        purchasesTab.textContent = totalUnread > 0 ? "🔔 My purchases (" + totalUnread + ")" : "My purchases";
+        purchasesTab.setAttribute("aria-label", totalUnread > 0 ? "My purchases, " + totalUnread + " unread customer messages" : "My purchases");
+      }
+    } catch (error) {
+      console.warn("Could not refresh purchase unread indicators:", error);
+    }
+  }
+
   async function loadPurchases() {
     const list = $("purchasesList");
     if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
@@ -1347,7 +1397,20 @@
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
-    $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
+    // Keep unread chat bells synchronized when a conversation is read on another device.
+    let purchaseUnreadTimer = null;
+    const syncPurchaseUnread = () => {
+      if (purchaseUnreadTimer) window.clearInterval(purchaseUnreadTimer);
+      if (!document.hidden) {
+        refreshPurchaseUnreadIndicators();
+        purchaseUnreadTimer = window.setInterval(refreshPurchaseUnreadIndicators, 8000);
+      }
+    };
+    document.addEventListener("visibilitychange", syncPurchaseUnread);
+    window.addEventListener("focus", syncPurchaseUnread);
+    window.addEventListener("blur", () => { if (purchaseUnreadTimer) { window.clearInterval(purchaseUnreadTimer); purchaseUnreadTimer = null; } });
+    syncPurchaseUnread();
+        $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
     $("leadSearch").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
