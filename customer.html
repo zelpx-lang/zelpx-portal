@@ -548,6 +548,12 @@
         // to the login form. Contractor accounts may also use this portal;
         // do not rewrite their database role during customer sign-in.
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
+        // One-time authenticated handoff lets the Android native layer associate
+        // its Firebase token with this signed-in Supabase account.
+        if (/Android/i.test(navigator.userAgent) && !sessionStorage.getItem("zelpxNativeTokenHandoff")) {
+          sessionStorage.setItem("zelpxNativeTokenHandoff", "1");
+          window.location.href = "intent://register?access_token=" + encodeURIComponent(session.access_token) + "#Intent;scheme=zelpx;package=com.zelpx.app;end";
+        }
         $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
 
