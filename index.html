@@ -313,6 +313,14 @@
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    // One-time authenticated handoff lets the Android native layer associate
+    // its Firebase token with this signed-in Supabase account.
+    const nativeSessionResult = await db.auth.getSession();
+    const nativeSession = nativeSessionResult.data && nativeSessionResult.data.session;
+    if (nativeSession && /Android/i.test(navigator.userAgent) && !sessionStorage.getItem("zelpxNativeTokenHandoff")) {
+      sessionStorage.setItem("zelpxNativeTokenHandoff", "1");
+      window.location.href = "intent://register?access_token=" + encodeURIComponent(nativeSession.access_token) + "#Intent;scheme=zelpx;package=com.zelpx.app;end";
+    }
     await loadAccount();
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
