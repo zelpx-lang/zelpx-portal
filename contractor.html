@@ -1645,7 +1645,18 @@
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("specialtySearch").addEventListener("input", renderSpecialtyOptions);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
-    $("professionState").addEventListener("change",refreshProfessionRules);
+    $("professionState").addEventListener("change",async()=>{
+      try {
+        const {data,error}=await db.from("contractor_profession_qualifications").select("profession_id,work_role")
+          .eq("contractor_id",currentContractor.id).eq("state_code",$("professionState").value);
+        if(error) throw error;
+        selectedProfessionIds=new Set((data||[]).map(x=>x.profession_id));
+        savedProfessionIds=new Set(selectedProfessionIds);
+        $("professionWorkRole").value=data?.[0]?.work_role||"independent";
+        renderProfessionOptions();
+        await refreshProfessionRules();
+      } catch(e) { message("professionComplianceSummary","Could not load saved work types: "+e.message,"error"); }
+    });
     $("professionWorkRole").addEventListener("change",refreshProfessionRules);
     $("saveProfessionQualificationsBtn").addEventListener("click",saveProfessionQualifications);
     $("saveSpecialtiesBtn").addEventListener("click", saveContractorServiceCategories);
