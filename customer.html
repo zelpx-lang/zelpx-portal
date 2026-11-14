@@ -1748,19 +1748,36 @@
                   await openCustomerConversation(request.lead_id, chatPanel);
                   chatPanel.dataset.loaded = "1";
                 }
-                if (unreadCount > 0) {
-                  const clearedUnread = unreadCount;
-                  unreadCount = 0;
-                  unreadBell.textContent = "";
-                  unreadBell.classList.remove("has-unread");
-                  unreadBell.setAttribute("aria-label", "No unread messages");
-                  unreadBell.title = "";
-                  totalUnreadChats = Math.max(0, totalUnreadChats - clearedUnread);
-                  if (requestsTab) {
-                    requestsTab.textContent = totalUnreadChats ? "🔔 My Service Requests (" + totalUnreadChats + ")" : "My Service Requests";
-                    requestsTab.setAttribute("aria-label", totalUnreadChats ? "My Service Requests, " + totalUnreadChats + " unread chat messages" : "My Service Requests");
+                if (request.lead_id) {
+                  // Re-check the database after the read-receipt RPC. Never hide the bell optimistically.
+                  try {
+                    const { data: readConversation, error: readConversationError } = await db
+                      .from("lead_conversations").select("id").eq("lead_id", request.lead_id).maybeSingle();
+                    if (readConversationError) throw readConversationError;
+                    let remainingUnread = 0;
+                    if (readConversation?.id) {
+                      const { count, error: unreadCheckError } = await db
+                        .from("lead_messages").select("id", { count: "exact", head: true })
+                        .eq("conversation_id", readConversation.id)
+                        .eq("sender_type", "contractor").is("customer_read_at", null);
+                      if (unreadCheckError) throw unreadCheckError;
+                      remainingUnread = count || 0;
+                    }
+                    totalUnreadChats = Math.max(0, totalUnreadChats - unreadCount + remainingUnread);
+                    unreadCount = remainingUnread;
+                    unreadBell.textContent = remainingUnread ? "🔔" + (remainingUnread > 1 ? " " + remainingUnread : "") : "";
+                    unreadBell.classList.toggle("has-unread", remainingUnread > 0);
+                    unreadBell.setAttribute("aria-label", remainingUnread ? remainingUnread + " unread chat messages" : "No unread messages");
+                    unreadBell.title = remainingUnread ? "New unread contractor message — open the order to view chat" : "";
+                    if (requestsTab) {
+                      requestsTab.textContent = totalUnreadChats ? "🔔 My Service Requests (" + totalUnreadChats + ")" : "My Service Requests";
+                      requestsTab.setAttribute("aria-label", totalUnreadChats ? "My Service Requests, " + totalUnreadChats + " unread chat messages" : "My Service Requests");
+                    }
+                    chatButton.textContent = remainingUnread ? "🔔 New message (" + remainingUnread + ") · Open chat" : "Close conversation";
+                  } catch (readStatusError) {
+                    console.warn("Could not verify customer chat read status:", readStatusError);
+                    chatButton.textContent = "Close conversation";
                   }
-                  chatButton.textContent = "Close conversation";
                 }
               } else {
                 chatButton.textContent = unreadCount > 0
