@@ -97,5 +97,18 @@ if "com.zelpx.app.calls.CallActionReceiver" not in existing_receivers:
         ns + "name": "com.zelpx.app.calls.CallActionReceiver",
         ns + "exported": "false",
     })
+existing_token_activities = {e.get(ns + "name") for e in application.findall("activity")}
+if "com.zelpx.app.calls.TokenRegistrationActivity" not in existing_token_activities:
+    token_activity = ET.SubElement(application, "activity", {
+        ns + "name": "com.zelpx.app.calls.TokenRegistrationActivity",
+        ns + "exported": "true",
+        ns + "excludeFromRecents": "true",
+        ns + "noHistory": "true",
+    })
+    token_filter = ET.SubElement(token_activity, "intent-filter")
+    ET.SubElement(token_filter, "action", {ns + "name": "android.intent.action.VIEW"})
+    ET.SubElement(token_filter, "category", {ns + "name": "android.intent.category.DEFAULT"})
+    ET.SubElement(token_filter, "category", {ns + "name": "android.intent.category.BROWSABLE"})
+    ET.SubElement(token_filter, "data", {ns + "scheme": "zelpx", ns + "host": "register"})
 tree.write(MANIFEST, encoding="utf-8", xml_declaration=True)
 print("Native ZELPX call scaffold integrated into generated Android project.")
