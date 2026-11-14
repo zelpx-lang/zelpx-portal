@@ -553,20 +553,15 @@
       return;
     }
     if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
-    // Filter immediately by work status. Employees may select scopes that do
-    // not require a personal credential OR are legally performed under a licensed
-    // employer's license/supervision. Independent contractors without credentials
-    // see only scopes affirmatively marked as not requiring an individual license.
-    const workRole=$("signupWorkRole").value;
+    // No personal license = show ONLY scopes affirmatively classified as
+    // not requiring an individual license. This applies to employees and
+    // independent contractors alike. Employer-supervised or contractor-license
+    // scopes are not "license-free" and must not appear in this list.
     const licenseAnswer=$("hasLicense").value;
+    const showOnlyLicenseFree=licenseAnswer!=="yes";
     const visibleProfessions=signupProfessionCatalog.filter(p=>{
       const rule=signupRuleRows.find(r=>r.profession_id===p.id);
-      const status=rule?.eligibility_status;
-      if(workRole==="employee"){
-        return ["allowed_no_individual_license","employer_license_and_supervision","contractor_license_or_registration_required"].includes(status);
-      }
-      if(licenseAnswer==="no") return status==="allowed_no_individual_license";
-      return true;
+      return !showOnlyLicenseFree || rule?.eligibility_status==="allowed_no_individual_license";
     });
     const visibleIds=new Set(visibleProfessions.map(p=>p.id));
     [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
