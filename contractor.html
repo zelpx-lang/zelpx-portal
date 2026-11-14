@@ -601,7 +601,9 @@
     $("signupConditionalAckLabel").classList.toggle("hidden",!conditional);
     $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified);
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
-    if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent="At least one selected profession requires a current license or contractor registration. Enter its details below to continue.";root.append(p);}
+    if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent=employee?"At least one selected trade requires your own individual credential. Enter the credential details below to continue.":"At least one selected profession requires a current license or contractor registration. Enter its details below to continue.";root.append(p);}
+    $("signupConditionalAckLabel").querySelector("input").nextSibling.textContent=employee?" I will only perform this work under an appropriately licensed employer and required supervision.":" I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.";
+    $("signupUnverifiedAckLabel").querySelector("input").nextSibling.textContent=employee?" I will verify individual credentials and employer requirements before performing work not yet verified in ZELPX.":" I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.";
   }
   async function signUp() {
     clearMessage("authMessage");
@@ -611,12 +613,15 @@
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
     const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
+    const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
     const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||["unverified","local_only"].includes(signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status));
     if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
-    if(signupRole==="independent"&&requiredSignup.length&&(!hasLicense||!licenseNumber||!licenseState||!licenseType))return message("authMessage","A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
-    if(signupRole==="independent"&&conditionalSignup.length&&!hasLicense&&!$("signupConditionalAck").checked)return message("authMessage","Confirm the conditional-work notice or provide your credential.","error");
-    if(signupRole==="independent"&&unverifiedSignup.length&&!$("signupUnverifiedAck").checked)return message("authMessage","Confirm that you will verify unreviewed state requirements before offering this work.","error");
+    if((signupRole==="independent"&&requiredSignup.length)||(signupRole==="employee"&&individualCredentialSignup.length)){
+      if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage",signupRole==="employee"?"A selected trade requires your own individual license or certificate. Enter its number, issuing state and type, or remove that profession.":"A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
+    }
+    if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
+    if(unverifiedSignup.length&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
     if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
@@ -738,9 +743,9 @@
     const {data:existing,error:ee}=await db.from("contractor_profession_qualifications").select("profession_id").eq("contractor_id",currentContractor.id).eq("state_code",state);if(ee)throw ee;
     const have=new Set((existing||[]).map(x=>x.profession_id)),missing=ids.filter(id=>!have.has(id));
     if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
-    const {data:rules,error:re}=await db.from("state_profession_rules").select("profession_id,requirement_status,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state").in("profession_id",missing);if(re)throw re;
     const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
-    const rows=missing.map(profession_id=>{const r=rules?.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=role==="independent"&&(st==="required"||st==="conditional");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_required_at_registration:req,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,verification_status:req?"not_submitted":st==="not_required"?"not_required":"pending"};});
+    const rules=await loadRoleEligibilityRules(state,role);
+    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_required_at_registration:req,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,verification_status:req?"not_submitted":st==="not_required"?"not_required":"pending"};});
     const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
     if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
@@ -947,7 +952,7 @@
       const rules=professionRuleRows;
       const rows=selected.map(p=>{
         const rule=rules.find(r=>r.profession_id===p.id);
-        const requires=rule?.requirement_status==="required"||rule?.requirement_status==="conditional";
+        const requires=rule?.requirement_status==="required"||(rule?.requirement_status==="conditional"&&role==="independent");
         return {contractor_id:currentContractor.id,profession_id:p.id,state_code:state,work_role:role,
           license_required_at_registration:requires,
           verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
