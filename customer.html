@@ -578,7 +578,9 @@
           const chatButton = targetRequest?.querySelector("button[data-open-chat]");
           if (chatButton) chatButton.click();
           else showMessage("requestMessage", "Your contractor purchased the request. Refresh the request list to open the conversation.", "success");
-          history.replaceState({}, "", window.location.pathname);
+          const remainingParams = new URLSearchParams(window.location.search);
+          remainingParams.delete("open_lead");
+          history.replaceState({}, "", window.location.pathname + (remainingParams.toString() ? "?" + remainingParams.toString() : "") + window.location.hash);
         }
       } else {
         $("authView").classList.remove("hidden");
