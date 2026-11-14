@@ -45,7 +45,7 @@ if "com.google.firebase:firebase-messaging" not in app_text:
     else:
         app_text = app_text[:match.end()] + "\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\n    implementation 'com.google.firebase:firebase-messaging'\n    implementation 'androidx.core:core-ktx:1.16.0'" + app_text[match.end():]
 # Align Java bytecode target with the Kotlin 17 target used by Firebase/Kotlin plugin.
-android_match = re.search(r"android\\s*\\{", app_text)
+android_match = re.search(r"android\s*\{", app_text)
 if not android_match:
     raise SystemExit("Cannot find app android { } Gradle block")
 compile_options = """
