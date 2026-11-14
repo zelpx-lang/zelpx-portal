@@ -44,7 +44,7 @@
     const cleanup = async (message="Call ended") => {
       if(pc){pc.onicecandidate=null;pc.close();pc=null;}
       if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
-      audio.srcObject=null; activeCall=null; callBtn.disabled=false; callBtn.textContent="☎ Call"; say(message);
+      audio.srcObject=null; activeCall=null; callBtn.disabled=false; callBtn.textContent="☎ Call"; callBtn.onclick=null; say(message);
     };
     const processSignal = async row => {
       if(closed || !activeCall || row.call_id!==activeCall || row.from_user_id===userId || seen.has(row.id)) return;
@@ -96,7 +96,7 @@
         const row=payload.new;if(row.caller_user_id===userId||row.status!=="ringing"||activeCall)return;
         activeCall=row.call_id; callBtn.disabled=true; callBtn.textContent="Incoming call…";
         say("Incoming audio call — opening call controls");
-        try{await subscribe(row.call_id);await processSignal({id:"",call_id:row.call_id,from_user_id:row.caller_user_id,signal_type:"__incoming",payload:{}});}catch(e){say("Incoming call error: "+e.message);}
+        try{await subscribe(row.call_id);callBtn.disabled=false;callBtn.textContent="End call";callBtn.onclick=async()=>{try{await send("hangup");}catch(_){}await db.from("call_invitations").update({status:"ended"}).eq("call_id",row.call_id);await cleanup();};}catch(e){say("Incoming call error: "+e.message);}
       }).subscribe();
     const poll=window.setInterval(()=>{if(!panel.isConnected||panel.classList.contains("hidden")||panel.offsetParent===null){window.clearInterval(poll);closed=true;db.removeChannel(incoming);if(channel)db.removeChannel(channel);cleanup();}},1500);
     // Incoming call prompt is triggered only after its offer arrives.
