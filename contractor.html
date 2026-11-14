@@ -214,7 +214,9 @@
     #purchasesList > .purchase-row:last-child { border-bottom:0; }
     #purchasesList .purchase-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
     #purchasesList .purchase-summary:hover { background:#faf4ed; box-shadow:none; transform:none; }
-    #purchasesList .purchase-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #purchasesList .purchase-summary-text { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
+    #purchasesList .purchase-summary-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #purchasesList .purchase-summary-date { color:#82776d; font-size:11px; font-weight:500; line-height:1.3; }
     #purchasesList .purchase-chevron { flex:0 0 auto; color:var(--muted); font-size:16px; }
     #purchasesList .purchase-unread { flex:0 0 auto; color:#c2410c; font-size:13px; font-weight:800; }
     #purchasesList .purchase-unread.has-unread { padding:4px 7px; border-radius:999px; background:#fff0e8; }
@@ -914,13 +916,17 @@
       card.dataset.leadId = item.lead_id;
       const summary = document.createElement("button"); summary.type = "button"; summary.className = "purchase-summary";
       summary.setAttribute("aria-expanded", "false");
+      const summaryText = document.createElement("span"); summaryText.className = "purchase-summary-text";
       const heading = document.createElement("strong"); heading.className = "purchase-summary-title";
       heading.textContent = "Purchased service";
+      const purchasedAt = document.createElement("small"); purchasedAt.className = "purchase-summary-date";
+      purchasedAt.textContent = item.purchased_at ? "Purchased " + new Date(item.purchased_at).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }) : "Purchase date unavailable";
+      summaryText.append(heading, purchasedAt);
       const unreadCount = unreadByLead.get(item.lead_id) || 0;
       const unreadBadge = document.createElement("span"); unreadBadge.className = "purchase-unread";
       if (unreadCount) { unreadBadge.classList.add("has-unread"); unreadBadge.textContent = "🔔 " + unreadCount; unreadBadge.title = unreadCount + " unread customer messages"; }
       const chevron = document.createElement("span"); chevron.className = "purchase-chevron"; chevron.textContent = "＋";
-      summary.append(heading, unreadBadge, chevron); card.append(summary);
+      summary.append(summaryText, unreadBadge, chevron); card.append(summary);
       const details = document.createElement("div"); details.className = "purchase-details hidden";
       const info = document.createElement("p"); info.className = "purchase-meta"; info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); details.append(info);
       const serviceDetails = document.createElement("div"); details.append(serviceDetails);
