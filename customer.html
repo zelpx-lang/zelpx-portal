@@ -485,6 +485,11 @@
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
     .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
     .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
+
+/* Incoming chat toast — pinned to the lower-right corner on phones */
+.zelpx-chat-toast{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:99999;width:min( min(340px,calc(100vw - 28px)),340px);padding:13px 15px;border:1px solid #f2c5aa;border-left:4px solid #f36b2b;border-radius:14px;background:#fffefa;color:#29251f;box-shadow:0 12px 34px #21170f30;font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;animation:zelpxToastIn .22s ease-out;pointer-events:none}
+.zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
 </style>
 </head>
 
@@ -1447,6 +1452,13 @@
             oscillator.connect(gain); gain.connect(chatSoundContext.destination); oscillator.start(); oscillator.stop(chatSoundContext.currentTime + 0.3);
           } catch (_) {}
         }
+        function showIncomingChatToast(messageText) {
+          const previous = document.querySelector(".zelpx-chat-toast"); if (previous) previous.remove();
+          const toast = document.createElement("div"); toast.className = "zelpx-chat-toast"; toast.setAttribute("role","status");
+          const heading = document.createElement("strong"); heading.textContent = "New contractor message";
+          const preview = document.createElement("span"); preview.textContent = String(messageText || "You have a new chat message").startsWith("[[ZELPX_AUDIO:") ? "New message" : String(messageText || "New message");
+          toast.append(heading,preview); document.body.append(toast); window.setTimeout(() => toast.remove(),5000);
+        }
         async function refreshMessages() {
           let { data, error } = await db.from("lead_messages")
             .select("id,sender_type,message,created_at,customer_read_at,contractor_read_at")
@@ -1462,7 +1474,8 @@
             .order("created_at", { ascending: true }).limit(200));
           if (error) throw error;
           const currentIds = new Set((data || []).map(item => item.id));
-          if (knownMessageIds && (data || []).some(item => !knownMessageIds.has(item.id) && item.sender_type !== "customer")) playIncomingChatSound();
+          const newIncoming = knownMessageIds ? (data || []).filter(item => !knownMessageIds.has(item.id) && item.sender_type !== "customer") : [];
+          if (newIncoming.length) { playIncomingChatSound(); showIncomingChatToast(newIncoming[newIncoming.length - 1].message); }
           knownMessageIds = currentIds;
           messagesBox.replaceChildren();
           if (!data?.length) {
