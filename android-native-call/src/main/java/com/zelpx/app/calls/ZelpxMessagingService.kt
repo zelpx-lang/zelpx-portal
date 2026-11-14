@@ -17,8 +17,9 @@ import com.google.firebase.messaging.RemoteMessage
 class ZelpxMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // TODO: register token with authenticated backend; never log or expose the token.
-        Log.i(TAG, "FCM token refreshed; backend registration required")
+        // Uses the authenticated session handed off by the ZELPX TWA page.
+        // Never log the FCM token or the user access token.
+        TokenRegistration.registerSavedSession(this, token)
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
