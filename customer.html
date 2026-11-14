@@ -548,6 +548,26 @@
         // to the login form. Contractor accounts may also use this portal;
         // do not rewrite their database role during customer sign-in.
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
+        // Android token registration is user-triggered so Chrome/TWA does not
+        // block an automatic external-app intent during page initialization.
+        if (/Android/i.test(navigator.userAgent)) {
+          let nativeButton = document.getElementById("zelpxNativeTokenButton");
+          if (!nativeButton) {
+            nativeButton = document.createElement("button");
+            nativeButton.id = "zelpxNativeTokenButton";
+            nativeButton.type = "button";
+            nativeButton.textContent = "Register this phone for call alerts";
+            nativeButton.setAttribute("aria-label", "Register this Android phone for ZELPX call alerts");
+            nativeButton.style.cssText = "position:fixed;z-index:99999;right:16px;bottom:16px;padding:13px 17px;border:0;border-radius:12px;background:#f47b20;color:#fff;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.22);";
+            nativeButton.addEventListener("click", async () => {
+              const fresh = await db.auth.getSession();
+              const token = fresh.data && fresh.data.session && fresh.data.session.access_token;
+              if (!token) { nativeButton.textContent = "Please sign in again"; return; }
+              window.location.href = "intent://register?access_token=" + encodeURIComponent(token) + "#Intent;scheme=zelpx;package=com.zelpx.app;end";
+            });
+            document.body.appendChild(nativeButton);
+          }
+        }
         $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
 
