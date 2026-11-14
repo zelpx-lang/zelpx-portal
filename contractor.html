@@ -696,7 +696,7 @@
       message("appMessage","Your registration details were saved. Please upload the missing "+[missingLicense?"license document":null,missingInsurance?"insurance certificate":null].filter(Boolean).join(" and ")+" in My Company so ZELPX can review them.","error");
       return;
     }
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null}});
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null,zelpx_signup_work_role:null}});
     if(metadataError)console.warn("Could not clear one-time credential metadata:",metadataError.message);
   }
 
@@ -705,12 +705,12 @@
     const state=String(m.service_state||"").toUpperCase();if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
     const {data:existing,error:ee}=await db.from("contractor_profession_qualifications").select("profession_id").eq("contractor_id",currentContractor.id).eq("state_code",state);if(ee)throw ee;
     const have=new Set((existing||[]).map(x=>x.profession_id)),missing=ids.filter(id=>!have.has(id));
-    if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null,zelpx_signup_work_role:null}});return;}
+    if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
     const {data:rules,error:re}=await db.from("state_profession_rules").select("profession_id,requirement_status,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state").in("profession_id",missing);if(re)throw re;
     const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
     const rows=missing.map(profession_id=>{const r=rules?.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=role==="independent"&&(st==="required"||st==="conditional");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_required_at_registration:req,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,verification_status:req?"not_submitted":st==="not_required"?"not_required":"pending"};});
     const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
-    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null,zelpx_signup_work_role:null}});
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
     if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
   }
 
