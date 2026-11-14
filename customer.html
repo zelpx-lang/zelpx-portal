@@ -1384,6 +1384,7 @@
         const input = document.createElement("textarea"); input.maxLength = 5000; input.required = true;
         input.placeholder = "Write your message to the contractor…";
         const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
+        form.append(input, send);
         const chatActions = document.createElement("div");
         chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "8px"; chatActions.style.alignItems = "center"; chatActions.style.marginTop = "10px";
         const refresh = document.createElement("button"); refresh.type = "button";
