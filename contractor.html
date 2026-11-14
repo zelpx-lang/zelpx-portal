@@ -576,8 +576,6 @@
     }
     renderSignupProfessionOptions();
     const employee=$("signupWorkRole").value==="employee";
-    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional||employee);
-    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified||employee);
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
     if(employee){
       root.textContent=/^[A-Z]{2}$/.test(state)
