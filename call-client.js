@@ -82,6 +82,15 @@
         const callId=crypto.randomUUID();
         const {error}=await db.from("call_invitations").insert({call_id:callId,conversation_id:conversationId,caller_user_id:userId,caller_role:role,status:"ringing"});
         if(error) throw error;
+        // Ask the authenticated Edge Function to notify registered native Android devices.
+        // The call still works in an open chat if no native FCM token is registered yet.
+        try {
+          const {data:pushData,error:pushError}=await db.functions.invoke("zelpx-fcm-call",{
+            body:{action:"incoming_call",call_id:callId,conversation_id:conversationId,caller_role:role,caller_name:role==="customer"?"ZELPX customer":"ZELPX contractor"}
+          });
+          if(pushError) say("Call started; background alert unavailable: "+pushError.message);
+          else if(pushData?.sent===0) say("Calling… no native Android device is registered for background ringing yet.");
+        } catch(pushError) { say("Calling… background alert could not be sent."); }
         await subscribe(callId);
         const peer=await ensurePeer(); const offer=await peer.createOffer(); await peer.setLocalDescription(offer);
         await send("offer",peer.localDescription.toJSON());
