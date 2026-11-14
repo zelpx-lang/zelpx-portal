@@ -334,6 +334,12 @@
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
+    const nativeLead = new URLSearchParams(window.location.search).get("lead");
+    if (nativeLead) {
+      const purchasedCard = [...$("purchasesList").querySelectorAll("[data-lead-id]")].find(card => card.dataset.leadId === nativeLead);
+      const openChat = purchasedCard?.querySelector("button[data-open-purchased-chat]");
+      if (openChat) openChat.click();
+    }
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
@@ -472,7 +478,7 @@
       if (requestedLead === lead.id) {
         card.scrollIntoView({ behavior: "smooth", block: "center" });
         card.style.outline = "3px solid #1769aa";
-        window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel");
+        const remaining = new URLSearchParams(window.location.search); remaining.delete("lead"); window.history.replaceState({}, document.title, window.location.pathname + (remaining.toString() ? "?" + remaining.toString() : "") + "#availablePanel");
       }
     });
   }
@@ -550,12 +556,12 @@
     const purchases = data || []; $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
     for (const item of purchases) {
-      const card = document.createElement("article"); card.className = "lead";
+      const card = document.createElement("article"); card.className = "lead"; card.dataset.leadId = item.lead_id;
       const heading = document.createElement("h3"); heading.textContent = "Purchased lead"; card.append(heading);
       const info = document.createElement("p"); info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); card.append(info);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
-      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
+      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.dataset.openPurchasedChat = "true"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
         if (chatPanel.classList.contains("hidden")) { if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
