@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f6f2ec">
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" href="/icons/zelpx-192.svg" type="image/svg+xml">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" type="image/svg+xml">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ZELPX">
@@ -572,7 +572,7 @@
       <div id="dashboardPage-profile" class="dashboard-page" hidden>
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
-        <div class="profile-photo-tools" style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="customerAvatarPreview" src="/icons/zelpx-192.svg" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="customerAvatarFile">Profile photo for chat notifications</label><input id="customerAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><small id="customerAvatarStatus" class="subtitle">Upload a photo so contractors can recognize you in message notifications. Max 2 MB.</small></div></div>
+        <div class="profile-photo-tools" style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="customerAvatarPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="customerAvatarFile">Profile photo for chat notifications</label><input id="customerAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><small id="customerAvatarStatus" class="subtitle">Upload a photo so contractors can recognize you in message notifications. Max 10 MB.</small></div></div>
         <label for="customerFullName">Full Name</label>
         <input id="customerFullName" type="text" autocomplete="name" required readonly>
         <label for="customerPhone">Phone Number</label>
@@ -860,7 +860,7 @@
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
-      $("customerAvatarPreview").src = data.avatar_url || "/icons/zelpx-192.svg";
+      $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
 
@@ -869,7 +869,7 @@
       const status = $("customerAvatarStatus"); status.textContent = "Uploading photo…";
       try {
         if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
-        if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 2 MB or smaller.");
+        if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 10 MB or smaller.");
         const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
         const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
         const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
