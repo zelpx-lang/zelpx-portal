@@ -765,6 +765,12 @@
           if (error) throw error; textarea.value = ""; status.textContent = "Message sent."; await refreshMessages();
         } catch (e) { status.textContent = "Could not send message: " + e.message; } finally { send.disabled = false; }
       });
+      textarea.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+          event.preventDefault();
+          if (!send.disabled) form.requestSubmit(send);
+        }
+      });
       // Quietly initialize sound and push while the contractor opens the chat.
       try { const AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) { chatSoundContext ||= new AudioCtx(); chatSoundContext.resume().catch(() => {}); } } catch (_) {}
       // Refresh an already-authorized subscription on every chat open; never prompt without a user tap.
