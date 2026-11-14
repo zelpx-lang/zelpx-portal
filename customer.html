@@ -1469,12 +1469,7 @@
             const sender = document.createElement("strong");
             sender.textContent = item.sender_type === "customer" ? "YOU" : "CONTRACTOR";
             const body = document.createElement("div");
-            const audioMatch = String(item.message || "").match(/^\[\[ZELPX_AUDIO:(.+)\]\]$/);
-            if (audioMatch) {
-              const player = document.createElement("audio"); player.controls = true; player.preload = "none"; player.style.display = "block"; player.style.width = "min(100%, 320px)"; player.style.marginTop = "6px";
-              body.appendChild(player);
-              db.storage.from("lead-chat-audio").createSignedUrl(audioMatch[1], 3600).then(({ data: signed, error: signError }) => { if (signError) throw signError; player.src = signed.signedUrl; }).catch(() => { body.textContent = "Voice message unavailable."; });
-            } else { body.textContent = item.message || ""; }
+            body.textContent = String(item.message || "").startsWith("[[ZELPX_AUDIO:") ? "Audio message removed." : (item.message || "");
             const time = document.createElement("small");
             time.textContent = item.created_at ? new Date(item.created_at).toLocaleString() : "";
             bubble.append(sender, body, time);
