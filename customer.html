@@ -765,6 +765,7 @@
         const refresh = document.createElement("button"); refresh.type = "button";
         refresh.className = "secondary-button"; refresh.textContent = "Refresh messages";
         panel.replaceChildren(messagesBox, form, refresh, status);
+        if (typeof window.ZELPXMountAudioCall === "function") window.ZELPXMountAudioCall({ db, conversationId: conversation.id, role: "customer", panel, userId: session.user.id });
         let knownMessageIds = null;
         let chatSoundContext = null;
         function playIncomingChatSound() {
@@ -983,5 +984,6 @@
     });
   </script>
 
+<script src="/call-client.js"></script>
 </body>
 </html>
