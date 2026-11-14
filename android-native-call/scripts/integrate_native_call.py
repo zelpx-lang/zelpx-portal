@@ -27,23 +27,23 @@ for source in SRC.glob("*.kt"):
 root_gradle = ANDROID / "build.gradle"
 root_text = root_gradle.read_text()
 if "com.google.gms:google-services" not in root_text:
-    match = re.search(r"dependencies\\s*\\{", root_text)
+    match = re.search(r"dependencies\s*\{", root_text)
     if not match:
         raise SystemExit("Cannot find root buildscript dependencies block")
-    root_text = root_text[:match.end()] + "\\n        classpath 'com.google.gms:google-services:4.4.2'\\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'" + root_text[match.end():]
+    root_text = root_text[:match.end()] + "\n        classpath 'com.google.gms:google-services:4.4.2'\n        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'" + root_text[match.end():]
 root_gradle.write_text(root_text)
 
 app_gradle = APP / "build.gradle"
 app_text = app_gradle.read_text()
 for plugin in ("org.jetbrains.kotlin.android", "com.google.gms.google-services"):
     if plugin not in app_text:
-        app_text += f"\\napply plugin: '{plugin}'\\n"
+        app_text += f"\napply plugin: '{plugin}'\n"
 if "com.google.firebase:firebase-messaging" not in app_text:
-    match = re.search(r"dependencies\\s*\\{", app_text)
+    match = re.search(r"dependencies\s*\{", app_text)
     if not match:
-        app_text += "\\ndependencies {\\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\\n    implementation 'com.google.firebase:firebase-messaging'\\n    implementation 'androidx.core:core-ktx:1.16.0'\\n}\\n"
+        app_text += "\ndependencies {\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\n    implementation 'com.google.firebase:firebase-messaging'\n    implementation 'androidx.core:core-ktx:1.16.0'\n}\n"
     else:
-        app_text = app_text[:match.end()] + "\\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\\n    implementation 'com.google.firebase:firebase-messaging'\\n    implementation 'androidx.core:core-ktx:1.16.0'" + app_text[match.end():]
+        app_text = app_text[:match.end()] + "\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\n    implementation 'com.google.firebase:firebase-messaging'\n    implementation 'androidx.core:core-ktx:1.16.0'" + app_text[match.end():]
 app_gradle.write_text(app_text)
 
 # Merge only required manifest entries; preserve Bubblewrap's existing activities and metadata.
