@@ -528,34 +528,34 @@
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
+  async function loadRoleEligibilityRules(state,role){
+    if(!/^[A-Z]{2}$/.test(state))return [];
+    const {data,error}=await db.from("state_profession_eligibility")
+      .select("profession_id,worker_role,eligibility_status,scope_summary,license_name,licensing_authority,official_source_url,verified_on")
+      .eq("state_code",state).eq("worker_role",role);
+    if(error)throw error;
+    return (data||[]).map(item=>{
+      const status=item.eligibility_status;
+      let requirement_status="unverified";
+      if(status==="allowed_no_individual_license")requirement_status="not_required";
+      else if(status==="individual_trade_credential_required")requirement_status="required";
+      else if(status==="contractor_license_or_registration_required")requirement_status=role==="employee"?"conditional":"required";
+      else if(status==="employer_license_and_supervision")requirement_status=role==="employee"?"conditional":"required";
+      else if(status==="conditional")requirement_status="conditional";
+      else if(status==="local_review_required")requirement_status="local_only";
+      return {profession_id:item.profession_id,requirement_status,rule_summary:item.scope_summary||"No verified profession-specific rule is available. Do not assume this work is license-free.",licensing_authority:item.licensing_authority,official_source_url:item.official_source_url,verified_on:item.verified_on,eligibility_status:status,license_name:item.license_name};
+    });
+  }
   function renderSignupProfessionOptions(){
     const root=$("signupProfessionOptions");root.replaceChildren();
-    const employee=$("signupWorkRole").value==="employee";
-    const state=$("serviceState").value.trim().toUpperCase();
-    const credentialChoice=$("hasLicense").value;
-    const visible=employee
-      ? signupProfessionCatalog.filter(p=>signupRuleRows.some(r=>r.profession_id===p.id&&r.requirement_status==="not_required"))
-      : credentialChoice==="yes"
-        ? signupProfessionCatalog.filter(p=>signupRuleRows.some(r=>r.profession_id===p.id&&r.requirement_status==="required"))
-        : credentialChoice==="no"
-          ? signupProfessionCatalog.filter(p=>signupRuleRows.some(r=>r.profession_id===p.id&&r.requirement_status==="not_required"))
-          : signupProfessionCatalog;
-    // Remove previously selected professions that no longer match this state's role/license filter.
-    const allowed=new Set(visible.map(p=>p.id));
-    signupSelectedProfessionIds=new Set([...signupSelectedProfessionIds].filter(id=>allowed.has(id)));
-    if(employee&&!/^[A-Z]{2}$/.test(state)){
-      root.textContent="Select a state first. Only verified license-free work categories will appear.";
+    if(!$("serviceState").value){
+      root.textContent="Select your state first, then choose all the professions you want to offer.";
       return;
     }
-    if(!visible.length){
-      root.textContent=employee||credentialChoice==="no"
-        ? "No professions are currently verified as license-free for this state. Please choose another state or ask ZELPX support."
-        : credentialChoice==="yes"
-          ? "No professions with a verified state license requirement are currently listed for this state."
-          : "Select whether you have the required license to show the matching work categories.";
-      return;
-    }
-    visible.forEach(p=>{
+    if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
+    // Show every profession. Licensing requirements are evaluated after selection,
+    // using the selected state AND worker role; never hide a regulated trade.
+    signupProfessionCatalog.forEach(p=>{
       const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
       const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
       cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
@@ -578,18 +578,12 @@
     root.replaceChildren();
     signupRuleRows=[];
     if(/^[A-Z]{2}$/.test(state)){
-      const {data,error}=await db.from("state_profession_rules").select("profession_id,requirement_status,rule_summary,official_source_url,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state");
-      if(error)throw error;signupRuleRows=data||[];
+      signupRuleRows=await loadRoleEligibilityRules(state,$("signupWorkRole").value);
     }
     renderSignupProfessionOptions();
     const employee=$("signupWorkRole").value==="employee";
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
-    if(employee){
-      root.textContent=/^[A-Z]{2}$/.test(state)
-        ? "Showing only professions marked NOT REQUIRED by verified state-level rules. This does not waive business registration, local permits, safety rules, or task-specific credentials."
-        : "Select a state. Only verified license-free work categories will appear.";
-      return;
-    }
+    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
     if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
     let conditional=false,unverified=false,required=false;
@@ -598,7 +592,7 @@
       if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified"||status==="local_only")unverified=true;
       const row=document.createElement("div");row.style.margin="7px 0";
       const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
-      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"LICENSE / REGISTRATION REQUIRED",conditional:"CONDITIONAL — CHECK EXACT TASK",not_required:"NO STATE TRADE LICENSE FOR DESCRIBED SCOPE",local_only:"LOCAL RULES APPLY",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
+      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS SCOPE",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
       const detail=document.createElement("div");detail.style.fontSize="12px";detail.textContent=r?.rule_summary||"No verified rule. Do not assume this work is license-free.";
       row.append(strong,stateLabel,detail);
       if(r?.official_source_url){const a=document.createElement("a");a.href=r.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(r.licensing_authority||"State authority");row.append(a);}
@@ -920,11 +914,7 @@
   async function refreshProfessionRules() {
     const state=$("professionState").value;
     if(!state) return;
-    const {data,error}=await db.from("state_profession_rules")
-      .select("profession_id,requirement_status,jurisdiction_level,rule_summary,licensing_authority,official_source_url,verified_on")
-      .eq("state_code",state).eq("jurisdiction_level","state");
-    if(error) throw error;
-    professionRuleRows=data||[];
+    professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     const chosen=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
     const summary=$("professionComplianceSummary"); summary.replaceChildren();
     if(!chosen.length){summary.textContent="Select one or more professions to see the state requirements.";return;}
@@ -934,7 +924,7 @@
       const strong=document.createElement("strong"); strong.textContent=p.profession_name+": ";
       const status=document.createElement("span");
       const key=rule?.requirement_status||"unverified";
-      status.textContent=({required:"LICENSE / REGISTRATION REQUIRED",conditional:"CONDITIONAL — REVIEW SCOPE",not_required:"NOT REQUIRED FOR DESCRIBED SCOPE",local_only:"LOCAL RULES APPLY",unverified:"NOT YET VERIFIED"})[key]||"NOT YET VERIFIED";
+      status.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[key]||"NOT YET VERIFIED";
       row.append(strong,status);
       const detail=document.createElement("div"); detail.style.fontSize="12px"; detail.style.marginTop="2px";
       detail.textContent=rule?.rule_summary||"No verified state rule is available yet. Do not assume this work is license-free.";
@@ -943,7 +933,7 @@
       summary.append(row);
     });
     if($("professionWorkRole").value==="employee"){
-      const note=document.createElement("p");note.style.fontSize="12px";note.textContent="Employee mode: this records the trades you want to work in. Your employer may need contractor registration, and you may still need an individual trade certificate, apprenticeship status, or permit for regulated tasks.";summary.append(note);
+      const note=document.createElement("p");note.style.fontSize="12px";note.textContent="Employee mode: an employer may hold the contractor license, but you may still need an individual trade license, certification, apprenticeship status, or task-specific permit. ZELPX does not treat employee status as an automatic exemption.";summary.append(note);
     }
   }
   async function saveProfessionQualifications() {
@@ -970,8 +960,7 @@
         throw insertError;
       }
       savedProfessionIds=new Set(selectedProfessionIds);
-      const {data:updatedRules}=await db.from("state_profession_rules").select("profession_id,requirement_status").eq("state_code",state).eq("jurisdiction_level","state");
-      professionRuleRows=updatedRules||[];
+      professionRuleRows=await loadRoleEligibilityRules(state,role);
       await refreshProfessionRules();
       message("professionComplianceSummary","Your work types were saved. License checks remain subject to administrator verification and official state rules.","success");
     } catch(e) { message("professionComplianceSummary","Could not save work types: "+(e.message||"Unknown error"),"error"); }
