@@ -1804,6 +1804,8 @@
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
+      const licenseLabel=document.querySelector('label[for="hasLicense"]');
+      if(licenseLabel)licenseLabel.textContent=employee?"Do you personally hold the individual trade license / certificate required for your selected work?":"Do you have the required current license / registration / trade credential?";
       $("signupInsuranceFields").classList.remove("hidden"); // Keep upload fields visible for every applicant.
       ["signupInsurancePolicy","signupInsuranceExpiration","signupInsuranceDocument"].forEach(id=>$(id).required=!employee);
     });
