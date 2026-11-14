@@ -688,14 +688,16 @@
     };
     const needsLicenseFile=m.has_license===true;
     const needsInsuranceFile=m.zelpx_signup_work_role==="independent";
-    if((needsLicenseFile&&!licensePath)||(needsInsuranceFile&&!insurancePath)){
-      console.warn("ZELPX signup documents still need upload after email confirmation/sign-in.");
-      return;
-    }
+    const missingLicense=needsLicenseFile&&!licensePath, missingInsurance=needsInsuranceFile&&!insurancePath;
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
     currentContractor={...currentContractor,...update};
-    await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null}});
+    if(missingLicense||missingInsurance){
+      message("appMessage","Your registration details were saved. Please upload the missing "+[missingLicense?"license document":null,missingInsurance?"insurance certificate":null].filter(Boolean).join(" and ")+" in My Company so ZELPX can review them.","error");
+      return;
+    }
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null}});
+    if(metadataError)console.warn("Could not clear one-time credential metadata:",metadataError.message);
   }
 
   async function syncSignupProfessionQualifications(user){
