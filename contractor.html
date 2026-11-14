@@ -553,17 +553,27 @@
       return;
     }
     if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
-    // If the applicant explicitly selects "No", show ONLY professions whose
-    // selected-state + worker-role rule affirmatively says no individual license
-    // is required. An unanswered field must not be treated as "No".
+    // Filter immediately by work status. Employees may select scopes that do
+    // not require a personal credential OR are legally performed under a licensed
+    // employer's license/supervision. Independent contractors without credentials
+    // see only scopes affirmatively marked as not requiring an individual license.
+    const workRole=$("signupWorkRole").value;
     const licenseAnswer=$("hasLicense").value;
-    const visibleProfessions=licenseAnswer==="no"
-      ? signupProfessionCatalog.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="allowed_no_individual_license")
-      : signupProfessionCatalog;
+    const visibleProfessions=signupProfessionCatalog.filter(p=>{
+      const rule=signupRuleRows.find(r=>r.profession_id===p.id);
+      const status=rule?.eligibility_status;
+      if(workRole==="employee"){
+        return ["allowed_no_individual_license","employer_license_and_supervision","contractor_license_or_registration_required"].includes(status);
+      }
+      if(licenseAnswer==="no") return status==="allowed_no_individual_license";
+      return true;
+    });
     const visibleIds=new Set(visibleProfessions.map(p=>p.id));
     [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
-    if(licenseAnswer==="no" && !visibleProfessions.length){
-      root.textContent="No professions have been confirmed as license-free for this state and work status. Choose another state or work status, or select Yes if you hold the required credential.";
+    if(!visibleProfessions.length){
+      root.textContent=workRole==="employee"
+        ?"No professions have been confirmed for employee work in this state yet. ZELPX must verify the state rules before showing them."
+        :"No professions have been confirmed as license-free for this state. Choose another state or provide the required credential.";
       return;
     }
     visibleProfessions.forEach(p=>{
