@@ -44,6 +44,18 @@ if "com.google.firebase:firebase-messaging" not in app_text:
         app_text += "\ndependencies {\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\n    implementation 'com.google.firebase:firebase-messaging'\n    implementation 'androidx.core:core-ktx:1.16.0'\n}\n"
     else:
         app_text = app_text[:match.end()] + "\n    implementation platform('com.google.firebase:firebase-bom:34.0.0')\n    implementation 'com.google.firebase:firebase-messaging'\n    implementation 'androidx.core:core-ktx:1.16.0'" + app_text[match.end():]
+# Align Java bytecode target with the Kotlin 17 target used by Firebase/Kotlin plugin.
+android_match = re.search(r"android\\s*\\{", app_text)
+if not android_match:
+    raise SystemExit("Cannot find app android { } Gradle block")
+compile_options = """
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+"""
+if "sourceCompatibility JavaVersion.VERSION_17" not in app_text:
+    app_text = app_text[:android_match.end()] + compile_options + app_text[android_match.end():]
 app_gradle.write_text(app_text)
 
 # Merge only required manifest entries; preserve Bubblewrap's existing activities and metadata.
