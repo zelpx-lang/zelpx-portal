@@ -12,10 +12,10 @@
 1. Включить код в настоящий Android app module, сохранив applicationId com.zelpx.app и существующий upload signing key.
 2. Положить Firebase Console google-services.json в корень app-модуля; service-account JSON сюда НЕ добавлять.
 3. Подключить Google Services Gradle plugin и Firebase Messaging BoM.
-4. Реализовать регистрацию FCM token после входа и безопасное сохранение с user_id/device_id; обновлять токен и удалять связь при logout.
+4. Реализован handoff Supabase access token из TWA в отдельную Android Activity по intent-схеме zelpx://register; нативный слой получает Firebase token и регистрирует его через zelpx-fcm-call. Обновление FCM token использует сохранённую сессию. Logout-отвязку устройства ещё нужно добавить.
 5. Создать таблицу FCM-токенов с RLS и отдельную Edge Function для FCM HTTP v1. Существующую send-chat-push пока не заменять.
 6. На сервере проверять пользователя и доступ к conversation перед отправкой.
-7. Реализовать WebRTC signaling: Answer должен принять вызов и подключить offer/answer/ICE. Текущий код только открывает deep link — он НЕ устанавливает аудиосоединение.
+7. Реализовать нативный Answer/Decline через серверный signaling и связать принятый вызов с WebRTC. Сейчас Answer/Decline открывают deep link и НЕ устанавливают аудиосоединение.
 8. Добавить cancel/timeout, завершение уведомления при answer, защиту от повторного call_id и синхронизацию состояния.
 9. Настроить TURN для надёжного WebRTC через мобильные сети/NAT.
 10. Запросить POST_NOTIFICATIONS. Для Android 14+ проверить full-screen intent и выполнить Play Console declaration; при отказе показывать обычное уведомление.
