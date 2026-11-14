@@ -365,6 +365,15 @@
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><input id="profileServiceState" maxlength="2" autocomplete="address-level1"></div>
         <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Enter or update your ZIP code, wait for the lookup, then save.</small></div>
+        <div id="specialtiesSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5">
+          <h3 style="margin:0 0 5px">Services you provide</h3>
+          <p class="muted" style="margin:0 0 12px">Select every type of work your company performs. Only matching leads will appear in your lead list, and the server will block purchases outside your selected services.</p>
+          <input id="specialtySearch" type="search" placeholder="Search services…" aria-label="Search service specializations" style="margin-bottom:10px">
+          <div id="specialtySelectionSummary" class="muted" style="font-size:13px;margin-bottom:10px">Loading your selected services…</div>
+          <div id="specialtyOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:320px;overflow:auto;padding:2px"></div>
+          <div class="actions"><button id="saveSpecialtiesBtn" type="button">Save my services</button><button id="resetSpecialtiesBtn" type="button" class="secondary">Discard changes</button></div>
+          <div id="specialtiesMessage" class="message hidden" role="status" aria-live="polite"></div>
+        </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
@@ -445,6 +454,7 @@
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
+  let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
 
   function message(id, text, type) {
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
@@ -577,6 +587,7 @@
       : "No license document uploaded yet.";
     $("profileInsurancePolicy").value = contractor?.insurance_policy_number || "";
     $("profileInsuranceExpiration").value = contractor?.insurance_expiration_date || "";
+    await loadContractorServiceCategories();
     $("insuranceDocumentStatus").textContent = contractor?.insurance_document_path
       ? "Insurance certificate on file · Review: " + String(contractor.insurance_review_status || "pending").replaceAll("_"," ") + ". Select a new file to replace it."
       : "No insurance certificate uploaded yet.";
@@ -602,6 +613,71 @@
     } catch (error) { status.textContent = error.message || "Could not upload photo."; }
     finally { event.target.value = ""; }
   });
+
+  async function loadContractorServiceCategories() {
+    const root = $("specialtyOptions");
+    if (!currentContractor) { root.textContent = "Complete your contractor profile first."; return; }
+    const [categoriesResult, selectedResult] = await Promise.all([
+      db.from("service_categories").select("id,name").eq("is_active", true).order("name"),
+      db.from("contractor_service_categories").select("category_id").eq("contractor_id", currentContractor.id)
+    ]);
+    if (categoriesResult.error) throw categoriesResult.error;
+    if (selectedResult.error) throw selectedResult.error;
+    availableServiceCategories = categoriesResult.data || [];
+    selectedContractorCategoryIds = new Set((selectedResult.data || []).map(row => row.category_id));
+    savedContractorCategoryIds = new Set(selectedContractorCategoryIds);
+    renderSpecialtyOptions(); updateSpecialtySummary();
+  }
+
+  function updateSpecialtySummary() {
+    const count = selectedContractorCategoryIds.size;
+    $("specialtySelectionSummary").textContent = count
+      ? count + " service categories selected. Your lead feed is limited to these categories."
+      : "No services selected. Select at least one category to see matching leads and buy them.";
+  }
+
+  function renderSpecialtyOptions() {
+    const root = $("specialtyOptions"), query = ($("specialtySearch").value || "").trim().toLowerCase();
+    root.replaceChildren();
+    const matches = availableServiceCategories.filter(item => item.name.toLowerCase().includes(query));
+    if (!matches.length) { root.textContent = "No services match your search."; return; }
+    matches.forEach(item => {
+      const label = document.createElement("label");
+      label.style.cssText = "display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox"; checkbox.checked = selectedContractorCategoryIds.has(item.id);
+      checkbox.style.cssText = "width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) selectedContractorCategoryIds.add(item.id); else selectedContractorCategoryIds.delete(item.id);
+        updateSpecialtySummary(); renderLeads(); $("specialtiesMessage").className = "message hidden";
+      });
+      const name = document.createElement("span"); name.textContent = item.name;
+      label.append(checkbox, name); root.append(label);
+    });
+  }
+
+  async function saveContractorServiceCategories() {
+    if (!currentContractor) return message("specialtiesMessage", "Contractor profile not found. Complete your company profile first.", "error");
+    const button = $("saveSpecialtiesBtn"); setBusy(button, true, "Saving services…");
+    try {
+      const ids = [...selectedContractorCategoryIds];
+      if (!ids.length) throw new Error("Select at least one service category before saving.");
+      const { error: deleteError } = await db.from("contractor_service_categories").delete().eq("contractor_id", currentContractor.id);
+      if (deleteError) throw deleteError;
+      const { error: insertError } = await db.from("contractor_service_categories").insert(ids.map(category_id => ({ contractor_id: currentContractor.id, category_id })));
+      if (insertError) {
+        if (savedContractorCategoryIds.size) await db.from("contractor_service_categories").insert([...savedContractorCategoryIds].map(category_id => ({ contractor_id: currentContractor.id, category_id })));
+        throw insertError;
+      }
+      savedContractorCategoryIds = new Set(ids);
+      $("specialtiesMessage").className = "message success";
+      $("specialtiesMessage").textContent = "Your services have been saved. Your lead list now shows only matching categories.";
+      renderLeads();
+    } catch (error) {
+      $("specialtiesMessage").className = "message error";
+      $("specialtiesMessage").textContent = error.message || "Could not save your service categories.";
+    } finally { setBusy(button, false); }
+  }
 
   async function addCredits() {
     clearMessage("appMessage");
@@ -688,11 +764,14 @@
   function renderLeads() {
     const list = $("leadsList"), query = ($("leadSearch").value || "").trim().toLowerCase();
     const category = $("leadCategoryFilter").value, statusFilter = $("leadStatusFilter").value;
+    const selectedNames = new Set(availableServiceCategories.filter(item => selectedContractorCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
+    const specialtyReady = isAdmin || selectedNames.size > 0;
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
+      const specialtyMatch = isAdmin || selectedNames.has(String(lead.service_category || "").toLowerCase());
       const categoryMatch = !category || lead.service_category === category;
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return statusMatch && categoryMatch && (!query || haystack.includes(query));
+      return specialtyReady && specialtyMatch && statusMatch && categoryMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
@@ -700,7 +779,9 @@
       const empty = document.createElement("div"); empty.className = "lead";
       const title = document.createElement("h3"); title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
       const note = document.createElement("p"); note.className = "muted";
-      note.textContent = cachedLeads.length ? "Try changing your search or filters." : "New service requests will appear here when they are published.";
+      note.textContent = !isAdmin && selectedContractorCategoryIds.size === 0
+        ? "Choose your services in My company → Services you provide, then save. Only matching leads will appear here."
+        : cachedLeads.length ? "No leads match your selected services and current filters." : "New service requests will appear here when they are published.";
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
@@ -1446,6 +1527,13 @@
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
+    $("specialtySearch").addEventListener("input", renderSpecialtyOptions);
+    $("saveSpecialtiesBtn").addEventListener("click", saveContractorServiceCategories);
+    $("resetSpecialtiesBtn").addEventListener("click", () => {
+      selectedContractorCategoryIds = new Set(savedContractorCategoryIds);
+      renderSpecialtyOptions(); updateSpecialtySummary(); renderLeads();
+      $("specialtiesMessage").className = "message hidden";
+    });
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
     $("serviceZip").addEventListener("change", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
