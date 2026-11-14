@@ -28,11 +28,13 @@ class ZelpxMessagingService : FirebaseMessagingService() {
         if (data["type"] != "incoming_call") return
         val callId = data["call_id"] ?: return
         val conversationId = data["conversation_id"] ?: return
+        val leadId = data["lead_id"] ?: return
+        val recipientRole = data["recipient_role"] ?: return
         val callerName = data["caller_name"]?.take(80)?.ifBlank { "ZELPX caller" } ?: "ZELPX caller"
-        showIncomingCall(callId, conversationId, callerName)
+        showIncomingCall(callId, conversationId, leadId, recipientRole, callerName)
     }
 
-    private fun showIncomingCall(callId: String, conversationId: String, callerName: String) {
+    private fun showIncomingCall(callId: String, conversationId: String, leadId: String, recipientRole: String, callerName: String) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(
@@ -48,6 +50,8 @@ class ZelpxMessagingService : FirebaseMessagingService() {
         val fullScreen = Intent(this, IncomingCallActivity::class.java).apply {
             putExtra(EXTRA_CALL_ID, callId)
             putExtra(EXTRA_CONVERSATION_ID, conversationId)
+            putExtra(EXTRA_LEAD_ID, leadId)
+            putExtra(EXTRA_RECIPIENT_ROLE, recipientRole)
             putExtra(EXTRA_CALLER, callerName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -88,5 +92,7 @@ class ZelpxMessagingService : FirebaseMessagingService() {
         const val EXTRA_CALL_ID = "call_id"
         const val EXTRA_CONVERSATION_ID = "conversation_id"
         const val EXTRA_CALLER = "caller_name"
+        const val EXTRA_LEAD_ID = "lead_id"
+        const val EXTRA_RECIPIENT_ROLE = "recipient_role"
     }
 }
