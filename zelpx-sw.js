@@ -4,8 +4,9 @@ self.addEventListener("push", event => {
   const title = data.title || "ZELPX — New chat message";
   const options = {
     body: data.body || "You have a new message.",
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
+    icon: data.icon || "/icons/zelpx-192.svg",
+    image: data.image || undefined,
+    badge: "/icons/zelpx-192.svg",
     tag: data.tag || "zelpx-chat-message",
     renotify: true,
     silent: false,
