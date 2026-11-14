@@ -840,6 +840,14 @@
         }
       }
     }
+    let totalUnreadPurchases = [...unreadByLead.values()].reduce((sum, count) => sum + count, 0);
+    const purchasesTab = document.querySelector('.tabs button[data-tab="purchasesPanel"]');
+    const updatePurchasesTab = () => {
+      if (!purchasesTab) return;
+      purchasesTab.textContent = totalUnreadPurchases > 0 ? "🔔 My purchases (" + totalUnreadPurchases + ")" : "My purchases";
+      purchasesTab.setAttribute("aria-label", totalUnreadPurchases > 0 ? "My purchases, " + totalUnreadPurchases + " unread customer messages" : "My purchases");
+    };
+    updatePurchasesTab();
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
 
     for (const item of purchases) {
@@ -864,6 +872,10 @@
       chatButton.addEventListener("click", async () => {
         if (!chatPanel.classList.contains("hidden")) return;
         unreadBadge.remove();
+        if (unreadCount > 0) {
+          totalUnreadPurchases = Math.max(0, totalUnreadPurchases - unreadCount);
+          updatePurchasesTab();
+        }
         if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} }
         show(chatPanel); chatButton.hidden = true;
         await openContractorChat(item.lead_id, chatPanel);
