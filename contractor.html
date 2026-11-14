@@ -697,6 +697,7 @@
   let professionRuleRows = [];
   async function loadProfessionQualifications() {
     const stateSelect = $("professionState");
+    if (!currentContractor) { $("professionComplianceSummary").textContent = "A contractor profile is required before saving work types."; return; }
     if (!stateSelect.options.length) {
       const { data: states, error: statesError } = await db.from("us_states").select("state_code,state_name").eq("is_active",true).order("state_name");
       if (statesError) throw statesError;
