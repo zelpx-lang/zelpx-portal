@@ -309,9 +309,17 @@
       </div>
       <div><label for="hasLicense">Do you have the required current license / registration / trade credential?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
-        <div><label for="licenseNumber">License number</label><input id="licenseNumber"></div>
-        <div><label for="licenseState">License state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
-        <div><label for="licenseType">License type</label><input id="licenseType" placeholder="Trade / license classification"></div>
+        <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
+        <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
+        <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
+        <div style="grid-column:1/-1"><label for="signupLicenseDocument">Upload license photo or PDF</label><input id="signupLicenseDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small class="muted">Private upload · JPG, PNG, WebP or PDF · Max 10 MB</small></div>
+      </div>
+      <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
+        <h3 style="grid-column:1/-1;margin:0">Business insurance (Certificate of Insurance)</h3>
+        <p class="muted" style="grid-column:1/-1;margin:0">Independent contractors must provide current insurance information for ZELPX review. Employees do not need to upload a business insurance policy for themselves.</p>
+        <div><label for="signupInsurancePolicy">Insurance policy number</label><input id="signupInsurancePolicy" autocomplete="off"></div>
+        <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
+        <div style="grid-column:1/-1"><label for="signupInsuranceDocument">Upload insurance card / Certificate of Insurance photo or PDF</label><input id="signupInsuranceDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small class="muted">Private upload · JPG, PNG, WebP or PDF · Max 10 MB</small></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
@@ -580,10 +588,22 @@
     if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
+    const signupLicenseFile=$("signupLicenseDocument").files?.[0]||null;
+    const signupInsuranceFile=$("signupInsuranceDocument").files?.[0]||null;
+    const insurancePolicyNumber=$("signupInsurancePolicy").value.trim();
+    const insuranceExpiration=$("signupInsuranceExpiration").value;
+    const allowedDocumentTypes=["application/pdf","image/jpeg","image/png","image/webp"];
+    if(hasLicense && !signupLicenseFile) return message("authMessage","Upload a photo or PDF of your license / registration before creating the account.","error");
+    if(signupRole==="independent" && (!insurancePolicyNumber || !insuranceExpiration || !signupInsuranceFile)) return message("authMessage","Independent contractors must enter the insurance policy number and expiration date, and upload a current Certificate of Insurance.","error");
+    for(const [file,label] of [[signupLicenseFile,"License"],[signupInsuranceFile,"Insurance"]]){
+      if(file && !allowedDocumentTypes.includes(file.type)) return message("authMessage",label+" file must be PDF, JPG, PNG or WebP.","error");
+      if(file && file.size>10*1024*1024) return message("authMessage",label+" file must be 10 MB or smaller.","error");
+    }
+    if(signupRole==="independent" && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Upload a current Certificate of Insurance.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_work_role: signupRole } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, insurance_policy_number: signupRole==="independent" ? insurancePolicyNumber : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -613,7 +633,10 @@
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
-    if (!isAdmin && currentContractor) await syncSignupProfessionQualifications(user);
+    if (!isAdmin && currentContractor) {
+      await syncSignupProfessionQualifications(user);
+      await syncSignupContractorDocuments(user);
+    }
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
       currentUser = null;
@@ -632,6 +655,45 @@
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
+  async function syncSignupContractorDocuments(user){
+    const m=user?.user_metadata||{};
+    if(!currentContractor)return;
+    let licensePath=currentContractor.license_document_path||null;
+    let insurancePath=currentContractor.insurance_document_path||null;
+    const licenseFile=$("signupLicenseDocument")?.files?.[0]||null;
+    const insuranceFile=$("signupInsuranceDocument")?.files?.[0]||null;
+    const uploadPrivate=async(bucket,file,kind)=>{
+      if(!file)return null;
+      if(!["application/pdf","image/jpeg","image/png","image/webp"].includes(file.type)||file.size>10*1024*1024)throw new Error(kind+" file must be PDF/JPG/PNG/WebP and 10 MB or smaller.");
+      const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      const path=user.id+"/"+Date.now()+"-signup-"+kind.toLowerCase()+"-"+safe;
+      const {error}=await db.storage.from(bucket).upload(path,file,{upsert:false,contentType:file.type});
+      if(error)throw error;return path;
+    };
+    if(licenseFile)licensePath=await uploadPrivate("contractor-licenses",licenseFile,"License");
+    if(insuranceFile)insurancePath=await uploadPrivate("contractor-insurance",insuranceFile,"Insurance");
+    const update={
+      has_license:m.has_license===true,
+      license_number:m.has_license===true?(m.license_number||null):null,
+      license_state:m.has_license===true?(m.license_state||null):null,
+      license_type:m.has_license===true?(m.license_type||null):null,
+      license_document_path:licensePath,
+      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
+      insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
+      insurance_document_path:insurancePath
+    };
+    const needsLicenseFile=m.has_license===true;
+    const needsInsuranceFile=m.zelpx_signup_work_role==="independent";
+    if((needsLicenseFile&&!licensePath)||(needsInsuranceFile&&!insurancePath)){
+      console.warn("ZELPX signup documents still need upload after email confirmation/sign-in.");
+      return;
+    }
+    const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
+    if(error)throw error;
+    currentContractor={...currentContractor,...update};
+    await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null}});
+  }
+
   async function syncSignupProfessionQualifications(user){
     const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"):[];
     const state=String(m.service_state||"").toUpperCase();if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
@@ -1702,6 +1764,11 @@
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
+    $("signupWorkRole").addEventListener("change",()=>{
+      const employee=$("signupWorkRole").value==="employee";
+      $("signupInsuranceFields").classList.toggle("hidden",employee);
+      ["signupInsurancePolicy","signupInsuranceExpiration","signupInsuranceDocument"].forEach(id=>$(id).required=!employee);
+    });
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
@@ -1747,7 +1814,11 @@
       renderSpecialtyOptions(); updateSpecialtySummary(); renderLeads();
       $("specialtiesMessage").className = "message hidden";
     });
-    $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
+    $("hasLicense").addEventListener("change", () => {
+      const showLicense=$("hasLicense").value==="yes";
+      $("signupLicenseFields").classList.toggle("hidden",!showLicense);
+      ["licenseNumber","licenseState","licenseType","signupLicenseDocument"].forEach(id=>$(id).required=showLicense);
+    });
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
     $("serviceZip").addEventListener("change", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
     $("serviceZip").addEventListener("blur", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
