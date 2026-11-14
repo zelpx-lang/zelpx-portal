@@ -553,21 +553,10 @@
       return;
     }
     if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
-    // Do not display regulated, conditional, local-review or unverified professions
-    // to applicants who selected "No" for holding the required credential.
-    const licenseAnswer=$("hasLicense").value;
-    const visibleProfessions=signupProfessionCatalog.filter(p=>{
-      const rule=signupRuleRows.find(r=>r.profession_id===p.id);
-      return licenseAnswer==="yes" || rule?.eligibility_status==="allowed_no_individual_license";
-    });
-    // Remove previously selected items that are no longer eligible for this answer.
-    const visibleIds=new Set(visibleProfessions.map(p=>p.id));
-    [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
-    if(licenseAnswer!=="yes" && !visibleProfessions.length){
-      root.textContent="No professions are cleared for registration without a license in this state. Select Yes and provide a valid credential, or choose a profession after its requirements are verified.";
-      return;
-    }
-    visibleProfessions.forEach(p=>{
+    // Keep the complete profession catalog visible. Eligibility is evaluated per
+    // state + worker role below; visibility must not depend on the license answer,
+    // which appears later in the form and previously hid the entire catalog.
+    signupProfessionCatalog.forEach(p=>{
       const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
       const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
       cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
@@ -628,19 +617,24 @@
     const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
     const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||["unverified","local_only"].includes(signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status));
-    // Fail closed: only an explicit state/role determination that no individual credential is
-    // required may be selected by an applicant who says they do not have a license.
-    // Conditional, local-review, missing and unverified rules are NOT license-free.
-    const restrictedWithoutLicense=selectedSignup.filter(p=>{
+    // Block only scopes explicitly classified as requiring a credential.
+    // Employees may register for employer-supervised scopes without a personal
+    // contractor license; their employer must hold the required business license.
+    // Unverified/local-review scopes may register as pending, but server-side lead
+    // purchasing remains blocked until a qualification is verified.
+    const explicitlyRequiredWithoutLicense=selectedSignup.filter(p=>{
       const rule=signupRuleRows.find(r=>r.profession_id===p.id);
-      return !rule || rule.eligibility_status!=="allowed_no_individual_license";
+      if(!rule)return false; // no rule: keep account registration pending, never grant job access
+      if(rule.eligibility_status==="individual_trade_credential_required")return true;
+      if(signupRole==="independent" && ["contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status))return true;
+      return false;
     });
     if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
-    if(!hasLicense && restrictedWithoutLicense.length){
-      const names=restrictedWithoutLicense.map(p=>p.profession_name).join(", ");
-      return message("authMessage","You cannot register to offer these services without a current required license or credential: "+names+". ZELPX cannot treat conditional, local-review or unverified work as license-free. Remove these professions or provide your license details and upload the document.","error");
+    if(!hasLicense && explicitlyRequiredWithoutLicense.length){
+      const names=explicitlyRequiredWithoutLicense.map(p=>p.profession_name).join(", ");
+      return message("authMessage","A current license or trade credential is required for: "+names+". You cannot register to offer this work without the required credential. Remove these professions or provide your license details and upload the document.","error");
     }
-    if((signupRole==="independent"&&requiredSignup.length)||(signupRole==="employee"&&individualCredentialSignup.length)){
+    if((signupRole==="independent"&&(requiredSignup.length||conditionalSignup.length))||(signupRole==="employee"&&individualCredentialSignup.length)){
       if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage",signupRole==="employee"?"A selected trade requires your own individual license or certificate. Enter its number, issuing state and type, or remove that profession.":"A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
     }
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
