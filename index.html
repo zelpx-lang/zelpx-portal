@@ -481,6 +481,7 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+      if (typeof window.ZELPXMountAudioCall === "function") window.ZELPXMountAudioCall({ db, conversationId, role: "contractor", panel, userId: currentUser.id });
       let knownMessageIds = null;
       let chatSoundContext = null;
       function playIncomingChatSound() {
@@ -912,5 +913,6 @@
   start();
 })();
 </script>
+<script src="/call-client.js"></script>
 </body>
 </html>
