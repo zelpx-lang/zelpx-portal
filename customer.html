@@ -1553,6 +1553,7 @@
       }
     }
 
+    let customerUnreadOnly = false;
     async function loadRequests(sessionOverride = undefined) {
       const list = $("requestsList");
       list.textContent = "Loading your requests...";
@@ -1652,6 +1653,7 @@
           summaryDate.textContent = request.created_at ? "Order placed " + new Date(request.created_at).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }) : "Order date unavailable";
           summaryText.append(summaryTitle, summaryDate);
           const unreadCountForRequest = request.lead_id ? (unreadByLead.get(request.lead_id) || 0) : 0;
+          card.dataset.unreadCount = String(unreadCountForRequest);
           const unreadBell = document.createElement("span");
           unreadBell.className = "request-unread-bell" + (unreadCountForRequest ? " has-unread" : "");
           unreadBell.setAttribute("aria-label", unreadCountForRequest ? unreadCountForRequest + " unread chat messages" : "No unread messages");
@@ -1841,10 +1843,16 @@
       cards.forEach(card => {
         const matchesService = !serviceFilter || card.dataset.serviceType === serviceFilter;
         const matchesStatus = !statusFilter || card.dataset.requestStatus.includes(statusFilter);
-        card.hidden = !(matchesService && matchesStatus);
+        const matchesUnread = !customerUnreadOnly || Number(card.dataset.unreadCount || 0) > 0;
+        card.hidden = !(matchesService && matchesStatus && matchesUnread);
         list.appendChild(card);
       });
       const visibleCount = cards.filter(card => !card.hidden).length;
+      const unreadFilterButton = $("customerUnreadFilter");
+      if (unreadFilterButton) {
+        unreadFilterButton.textContent = customerUnreadOnly ? "Show all orders" : "Show unread chats only";
+        unreadFilterButton.setAttribute("aria-pressed", String(customerUnreadOnly));
+      }
       $("requestResultsCount").textContent = cards.length
         ? visibleCount + " of " + cards.length + " requests"
         : "";
@@ -1882,6 +1890,12 @@
     document.querySelectorAll("[data-dashboard-page]").forEach(button => {
       button.addEventListener("click", () => {
         const selectedPage = button.dataset.dashboardPage;
+        if (selectedPage === "requests") {
+          customerUnreadOnly = !customerUnreadOnly;
+          applyRequestFilters();
+        } else {
+          customerUnreadOnly = false;
+        }
         document.querySelectorAll(".dashboard-page").forEach(page => {
           page.hidden = page.id !== "dashboardPage-" + selectedPage;
         });
