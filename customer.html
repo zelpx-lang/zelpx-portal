@@ -1474,6 +1474,12 @@
           } catch (error) { status.textContent = "Could not send message: " + (error.message || "Unknown error"); }
           finally { send.disabled = false; }
         });
+        input.addEventListener("keydown", event => {
+          if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            if (!send.disabled) form.requestSubmit(send);
+          }
+        });
         refresh.addEventListener("click", async () => {
           try { await refreshMessages(); status.textContent = "Messages refreshed."; }
           catch (error) { status.textContent = "Could not refresh messages: " + (error.message || "Unknown error"); }
