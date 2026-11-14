@@ -296,7 +296,7 @@
       <div><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
-      <div><label for="serviceState">State</label><input id="serviceState" autocomplete="address-level1" maxlength="2" placeholder="e.g. WA" required></div>
+      <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
       <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
       <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
         <h3>Choose your work before creating your account</h3>
@@ -521,6 +521,12 @@
   }
   let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
   async function loadSignupWorkTypes(){
+    const {data:states,error:statesError}=await db.from("us_states").select("state_code,state_name").eq("is_active",true).order("state_name");
+    if(statesError)throw statesError;
+    const stateSelect=$("serviceState"), previousState=stateSelect.value;
+    stateSelect.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select state";stateSelect.append(placeholder);
+    (states||[]).forEach(x=>{const o=document.createElement("option");o.value=x.state_code;o.textContent=x.state_name;stateSelect.append(o);});
+    if(previousState)stateSelect.value=previousState;
     const {data,error}=await db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name");
     if(error) throw error; signupProfessionCatalog=data||[];
     const root=$("signupProfessionOptions"); root.replaceChildren();
