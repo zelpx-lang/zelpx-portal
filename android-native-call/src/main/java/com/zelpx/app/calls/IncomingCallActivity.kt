@@ -16,6 +16,8 @@ class IncomingCallActivity : Activity() {
         super.onCreate(savedInstanceState)
         val callId = intent.getStringExtra(ZelpxMessagingService.EXTRA_CALL_ID).orEmpty()
         val conversationId = intent.getStringExtra(ZelpxMessagingService.EXTRA_CONVERSATION_ID).orEmpty()
+        val leadId = intent.getStringExtra(ZelpxMessagingService.EXTRA_LEAD_ID).orEmpty()
+        val recipientRole = intent.getStringExtra(ZelpxMessagingService.EXTRA_RECIPIENT_ROLE).orEmpty()
         val caller = intent.getStringExtra(ZelpxMessagingService.EXTRA_CALLER) ?: "ZELPX caller"
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -31,20 +33,21 @@ class IncomingCallActivity : Activity() {
         }, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         layout.addView(Button(this).apply {
             text = "Answer"
-            setOnClickListener { handoff(callId, conversationId, "answer") }
+            setOnClickListener { handoff(callId, conversationId, leadId, recipientRole, "answer") }
         })
         layout.addView(Button(this).apply {
             text = "Decline"
-            setOnClickListener { handoff(callId, conversationId, "decline") }
+            setOnClickListener { handoff(callId, conversationId, leadId, recipientRole, "decline") }
         })
         setContentView(layout)
     }
 
-    private fun handoff(callId: String, conversationId: String, action: String) {
+    private fun handoff(callId: String, conversationId: String, leadId: String, recipientRole: String, action: String) {
+        val destination = if (recipientRole == "customer") "customer?open_lead=" else "?lead="
         val uri = android.net.Uri.parse(
-            "https://app.zelpx.com/call?action=$action&call_id=" +
-                android.net.Uri.encode(callId) + "&conversation_id=" +
-                android.net.Uri.encode(conversationId)
+            "https://app.zelpx.com/$destination" + android.net.Uri.encode(leadId) +
+                "&action=$action&call_id=" + android.net.Uri.encode(callId) +
+                "&conversation_id=" + android.net.Uri.encode(conversationId)
         )
         startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         finish()
