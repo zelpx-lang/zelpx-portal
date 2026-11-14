@@ -49,8 +49,11 @@ function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
 function select(it){sel=it;items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   const zip=document.getElementById("zip").value.trim();
+  const target="/customer?service="+encodeURIComponent(it.name)+(/^\d{5}$/.test(zip)?"&zip="+encodeURIComponent(zip):"")+"#requestForm";
   panel.hidden=false;pn.textContent=it.name;
-  pg.href="/customer?service="+encodeURIComponent(it.name)+(/^\d{5}$/.test(zip)?"&zip="+zip:"")+"#requestForm";}
+  pg.href=target;
+  // A single tap on a finished service opens the customer request page.
+  window.location.href=target;}
 window.buildSphere=function(names,icon){
   size();box.replaceChildren();sel=null;panel.hidden=true;
   const list=names.slice(0,W<500?36:60),N=list.length,ga=Math.PI*(3-Math.sqrt(5));
