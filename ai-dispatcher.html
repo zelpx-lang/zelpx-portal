@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZELPX AI Dispatcher · Pilot</title>
+<style>
+:root{--ink:#1d2430;--muted:#697586;--orange:#f36b2b;--orange2:#fff1e8;--line:#e8e5e0;--bg:#f7f8fa;--card:#fff;--teal:#1689a8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line);padding:16px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:23px;font-weight:900;letter-spacing:-1px}.brand span{color:var(--orange)}.tag{font-size:12px;color:#9a4a20;background:var(--orange2);padding:6px 10px;border-radius:999px;font-weight:800}
+main{max-width:1120px;margin:28px auto;padding:0 18px}.hero{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}.eyebrow{color:var(--orange);font-size:12px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase}h1{font-size:clamp(28px,5vw,42px);line-height:1.08;letter-spacing:-1.5px;margin:7px 0}.sub{color:var(--muted);max-width:650px;margin:8px 0}.status{border:1px solid #f0d4c4;background:#fffaf6;color:#96502c;padding:9px 12px;border-radius:12px;font-size:12px;font-weight:750;white-space:nowrap}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 8px 26px #1c293508}.panel h2{font-size:19px;margin:0 0 4px}.hint{color:var(--muted);font-size:13px;margin:0 0 18px}
+label{display:block;font-size:12px;font-weight:800;margin:13px 0 6px;color:#46505d}input,select,textarea{width:100%;border:1px solid #d9dfe5;border-radius:10px;padding:12px 13px;font:inherit;background:white;color:var(--ink);outline:none}input:focus,select:focus,textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px #f36b2b18}textarea{min-height:95px;resize:vertical}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}.primary{background:var(--orange);color:white;width:100%;margin-top:16px}.secondary{background:#fff1e8;color:#a64d20}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.pill{border:1px solid var(--line);background:#fff;color:#5c6571;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:750}.pill.active{background:var(--orange2);border-color:#f4c7ae;color:#a64d20}
+.metric{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.metric div{background:#fafbfc;border:1px solid var(--line);border-radius:12px;padding:12px}.metric b{display:block;font-size:22px}.metric small{color:var(--muted)}
+.feed{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:12px;padding:13px}.item-top{display:flex;justify-content:space-between;gap:10px;font-weight:800}.item p{margin:5px 0;color:var(--muted);font-size:13px}.badge{font-size:11px;color:#176b43;background:#eaf7f0;padding:4px 8px;border-radius:99px;height:max-content}.empty{color:var(--muted);padding:18px;text-align:center;border:1px dashed #d8dde3;border-radius:12px}
+.notice{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;color:var(--muted);font-size:13px}.notice b{color:var(--ink)}
+@media(max-width:760px){main{margin:20px auto}.grid{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}.status{white-space:normal}.two{grid-template-columns:1fr}.metric{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="brand">ZEL<span>PX</span></div><div class="tag">AI DISPATCHER · PRIVATE PILOT</div></header>
+<main>
+<section class="hero"><div><div class="eyebrow">Smarter home-service operations</div><h1>AI Dispatcher & CRM</h1><p class="sub">A separate pilot workspace for customer intake, contractor follow-up and appointment planning. Existing customer and contractor portals remain untouched.</p></div><div class="status">Prototype mode · No live calls or messages</div></section>
+<div class="grid">
+<section class="panel">
+<h2>Customer request intake</h2><p class="hint">Capture the details an AI dispatcher would collect before creating a service request.</p>
+<form id="intake">
+<label for="customerName">Customer name</label><input id="customerName" required placeholder="Full name">
+<div class="two"><div><label for="customerPhone">Phone</label><input id="customerPhone" required type="tel" placeholder="(555) 000-0000"></div><div><label for="zip">ZIP code</label><input id="zip" required inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="98660"></div></div>
+<label for="service">Service needed</label><select id="service" required><option value="">Choose a service</option><option>Tile Installation</option><option>Flooring & Laminate</option><option>Plumbing</option><option>Electrical</option><option>Painting & Home Repairs</option><option>AC Installation & Repair</option><option>House Cleaning</option><option>Other</option></select>
+<label for="details">Describe the job</label><textarea id="details" required placeholder="What needs to be repaired or installed?"></textarea>
+<label for="time">Preferred appointment window</label><select id="time"><option>First available</option><option>Morning · 8 AM–12 PM</option><option>Afternoon · 12 PM–4 PM</option><option>Evening · 4 PM–7 PM</option></select>
+<button class="primary" type="submit">Preview intake summary</button>
+</form>
+</section>
+<section class="panel">
+<h2>Dispatcher preview</h2><p class="hint">A local demonstration of the information handoff. Nothing is sent to a customer or saved.</p>
+<div id="preview" class="empty">Complete the form to preview the request summary here.</div>
+<div class="metric"><div><b id="count">0</b><small>Demo requests</small></div><div><b>0</b><small>Live calls</small></div><div><b>0</b><small>Appointments</small></div></div>
+</section>
+<section class="panel">
+<h2>Contractor CRM</h2><p class="hint">Planned workflow sections for the contractor workspace.</p>
+<div class="toolbar"><span class="pill active">New requests</span><span class="pill">Follow-ups</span><span class="pill">Appointments</span><span class="pill">Call history</span></div>
+<div class="feed"><div class="item"><div class="item-top"><span>New request inbox</span><span class="badge">Planned</span></div><p>Review qualified customer requests and route them through the existing exclusive-lead rules.</p></div><div class="item"><div class="item-top"><span>Follow-up reminders</span><span class="badge">Planned</span></div><p>Track callbacks and customer responses without changing the current chat system.</p></div><div class="item"><div class="item-top"><span>Appointment calendar</span><span class="badge">Planned</span></div><p>Propose a visit window and confirm it only after the contractor accepts.</p></div></div>
+</section>
+<section class="panel">
+<h2>AI phone assistant</h2><p class="hint">Voice automation is intentionally not connected in this pilot.</p>
+<div class="item"><div class="item-top"><span>Inbound phone calls</span><span class="badge">Not connected</span></div><p>Requires a phone provider, an AI voice service, secure server-side credentials and consent-aware call handling.</p></div>
+<div class="item" style="margin-top:10px"><div class="item-top"><span>Human handoff</span><span class="badge">Planned</span></div><p>Escalate uncertain requests or urgent situations to a real person instead of guessing.</p></div>
+</section>
+</div>
+<div class="notice"><b>Safety boundary:</b> This pilot is isolated from production data. It does not create real service requests, contact customers, place calls, book visits, access Stripe or modify either existing account portal.</div>
+</main>
+<script>
+const form=document.getElementById('intake');let demoCount=0;
+form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;const v=id=>document.getElementById(id).value.trim();const safe=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));document.getElementById('preview').className='item';document.getElementById('preview').innerHTML='<div class="item-top"><span>'+safe(v('service'))+'</span><span class="badge">Demo only</span></div><p><b>Customer:</b> '+safe(v('customerName'))+'</p><p><b>Phone:</b> '+safe(v('customerPhone'))+' · <b>ZIP:</b> '+safe(v('zip'))+'</p><p><b>Job:</b> '+safe(v('details'))+'</p><p><b>Preferred time:</b> '+safe(v('time'))+'</p><p style="margin-top:12px;color:#a64d20;font-weight:800">Next step: verify details and route to an eligible contractor.</p>';demoCount++;document.getElementById('count').textContent=demoCount;});
+</script>
+</body></html>
