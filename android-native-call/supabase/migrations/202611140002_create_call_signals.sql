@@ -33,3 +33,7 @@ with check (
       and (ct.user_id = auth.uid() or sr.user_id = auth.uid())
   )
 );
+
+-- Enable realtime delivery for incoming invitations and WebRTC signal exchange.
+alter publication supabase_realtime add table public.call_invitations;
+alter publication supabase_realtime add table public.call_signals;
