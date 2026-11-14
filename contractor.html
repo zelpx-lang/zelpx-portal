@@ -540,11 +540,9 @@
         : credentialChoice==="no"
           ? signupProfessionCatalog.filter(p=>signupRuleRows.some(r=>r.profession_id===p.id&&r.requirement_status==="not_required"))
           : signupProfessionCatalog;
-    // Remove any previously selected profession that is not confirmed license-free for this state.
-    if(employee){
-      const allowed=new Set(visible.map(p=>p.id));
-      signupSelectedProfessionIds=new Set([...signupSelectedProfessionIds].filter(id=>allowed.has(id)));
-    }
+    // Remove previously selected professions that no longer match this state's role/license filter.
+    const allowed=new Set(visible.map(p=>p.id));
+    signupSelectedProfessionIds=new Set([...signupSelectedProfessionIds].filter(id=>allowed.has(id)));
     if(employee&&!/^[A-Z]{2}$/.test(state)){
       root.textContent="Select a state first. Only verified license-free work categories will appear.";
       return;
