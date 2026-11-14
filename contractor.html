@@ -580,7 +580,7 @@
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
     const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
-    const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="unverified");
+    const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||["unverified","local_only"].includes(signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status));
     if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
     if(signupRole==="independent"&&requiredSignup.length&&(!hasLicense||!licenseNumber||!licenseState||!licenseType))return message("authMessage","A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
     if(signupRole==="independent"&&conditionalSignup.length&&!hasLicense&&!$("signupConditionalAck").checked)return message("authMessage","Confirm the conditional-work notice or provide your credential.","error");
@@ -634,8 +634,12 @@
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
     if (!isAdmin && currentContractor) {
-      await syncSignupProfessionQualifications(user);
-      await syncSignupContractorDocuments(user);
+      try {
+        await syncSignupProfessionQualifications(user);
+        await syncSignupContractorDocuments(user);
+      } catch (documentError) {
+        message("appMessage", "Your account is open, but a license or insurance document could not be saved: " + (documentError.message || "Please try again from My Company."), "error");
+      }
     }
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
