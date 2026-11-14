@@ -717,6 +717,8 @@
       const form = document.createElement("form"); form.className = "chatform";
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
+      form.append(textarea, send);
+      panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
       let knownMessageIds = null;
       let chatSoundContext = null;
