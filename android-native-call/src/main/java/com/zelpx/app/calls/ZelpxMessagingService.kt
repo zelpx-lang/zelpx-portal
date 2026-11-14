@@ -45,8 +45,8 @@ class ZelpxMessagingService : FirebaseMessagingService() {
             )
         }
         val person = Person.Builder().setName(callerName).setImportant(true).build()
-        val answer = actionIntent(CallActionReceiver.ACTION_ANSWER, callId, conversationId)
-        val decline = actionIntent(CallActionReceiver.ACTION_DECLINE, callId, conversationId)
+        val answer = actionIntent(CallActionReceiver.ACTION_ANSWER, callId, conversationId, leadId, recipientRole)
+        val decline = actionIntent(CallActionReceiver.ACTION_DECLINE, callId, conversationId, leadId, recipientRole)
         val fullScreen = Intent(this, IncomingCallActivity::class.java).apply {
             putExtra(EXTRA_CALL_ID, callId)
             putExtra(EXTRA_CONVERSATION_ID, conversationId)
@@ -74,11 +74,13 @@ class ZelpxMessagingService : FirebaseMessagingService() {
         manager.notify(callId.hashCode(), notification)
     }
 
-    private fun actionIntent(action: String, callId: String, conversationId: String): PendingIntent {
+    private fun actionIntent(action: String, callId: String, conversationId: String, leadId: String, recipientRole: String): PendingIntent {
         val intent = Intent(this, CallActionReceiver::class.java).apply {
             this.action = action
             putExtra(EXTRA_CALL_ID, callId)
             putExtra(EXTRA_CONVERSATION_ID, conversationId)
+            putExtra(EXTRA_LEAD_ID, leadId)
+            putExtra(EXTRA_RECIPIENT_ROLE, recipientRole)
         }
         return PendingIntent.getBroadcast(
             this, (callId + action).hashCode(), intent,
