@@ -1636,7 +1636,7 @@
           description.append(descriptionLabel, document.createTextNode("\\n" + descriptionText));
 
           const date = document.createElement("p");
-          date.textContent = "Submitted: " +
+          date.textContent = "Order placed: " +
             new Date(request.created_at).toLocaleString();
 
           const summary = document.createElement("button");
@@ -1649,7 +1649,7 @@
           summaryTitle.textContent = request.service_type || "Service request";
           const summaryDate = document.createElement("small");
           summaryDate.className = "request-summary-date";
-          summaryDate.textContent = request.created_at ? "Created " + new Date(request.created_at).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }) : "Creation date unavailable";
+          summaryDate.textContent = request.created_at ? "Order placed " + new Date(request.created_at).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }) : "Order date unavailable";
           summaryText.append(summaryTitle, summaryDate);
           const unreadCountForRequest = request.lead_id ? (unreadByLead.get(request.lead_id) || 0) : 0;
           const unreadBell = document.createElement("span");
