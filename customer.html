@@ -1403,35 +1403,6 @@
         const input = document.createElement("textarea"); input.maxLength = 5000; input.required = true;
         input.placeholder = "Write your message to the contractor…";
         const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send";
-        const voiceButton = document.createElement("button"); voiceButton.type = "button"; voiceButton.className = "secondary-button"; voiceButton.textContent = "🎙 Record voice"; voiceButton.style.minHeight = "40px";
-        form.append(input, voiceButton, send);
-        let voiceRecorder = null, voiceChunks = [], voiceStream = null, voiceTimer = null;
-        voiceButton.addEventListener("click", async () => {
-          try {
-            if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error("Voice recording is not supported in this browser.");
-            if (voiceRecorder?.state === "recording") { voiceRecorder.stop(); voiceButton.disabled = true; voiceButton.textContent = "Saving voice…"; return; }
-            voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mimeType = ["audio/webm;codecs=opus","audio/mp4","audio/ogg;codecs=opus"].find(type => MediaRecorder.isTypeSupported(type)) || "";
-            voiceRecorder = new MediaRecorder(voiceStream, mimeType ? { mimeType } : undefined); voiceChunks = [];
-            voiceRecorder.ondataavailable = event => { if (event.data?.size) voiceChunks.push(event.data); };
-            voiceRecorder.onstop = async () => {
-              try {
-                const blob = new Blob(voiceChunks, { type: voiceRecorder.mimeType || "audio/webm" });
-                if (!blob.size || blob.size > 5 * 1024 * 1024) throw new Error("Voice message must be non-empty and under 5 MB.");
-                const ext = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
-                const path = conversation.id + "/" + session.user.id + "/" + Date.now() + "." + ext;
-                status.textContent = "Uploading voice message…";
-                const { error: uploadError } = await db.storage.from("lead-chat-audio").upload(path, blob, { contentType: blob.type.split(";")[0], upsert: false }); if (uploadError) throw uploadError;
-                const { error: insertError } = await db.from("lead_messages").insert({ conversation_id: conversation.id, sender_type: "customer", sender_user_id: session.user.id, message: "[[ZELPX_AUDIO:" + path + "]]" });
-                if (insertError) { await db.storage.from("lead-chat-audio").remove([path]); throw insertError; }
-                status.textContent = "Voice message sent."; await refreshMessages();
-              } catch (error) { status.textContent = "Could not send voice message: " + (error.message || "Unknown error"); }
-              finally { clearTimeout(voiceTimer); voiceStream?.getTracks().forEach(track => track.stop()); voiceStream = null; voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; }
-            };
-            voiceRecorder.start(); voiceButton.textContent = "■ Stop recording"; status.textContent = "Recording… (maximum 2 minutes)";
-            voiceTimer = window.setTimeout(() => { if (voiceRecorder?.state === "recording") voiceRecorder.stop(); }, 120000);
-          } catch (error) { voiceButton.disabled = false; voiceButton.textContent = "🎙 Record voice"; status.textContent = error.message || "Microphone permission is required."; }
-        });
         const chatActions = document.createElement("div");
         chatActions.style.display = "flex"; chatActions.style.flexWrap = "wrap"; chatActions.style.gap = "8px"; chatActions.style.alignItems = "center"; chatActions.style.marginTop = "10px";
         const refresh = document.createElement("button"); refresh.type = "button";
