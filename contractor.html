@@ -223,23 +223,45 @@
     #purchasesList .purchase-chat-button { min-height:40px; padding:8px 14px; font-size:13px; }
     #purchasesList .contactbox { margin-top:10px; }
     @media(max-width:700px) { #purchasesList .purchase-summary { min-height:46px; padding:8px; } #purchasesList .purchase-details { padding:9px 8px 12px; } }
-    #leadsList .lead.lead-compact { display:block; padding:0; margin:7px 0; border-radius:15px; box-shadow:0 5px 16px -15px #3b2a1a66; }
-    #leadsList .lead.lead-compact::before { top:9px; bottom:9px; }
-    #leadsList .lead-summary { width:100%; min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 13px 9px 17px; border:0; border-radius:15px; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
-    #leadsList .lead-summary:hover:not(:disabled) { background:#faf4ed; color:var(--ink); box-shadow:none; transform:none; }
-    #leadsList .lead-summary-main { display:flex; min-width:0; flex-direction:column; gap:1px; }
-    #leadsList .lead-summary-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
-    #leadsList .lead-summary-zip { color:var(--muted); font-size:12px; font-weight:500; }
-    #leadsList .lead-summary-side { display:flex; align-items:center; gap:12px; flex:0 0 auto; }
-    #leadsList .lead-summary-price { color:#c2410c; background:var(--accent-soft); border-radius:999px; padding:4px 10px; font-size:14px; }
-    #leadsList .lead-summary-chevron { color:var(--muted); font-size:18px; line-height:1; }
-    #leadsList .lead-details { padding:0 14px 12px 17px; border-top:1px solid var(--line); }
-    #leadsList .lead-details .lead-badges { margin:9px 0; }
-    #leadsList .lead-details-label { margin:8px 0 3px!important; font-size:11px!important; color:var(--muted)!important; text-transform:uppercase; letter-spacing:.06em; }
-    #leadsList .lead-details-description { margin:0; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--ink); }
-    #leadsList .lead-details .lead-footer { margin-top:10px; padding-top:9px; }
-    #leadsList .lead-details .lead-footer button { min-height:38px; padding:8px 17px; font-size:13px; }
-    @media(max-width:700px) { #leadsList .lead-summary { min-height:50px; padding:8px 11px 8px 15px; } #leadsList .lead-details { padding:0 11px 11px 15px; } }
+    /* ZELPX available jobs — refreshed orange marketplace cards */
+    #availablePanel { background:#fff; border:1px solid #f0e5dc; border-radius:20px; }
+    #availablePanel > h2 { font-size:21px; font-weight:800; letter-spacing:-.02em; }
+    #availablePanel > p { color:#71675e; line-height:1.5; }
+    .lead-controls { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap:9px; padding:12px; background:#fff8f3; border:1px solid #f3e3d7; border-radius:16px; }
+    .lead-controls input,.lead-controls select { min-height:44px; border:1px solid #eaded4; border-radius:11px; background:#fff; }
+    .lead-toolbar { margin:10px 2px 12px; }
+    .lead-count { color:#75695f; font-size:13px; font-weight:700; }
+    #leadsList .lead.lead-compact { display:block; position:relative; overflow:hidden; margin:10px 0; padding:0; border:1px solid #eee2d8; border-radius:17px; background:#fff; box-shadow:0 5px 18px -15px #6b3b1e80; transition:border-color .18s,box-shadow .18s,transform .18s; }
+    #leadsList .lead.lead-compact::before { top:0; bottom:0; left:0; width:4px; border-radius:0; background:#f36b2b; }
+    #leadsList .lead.lead-compact:hover { border-color:#f2b18e; box-shadow:0 12px 25px -18px #a64e2080; transform:translateY(-1px); }
+    #leadsList .lead-summary { width:100%; min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px 12px 20px; border:0; border-radius:16px; background:transparent; color:#29251f; box-shadow:none; text-align:left; }
+    #leadsList .lead-summary:hover:not(:disabled) { background:#fff8f3; color:#29251f; box-shadow:none; transform:none; }
+    #leadsList .lead-summary-main { display:flex; min-width:0; flex-direction:column; gap:4px; }
+    #leadsList .lead-summary-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#29251f; font-size:16px; font-weight:800; letter-spacing:-.01em; }
+    #leadsList .lead-summary-zip { color:#81766d; font-size:12px; font-weight:600; }
+    #leadsList .lead-summary-side { display:flex; align-items:center; gap:13px; flex:0 0 auto; }
+    #leadsList .lead-summary-price { color:#c44d16; background:#fff0e7; border:1px solid #ffdfcc; border-radius:10px; padding:7px 11px; font-size:15px; font-weight:850; white-space:nowrap; }
+    #leadsList .lead-summary-chevron { color:#b65a2a; font-size:19px; line-height:1; }
+    #leadsList .lead-details { padding:0 17px 15px 20px; border-top:1px solid #f2e9e2; background:linear-gradient(180deg,#fff 0%,#fffdfa 100%); }
+    #leadsList .lead-details .lead-badges { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0; }
+    #leadsList .lead-details .pill { padding:5px 10px; border-radius:999px; font-size:11px; font-weight:750; }
+    #leadsList .lead-details-label { margin:10px 0 5px!important; color:#8b7d72!important; font-size:10px!important; font-weight:800; text-transform:uppercase; letter-spacing:.09em; }
+    #leadsList .lead-details-description { margin:0; color:#39332d; font-size:14px; line-height:1.6; white-space:pre-wrap; }
+    #leadsList .lead-details .lead-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:13px; padding-top:12px; border-top:1px solid #f0e7df; }
+    #leadsList .lead-details .lead-date { color:#85796f; font-size:12px; }
+    #leadsList .lead-details .lead-footer button { min-height:42px; padding:9px 18px; border-radius:11px; background:#f36b2b; color:#fff; font-size:13px; font-weight:800; box-shadow:0 5px 12px -7px #b74c1b; }
+    #leadsList .lead-details .lead-footer button:hover:not(:disabled) { background:#dc571c; }
+    @media(max-width:700px) {
+      #availablePanel { padding:12px; border-radius:16px; }
+      .lead-controls { grid-template-columns:1fr; padding:10px; }
+      #leadsList .lead-summary { min-height:64px; padding:11px 12px 11px 17px; gap:8px; }
+      #leadsList .lead-summary-title { font-size:15px; }
+      #leadsList .lead-summary-side { gap:8px; }
+      #leadsList .lead-summary-price { padding:6px 9px; font-size:14px; }
+      #leadsList .lead-details { padding:0 12px 13px 17px; }
+      #leadsList .lead-details .lead-footer { align-items:flex-start; flex-direction:column; }
+      #leadsList .lead-details .lead-footer button { width:100%; }
+    }
     .password-field { position:relative; width:100%; }
     .password-field input { width:100%; padding-right:52px; }
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
