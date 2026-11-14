@@ -298,7 +298,16 @@
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State</label><input id="serviceState" autocomplete="address-level1" maxlength="2" placeholder="e.g. WA" required></div>
       <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
-      <div><label for="hasLicense">Do you have a current license?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+      <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
+        <h3>Choose your work before creating your account</h3>
+        <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
+        <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
+        <label>Professions / work types</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Loading professions…</span></div>
+        <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
+        <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
+        <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
+      </div>
+      <div><label for="hasLicense">Do you have the required current license / registration / trade credential?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
         <div><label for="licenseNumber">License number</label><input id="licenseNumber"></div>
         <div><label for="licenseState">License state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
@@ -491,6 +500,7 @@
     enabled ? show($("signupBtn")) : hide($("signupBtn"));
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
+    if (enabled) loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error"));
   }
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
 
@@ -509,19 +519,65 @@
     }
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
+  let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
+  async function loadSignupWorkTypes(){
+    const {data,error}=await db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name");
+    if(error) throw error; signupProfessionCatalog=data||[];
+    const root=$("signupProfessionOptions"); root.replaceChildren();
+    signupProfessionCatalog.forEach(p=>{
+      const label=document.createElement("label"); label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
+      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=signupSelectedProfessionIds.has(p.id); cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
+      cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
+      const name=document.createElement("span"); name.textContent=p.profession_name; label.append(cb,name); root.append(label);
+    });
+    await refreshSignupProfessionRules();
+  }
+  async function refreshSignupProfessionRules(){
+    const state=$("serviceState").value.trim().toUpperCase(), root=$("signupProfessionRules"); root.replaceChildren();
+    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
+    if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
+    const {data,error}=await db.from("state_profession_rules").select("profession_id,requirement_status,rule_summary,official_source_url,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state");
+    if(error) throw error; signupRuleRows=data||[];
+    let conditional=false,unverified=false,required=false;
+    signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)).forEach(p=>{
+      const r=signupRuleRows.find(x=>x.profession_id===p.id), status=r?.requirement_status||"unverified";
+      if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified")unverified=true;
+      const row=document.createElement("div");row.style.margin="7px 0";
+      const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
+      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"LICENSE / REGISTRATION REQUIRED",conditional:"CONDITIONAL — CHECK EXACT TASK",not_required:"NO STATE TRADE LICENSE FOR DESCRIBED SCOPE",local_only:"LOCAL RULES APPLY",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
+      const detail=document.createElement("div");detail.style.fontSize="12px";detail.textContent=r?.rule_summary||"No verified rule. Do not assume this work is license-free.";
+      row.append(strong,stateLabel,detail);
+      if(r?.official_source_url){const a=document.createElement("a");a.href=r.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(r.licensing_authority||"State authority");row.append(a);}
+      root.append(row);
+    });
+    const employee=$("signupWorkRole").value==="employee";
+    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional||employee);
+    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified||employee);
+    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
+    if(required&&!employee){const p=document.createElement("p");p.style.fontWeight="700";p.textContent="At least one selected profession requires a current license or contractor registration. Enter its details below to continue.";root.append(p);}
+    if(employee){const p=document.createElement("p");p.textContent="Employee mode: your employer handles contractor registration where required. Individual trade certificates and permits may still apply.";root.append(p);}
+  }
   async function signUp() {
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
+    const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
+    const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
+    const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
+    const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="unverified");
+    if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
+    if(signupRole==="independent"&&requiredSignup.length&&(!hasLicense||!licenseNumber||!licenseState||!licenseType))return message("authMessage","A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
+    if(signupRole==="independent"&&conditionalSignup.length&&!hasLicense&&!$("signupConditionalAck").checked)return message("authMessage","Confirm the conditional-work notice or provide your credential.","error");
+    if(signupRole==="independent"&&unverifiedSignup.length&&!$("signupUnverifiedAck").checked)return message("authMessage","Confirm that you will verify unreviewed state requirements before offering this work.","error");
     if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -551,6 +607,7 @@
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
+    if (!isAdmin && currentContractor) await syncSignupProfessionQualifications(user);
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
       currentUser = null;
@@ -569,6 +626,17 @@
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
+  async function syncSignupProfessionQualifications(user){
+    const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"):[];
+    const state=String(m.service_state||"").toUpperCase();if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
+    const {data:existing,error:ee}=await db.from("contractor_profession_qualifications").select("profession_id").eq("contractor_id",currentContractor.id).eq("state_code",state);if(ee)throw ee;
+    const have=new Set((existing||[]).map(x=>x.profession_id)),missing=ids.filter(id=>!have.has(id));if(!missing.length)return;
+    const {data:rules,error:re}=await db.from("state_profession_rules").select("profession_id,requirement_status,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state").in("profession_id",missing);if(re)throw re;
+    const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
+    const rows=missing.map(profession_id=>{const r=rules?.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=role==="independent"&&(st==="required"||st==="conditional");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_required_at_registration:req,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,verification_status:req?"not_submitted":st==="not_required"?"not_required":"pending"};});
+    const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
+  }
+
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
@@ -1620,6 +1688,8 @@
   }
   function wireEvents() {
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
+    $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
+    $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
