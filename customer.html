@@ -572,6 +572,7 @@
       <div id="dashboardPage-profile" class="dashboard-page" hidden>
       <section class="profile-panel" aria-labelledby="customerProfileHeading">
         <h2 id="customerProfileHeading">My Profile</h2>
+        <div class="profile-photo-tools" style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="customerAvatarPreview" src="/icons/zelpx-192.svg" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="customerAvatarFile">Profile photo for chat notifications</label><input id="customerAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><small id="customerAvatarStatus" class="subtitle">Upload a photo so contractors can recognize you in message notifications. Max 2 MB.</small></div></div>
         <label for="customerFullName">Full Name</label>
         <input id="customerFullName" type="text" autocomplete="name" required readonly>
         <label for="customerPhone">Phone Number</label>
@@ -848,7 +849,7 @@
       clearMessage("profileMessage");
       const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role")
+        .select("full_name,phone,role,avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -859,7 +860,30 @@
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      $("customerAvatarPreview").src = data.avatar_url || "/icons/zelpx-192.svg";
+      $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
+
+    $("customerAvatarFile").addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0]; if (!file) return;
+      const status = $("customerAvatarStatus"); status.textContent = "Uploading photo…";
+      try {
+        if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+        if (file.size > 2 * 1024 * 1024) throw new Error("Photo must be 2 MB or smaller.");
+        const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+        const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+        const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+        const path = user.id + "/avatar-" + Date.now() + "." + ext;
+        const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+        if (uploadError) throw uploadError;
+        const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
+        const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
+        if (saveError) throw saveError;
+        $("customerAvatarPreview").src = publicData.publicUrl; $("customerAvatarFile").dataset.currentUrl = publicData.publicUrl;
+        status.textContent = "Photo saved. It will appear in contractors’ chat notifications.";
+      } catch (error) { status.textContent = error.message || "Could not upload photo."; }
+      finally { event.target.value = ""; }
+    });
 
     const profileNameInput = $("customerFullName");
     const profilePhoneInput = $("customerPhone");
