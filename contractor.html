@@ -553,10 +553,20 @@
       return;
     }
     if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
-    // Keep the complete profession catalog visible. Eligibility is evaluated per
-    // state + worker role below; visibility must not depend on the license answer,
-    // which appears later in the form and previously hid the entire catalog.
-    signupProfessionCatalog.forEach(p=>{
+    // If the applicant explicitly selects "No", show ONLY professions whose
+    // selected-state + worker-role rule affirmatively says no individual license
+    // is required. An unanswered field must not be treated as "No".
+    const licenseAnswer=$("hasLicense").value;
+    const visibleProfessions=licenseAnswer==="no"
+      ? signupProfessionCatalog.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="allowed_no_individual_license")
+      : signupProfessionCatalog;
+    const visibleIds=new Set(visibleProfessions.map(p=>p.id));
+    [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
+    if(licenseAnswer==="no" && !visibleProfessions.length){
+      root.textContent="No professions have been confirmed as license-free for this state and work status. Choose another state or work status, or select Yes if you hold the required credential.";
+      return;
+    }
+    visibleProfessions.forEach(p=>{
       const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
       const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
       cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
