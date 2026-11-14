@@ -157,7 +157,16 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       .filter(x=>!query || x.score<99).sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name)).slice(0,8);
     matches.forEach(item=>{
       const button=document.createElement("button");button.type="button";button.setAttribute("role","option");button.textContent=item.name;
-      button.addEventListener("click",()=>{selectedService=item.name;serviceInput.value=item.name;suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");});
+      // Mobile: select a service with one tap and immediately close the suggestion panel.
+      button.addEventListener("pointerdown",event=>{event.preventDefault();});
+      button.addEventListener("click",()=>{
+        selectedService=item.name;
+        serviceInput.value=item.name;
+        suggestions.replaceChildren();
+        suggestions.hidden=true;
+        serviceInput.setAttribute("aria-expanded","false");
+        serviceInput.blur();
+      });
       suggestions.append(button);
     });
     suggestions.hidden=!matches.length;
@@ -165,6 +174,13 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
   }
   serviceInput.addEventListener("focus",showSuggestions);
   serviceInput.addEventListener("input",showSuggestions);
+  // Close the dropdown when the user taps anywhere outside the service field.
+  document.addEventListener("pointerdown",event=>{
+    if(!event.target.closest(".service-field")){
+      suggestions.hidden=true;
+      serviceInput.setAttribute("aria-expanded","false");
+    }
+  });
   serviceInput.addEventListener("keydown",event=>{
     if(event.key==="Escape"){suggestions.hidden=true;serviceInput.setAttribute("aria-expanded","false");}
     if(event.key==="Enter"&&!suggestions.hidden){const first=suggestions.querySelector("button");if(first){event.preventDefault();first.click();}}
