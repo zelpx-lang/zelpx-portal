@@ -19,7 +19,7 @@
     bar.append(callBtn, state, audio);
     const anchor = panel.querySelector("form") || panel.firstChild;
     if (anchor) panel.insertBefore(bar, anchor); else panel.append(bar);
-    let pc = null, activeCall = null, channel = null, localStream = null, seen = new Set(), closed = false;
+    let pc = null, activeCall = null, channel = null, localStream = null, seen = new Set(), pendingIce = [], closed = false;
     const otherRole = role === "customer" ? "contractor" : "customer";
     const say = t => { state.textContent = t; };
     const send = async (type,payload={}) => {
@@ -50,7 +50,7 @@
       if(closed || !activeCall || row.call_id!==activeCall || row.from_user_id===userId || seen.has(row.id)) return;
       seen.add(row.id);
       try {
-        if(row.signal_type==="answer" && pc){await pc.setRemoteDescription(row.payload);say("Connecting…");}
+        if(row.signal_type==="answer" && pc){await pc.setRemoteDescription(row.payload);for(const candidate of pendingIce.splice(0)) await pc.addIceCandidate(candidate);say("Connecting…");}
         else if(row.signal_type==="offer"){
           const accept = window.confirm("Incoming ZELPX audio call. Answer?");
           if(!accept){await db.from("call_invitations").update({status:"declined"}).eq("call_id",activeCall);await send("decline");await cleanup("Call declined");return;}
@@ -59,13 +59,13 @@
           await send("answer",peer.localDescription.toJSON());
           await db.from("call_invitations").update({status:"accepted"}).eq("call_id",activeCall);
           say("Connecting…");
-        } else if(row.signal_type==="ice" && pc){await pc.addIceCandidate(row.payload);}
+        } else if(row.signal_type==="ice" && pc){if(pc.remoteDescription) await pc.addIceCandidate(row.payload); else pendingIce.push(row.payload);}
         else if(row.signal_type==="decline"){await cleanup("The other person declined the call");}
         else if(row.signal_type==="hangup"){await cleanup("The other person ended the call");}
       } catch(e){say("Call error: "+(e.message||"Unable to connect"));await cleanup("Call failed");}
     };
     const subscribe = async callId => {
-      activeCall=callId; seen.clear();
+      activeCall=callId; seen.clear(); pendingIce=[];
       channel=db.channel("zelpx-call-"+callId)
         .on("postgres_changes",{event:"INSERT",schema:"public",table:"call_signals",filter:"call_id=eq."+callId},payload=>processSignal(payload.new))
         .subscribe();
