@@ -209,6 +209,20 @@
     }
   
     /* Compact expandable lead rows */
+    /* My purchases uses the same compact expandable list as customer requests. */
+    #purchasesList > .purchase-row { display:block; margin:0; padding:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
+    #purchasesList > .purchase-row:last-child { border-bottom:0; }
+    #purchasesList .purchase-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
+    #purchasesList .purchase-summary:hover { background:#faf4ed; box-shadow:none; transform:none; }
+    #purchasesList .purchase-summary-title { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #purchasesList .purchase-chevron { flex:0 0 auto; color:var(--muted); font-size:16px; }
+    #purchasesList .purchase-unread { flex:0 0 auto; color:#c2410c; font-size:13px; font-weight:800; }
+    #purchasesList .purchase-unread.has-unread { padding:4px 7px; border-radius:999px; background:#fff0e8; }
+    #purchasesList .purchase-details { padding:10px; border-top:1px solid var(--line); }
+    #purchasesList .purchase-details > p { margin:7px 0; font-size:13px; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
+    #purchasesList .purchase-chat-button { min-height:40px; padding:8px 14px; font-size:13px; }
+    #purchasesList .contactbox { margin-top:10px; }
+    @media(max-width:700px) { #purchasesList .purchase-summary { min-height:46px; padding:8px; } #purchasesList .purchase-details { padding:9px 8px 12px; } }
     #leadsList .lead.lead-compact { display:block; padding:0; margin:7px 0; border-radius:15px; box-shadow:0 5px 16px -15px #3b2a1a66; }
     #leadsList .lead.lead-compact::before { top:9px; bottom:9px; }
     #leadsList .lead-summary { width:100%; min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 13px 9px 17px; border:0; border-radius:15px; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
@@ -829,32 +843,40 @@
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
 
     for (const item of purchases) {
-      const card = document.createElement("article"); card.className = "lead";
-      const heading = document.createElement("h3");
+      const card = document.createElement("article"); card.className = "purchase-row";
+      card.dataset.leadId = item.lead_id;
+      const summary = document.createElement("button"); summary.type = "button"; summary.className = "purchase-summary";
+      summary.setAttribute("aria-expanded", "false");
+      const heading = document.createElement("strong"); heading.className = "purchase-summary-title";
       heading.textContent = "Purchased service";
-      card.append(heading);
-      const info = document.createElement("p"); info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); card.append(info);
-      const serviceDetails = document.createElement("div");
-      card.append(serviceDetails);
-      const contactBox = document.createElement("div"); contactBox.className = "contactbox";
-      const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
-      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
       const unreadCount = unreadByLead.get(item.lead_id) || 0;
-      const unreadBadge = document.createElement("span");
-      if (unreadCount) {
-        unreadBadge.className = "pill urgent";
-        unreadBadge.textContent = unreadCount + " unread message" + (unreadCount === 1 ? "" : "s");
-        unreadBadge.style.marginLeft = "10px";
-      }
+      const unreadBadge = document.createElement("span"); unreadBadge.className = "purchase-unread";
+      if (unreadCount) { unreadBadge.classList.add("has-unread"); unreadBadge.textContent = "🔔 " + unreadCount; unreadBadge.title = unreadCount + " unread customer messages"; }
+      const chevron = document.createElement("span"); chevron.className = "purchase-chevron"; chevron.textContent = "＋";
+      summary.append(heading, unreadBadge, chevron); card.append(summary);
+      const details = document.createElement("div"); details.className = "purchase-details hidden";
+      const info = document.createElement("p"); info.className = "purchase-meta"; info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); details.append(info);
+      const serviceDetails = document.createElement("div"); details.append(serviceDetails);
+      const contactBox = document.createElement("div"); contactBox.className = "contactbox";
+      const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); details.append(contactBox);
+      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary purchase-chat-button"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
         if (!chatPanel.classList.contains("hidden")) return;
-        chatButton.parentElement.querySelectorAll(".pill.urgent").forEach(badge => badge.remove());
+        unreadBadge.remove();
         if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} }
         show(chatPanel); chatButton.hidden = true;
         await openContractorChat(item.lead_id, chatPanel);
       });
-      card.append(chatButton); if (unreadCount) card.append(unreadBadge); card.append(chatPanel); list.append(card);
+      details.append(chatButton, chatPanel); card.append(details);
+      summary.addEventListener("click", () => {
+        const opening = details.classList.contains("hidden");
+        if (opening) list.querySelectorAll(".purchase-details").forEach(panel => panel.classList.add("hidden"));
+        details.classList.toggle("hidden", !opening);
+        summary.setAttribute("aria-expanded", String(opening));
+        chevron.textContent = opening ? "−" : "＋";
+      });
+      list.append(card);
       try {
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
         if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
@@ -883,7 +905,9 @@
       const targetCard = [...list.querySelectorAll(".lead")].find(card => card.dataset.leadId === requestedLeadId);
       if (targetCard) {
         switchTab("purchasesPanel");
-        const openButton = targetCard.querySelector("button");
+        const summaryButton = targetCard.querySelector(".purchase-summary");
+        if (summaryButton) summaryButton.click();
+        const openButton = targetCard.querySelector(".purchase-chat-button");
         if (openButton) openButton.click();
         targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
         window.history.replaceState({}, document.title, window.location.pathname);
