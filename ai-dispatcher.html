@@ -53,24 +53,38 @@ button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:80
 <div class="notice"><b>Safety boundary:</b> Submissions are stored only in a separate ZELPX pilot table, not in live service-request or lead tables. This pilot does not contact customers, place calls, book visits, access Stripe or modify either existing account portal. Use test contact details only.</div>
 </main>
 <script>
-const form=document.getElementById('intake');
-let demoCount=0;
-const endpoint='https://zsrnjkndgbchfxibxiyd.supabase.co/functions/v1/ai-dispatcher-pilot-intake';
-const safe=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
-form.addEventListener('submit',async e=>{
- e.preventDefault(); if(!form.reportValidity())return;
- const v=id=>document.getElementById(id).value.trim();
- const button=form.querySelector('button[type=\"submit\"]');
- button.disabled=true; button.textContent='Saving test request…';
- try {
-  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_name:v('customerName'),phone:v('customerPhone'),zip_code:v('zip'),service_type:v('service'),job_details:v('details'),preferred_time:v('time')})});
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(result.error||'Unable to save test request.');
-  document.getElementById('preview').className='item';
-  document.getElementById('preview').innerHTML='<div class=\"item-top\"><span>'+safe(v('service'))+'</span><span class=\"badge\">Saved · Pilot only</span></div><p><b>Request ID:</b> '+safe(result.request.id)+'</p><p><b>Customer:</b> '+safe(v('customerName'))+'</p><p><b>Phone:</b> '+safe(v('customerPhone'))+' · <b>ZIP:</b> '+safe(v('zip'))+'</p><p><b>Job:</b> '+safe(v('details'))+'</p><p><b>Preferred time:</b> '+safe(v('time'))+'</p><p style=\"margin-top:12px;color:#a64d20;font-weight:800\">Saved in the isolated pilot database. Not yet routed to contractors.</p>';
-  demoCount++; document.getElementById('count').textContent=demoCount;
- } catch(error) { document.getElementById('preview').className='empty'; document.getElementById('preview').textContent=error.message||'Could not save the test request.'; }
- finally { button.disabled=false; button.textContent='Save test request'; }
+const form = document.getElementById('intake');
+let demoCount = 0;
+const endpoint = 'https://zsrnjkndgbchfxibxiyd.supabase.co/functions/v1/ai-dispatcher-pilot-intake';
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!form.reportValidity()) return;
+  const value = (id) => document.getElementById(id).value.trim();
+  const button = form.querySelector('button[type=submit]');
+  button.disabled = true;
+  button.textContent = 'Saving test request…';
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customer_name: value('customerName'), phone: value('customerPhone'), zip_code: value('zip'), service_type: value('service'), job_details: value('details'), preferred_time: value('time') })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Unable to save test request.');
+    const preview = document.getElementById('preview');
+    preview.className = 'item';
+    preview.textContent = 'Saved · Pilot only\nRequest ID: ' + result.request.id + '\nService: ' + value('service') + '\nCustomer: ' + value('customerName') + '\nPhone: ' + value('customerPhone') + ' · ZIP: ' + value('zip') + '\nJob: ' + value('details') + '\nPreferred time: ' + value('time') + '\n\nSaved in the isolated pilot database. Not yet routed to contractors.';
+    preview.style.whiteSpace = 'pre-wrap';
+    demoCount += 1;
+    document.getElementById('count').textContent = demoCount;
+  } catch (error) {
+    const preview = document.getElementById('preview');
+    preview.className = 'empty';
+    preview.textContent = error.message || 'Could not save the test request.';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Save test request';
+  }
 });
 </script>
 </body></html>
