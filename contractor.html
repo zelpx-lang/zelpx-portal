@@ -616,7 +616,18 @@
     const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
     const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||["unverified","local_only"].includes(signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status));
+    // Fail closed: only an explicit state/role determination that no individual credential is
+    // required may be selected by an applicant who says they do not have a license.
+    // Conditional, local-review, missing and unverified rules are NOT license-free.
+    const restrictedWithoutLicense=selectedSignup.filter(p=>{
+      const rule=signupRuleRows.find(r=>r.profession_id===p.id);
+      return !rule || rule.eligibility_status!=="allowed_no_individual_license";
+    });
     if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
+    if(!hasLicense && restrictedWithoutLicense.length){
+      const names=restrictedWithoutLicense.map(p=>p.profession_name).join(", ");
+      return message("authMessage","You cannot register to offer these services without a current required license or credential: "+names+". ZELPX cannot treat conditional, local-review or unverified work as license-free. Remove these professions or provide your license details and upload the document.","error");
+    }
     if((signupRole==="independent"&&requiredSignup.length)||(signupRole==="employee"&&individualCredentialSignup.length)){
       if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage",signupRole==="employee"?"A selected trade requires your own individual license or certificate. Enter its number, issuing state and type, or remove that profession.":"A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
     }
