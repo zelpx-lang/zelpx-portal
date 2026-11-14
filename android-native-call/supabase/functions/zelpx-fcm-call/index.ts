@@ -137,6 +137,8 @@ Deno.serve(async (req) => {
             token:device.fcm_token,
             data:{
               type:"incoming_call", call_id:callId, conversation_id:conversationId,
+              lead_id:conversation.lead_id,
+              recipient_role:callerRole === "customer" ? "contractor" : "customer",
               caller_name:typeof body.caller_name === "string" ? body.caller_name.slice(0,80) : "ZELPX caller"
             },
             android:{priority:"HIGH",ttl:"45s"}
