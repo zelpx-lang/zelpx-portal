@@ -21,7 +21,7 @@ button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:80
 <body>
 <header><div class="brand">ZEL<span>PX</span></div><div class="tag">AI DISPATCHER · PRIVATE PILOT</div></header>
 <main>
-<section class="hero"><div><div class="eyebrow">Smarter home-service operations</div><h1>AI Dispatcher & CRM</h1><p class="sub">A separate pilot workspace for customer intake, contractor follow-up and appointment planning. Existing customer and contractor portals remain untouched.</p></div><div class="status">Prototype mode · No live calls or messages</div></section>
+<section class="hero"><div><div class="eyebrow">Smarter home-service operations</div><h1>AI Dispatcher & CRM</h1><p class="sub">A separate pilot workspace for customer intake, contractor follow-up and appointment planning. Existing customer and contractor portals remain untouched.</p></div><div class="status">Pilot database · No live calls or messages</div></section>
 <div class="grid">
 <section class="panel">
 <h2>Customer request intake</h2><p class="hint">Capture the details an AI dispatcher would collect before creating a service request.</p>
@@ -31,12 +31,12 @@ button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:80
 <label for="service">Service needed</label><select id="service" required><option value="">Choose a service</option><option>Tile Installation</option><option>Flooring & Laminate</option><option>Plumbing</option><option>Electrical</option><option>Painting & Home Repairs</option><option>AC Installation & Repair</option><option>House Cleaning</option><option>Other</option></select>
 <label for="details">Describe the job</label><textarea id="details" required placeholder="What needs to be repaired or installed?"></textarea>
 <label for="time">Preferred appointment window</label><select id="time"><option>First available</option><option>Morning · 8 AM–12 PM</option><option>Afternoon · 12 PM–4 PM</option><option>Evening · 4 PM–7 PM</option></select>
-<button class="primary" type="submit">Preview intake summary</button>
+<button class="primary" type="submit">Save test request</button>
 </form>
 </section>
 <section class="panel">
-<h2>Dispatcher preview</h2><p class="hint">A local demonstration of the information handoff. Nothing is sent to a customer or saved.</p>
-<div id="preview" class="empty">Complete the form to preview the request summary here.</div>
+<h2>Dispatcher preview</h2><p class="hint">Test submissions are saved in a separate, isolated ZELPX pilot table. No customer messages or calls are sent.</p>
+<div id="preview" class="empty">Complete the form to save a test request and preview its summary.</div>
 <div class="metric"><div><b id="count">0</b><small>Demo requests</small></div><div><b>0</b><small>Live calls</small></div><div><b>0</b><small>Appointments</small></div></div>
 </section>
 <section class="panel">
@@ -50,10 +50,27 @@ button{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:80
 <div class="item" style="margin-top:10px"><div class="item-top"><span>Human handoff</span><span class="badge">Planned</span></div><p>Escalate uncertain requests or urgent situations to a real person instead of guessing.</p></div>
 </section>
 </div>
-<div class="notice"><b>Safety boundary:</b> This pilot is isolated from production data. It does not create real service requests, contact customers, place calls, book visits, access Stripe or modify either existing account portal.</div>
+<div class="notice"><b>Safety boundary:</b> Submissions are stored only in a separate ZELPX pilot table, not in live service-request or lead tables. This pilot does not contact customers, place calls, book visits, access Stripe or modify either existing account portal. Use test contact details only.</div>
 </main>
 <script>
-const form=document.getElementById('intake');let demoCount=0;
-form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;const v=id=>document.getElementById(id).value.trim();const safe=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));document.getElementById('preview').className='item';document.getElementById('preview').innerHTML='<div class="item-top"><span>'+safe(v('service'))+'</span><span class="badge">Demo only</span></div><p><b>Customer:</b> '+safe(v('customerName'))+'</p><p><b>Phone:</b> '+safe(v('customerPhone'))+' · <b>ZIP:</b> '+safe(v('zip'))+'</p><p><b>Job:</b> '+safe(v('details'))+'</p><p><b>Preferred time:</b> '+safe(v('time'))+'</p><p style="margin-top:12px;color:#a64d20;font-weight:800">Next step: verify details and route to an eligible contractor.</p>';demoCount++;document.getElementById('count').textContent=demoCount;});
+const form=document.getElementById('intake');
+let demoCount=0;
+const endpoint='https://zsrnjkndgbchfxibxiyd.supabase.co/functions/v1/ai-dispatcher-pilot-intake';
+const safe=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));
+form.addEventListener('submit',async e=>{
+ e.preventDefault(); if(!form.reportValidity())return;
+ const v=id=>document.getElementById(id).value.trim();
+ const button=form.querySelector('button[type=\"submit\"]');
+ button.disabled=true; button.textContent='Saving test request…';
+ try {
+  const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer_name:v('customerName'),phone:v('customerPhone'),zip_code:v('zip'),service_type:v('service'),job_details:v('details'),preferred_time:v('time')})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Unable to save test request.');
+  document.getElementById('preview').className='item';
+  document.getElementById('preview').innerHTML='<div class=\"item-top\"><span>'+safe(v('service'))+'</span><span class=\"badge\">Saved · Pilot only</span></div><p><b>Request ID:</b> '+safe(result.request.id)+'</p><p><b>Customer:</b> '+safe(v('customerName'))+'</p><p><b>Phone:</b> '+safe(v('customerPhone'))+' · <b>ZIP:</b> '+safe(v('zip'))+'</p><p><b>Job:</b> '+safe(v('details'))+'</p><p><b>Preferred time:</b> '+safe(v('time'))+'</p><p style=\"margin-top:12px;color:#a64d20;font-weight:800\">Saved in the isolated pilot database. Not yet routed to contractors.</p>';
+  demoCount++; document.getElementById('count').textContent=demoCount;
+ } catch(error) { document.getElementById('preview').className='empty'; document.getElementById('preview').textContent=error.message||'Could not save the test request.'; }
+ finally { button.disabled=false; button.textContent='Save test request'; }
+});
 </script>
 </body></html>
