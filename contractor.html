@@ -547,7 +547,7 @@
     let conditional=false,unverified=false,required=false;
     signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)).forEach(p=>{
       const r=signupRuleRows.find(x=>x.profession_id===p.id), status=r?.requirement_status||"unverified";
-      if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified")unverified=true;
+      if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified"||status==="local_only")unverified=true;
       const row=document.createElement("div");row.style.margin="7px 0";
       const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
       const stateLabel=document.createElement("span");stateLabel.textContent=({required:"LICENSE / REGISTRATION REQUIRED",conditional:"CONDITIONAL — CHECK EXACT TASK",not_required:"NO STATE TRADE LICENSE FOR DESCRIBED SCOPE",local_only:"LOCAL RULES APPLY",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
@@ -1435,6 +1435,9 @@
       // Prefer the first official place; keep the inputs editable in case the address uses another locality.
       cityInput.value = places[0]["place name"] || "";
       stateInput.value = places[0]["state abbreviation"] || "";
+      if (stateInput.id === "serviceState" && typeof refreshSignupProfessionRules === "function") {
+        refreshSignupProfessionRules().catch(error => console.warn("Signup profession rule refresh failed:", error));
+      }
       if (statusElement) {
         statusElement.textContent = places.length > 1
           ? "ZIP found. Multiple localities are associated with this ZIP; verify the city and edit if needed."
