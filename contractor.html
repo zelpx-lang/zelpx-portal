@@ -543,7 +543,7 @@
     const status = $("contractorAvatarStatus"); status.textContent = "Uploading photo…";
     try {
       if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
-      if (file.size > 2 * 1024 * 1024) throw new Error("Photo must be 2 MB or smaller.");
+      if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 2 MB or smaller.");
       const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
       const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
       const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
