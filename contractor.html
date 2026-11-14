@@ -528,33 +528,68 @@
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
+  function renderSignupProfessionOptions(){
+    const root=$("signupProfessionOptions");root.replaceChildren();
+    const employee=$("signupWorkRole").value==="employee";
+    const state=$("serviceState").value.trim().toUpperCase();
+    const visible=employee
+      ? signupProfessionCatalog.filter(p=>signupRuleRows.some(r=>r.profession_id===p.id&&r.requirement_status==="not_required"))
+      : signupProfessionCatalog;
+    // Remove any previously selected profession that is not confirmed license-free for this state.
+    if(employee){
+      const allowed=new Set(visible.map(p=>p.id));
+      signupSelectedProfessionIds=new Set([...signupSelectedProfessionIds].filter(id=>allowed.has(id)));
+    }
+    if(employee&&!/^[A-Z]{2}$/.test(state)){
+      root.textContent="Select a state first. Only verified license-free work categories will appear.";
+      return;
+    }
+    if(employee&&!visible.length){
+      root.textContent="No professions are currently verified as license-free for this state. Please choose another state or ask ZELPX support.";
+      return;
+    }
+    visible.forEach(p=>{
+      const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
+      const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
+      cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
+      const name=document.createElement("span");name.textContent=p.profession_name;label.append(cb,name);root.append(label);
+    });
+  }
   async function loadSignupWorkTypes(){
     const {data:states,error:statesError}=await db.from("us_states").select("state_code,state_name").eq("is_active",true).order("state_name");
     if(statesError)throw statesError;
-    const stateSelect=$("serviceState"), previousState=stateSelect.value;
+    const stateSelect=$("serviceState"),previousState=stateSelect.value;
     stateSelect.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select state";stateSelect.append(placeholder);
     (states||[]).forEach(x=>{const o=document.createElement("option");o.value=x.state_code;o.textContent=x.state_name;stateSelect.append(o);});
     if(previousState)stateSelect.value=previousState;
     const {data,error}=await db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name");
-    if(error) throw error; signupProfessionCatalog=data||[];
-    const root=$("signupProfessionOptions"); root.replaceChildren();
-    signupProfessionCatalog.forEach(p=>{
-      const label=document.createElement("label"); label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
-      const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=signupSelectedProfessionIds.has(p.id); cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
-      cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
-      const name=document.createElement("span"); name.textContent=p.profession_name; label.append(cb,name); root.append(label);
-    });
+    if(error)throw error;signupProfessionCatalog=data||[];
     await refreshSignupProfessionRules();
   }
   async function refreshSignupProfessionRules(){
-    const state=$("serviceState").value.trim().toUpperCase(), root=$("signupProfessionRules"); root.replaceChildren();
+    const state=$("serviceState").value.trim().toUpperCase(),root=$("signupProfessionRules");
+    root.replaceChildren();
+    signupRuleRows=[];
+    if(/^[A-Z]{2}$/.test(state)){
+      const {data,error}=await db.from("state_profession_rules").select("profession_id,requirement_status,rule_summary,official_source_url,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state");
+      if(error)throw error;signupRuleRows=data||[];
+    }
+    renderSignupProfessionOptions();
+    const employee=$("signupWorkRole").value==="employee";
+    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional||employee);
+    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified||employee);
+    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
+    if(employee){
+      root.textContent=/^[A-Z]{2}$/.test(state)
+        ? "Showing only professions marked NOT REQUIRED by verified state-level rules. This does not waive business registration, local permits, safety rules, or task-specific credentials."
+        : "Select a state. Only verified license-free work categories will appear.";
+      return;
+    }
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
     if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
-    const {data,error}=await db.from("state_profession_rules").select("profession_id,requirement_status,rule_summary,official_source_url,licensing_authority").eq("state_code",state).eq("jurisdiction_level","state");
-    if(error) throw error; signupRuleRows=data||[];
     let conditional=false,unverified=false,required=false;
     signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)).forEach(p=>{
-      const r=signupRuleRows.find(x=>x.profession_id===p.id), status=r?.requirement_status||"unverified";
+      const r=signupRuleRows.find(x=>x.profession_id===p.id),status=r?.requirement_status||"unverified";
       if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified"||status==="local_only")unverified=true;
       const row=document.createElement("div");row.style.margin="7px 0";
       const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
@@ -564,12 +599,10 @@
       if(r?.official_source_url){const a=document.createElement("a");a.href=r.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(r.licensing_authority||"State authority");row.append(a);}
       root.append(row);
     });
-    const employee=$("signupWorkRole").value==="employee";
-    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional||employee);
-    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified||employee);
+    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional);
+    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified);
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
-    if(required&&!employee){const p=document.createElement("p");p.style.fontWeight="700";p.textContent="At least one selected profession requires a current license or contractor registration. Enter its details below to continue.";root.append(p);}
-    if(employee){const p=document.createElement("p");p.textContent="Employee mode: your employer handles contractor registration where required. Individual trade certificates and permits may still apply.";root.append(p);}
+    if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent="At least one selected profession requires a current license or contractor registration. Enter its details below to continue.";root.append(p);}
   }
   async function signUp() {
     clearMessage("authMessage");
