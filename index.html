@@ -313,6 +313,29 @@
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    // Android may block automatic external-app launches without a user gesture.
+    // Show an explicit registration action so the signed-in user can launch the
+    // native token handoff reliably. The access token is never displayed or logged.
+    const nativeSessionResult = await db.auth.getSession();
+    const nativeSession = nativeSessionResult.data && nativeSessionResult.data.session;
+    if (nativeSession && /Android/i.test(navigator.userAgent)) {
+      let nativeButton = document.getElementById("zelpxNativeTokenButton");
+      if (!nativeButton) {
+        nativeButton = document.createElement("button");
+        nativeButton.id = "zelpxNativeTokenButton";
+        nativeButton.type = "button";
+        nativeButton.textContent = "Register this phone for call alerts";
+        nativeButton.setAttribute("aria-label", "Register this Android phone for ZELPX call alerts");
+        nativeButton.style.cssText = "position:fixed;z-index:99999;right:16px;bottom:16px;padding:13px 17px;border:0;border-radius:12px;background:#f47b20;color:#fff;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.22);";
+        nativeButton.addEventListener("click", async () => {
+          const fresh = await db.auth.getSession();
+          const token = fresh.data && fresh.data.session && fresh.data.session.access_token;
+          if (!token) { nativeButton.textContent = "Please sign in again"; return; }
+          window.location.href = "intent://register?access_token=" + encodeURIComponent(token) + "#Intent;scheme=zelpx;package=com.zelpx.app;end";
+        });
+        document.body.appendChild(nativeButton);
+      }
+    }
     await loadAccount();
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
@@ -326,6 +349,12 @@
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
+    const nativeLead = new URLSearchParams(window.location.search).get("lead");
+    if (nativeLead) {
+      const purchasedCard = [...$("purchasesList").querySelectorAll("[data-lead-id]")].find(card => card.dataset.leadId === nativeLead);
+      const openChat = purchasedCard?.querySelector("button[data-open-purchased-chat]");
+      if (openChat) openChat.click();
+    }
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
@@ -464,7 +493,7 @@
       if (requestedLead === lead.id) {
         card.scrollIntoView({ behavior: "smooth", block: "center" });
         card.style.outline = "3px solid #1769aa";
-        window.history.replaceState({}, document.title, window.location.pathname + "#availablePanel");
+        const remaining = new URLSearchParams(window.location.search); remaining.delete("lead"); window.history.replaceState({}, document.title, window.location.pathname + (remaining.toString() ? "?" + remaining.toString() : "") + "#availablePanel");
       }
     });
   }
@@ -481,6 +510,7 @@
       const textarea = document.createElement("textarea"); textarea.maxLength = 5000; textarea.required = true; textarea.placeholder = "Write a message to the customer…";
       const send = document.createElement("button"); send.type = "submit"; send.textContent = "Send"; form.append(textarea, send); panel.append(form);
       const status = document.createElement("p"); status.className = "muted"; panel.append(status);
+      if (typeof window.ZELPXMountAudioCall === "function") window.ZELPXMountAudioCall({ db, conversationId, role: "contractor", panel, userId: currentUser.id });
       let knownMessageIds = null;
       let chatSoundContext = null;
       function playIncomingChatSound() {
@@ -541,12 +571,12 @@
     const purchases = data || []; $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
     if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
     for (const item of purchases) {
-      const card = document.createElement("article"); card.className = "lead";
+      const card = document.createElement("article"); card.className = "lead"; card.dataset.leadId = item.lead_id;
       const heading = document.createElement("h3"); heading.textContent = "Purchased lead"; card.append(heading);
       const info = document.createElement("p"); info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); card.append(info);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); card.append(contactBox);
-      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
+      const chatButton = document.createElement("button"); chatButton.type = "button"; chatButton.className = "secondary"; chatButton.dataset.openPurchasedChat = "true"; chatButton.textContent = "Open customer chat"; chatButton.style.marginTop = "12px";
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
         if (chatPanel.classList.contains("hidden")) { if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} } show(chatPanel); chatButton.textContent = "Close customer chat"; await openContractorChat(item.lead_id, chatPanel); }
@@ -912,5 +942,6 @@
   start();
 })();
 </script>
+<script src="/call-client.js"></script>
 </body>
 </html>

@@ -1,0 +1,193 @@
+name: Build ZELPX Android TWA with native call scaffold
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/android-native-incoming-call
+permissions:
+  contents: read
+concurrency:
+  group: zelpx-android-twa
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo 'Missing ANDROID_KEYSTORE_BASE64'; exit 1; }
+          test -n "$STORE_PASSWORD" || { echo 'Missing ANDROID_KEYSTORE_PASSWORD'; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo 'Missing ANDROID_KEY_PASSWORD'; exit 1; }
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Bubblewrap
+        run: npm install --global @bubblewrap/cli
+      - name: Restore upload keystore
+        shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p android
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > android/android-keystore
+          cp android/android-keystore android/android.keystore
+          chmod 600 android/android-keystore android/android.keystore
+          keytool -list -keystore android/android.keystore -storepass "$BUBBLEWRAP_KEYSTORE_PASSWORD" -alias android >/dev/null
+      - name: Set up Android SDK and accept licenses
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+      - name: Configure Bubblewrap to use preinstalled Android tools
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.bubblewrap"
+          # Bubblewrap expects sdkmanager at ANDROID_HOME/bin/sdkmanager.
+          # GitHub's Android SDK ships it under cmdline-tools/<version>/bin.
+          set -euxo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT" || { echo 'ANDROID_HOME and ANDROID_SDK_ROOT are both unset'; env | sort | grep -E 'ANDROID|JAVA' || true; exit 1; }
+          echo "Android SDK root: $SDK_ROOT"
+          test -d "$SDK_ROOT" || { echo "Android SDK directory does not exist: $SDK_ROOT"; exit 1; }
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -path '*/bin/sdkmanager' 2>/dev/null | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER" || { echo 'sdkmanager was not found'; find "$SDK_ROOT" -type f -name sdkmanager -print || true; exit 1; }
+          echo "Using sdkmanager: $SDKMANAGER"
+          mkdir -p "$SDK_ROOT/bin" "$HOME/.bubblewrap"
+          ln -sfn "$SDKMANAGER" "$SDK_ROOT/bin/sdkmanager"
+          # The SDK is preinstalled and read-only on the runner; do not chmod it.
+          test -x "$SDKMANAGER" || { echo "sdkmanager is not executable: $SDKMANAGER"; ls -l "$SDKMANAGER"; exit 1; }
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$SDK_ROOT" > "$HOME/.bubblewrap/config.json"
+          cat "$HOME/.bubblewrap/config.json"
+          "$SDKMANAGER" --version
+          bubblewrap doctor
+      - name: Prepare build manifest with available ZELPX icons
+        shell: bash
+        run: |
+          curl -fsSL https://app.zelpx.com/manifest.webmanifest -o zelpx-build-manifest.json
+          jq '(.icons[] | .src) |= (if endswith("192.svg") then "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg" else "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-512.svg" end) | (.shortcuts[]?.icons[]?.src) |= "https://raw.githubusercontent.com/zelpx-lang/zelpx-portal/android/google-play-twa-current-main/icons/zelpx-192.svg"' zelpx-build-manifest.json > zelpx-build-manifest.tmp
+          mv zelpx-build-manifest.tmp zelpx-build-manifest.json
+          cat zelpx-build-manifest.json
+      - name: Initialize TWA project from production manifest
+        shell: bash
+        run: |
+          # The manifest is generated during this job, so it is not available at
+          # the raw.githubusercontent.com URL. Serve the generated file locally
+          # for Bubblewrap's manifest fetch.
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "$GITHUB_WORKSPACE" >/tmp/zelpx-manifest-server.log 2>&1 &
+          MANIFEST_SERVER_PID=$!
+          trap 'kill "$MANIFEST_SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8765/zelpx-build-manifest.json -o /dev/null
+          # Bubblewrap's init wizard requires a real interactive TTY. Use Expect
+          # to answer each prompt explicitly instead of piping text into Inquirer.
+          sudo apt-get update
+          sudo apt-get install -y expect
+          expect <<'EXPECT'
+          set timeout 120
+          log_user 1
+          proc wait_for {pattern description} {
+            expect {
+              -re $pattern {}
+              timeout { puts stderr "Timed out waiting for: $description"; exit 1 }
+              eof { puts stderr "Bubblewrap exited while waiting for: $description"; exit 1 }
+            }
+          }
+          spawn bubblewrap init --manifest=http://127.0.0.1:8765/zelpx-build-manifest.json --directory=android
+          wait_for {Domain:.*\(127\.0\.0\.1:8765\)} "Domain prompt"
+          send -- "app.zelpx.com\r"
+          wait_for {URL path:.*\(/\)} "URL path prompt"
+          send -- "/\r"
+          wait_for {Application name:.*\(ZELPX\)} "Application name prompt"
+          send -- "ZELPX\r"
+          wait_for {Short name:.*\(ZELPX\)} "Short name prompt"
+          send -- "ZELPX\r"
+          wait_for {Application ID:.*\(1_8765\.0\.0\.127\.twa\)} "Application ID prompt"
+          send -- "com.zelpx.app\r"
+          wait_for {Starting version code for the new app version:} "Version code prompt"
+          send -- "1\r"
+          wait_for {Display mode:.*Use arrow keys} "Display mode prompt"
+          send -- "\r"
+          wait_for {Orientation:.*Use arrow keys} "Orientation prompt"
+          send -- "\r"
+          wait_for {Status bar color:.*\(#10243A\)} "Status bar color prompt"
+          send -- "#10243a\r"
+          wait_for {Splash screen color:.*\(#F3F6FA\)} "Splash screen color prompt"
+          send -- "#f3f6fa\r"
+          wait_for {Icon URL:.*zelpx-512\.svg} "Launcher icon prompt"
+          send -- "\r"
+          wait_for {Maskable icon URL:.*zelpx-512\.svg} "Maskable icon prompt"
+          send -- "\r"
+          wait_for {Include app shortcuts\?.*\(Y/n\)} "App shortcuts prompt"
+          send -- "\r"
+          wait_for {Monochrome icon URL:.*\(\)} "Monochrome icon prompt"
+          send -- "\r"
+          wait_for {Include support for Play Billing\?.*\(y/N\)} "Play Billing prompt"
+          send -- "\r"
+          wait_for {Request geolocation permission\?.*\(y/N\)} "Geolocation prompt"
+          send -- "\r"
+          wait_for {Key store location:.*android\.keystore} "Keystore location prompt"
+          send -- "\r"
+          wait_for {Key name:.*\(android\)} "Keystore alias prompt"
+          send -- "\r"
+          expect eof
+          EXPECT
+          test -f android/twa-manifest.json || { echo 'Bubblewrap did not create android/twa-manifest.json'; exit 1; }
+          node -e "const m=require('./android/twa-manifest.json'); if(m.host !== 'app.zelpx.com') { console.error('Unexpected TWA host:',m.host); process.exit(1); } console.log('TWA host:',m.host,'startUrl:',m.startUrl,'packageId:',m.packageId);"
+      - name: Apply fixed ZELPX TWA settings
+        working-directory: android
+        run: |
+          cp ../twa-manifest.json ./twa-manifest.json
+          cp ./android.keystore ./android-keystore
+          bubblewrap update --skipVersionUpgrade
+      - name: Validate native Android source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s android-native-call/google-services.json
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/TokenRegistration.kt
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/TokenRegistrationActivity.kt
+          test -s android-native-call/src/main/java/com/zelpx/app/calls/ZelpxMessagingService.kt
+          python3 -m py_compile android-native-call/scripts/integrate_native_call.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path('android-native-call/google-services.json').read_text())
+          ids = {c['client_info']['android_client_info']['package_name'] for c in cfg.get('client', [])}
+          assert 'com.zelpx.app' in ids, f'Firebase package mismatch: {sorted(ids)}'
+          print('Firebase Android package verified: com.zelpx.app')
+          PY
+      - name: Integrate isolated native FCM call scaffold
+        run: python3 android-native-call/scripts/integrate_native_call.py
+      - name: Build signed APK and AAB
+        working-directory: android
+        run: yes '' | bubblewrap build
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelpx-android-native-call-${{ github.run_number }}
+          path: |
+            android/app-release-bundle.aab
+            android/app-release-signed.apk
+          if-no-files-found: error
+          retention-days: 14

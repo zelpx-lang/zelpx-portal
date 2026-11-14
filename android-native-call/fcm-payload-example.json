@@ -1,0 +1,15 @@
+{
+  "message": {
+    "token": "<registered-device-fcm-token>",
+    "data": {
+      "type": "incoming_call",
+      "call_id": "<server-generated-call-id>",
+      "conversation_id": "<authorized-conversation-id>",
+      "caller_name": "ZELPX customer"
+    },
+    "android": {
+      "priority": "HIGH",
+      "ttl": "45s"
+    }
+  }
+}
