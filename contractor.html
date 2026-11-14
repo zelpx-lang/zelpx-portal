@@ -324,6 +324,7 @@
     </section>
     <section id="companyPanel" class="card hidden">
       <h2>My company</h2>
+      <div style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="contractorAvatarPreview" src="/icons/zelpx-192.svg" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="contractorAvatarFile">Profile photo for chat notifications</label><input id="contractorAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><small id="contractorAvatarStatus" class="muted">Upload a photo so customers can recognize you in message notifications. Max 2 MB.</small></div></div>
       <div class="grid">
         <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
         <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
@@ -510,7 +511,7 @@
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
   }
   async function loadAccount() {
-    const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
+    const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
     currentProfile = profile; isAdmin = profile?.role === "admin";
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
@@ -525,6 +526,7 @@
     } else currentWallet = null;
     $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
     $("profileFullName").value = profile?.full_name || ""; $("profilePhone").value = profile?.phone || "";
+    $("contractorAvatarPreview").src = profile?.avatar_url || "/icons/zelpx-192.svg";
     $("profileCompany").value = contractor?.company_name || ""; $("profileCompanyEmail").value = contractor?.email || "";
     $("profileServiceAddress").value = contractor?.service_address || ""; $("profileServiceCity").value = contractor?.service_city || "";
     $("profileServiceState").value = contractor?.service_state || ""; $("profileServiceZip").value = contractor?.service_zip_code || "";
@@ -536,6 +538,28 @@
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("licenseDocumentStatus").textContent = contractor?.license_document_path ? "A document is on file. Select a new file to replace it." : "No license document uploaded yet.";
   }
+  $("contractorAvatarFile").addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    const status = $("contractorAvatarStatus"); status.textContent = "Uploading photo…";
+    try {
+      if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+      if (file.size > 2 * 1024 * 1024) throw new Error("Photo must be 2 MB or smaller.");
+      const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+      const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = user.id + "/avatar-" + Date.now() + "." + ext;
+      const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+      if (uploadError) throw uploadError;
+      const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
+      const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
+      if (saveError) throw saveError;
+      $("contractorAvatarPreview").src = publicData.publicUrl;
+      if (currentProfile) currentProfile.avatar_url = publicData.publicUrl;
+      status.textContent = "Photo saved. It will appear in customers’ chat notifications.";
+    } catch (error) { status.textContent = error.message || "Could not upload photo."; }
+    finally { event.target.value = ""; }
+  });
+
   async function addCredits() {
     clearMessage("appMessage");
     if (!currentContractor || !currentWallet) return message("appMessage", "Your contractor account or credit wallet is not ready. Contact ZELPX support.", "error");
