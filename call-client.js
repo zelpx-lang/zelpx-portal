@@ -52,7 +52,15 @@
       try {
         if(row.signal_type==="answer" && pc){await pc.setRemoteDescription(row.payload);for(const candidate of pendingIce.splice(0)) await pc.addIceCandidate(candidate);say("Connecting…");}
         else if(row.signal_type==="offer"){
-          const accept = window.confirm("Incoming ZELPX audio call. Answer?");
+          const params = new URLSearchParams(window.location.search);
+          const requestedCall = params.get("call_id");
+          const requestedAction = requestedCall === activeCall ? params.get("action") : null;
+          const accept = requestedAction === "answer" ? true : requestedAction === "decline" ? false : window.confirm("Incoming ZELPX audio call. Answer?");
+          if (requestedAction) {
+            params.delete("action"); params.delete("call_id"); params.delete("conversation_id");
+            const cleanUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "") + window.location.hash;
+            window.history.replaceState({}, "", cleanUrl);
+          }
           if(!accept){await db.from("call_invitations").update({status:"declined"}).eq("call_id",activeCall);await send("decline");await cleanup("Call declined");return;}
           const peer=await ensurePeer(); await peer.setRemoteDescription(row.payload);
           const answer=await peer.createAnswer(); await peer.setLocalDescription(answer);
@@ -107,6 +115,22 @@
         say("Incoming audio call — opening call controls");
         try{await subscribe(row.call_id);callBtn.disabled=false;callBtn.textContent="End call";callBtn.onclick=async()=>{try{await send("hangup");}catch(_){}await db.from("call_invitations").update({status:"ended"}).eq("call_id",row.call_id);await cleanup();};}catch(e){say("Incoming call error: "+e.message);}
       }).subscribe();
+    // Recover an invitation that arrived before this chat was opened (e.g. after
+    // tapping Answer on the native Android call notification).
+    try {
+      const { data: pendingCalls, error: pendingError } = await db.from("call_invitations")
+        .select("call_id,caller_user_id,status").eq("conversation_id", conversationId)
+        .eq("status", "ringing").neq("caller_user_id", userId)
+        .order("created_at", { ascending: false }).limit(1);
+      if (pendingError) throw pendingError;
+      const pending = pendingCalls && pendingCalls[0];
+      if (pending && !activeCall) {
+        callBtn.disabled = true; callBtn.textContent = "Incoming call…";
+        await subscribe(pending.call_id);
+        callBtn.disabled = false; callBtn.textContent = "End call";
+        callBtn.onclick = async () => { try { await send("hangup"); } catch (_) {} await db.from("call_invitations").update({status:"ended"}).eq("call_id", pending.call_id); await cleanup(); };
+      }
+    } catch (e) { say("Could not restore incoming call: " + (e.message || "unknown error")); }
     const poll=window.setInterval(()=>{if(!panel.isConnected||panel.classList.contains("hidden")||panel.offsetParent===null){window.clearInterval(poll);closed=true;db.removeChannel(incoming);if(channel)db.removeChannel(channel);cleanup();}},1500);
     // Incoming call prompt is triggered only after its offer arrives.
     callBtn.addEventListener("contextmenu",e=>e.preventDefault());
