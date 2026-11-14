@@ -902,7 +902,7 @@
     }
     const requestedLeadId = new URLSearchParams(window.location.search).get("open_lead");
     if (requestedLeadId) {
-      const targetCard = [...list.querySelectorAll(".lead")].find(card => card.dataset.leadId === requestedLeadId);
+      const targetCard = [...list.querySelectorAll(".purchase-row")].find(card => card.dataset.leadId === requestedLeadId);
       if (targetCard) {
         switchTab("purchasesPanel");
         const summaryButton = targetCard.querySelector(".purchase-summary");
