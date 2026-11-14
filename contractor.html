@@ -308,7 +308,7 @@
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
       </div>
       <div><label for="hasLicense">Do you have the required current license / registration / trade credential?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-      <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
+      <div id="signupLicenseFields" class="grid" style="grid-column:1/-1">
         <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
         <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
@@ -1772,7 +1772,7 @@
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
-      $("signupInsuranceFields").classList.toggle("hidden",employee);
+      $("signupInsuranceFields").classList.remove("hidden"); // Keep upload fields visible for every applicant.
       ["signupInsurancePolicy","signupInsuranceExpiration","signupInsuranceDocument"].forEach(id=>$(id).required=!employee);
     });
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
@@ -1822,7 +1822,7 @@
     });
     $("hasLicense").addEventListener("change", () => {
       const showLicense=$("hasLicense").value==="yes";
-      $("signupLicenseFields").classList.toggle("hidden",!showLicense);
+      // Keep the license upload fields visible; require them only when Yes is selected.
       ["licenseNumber","licenseState","licenseType","signupLicenseDocument"].forEach(id=>$(id).required=showLicense);
     });
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
