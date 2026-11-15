@@ -1013,6 +1013,7 @@
     try {
       const { data: rows, error } = await db.from("contractor_change_requests")
         .select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at")
+        .neq("status", "rejected")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       const requests = rows || [];
