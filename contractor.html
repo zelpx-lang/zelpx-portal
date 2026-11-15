@@ -631,10 +631,9 @@
         ? rule.eligibility_status===LICENSE_FREE_STATUS
         : LICENSE_REQUIRED_STATUSES.has(rule.eligibility_status);
     });
-    const visibleIds=new Set(visibleCategories.map(c=>c.id));
-    [...signupSelectedCategoryIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedCategoryIds.delete(id);});
-    updateSignupSelectedServices();
-    if(!visibleCategories.length){root.textContent=licenseAnswer==="no"?"No work types are confirmed as not requiring an individual license for this state and work status.":"No work types with confirmed license, registration, or trade-credential requirements are available for this state and work status.";return;}
+    // Searching only changes what is displayed; it must never clear a category
+    // selected earlier while it was visible under a different search term.
+    if(!visibleCategories.length){root.textContent="No services match your search. Clear the search to see the full catalog.";return;}
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
     [...groups.entries()].forEach(([group,cats])=>{
@@ -1080,15 +1079,10 @@
     const licenseChoice=$("profileHasLicense").value;
     const role=$("professionWorkRole").value;
     $("professionLicenseFilter").classList.toggle("hidden",role==="employee");
-    if(role==="independent" && licenseChoice==="no") {
-      selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status==="allowed_no_individual_license"));
-    } else if(role==="independent" && licenseChoice==="yes") {
-      const allowedWithLicense=new Set(["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"]);
-      selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>allowedWithLicense.has(professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status)));
-    } else if(role==="employee") {
-      const employeeEligible=new Set(["allowed_no_individual_license"]);
-      selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>employeeEligible.has(professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status)));
-    }
+    // Do not silently discard a contractor's selected professions when the
+    // current state has a required, conditional, local-only, or unverified rule.
+    // Keep the selection visible and save its qualification as pending; the
+    // lead-access check separately blocks work until the required review passes.
     renderProfessionOptions();
     const chosen=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
     const summary=$("professionComplianceSummary"); summary.replaceChildren();
