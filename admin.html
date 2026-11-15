@@ -311,6 +311,14 @@
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
+
+      <section class="lead" style="margin-top:18px">
+        <h2>Contractor profile change requests <span id="adminPendingBadge" class="pill" style="display:none">0</span></h2>
+        <p>Review company details, selected work types, licenses and service categories submitted by contractors. Changes are applied only after approval.</p>
+        <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh submissions</button></div>
+        <div id="contractorChangesList"><p class="muted">Loading contractor submissions…</p></div>
+      </section>
       </section>
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
@@ -481,6 +489,7 @@
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); }
+    if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -1033,6 +1042,77 @@
   }
 
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
+  let adminChangeChannel=null, adminChangePollTimer=null;
+  const adminSeenChangeIds=new Set();
+  async function refreshAdminPendingBadge(){
+    if(!isAdmin)return;
+    const {count,error}=await db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending");
+    if(error){console.warn("Admin pending badge refresh failed:",error.message);return;}
+    const badge=$("adminPendingBadge");
+    if(badge){badge.textContent=String(count||0);badge.style.display=count?"inline-block":"none";}
+  }
+  function showAdminTopAlert(title,body,requestId){
+    let toast=document.getElementById("zelpxAdminTopAlert");
+    if(!toast){
+      toast=document.createElement("div");toast.id="zelpxAdminTopAlert";
+      toast.style.cssText="position:fixed;top:env(safe-area-inset-top,0px);left:12px;right:12px;z-index:99999;background:#202b3c;color:#fff;border:2px solid #f59e0b;border-radius:14px;padding:14px 16px;box-shadow:0 10px 35px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;justify-content:space-between";
+      document.body.append(toast);
+    }
+    toast.replaceChildren();
+    const copy=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("div");
+    strong.textContent=title;small.textContent=body;small.style.cssText="font-size:13px;opacity:.92;margin-top:3px";copy.append(strong,small);
+    const open=document.createElement("button");open.type="button";open.textContent="Open";open.style.cssText="background:#f59e0b;color:#202b3c;min-height:38px;padding:8px 12px";open.onclick=()=>{switchTab("adminPanel");loadContractorChangeRequests();toast.remove();};
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close notification");close.style.cssText="background:transparent;padding:4px 8px;min-height:32px";close.onclick=()=>toast.remove();
+    toast.append(copy,open,close);
+    if(requestId)toast.dataset.requestId=requestId;
+  }
+  function startAdminChangeNotifications(){
+    // This listener must never start in a contractor session.
+    if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
+    if(adminChangeChannel)db.removeChannel(adminChangeChannel);
+    if(adminChangePollTimer)clearInterval(adminChangePollTimer);
+    refreshAdminPendingBadge();
+    loadContractorChangeRequests();
+    const announceRequest=async(request)=>{
+      if(!request?.id||request.status!=="pending"||adminSeenChangeIds.has(request.id))return;
+      adminSeenChangeIds.add(request.id);
+      const kind=request.request_type==="profession_qualifications"?"selected professions and license details":request.request_type==="service_categories"?"selected work categories":"company details, license or insurance information";
+      const notice="A contractor submitted "+kind+". Please review and approve or reject this request.";
+      showAdminTopAlert("Approval required: new contractor submission",notice,request.id);
+      message("contractorChangesMessage",notice,"success");
+      if("Notification" in window && Notification.permission==="granted"){
+        const n=new Notification("ZELPX — administrator approval required",{body:notice,tag:"zelpx-change-"+request.id});
+        n.onclick=()=>{window.focus();switchTab("adminPanel");};
+      }
+      await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
+    };
+    // Load pending requests on admin sign-in and remember them to avoid duplicate alerts.
+    db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending")
+      .then(async({data,error})=>{
+        if(error){console.error("Admin pending request load failed:",error.message);return;}
+        (data||[]).forEach(r=>adminSeenChangeIds.add(r.id));
+        if(data?.length)showAdminTopAlert("Contractor submissions awaiting approval",
+          data.length+" pending submission"+(data.length===1?"":"s")+" require your review in Admin → Contractor profile change requests.");
+        await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
+      });
+    // Realtime for immediate delivery while the admin portal is open.
+    adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},payload=>announceRequest(payload.new||{}))
+      .subscribe((status,error)=>{
+        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Admin realtime notifications unavailable:",status,error||"");
+        if(status==="SUBSCRIBED")console.info("ZELPX admin realtime notifications connected.");
+      });
+    // Fallback: check only from the administrator portal if Realtime is delayed or disconnected.
+    adminChangePollTimer=setInterval(async()=>{
+      if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
+      const {data,error}=await db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending").order("created_at",{ascending:false}).limit(50);
+      if(error){console.warn("Admin pending request check failed:",error.message);return;}
+      for(const request of (data||[]).reverse())await announceRequest(request);
+    },8000);
+  }
+
+
+
   async function loadServiceRequests() {
     if (!isAdmin) return;
     const list = $("serviceRequestsList");
@@ -1302,6 +1382,7 @@
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
+    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests);
     $("requestSearch").addEventListener("input", loadServiceRequests);
     $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
