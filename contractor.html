@@ -1138,7 +1138,8 @@
     const specialtyReady = isAdmin || selectedNames.size > 0;
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
-      const specialtyMatch = isAdmin || selectedNames.has(String(lead.service_category || "").toLowerCase());
+      const licenseEligible = isAdmin || (licenseEligibleLeadCategories && licenseEligibleLeadCategories.has(String(lead.service_category || "").toLowerCase()));
+      const specialtyMatch = isAdmin || (licenseEligible && selectedNames.has(String(lead.service_category || "").toLowerCase()));
       const categoryMatch = !category || lead.service_category === category;
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return specialtyReady && specialtyMatch && statusMatch && categoryMatch && (!query || haystack.includes(query));
@@ -1149,9 +1150,11 @@
       const empty = document.createElement("div"); empty.className = "lead";
       const title = document.createElement("h3"); title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
       const note = document.createElement("p"); note.className = "muted";
-      note.textContent = !isAdmin && selectedContractorCategoryIds.size === 0
-        ? "Choose your services in My company → Services you provide, then save. Only matching leads will appear here."
-        : cachedLeads.length ? "No leads match your selected services and current filters." : "New service requests will appear here when they are published.";
+      note.textContent = !isAdmin && !licenseEligibleLeadCategories?.size
+        ? "No leads are shown until your state, profession, and required license or credential have been verified. Unverified or restricted work is hidden."
+        : !isAdmin && selectedContractorCategoryIds.size === 0
+          ? "Your eligible work types are verified, but no service categories are selected for lead matching."
+          : cachedLeads.length ? "No leads match your selected services, verified license eligibility, and current filters." : "New service requests will appear here when they are published.";
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
@@ -1223,11 +1226,52 @@
     }
   }
 
+  let licenseEligibleLeadCategories = null;
+  async function loadLicenseEligibleLeadCategories() {
+    licenseEligibleLeadCategories = new Set();
+    if (isAdmin) return;
+    if (!currentContractor?.service_state || !currentContractor?.id) return;
+    const state = String(currentContractor.service_state).trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(state)) return;
+    const [{data: maps, error: mapError}, {data: qualifications, error: qualificationError}] = await Promise.all([
+      db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
+      db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state).eq("work_role","independent")
+    ]);
+    if (mapError) throw mapError;
+    if (qualificationError) throw qualificationError;
+    const professionIds = [...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
+    if (!professionIds.length) return;
+    const {data: rules, error: rulesError} = await db.from("state_profession_eligibility")
+      .select("profession_id,eligibility_status")
+      .eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds);
+    if (rulesError) throw rulesError;
+    const qualificationByProfession = new Map((qualifications||[]).map(q=>[q.profession_id,q.verification_status]));
+    const ruleByProfession = new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
+    (maps||[]).forEach(map=>{
+      const rule=ruleByProfession.get(map.profession_id);
+      const verified=qualificationByProfession.get(map.profession_id)==="verified";
+      const allowed=rule==="allowed_no_individual_license" ||
+        (["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule) && verified);
+      if(allowed) licenseEligibleLeadCategories.add(map.category_id);
+    });
+    const {data: categories, error: categoriesError}=await db.from("service_categories").select("id,name").eq("is_active",true);
+    if(categoriesError) throw categoriesError;
+    const eligibleNames=new Set((categories||[]).filter(c=>licenseEligibleLeadCategories.has(c.id)).map(c=>c.name.toLowerCase()));
+    licenseEligibleLeadCategories=eligibleNames;
+  }
+
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
     const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load leads: " + error.message; $("leadResultsCount").textContent = "Unable to load leads"; return; }
-    cachedLeads = data || []; const available = cachedLeads.filter(lead => lead.status === "available");
+    cachedLeads = data || [];
+    try { await loadLicenseEligibleLeadCategories(); }
+    catch (eligibilityError) {
+      console.error("Could not verify profession eligibility:", eligibilityError);
+      licenseEligibleLeadCategories = new Set();
+    }
+    const available = cachedLeads.filter(lead => lead.status === "available" &&
+      (isAdmin || (licenseEligibleLeadCategories && licenseEligibleLeadCategories.has(String(lead.service_category||"").toLowerCase()))));
     $("availableCount").textContent = String(available.length);
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
