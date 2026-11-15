@@ -1874,6 +1874,21 @@
     const badge=$("adminPendingBadge");
     if(badge){badge.textContent=String(count||0);badge.style.display=count?"inline-block":"none";}
   }
+  function showAdminTopAlert(title,body,requestId){
+    let toast=document.getElementById("zelpxAdminTopAlert");
+    if(!toast){
+      toast=document.createElement("div");toast.id="zelpxAdminTopAlert";
+      toast.style.cssText="position:fixed;top:env(safe-area-inset-top,0px);left:12px;right:12px;z-index:99999;background:#202b3c;color:#fff;border:2px solid #f59e0b;border-radius:14px;padding:14px 16px;box-shadow:0 10px 35px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;justify-content:space-between";
+      document.body.append(toast);
+    }
+    toast.replaceChildren();
+    const copy=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("div");
+    strong.textContent=title;small.textContent=body;small.style.cssText="font-size:13px;opacity:.92;margin-top:3px";copy.append(strong,small);
+    const open=document.createElement("button");open.type="button";open.textContent="Open";open.style.cssText="background:#f59e0b;color:#202b3c;min-height:38px;padding:8px 12px";open.onclick=()=>{switchTab("adminPanel");loadContractorChangeRequests();toast.remove();};
+    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close notification");close.style.cssText="background:transparent;padding:4px 8px;min-height:32px";close.onclick=()=>toast.remove();
+    toast.append(copy,open,close);
+    if(requestId)toast.dataset.requestId=requestId;
+  }
   function startAdminChangeNotifications(){
     if(!isAdmin||!currentUser)return;
     if(adminChangeChannel)db.removeChannel(adminChangeChannel);
@@ -1884,7 +1899,7 @@
         if(request.status!=="pending")return;
         const kind=request.request_type==="profession_qualifications"?"professions and license details":request.request_type==="service_categories"?"selected work categories":"company profile or license information";
         const notice="A contractor has just submitted updated "+kind+". Open Admin → Contractor profile change requests to review the details.";
-        message("contractorChangesMessage",notice,"success");
+        showAdminTopAlert("New contractor information received",notice,request.id);\n        message("contractorChangesMessage",notice,"success");
         if("Notification" in window && Notification.permission==="granted"){
           const n=new Notification("ZELPX — new contractor update",{body:notice,tag:"zelpx-change-"+(request.id||Date.now())});
           n.onclick=()=>{window.focus();switchTab("adminPanel");};
@@ -1934,14 +1949,45 @@
       let query=db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(100);
       if(!isAdmin && currentUser?.id) query=query.eq("user_id",currentUser.id);
       const {data,error}=await query; if(error)throw error;
+      const rows=data||[], userIds=[...new Set(rows.map(r=>r.user_id).filter(Boolean))], contractorIds=[...new Set(rows.map(r=>r.contractor_id).filter(Boolean))];
+      const [profilesResult,contractorsResult]=await Promise.all([
+        userIds.length?db.from("profiles").select("id,full_name,phone").in("id",userIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractors").select("id,user_id,company_name,email").in("id",contractorIds):Promise.resolve({data:[],error:null})
+      ]);
+      if(profilesResult.error)throw profilesResult.error;if(contractorsResult.error)throw contractorsResult.error;
+      const professionIds=[...new Set(rows.flatMap(r=>(r.requested_changes?.items||[]).map(x=>x.profession_id).filter(Boolean)))];
+      const categoryIds=[...new Set(rows.flatMap(r=>r.requested_changes?.category_ids||[]))];
+      const [professionsResult,categoriesResult]=await Promise.all([
+        professionIds.length?db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):Promise.resolve({data:[],error:null}),
+        categoryIds.length?db.from("service_categories").select("id,name").in("id",categoryIds):Promise.resolve({data:[],error:null})
+      ]);
+      if(professionsResult.error)throw professionsResult.error;if(categoriesResult.error)throw categoriesResult.error;
+      const profiles=new Map((profilesResult.data||[]).map(x=>[x.id,x])), contractors=new Map((contractorsResult.data||[]).map(x=>[x.id,x]));
+      const professionNames=new Map((professionsResult.data||[]).map(x=>[x.id,x.profession_name])), categoryNames=new Map((categoriesResult.data||[]).map(x=>[x.id,x.name]));
       const render=(list,allowReview)=>{
         if(!list)return;list.replaceChildren();
-        if(!data?.length){list.textContent="No change requests yet.";return;}
-        data.forEach(r=>{
+        if(!rows.length){list.textContent="No change requests yet.";return;}
+        rows.forEach(r=>{
           const card=document.createElement("article");card.className="lead";
-          const h=document.createElement("h3");h.textContent=r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
-          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString();card.append(meta);
-          const pre=document.createElement("pre");pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#fffaf5;padding:12px;border-radius:10px";pre.textContent=JSON.stringify(r.requested_changes,null,2);card.append(pre);
+          const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
+          const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
+          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString()+" · "+(company.email||profile.phone||"Contact not provided");card.append(meta);
+          const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
+          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
+          if(r.request_type==="profession_qualifications"){
+            addDetail("State",changes.state_code);addDetail("Work arrangement",changes.work_role);
+            (changes.items||[]).forEach((item,index)=>{
+              const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
+              const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
+              addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
+              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);addDetail("Document",item.license_document_path);
+            });
+          }else if(r.request_type==="service_categories"){
+            addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
+          }else{
+            Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
+          }
+          card.append(detail);
           if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
           if(allowReview && r.status==="pending"){
             const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
@@ -1952,7 +1998,7 @@
                 if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
                 b.disabled=true;
                 try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
-                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();}
+                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();await loadAdminContractorReviews();}
                 }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
               });actions.append(b);
             }card.append(actions);
