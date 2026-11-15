@@ -683,6 +683,7 @@
             <option value="in progress">In progress</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
         <div class="request-filter-field">
@@ -1674,34 +1675,40 @@
 
           const actions = document.createElement("div");
           actions.className = "request-actions";
-          const deleteButton = document.createElement("button");
-          deleteButton.type = "button";
-          deleteButton.className = "request-delete-button";
-          deleteButton.textContent = "Delete request";
-          deleteButton.addEventListener("click", async () => {
-            const confirmed = window.confirm("Delete this service request? This cannot be undone.");
-            if (!confirmed) return;
-            deleteButton.disabled = true;
-            deleteButton.textContent = "Deleting...";
-            try {
-              const { data: deletedRows, error: deleteError } = await db
-                .from("service_requests")
-                .delete()
-                .eq("id", request.id)
-                .eq("user_id", session.user.id)
-                .select("id");
-              if (deleteError) throw deleteError;
-              if (!deletedRows || deletedRows.length === 0) {
-                throw new Error("The request was not deleted. Your account may not have permission to delete requests.");
+          const normalizedStatus = String(request.status || "").trim().toLowerCase();
+          if (normalizedStatus === "rejected") {
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "request-delete-button";
+            deleteButton.textContent = "Delete rejected request";
+            deleteButton.addEventListener("click", async () => {
+              const confirmed = window.confirm("Delete this rejected service request from your account? This cannot be undone.");
+              if (!confirmed) return;
+              deleteButton.disabled = true;
+              deleteButton.textContent = "Deleting…";
+              try {
+                const { data: deletedRows, error: deleteError } = await db
+                  .from("service_requests")
+                  .delete()
+                  .eq("id", request.id)
+                  .eq("user_id", session.user.id)
+                  .eq("status", "rejected")
+                  .select("id");
+                if (deleteError) throw deleteError;
+                if (!deletedRows || deletedRows.length === 0) {
+                  throw new Error("Only your own rejected requests can be deleted.");
+                }
+                await loadRequests();
+              } catch (deleteError) {
+                window.alert(deleteError.message || "Could not delete this rejected request. Please try again.");
+                deleteButton.disabled = false;
+                deleteButton.textContent = "Delete rejected request";
               }
-              await loadRequests();
-            } catch (deleteError) {
-              window.alert(deleteError.message || "Could not delete this request. Please try again.");
-              deleteButton.disabled = false;
-              deleteButton.textContent = "Delete request";
-            }
-          });
-          actions.append(status, deleteButton);
+            });
+            actions.append(status, deleteButton);
+          } else {
+            actions.append(status);
+          }
           details.appendChild(actions);
 
           if (request.lead_id) {
