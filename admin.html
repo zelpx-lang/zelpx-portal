@@ -503,6 +503,85 @@ body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.le
 }
 @media(max-width:390px){body.admin-mode #adminPanelNav{grid-template-columns:1fr}}
 
+
+/* ZELPX ADMIN — complete workspace redesign v3 */
+body.admin-mode{--admin-ink:#202329;--admin-orange:#f36b36;--admin-paper:#f4f5f7;background:#f4f5f7;color:var(--admin-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body.admin-mode .top{background:#202329;border-radius:0;padding:15px clamp(18px,4vw,58px);min-height:76px;box-shadow:0 4px 22px #15171c20}
+body.admin-mode .brand{font-size:22px;letter-spacing:.24em}
+body.admin-mode .brand::after{background:var(--admin-orange)}
+body.admin-mode .top small{font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+body.admin-mode main{width:min(100% - 36px,1480px);margin:28px auto 52px}
+body.admin-mode #adminPanel{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+body.admin-mode .admin-frame{display:flex;flex-direction:column;min-height:0;gap:24px}
+body.admin-mode .admin-rail{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:20px;padding:16px 20px;background:#fff;color:var(--admin-ink);border:1px solid #e4e6e9;border-radius:18px;box-shadow:0 8px 30px #1c24300a}
+body.admin-mode .admin-identity{padding:0 20px 0 0;border:0;border-right:1px solid #eceef0}
+body.admin-mode .admin-mark{width:43px;height:43px;border-radius:13px;background:var(--admin-orange);box-shadow:0 6px 14px #f36b3630}
+body.admin-mode .admin-identity strong{color:#202329;font-size:16px}
+body.admin-mode .admin-identity small{color:#8a9099;font-size:9px}
+body.admin-mode .admin-rail-caption,body.admin-mode #adminPanelHeader,body.admin-mode #adminPanelFooter{display:none!important}
+body.admin-mode #adminPanelNav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:0;background:transparent}
+body.admin-mode #adminPanelNav button.admin-nav-card{display:flex;align-items:center;gap:9px;min-height:48px;padding:8px 10px;border:1px solid transparent;border-radius:12px;background:#f5f6f7;color:#30343a;text-align:left;box-shadow:none}
+body.admin-mode #adminPanelNav button.admin-nav-card:hover,body.admin-mode #adminPanelNav button.admin-nav-card.active{transform:none;background:#fff1eb;border-color:#ffd4c3;box-shadow:none}
+body.admin-mode .admin-nav-icon{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:#fff;color:var(--admin-orange);font-size:16px}
+body.admin-mode .admin-nav-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+body.admin-mode .admin-nav-copy strong{color:#30343a;font-size:11px}
+body.admin-mode .admin-nav-copy small{display:none}
+body.admin-mode .admin-nav-arrow{display:none}
+body.admin-mode .admin-content{min-width:0;padding:0}
+body.admin-mode .admin-overview{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:26px;padding:clamp(24px,4vw,48px);margin-bottom:22px;border-radius:22px;background:#202329;color:#fff;position:relative;overflow:hidden}
+body.admin-mode .admin-overview:after{content:"Z";position:absolute;right:8%;top:-90px;font-size:390px;line-height:1;font-weight:900;color:#ffffff08;pointer-events:none}
+body.admin-mode .admin-overview-copy{position:relative;z-index:1;max-width:680px}
+body.admin-mode .admin-kicker{display:inline-block;margin-bottom:15px;color:#ff9b72;font-size:10px;font-weight:800;letter-spacing:.2em}
+body.admin-mode .admin-overview h1{margin:0 0 12px;color:#fff;font-size:clamp(34px,5vw,62px);line-height:1.02;letter-spacing:-.055em}
+body.admin-mode .admin-overview-copy p{max-width:550px;margin:0;color:#b9bec6;font-size:15px;line-height:1.7}
+body.admin-mode .admin-overview-note{position:relative;z-index:1;align-self:start;display:flex;align-items:center;gap:10px;padding:12px 15px;border:1px solid #ffffff20;border-radius:13px;background:#ffffff0b}
+body.admin-mode .admin-note-dot,body.admin-mode .admin-status i{width:8px;height:8px;border-radius:50%;background:#32c58b;box-shadow:0 0 0 4px #32c58b20}
+body.admin-mode .admin-overview-note strong,body.admin-mode .admin-overview-note small{display:block}
+body.admin-mode .admin-overview-note strong{font-size:11px;color:#fff}
+body.admin-mode .admin-overview-note small{margin-top:3px;color:#aeb4bd;font-size:10px}
+body.admin-mode .admin-workspace-grid{position:relative;z-index:1;grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:10px}
+body.admin-mode .admin-workspace-card{display:flex;flex-direction:column;align-items:flex-start;min-height:205px;padding:20px;border:1px solid #ffffff20;border-radius:16px;background:#2c3037;color:#fff;text-align:left;box-shadow:none;white-space:normal}
+body.admin-mode .admin-workspace-card:hover{transform:translateY(-3px);background:#363b43;border-color:#ff9b72;box-shadow:0 12px 26px #0003}
+body.admin-mode .admin-workspace-symbol{display:grid;place-items:center;width:40px;height:40px;margin-bottom:20px;border-radius:12px;background:#ff6a2b20;color:#ff9b72;font-size:22px}
+body.admin-mode .admin-workspace-label{margin-bottom:7px;color:#ff9b72;font-size:9px;font-weight:800;letter-spacing:.16em}
+body.admin-mode .admin-workspace-card strong{font-size:16px;line-height:1.25;color:#fff}
+body.admin-mode .admin-workspace-card small{margin-top:7px;color:#aeb4bd;font-size:11px;line-height:1.45}
+body.admin-mode .admin-workspace-go{margin-top:auto;padding-top:18px;color:#ffad8c;font-size:11px;font-weight:750}
+body.admin-mode .admin-content-top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:0 0 18px;padding:0 4px;min-height:44px;border:0}
+body.admin-mode .admin-content-top>div{display:flex;flex-direction:column;gap:3px}
+body.admin-mode .admin-crumb{color:#9a9fa7;font-size:9px;font-weight:800;letter-spacing:.16em}
+body.admin-mode .admin-content-top strong{font-size:18px;color:#252a31}
+body.admin-mode .admin-status{display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid #e3e7e9;border-radius:99px;background:#fff;color:#626a74;font-size:10px;font-weight:700}
+body.admin-mode .admin-status i{display:inline-block;width:7px;height:7px}
+body.admin-mode #adminPanel .admin-page{margin:0}
+body.admin-mode #adminPanel .admin-page>[data-admin-home]{margin-bottom:15px}
+body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.lead{padding:clamp(18px,3vw,30px);border:1px solid #e4e7eb;border-radius:18px;background:#fff;box-shadow:0 10px 30px #1c243008}
+body.admin-mode .admin-section-heading{margin-bottom:18px}
+body.admin-mode .admin-section-heading h2{font-size:23px;letter-spacing:-.035em}
+body.admin-mode .admin-section-heading p{font-size:13px}
+body.admin-mode #adminPanel .admin-page .lead{border-radius:18px}
+@media(max-width:900px){
+ body.admin-mode .admin-rail{grid-template-columns:1fr;gap:13px}
+ body.admin-mode .admin-identity{padding:0 0 12px;border-right:0;border-bottom:1px solid #eceef0}
+ body.admin-mode #adminPanelNav{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.admin-mode .admin-workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.admin-mode .admin-overview{grid-template-columns:1fr}
+ body.admin-mode .admin-overview-note{justify-self:start}
+}
+@media(max-width:520px){
+ body.admin-mode main{width:calc(100% - 20px);margin:14px auto 32px}
+ body.admin-mode .admin-rail{padding:13px;border-radius:15px}
+ body.admin-mode #adminPanelNav button.admin-nav-card{padding:7px;min-height:48px}
+ body.admin-mode .admin-nav-copy strong{font-size:10px}
+ body.admin-mode .admin-overview{padding:23px 17px;border-radius:17px}
+ body.admin-mode .admin-overview h1{font-size:38px}
+ body.admin-mode .admin-workspace-grid{gap:8px}
+ body.admin-mode .admin-workspace-card{min-height:178px;padding:13px}
+ body.admin-mode .admin-workspace-card strong{font-size:14px}
+ body.admin-mode .admin-workspace-card small{font-size:10px}
+ body.admin-mode .admin-workspace-symbol{width:34px;height:34px;margin-bottom:15px}
+}
+
 </style>
 </head>
 <body class="admin-mode">
@@ -620,7 +699,21 @@ body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.le
       <div id="adminPanelFooter" class="admin-home-foot"><span>CONTROL CENTER</span><span> v1.0 </span></div>
       </aside>
       <div class="admin-content">
-      <div class="admin-content-top"><div><span class="admin-crumb">ZELPX / ADMIN</span><strong>Operations workspace</strong></div><span class="admin-status"><i></i> System active</span></div>
+      <section id="adminOverview" class="admin-overview">
+        <div class="admin-overview-copy">
+          <span class="admin-kicker">ZELPX OPERATIONS</span>
+          <h1>Run your marketplace.</h1>
+          <p>One workspace to approve professionals, verify licenses and manage customer requests.</p>
+        </div>
+        <div class="admin-overview-note"><span class="admin-note-dot"></span><div><strong>Administrator access</strong><small>Choose a workspace below to get started</small></div></div>
+        <div class="admin-workspace-grid">
+          <button type="button" class="admin-workspace-card" data-admin-page="adminApprovalsPage"><span class="admin-workspace-symbol">✓</span><span class="admin-workspace-label">PEOPLE</span><strong>Contractor approvals</strong><small>Registrations and profile changes</small><span class="admin-workspace-go">Open workspace ↗</span></button>
+          <button type="button" class="admin-workspace-card" data-admin-page="adminUnlicensedPage"><span class="admin-workspace-symbol">▤</span><span class="admin-workspace-label">COMPLIANCE</span><strong>License review</strong><small>Review license requirements and records</small><span class="admin-workspace-go">Open workspace ↗</span></button>
+          <button type="button" class="admin-workspace-card" data-admin-page="adminCreateLeadPage"><span class="admin-workspace-symbol">＋</span><span class="admin-workspace-label">MARKETPLACE</span><strong>Create a lead</strong><small>Add a customer request manually</small><span class="admin-workspace-go">Open workspace ↗</span></button>
+          <button type="button" class="admin-workspace-card" data-admin-page="adminVerifyLeadPage"><span class="admin-workspace-symbol">⌕</span><span class="admin-workspace-label">TRUST & SAFETY</span><strong>Fraud protection</strong><small>Review and verify customer requests</small><span class="admin-workspace-go">Open workspace ↗</span></button>
+        </div>
+      </section>
+      <div class="admin-content-top"><div><span class="admin-crumb">ZELPX / ADMIN</span><strong>Operations workspace</strong></div><span class="admin-status"><i></i> System active</span></div><div><span class="admin-crumb">ZELPX / ADMIN</span><strong>Operations workspace</strong></div><span class="admin-status"><i></i> System active</span></div>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="admin-section-shell">
@@ -1758,6 +1851,7 @@ body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.le
   function showAdminPage(pageId) {
     if (!isAdmin) return;
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
+    const overview = $("adminOverview"); if (overview) overview.classList.add("hidden");
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
@@ -1770,6 +1864,7 @@ body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.le
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     if (tabId === "adminPanel" && isAdmin) {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
+      const overview = $("adminOverview"); if (overview) overview.classList.remove("hidden");
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
     }
     window.scrollTo({ top:0, behavior:"smooth" });
@@ -1782,6 +1877,7 @@ body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.le
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
+      const overview = $("adminOverview"); if (overview) overview.classList.remove("hidden");
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
