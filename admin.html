@@ -582,6 +582,69 @@ body.admin-mode #adminPanel .admin-page .lead{border-radius:18px}
  body.admin-mode .admin-workspace-symbol{width:34px;height:34px;margin-bottom:15px}
 }
 
+/* ZELPX ADMIN — product-grade dashboard layout */
+body.admin-mode{--shell:#f5f6f8;--surface:#fff;--ink:#20242b;--sub:#727985;--stroke:#e7e9ed;--orange:#f36b36;background:var(--shell);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+body.admin-mode .top{height:70px;min-height:70px;padding:0 clamp(18px,3vw,42px);display:flex;align-items:center;background:#fff;border-bottom:1px solid var(--stroke);border-radius:0;box-shadow:none;color:var(--ink)}
+body.admin-mode .brand{font-size:20px;letter-spacing:.22em;color:#20242b}
+body.admin-mode .top>div:first-child>small{color:#9298a1;font-size:9px;letter-spacing:.14em}
+body.admin-mode #topUser{gap:14px}
+body.admin-mode #userEmail{font-size:12px;color:#626a75}
+body.admin-mode #logoutBtn{min-height:36px;padding:8px 15px;background:#fff1eb;color:#c65327;border:1px solid #ffddce;box-shadow:none;border-radius:9px}
+body.admin-mode main{width:100%;max-width:none;margin:0;padding:26px clamp(12px,2.5vw,38px) 50px}
+body.admin-mode #adminPanel{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:visible}
+body.admin-mode .admin-frame{display:grid;grid-template-columns:250px minmax(0,1fr);align-items:start;gap:28px;min-height:calc(100vh - 122px)}
+body.admin-mode .admin-rail{position:sticky;top:18px;display:flex;flex-direction:column;gap:0;padding:18px 13px;background:#fff;border:1px solid var(--stroke);border-radius:16px;box-shadow:0 4px 18px #20242b06;color:var(--ink)}
+body.admin-mode .admin-identity{display:flex;align-items:center;gap:11px;padding:5px 8px 20px;border:0;border-bottom:1px solid var(--stroke)}
+body.admin-mode .admin-mark{width:38px;height:38px;border-radius:11px;background:var(--orange);font-size:20px;box-shadow:none}
+body.admin-mode .admin-identity strong{font-size:15px;letter-spacing:.16em;color:#20242b}
+body.admin-mode .admin-identity small{font-size:8px;letter-spacing:.16em;color:#9aa0a9}
+body.admin-mode .admin-rail-caption{display:block!important;padding:22px 10px 9px;color:#a0a5ad;font-size:9px;font-weight:800;letter-spacing:.15em}
+body.admin-mode #adminPanelHeader{display:none!important}
+body.admin-mode #adminPanelNav{display:flex!important;flex-direction:column;gap:5px;margin:0;padding:0;background:transparent}
+body.admin-mode #adminPanelNav button.admin-nav-card{display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:11px;width:100%;min-height:58px;padding:8px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:#424852;text-align:left;box-shadow:none}
+body.admin-mode #adminPanelNav button.admin-nav-card:hover{transform:none;background:#f7f8fa}
+body.admin-mode #adminPanelNav button.admin-nav-card.active{background:#fff1eb;border-color:#ffe0d2}
+body.admin-mode .admin-nav-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#f3f4f6;color:#737b86;font-size:16px}
+body.admin-mode #adminPanelNav button.active .admin-nav-icon{background:#ffdfd0;color:#d95e2c}
+body.admin-mode .admin-nav-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+body.admin-mode .admin-nav-copy strong{font-size:11px;font-weight:750;color:#343a43}
+body.admin-mode .admin-nav-copy small{font-size:9px;line-height:1.35;color:#969ca5}
+body.admin-mode .admin-nav-arrow{display:none}
+body.admin-mode .admin-home-foot{display:flex!important;justify-content:space-between;margin-top:24px;padding:14px 8px 2px;border-top:1px solid var(--stroke);color:#a0a5ad;font-size:8px;letter-spacing:.12em}
+body.admin-mode .admin-content{min-width:0;padding:0}
+body.admin-mode .admin-overview{display:block;margin:0 0 22px;padding:0;border:0;border-radius:0;background:transparent;color:var(--ink);overflow:visible}
+body.admin-mode .admin-overview:after{display:none}
+body.admin-mode .admin-overview-copy{max-width:none;padding:8px 2px 24px}
+body.admin-mode .admin-kicker{margin:0 0 9px;color:#d96739;font-size:9px;letter-spacing:.18em}
+body.admin-mode .admin-overview h1{margin:0 0 7px;color:#20242b;font-size:clamp(27px,3vw,38px);line-height:1.12;letter-spacing:-.045em}
+body.admin-mode .admin-overview-copy p{max-width:620px;margin:0;color:#858c96;font-size:13px;line-height:1.6}
+body.admin-mode .admin-overview-note{display:flex;align-items:center;gap:9px;width:max-content;max-width:100%;margin:0 0 18px;padding:9px 12px;border:1px solid #e5e9e7;border-radius:9px;background:#fff}
+body.admin-mode .admin-overview-note strong{font-size:10px;color:#4a535d}
+body.admin-mode .admin-overview-note small{font-size:9px;color:#9299a2}
+body.admin-mode .admin-note-dot{width:7px;height:7px;box-shadow:0 0 0 4px #32c58b18}
+body.admin-mode .admin-workspace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0}
+body.admin-mode .admin-workspace-card{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) 18px;grid-template-rows:auto auto auto;column-gap:13px;align-items:center;min-height:116px;padding:19px 20px;border:1px solid var(--stroke);border-radius:13px;background:#fff;color:var(--ink);text-align:left;box-shadow:0 3px 12px #20242b04;transition:border-color .15s,box-shadow .15s}
+body.admin-mode .admin-workspace-card:hover{transform:translateY(-2px);border-color:#f6b49a;background:#fff;box-shadow:0 10px 25px #20242b0b}
+body.admin-mode .admin-workspace-symbol{grid-column:1;grid-row:1/4;display:grid;place-items:center;width:42px;height:42px;margin:0;border-radius:11px;background:#fff0e9;color:#df6534;font-size:19px}
+body.admin-mode .admin-workspace-label{grid-column:2;grid-row:1;margin:0 0 3px;color:#a0a5ad;font-size:8px;letter-spacing:.15em}
+body.admin-mode .admin-workspace-card strong{grid-column:2;grid-row:2;color:#303640;font-size:14px;line-height:1.3}
+body.admin-mode .admin-workspace-card small{grid-column:2;grid-row:3;margin:4px 0 0;color:#9299a2;font-size:10px;line-height:1.4}
+body.admin-mode .admin-workspace-go{grid-column:3;grid-row:1/4;margin:0;padding:0;color:#d96739;font-size:16px;white-space:nowrap}
+body.admin-mode .admin-content-top{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:54px;margin:0 0 18px;padding:0 0 13px;border:0;border-bottom:1px solid var(--stroke)}
+body.admin-mode .admin-content-top>div{display:flex;flex-direction:column;gap:4px}
+body.admin-mode .admin-crumb{font-size:8px;letter-spacing:.16em;color:#a0a5ad}
+body.admin-mode .admin-content-top strong{font-size:15px;color:#303640}
+body.admin-mode .admin-status{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #e6e9ec;border-radius:8px;background:#fff;color:#747c86;font-size:9px}
+body.admin-mode .admin-status i{display:inline-block;width:6px;height:6px}
+body.admin-mode #adminPanel .admin-page{margin:0}
+body.admin-mode #adminPanel .admin-page>[data-admin-home]{min-height:36px;margin:0 0 14px;padding:7px 12px;border:1px solid var(--stroke);border-radius:8px;background:#fff;color:#606873;box-shadow:none;font-size:11px}
+body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.lead{padding:24px;border:1px solid var(--stroke);border-radius:13px;background:#fff;box-shadow:0 3px 14px #20242b04}
+body.admin-mode .admin-section-heading h2{font-size:20px;letter-spacing:-.03em}
+body.admin-mode .admin-section-heading p{font-size:12px}
+body.admin-mode #adminPanel .admin-page .lead{border-radius:13px}
+@media(max-width:900px){body.admin-mode .admin-frame{grid-template-columns:205px minmax(0,1fr);gap:16px}body.admin-mode .admin-rail{padding:13px 9px}body.admin-mode #adminPanelNav button.admin-nav-card{grid-template-columns:29px minmax(0,1fr);gap:8px;padding:7px}body.admin-mode .admin-nav-copy small{display:none}body.admin-mode .admin-workspace-grid{grid-template-columns:1fr}}
+@media(max-width:650px){body.admin-mode .top{height:62px;min-height:62px;padding:0 13px}body.admin-mode .brand{font-size:18px}body.admin-mode main{padding:14px 10px 30px}body.admin-mode .admin-frame{display:flex;flex-direction:column;gap:15px}body.admin-mode .admin-rail{position:static;width:100%;padding:10px;border-radius:12px}body.admin-mode .admin-identity{padding:2px 4px 10px}body.admin-mode .admin-rail-caption{padding:12px 5px 6px}body.admin-mode #adminPanelNav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}body.admin-mode #adminPanelNav button.admin-nav-card{min-height:42px;grid-template-columns:25px minmax(0,1fr);gap:6px;padding:6px}body.admin-mode .admin-nav-icon{width:25px;height:25px;font-size:13px}body.admin-mode .admin-nav-copy strong{font-size:9px}body.admin-mode .admin-home-foot{display:none!important}body.admin-mode .admin-overview-copy{padding:3px 2px 16px}body.admin-mode .admin-overview h1{font-size:29px}body.admin-mode .admin-overview-copy p{font-size:11px}body.admin-mode .admin-workspace-grid{gap:8px}body.admin-mode .admin-workspace-card{min-height:92px;padding:12px;grid-template-columns:34px minmax(0,1fr) 14px;column-gap:9px}body.admin-mode .admin-workspace-symbol{width:32px;height:32px;font-size:15px}body.admin-mode .admin-workspace-card strong{font-size:11px}body.admin-mode .admin-workspace-card small{font-size:9px}body.admin-mode .admin-workspace-go{font-size:13px}body.admin-mode .admin-section-shell,body.admin-mode #adminPanel .admin-page>.lead{padding:14px}body.admin-mode .admin-content-top{min-height:44px}body.admin-mode #logoutBtn{min-height:34px;padding:6px 10px}body.admin-mode #userEmail{max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
 </style>
 </head>
 <body class="admin-mode">
