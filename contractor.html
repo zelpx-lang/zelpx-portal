@@ -309,6 +309,10 @@
         <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
         <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
+        <label id="signupReadAgreeLabel" style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-weight:700;line-height:1.45">
+          <input id="signupReadAgree" type="checkbox" required style="width:22px;height:22px;min-width:22px;margin:2px 0 0;accent-color:#f0783c">
+          <span>I have read and agree to the licensing requirements and work-scope restrictions shown above. I will only perform work I am legally authorized to do.</span>
+        </label>
       </div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
         <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
@@ -652,6 +656,7 @@
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
+    if(!$("signupReadAgree").checked)return message("authMessage","Please read and accept the licensing requirements before creating your account.","error");
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
