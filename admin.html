@@ -1092,7 +1092,7 @@
         const addChange = (label, before, after) => {
           const p = document.createElement("p"), strong = document.createElement("strong");
           strong.textContent = label + ": ";
-          p.append(strong, document.createTextNode("Before: " + displayValue(before) + "  →  Submitted: " + displayValue(after)));
+          p.append(strong, document.createTextNode(displayValue(before) + "  →  Submitted: " + displayValue(after)));
           details.append(p);
         };
         const labels = {
