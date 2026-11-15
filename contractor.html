@@ -556,12 +556,15 @@
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
     try {
-      // Reject administrator accounts server-side before Supabase creates a session.
-      const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
-        body: { email, portal: "contractor" }
-      });
-      if (accessError) throw new Error("Could not verify account permissions. Please try again.");
-      if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the contractor portal.");
+      // Contractors are checked by the access function. Admins authenticate here
+      // and are authorized below by the profiles.role === "admin" check.
+      if (!IS_ADMIN_PORTAL) {
+        const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
+          body: { email, portal: "contractor" }
+        });
+        if (accessError) throw new Error("Could not verify account permissions. Please try again.");
+        if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the contractor portal.");
+      }
       const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp();
     }
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
@@ -829,6 +832,7 @@
     await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
+    if (IS_ADMIN_PORTAL && isAdmin) switchTab("adminPanel");
     // Start the admin approval listener after every successful login, not only
     // when an administrator already had an active session during page startup.
     if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
