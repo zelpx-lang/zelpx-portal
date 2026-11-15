@@ -435,7 +435,6 @@
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
-          <div class="actions"><button id="saveProfessionQualificationsBtn" type="button">Save work types</button></div>
           <p class="muted" style="font-size:12px;margin:8px 0 0">Important: ZELPX does not issue legal approvals. “Not required” applies only to the described scope and does not replace city permits, business registration, insurance, or individual trade certificates. Unverified states are never treated as license-free.</p>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
@@ -1723,9 +1722,33 @@
         };
         const {data:requestId,error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:changes});
         if(requestError) throw requestError;
+
+        // Submit selected professions from the same Save company details action.
+        if (selectedProfessionIds.size) {
+          await refreshProfessionRules();
+          const professionState = $("professionState").value;
+          const workRole = $("professionWorkRole").value;
+          const selected = professionCatalog.filter(p => selectedProfessionIds.has(p.id));
+          const items = selected.map(p => {
+            const rule = professionRuleRows.find(r => r.profession_id === p.id);
+            const requires = rule?.requirement_status === "required" ||
+              (rule?.requirement_status === "conditional" && workRole === "independent");
+            return {
+              profession_id: p.id,
+              license_required_at_registration: requires,
+              verification_status: requires ? "not_submitted" :
+                rule?.requirement_status === "not_required" ? "not_required" : "pending"
+            };
+          });
+          const { error: professionError } = await db.rpc("submit_contractor_change_request", {
+            p_type: "profession_qualifications",
+            p_changes: { state_code: professionState, work_role: workRole, items }
+          });
+          if (professionError) throw professionError;
+        }
       }
       $("licenseDocument").value = ""; $("insuranceDocument").value = "";
-      message("appMessage", "Your company, license, and insurance changes were submitted for administrator review. Existing approved details remain active until approval.", "success");
+      message("appMessage", "Your company details, selected work types, license, and insurance were submitted together for administrator review. Existing approved details remain active until approval.", "success");
     } catch (e) { message("appMessage", e.message, "error"); }
   }
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
@@ -2216,7 +2239,6 @@
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
-    $("saveProfessionQualificationsBtn").addEventListener("click",saveProfessionQualifications);
     $("saveSpecialtiesBtn").addEventListener("click", saveContractorServiceCategories);
     $("resetSpecialtiesBtn").addEventListener("click", () => {
       selectedContractorCategoryIds = new Set(savedContractorCategoryIds);
