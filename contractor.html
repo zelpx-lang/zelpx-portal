@@ -398,6 +398,11 @@
     </section>
     <section id="companyPanel" class="card hidden">
       <h2>My company</h2>
+      <section class="lead">
+        <h3>My change requests</h3>
+        <p>Changes to company details, services, and work types stay pending until an administrator reviews them.</p>
+        <div id="contractorOwnChangesList"><p class="muted">Loading your requests…</p></div>
+      </section>
       <div style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="contractorAvatarPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="contractorAvatarFile">Profile photo for chat notifications</label><input id="contractorAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><small id="contractorAvatarStatus" class="muted">Upload a photo so customers can recognize you in message notifications. Max 10 MB.</small></div></div>
       <div class="grid">
         <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
@@ -1862,37 +1867,40 @@
 
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadContractorChangeRequests() {
-    const list=$("contractorChangesList"); if(!list)return;
-    list.textContent="Loading change requests…";
+    const adminList=$("contractorChangesList"), ownList=$("contractorOwnChangesList");
+    [adminList,ownList].filter(Boolean).forEach(x=>x.textContent="Loading change requests…");
     try {
       let query=db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(100);
       if(!isAdmin && currentUser?.id) query=query.eq("user_id",currentUser.id);
       const {data,error}=await query; if(error)throw error;
-      list.replaceChildren();
-      if(!data?.length){list.textContent="No change requests yet.";return;}
-      data.forEach(r=>{
-        const card=document.createElement("article");card.className="lead";
-        const h=document.createElement("h3");h.textContent=r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
-        const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString();card.append(meta);
-        const pre=document.createElement("pre");pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#fffaf5;padding:12px;border-radius:10px";pre.textContent=JSON.stringify(r.requested_changes,null,2);card.append(pre);
-        if(r.admin_note){const note=document.createElement("p");note.textContent="Administrator note: "+r.admin_note;card.append(note);}
-        if(isAdmin && r.status==="pending"){
-          const note=document.createElement("textarea");note.placeholder="Optional note / rejection reason";note.rows=2;card.append(note);
-          const actions=document.createElement("div");actions.className="actions";
-          for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
-            const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
-            b.addEventListener("click",async()=>{
-              if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
-              b.disabled=true;
-              try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
-                message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved")await loadAdminLeads();
-              }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
-            });actions.append(b);
-          }card.append(actions);
-        }
-        list.append(card);
-      });
-    }catch(e){list.textContent="Could not load change requests: "+e.message;}
+      const render=(list,allowReview)=>{
+        if(!list)return;list.replaceChildren();
+        if(!data?.length){list.textContent="No change requests yet.";return;}
+        data.forEach(r=>{
+          const card=document.createElement("article");card.className="lead";
+          const h=document.createElement("h3");h.textContent=r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
+          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString();card.append(meta);
+          const pre=document.createElement("pre");pre.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;background:#fffaf5;padding:12px;border-radius:10px";pre.textContent=JSON.stringify(r.requested_changes,null,2);card.append(pre);
+          if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          if(allowReview && r.status==="pending"){
+            const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
+            const actions=document.createElement("div");actions.className="actions";
+            for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
+              const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
+              b.addEventListener("click",async()=>{
+                if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
+                b.disabled=true;
+                try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
+                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();}
+                }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
+              });actions.append(b);
+            }card.append(actions);
+          }
+          list.append(card);
+        });
+      };
+      render(adminList,isAdmin);render(ownList,false);
+    }catch(e){[adminList,ownList].filter(Boolean).forEach(x=>x.textContent="Could not load change requests: "+e.message);}
   }
 
   async function loadServiceRequests() {
