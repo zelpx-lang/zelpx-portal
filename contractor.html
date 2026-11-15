@@ -829,6 +829,10 @@
     await loadCategories(); await loadLeads(); await loadPurchases();
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
+    // Start the admin approval listener after every successful login, not only
+    // when an administrator already had an active session during page startup.
+    if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
+    else if (adminChangeChannel) { db.removeChannel(adminChangeChannel); adminChangeChannel=null; }
   }
   async function syncSignupContractorDocuments(user){
     const m=user?.user_metadata||{};
@@ -2305,7 +2309,7 @@
         history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
       }
       const { data: { session } } = await db.auth.getSession();
-      if (session) { await loadApp(); await handlePaymentReturn(); if(isAdmin)startAdminChangeNotifications(); }
+      if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
