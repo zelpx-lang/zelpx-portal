@@ -1030,6 +1030,16 @@
       if (contractorsResult.error) throw contractorsResult.error;
       const profiles = new Map((profilesResult.data || []).map(x => [x.id, x]));
       const contractors = new Map((contractorsResult.data || []).map(x => [x.id, x]));
+      const professionIds = [...new Set(requests.flatMap(r => (r.requested_changes?.items || []).map(item => item.profession_id).filter(Boolean)))];
+      const categoryIds = [...new Set(requests.flatMap(r => r.requested_changes?.category_ids || []))];
+      const [professionsResult, categoriesResult] = await Promise.all([
+        professionIds.length ? db.from("zelpx_professions").select("id,profession_name").in("id", professionIds) : Promise.resolve({data:[],error:null}),
+        categoryIds.length ? db.from("service_categories").select("id,name").in("id", categoryIds) : Promise.resolve({data:[],error:null})
+      ]);
+      if (professionsResult.error) throw professionsResult.error;
+      if (categoriesResult.error) throw categoriesResult.error;
+      const professionNames = new Map((professionsResult.data || []).map(x => [x.id, x.profession_name]));
+      const categoryNames = new Map((categoriesResult.data || []).map(x => [x.id, x.name]));
       list.replaceChildren();
       const pendingCount = requests.filter(r => r.status === "pending").length;
       const alert = $("contractorChangesAlert");
@@ -1073,16 +1083,24 @@
           lead_email_notifications:"Lead email notifications"
         };
         if (request.request_type === "company_profile") {
-          Object.entries(labels).forEach(([key,label]) => addDetail(label, changes[key]));
+          Object.entries(labels).forEach(([key,label]) => {
+            if (key === "has_license" && Object.prototype.hasOwnProperty.call(changes,key)) {
+              addDetail(label, changes[key] === true ? "YES — has a license" : changes[key] === false ? "NO — does not have a license" : "Not specified");
+            } else addDetail(label, changes[key]);
+          });
         } else if (request.request_type === "service_categories") {
-          addDetail("Requested category IDs", (changes.category_ids || []).join(", "));
+          addDetail("Selected work categories", (changes.category_ids || []).map(id => categoryNames.get(id) || "Unknown category").join(", ") || "No categories selected");
         } else if (request.request_type === "profession_qualifications") {
           addDetail("State", changes.state_code); addDetail("Work arrangement", changes.work_role);
           (changes.items || []).forEach((item, index) => {
-            addDetail("Profession " + (index + 1), item.profession_id);
-            addDetail("License required", item.license_required_at_registration ? "Yes" : "No");
-            addDetail("License number", item.license_number); addDetail("License type", item.license_type);
-            addDetail("License document", item.license_document_path);
+            addDetail("Profession " + (index + 1), professionNames.get(item.profession_id) || "Unknown profession");
+            addDetail("License required for this profession", item.license_required_at_registration === true ? "YES" : item.license_required_at_registration === false ? "NO" : "Not specified");
+            addDetail("License status", item.verification_status || "Not specified");
+            addDetail("License number", item.license_number);
+            addDetail("License type", item.license_type);
+            addDetail("Issuing authority", item.issuing_authority);
+            addDetail("License expiration", item.license_expiration_date);
+            addDetail("License document", item.license_document_path ? "Uploaded — " + item.license_document_path : "Not uploaded");
           });
         } else {
           Object.entries(changes).forEach(([key,value]) => addDetail(key.replaceAll("_"," "), value));
