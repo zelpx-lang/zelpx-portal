@@ -2271,11 +2271,6 @@
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
-    $("resetSpecialtiesBtn").addEventListener("click", () => {
-      selectedContractorCategoryIds = new Set(savedContractorCategoryIds);
-      renderSpecialtyOptions(); updateSpecialtySummary(); renderLeads();
-      $("specialtiesMessage").className = "message hidden";
-    });
     function updateSignupLicenseFields(){
       const showLicense=$("hasLicense").value==="yes";
       $("signupLicenseFields").classList.toggle("hidden",!showLicense);
