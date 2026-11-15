@@ -289,7 +289,9 @@
       <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
       <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
     </div>
-    <div id="signupFields" class="grid hidden">
+    <div id="signupFields" class="hidden">
+      <p id="signupPageStep" class="muted" style="font-weight:700;margin:0 0 12px">Step 1 of 2 · Account and service area</p>
+      <div id="signupPage1" class="grid">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
       <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
       <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
@@ -298,6 +300,8 @@
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
       <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
+      </div>
+      <div id="signupPage2" class="grid hidden">
       <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
         <h3>Choose your work before creating your account</h3>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
@@ -328,11 +332,16 @@
         <div style="grid-column:1/-1"><label for="signupInsuranceDocument">Upload insurance card / Certificate of Insurance photo or PDF</label><input id="signupInsuranceDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small class="muted">Private upload · JPG, PNG, WebP or PDF · Max 10 MB</small></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
+      </div>
+    </div>
+    <div id="signupPageActions" class="actions hidden" style="grid-column:1/-1">
+      <button id="backSignupPage" type="button" class="secondary hidden">Back</button>
+      <button id="nextSignupPage" type="button">Continue to services</button>
     </div>
     <div class="actions">
       <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button>
       <a id="forgotPasswordLink" href="/contractor-forgot-password.html" style="align-self:center">Forgot password?</a>
-      <button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
+      <button id="signupBtn" type="button" class="hidden">Create account</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
     </div>
     <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
   </section>
@@ -506,15 +515,37 @@
     if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); window.zelpxDb = db;
   }
+  function setSignupPage(page){
+    const first=page===1;
+    $("signupPage1").classList.toggle("hidden",!first);
+    $("signupPage2").classList.toggle("hidden",first);
+    $("nextSignupPage").classList.toggle("hidden",!first);
+    $("backSignupPage").classList.toggle("hidden",first);
+    $("signupBtn").classList.toggle("hidden",first);
+    $("signupPageActions").classList.remove("hidden");
+    $("signupPageStep").textContent=first?"Step 1 of 2 · Account and service area":"Step 2 of 2 · Services and verification";
+    if(!first)window.scrollTo({top:$("authView").offsetTop,behavior:"smooth"});
+  }
+  function validateSignupPage1(){
+    const requiredIds=["authEmail","authPassword","fullName","companyName","serviceAddress","serviceZip","serviceCity","serviceState"];
+    for(const id of requiredIds){
+      const el=$(id);
+      if(!el.value.trim()){el.focus();el.reportValidity?.();message("authMessage","Complete all required account and service-area fields before continuing.","error");return false;}
+      if(!el.checkValidity()){el.focus();el.reportValidity?.();message("authMessage","Please enter a valid "+(el.labels?.[0]?.textContent||"field")+".","error");return false;}
+    }
+    if($("authPassword").value.length<8){$("authPassword").focus();message("authMessage","Use a password with at least 8 characters.","error");return false;}
+    return true;
+  }
   function setSignupMode(enabled) {
     signupMode = enabled;
     enabled ? show($("signupFields")) : hide($("signupFields"));
     enabled ? hide($("loginBtn")) : show($("loginBtn"));
     enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
-    enabled ? show($("signupBtn")) : hide($("signupBtn"));
+    enabled ? hide($("signupBtn")) : hide($("signupBtn"));
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
+    enabled ? show($("signupPageActions")) : hide($("signupPageActions"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
-    if (enabled) loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error"));
+    if (enabled) { setSignupPage(1); loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error")); }
   }
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
 
@@ -1882,6 +1913,8 @@
   function wireEvents() {
     updateSignupLicenseFields();
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
+    $("nextSignupPage").addEventListener("click",()=>{if(validateSignupPage1())setSignupPage(2);});
+    $("backSignupPage").addEventListener("click",()=>setSignupPage(1));
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
