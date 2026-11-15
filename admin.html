@@ -312,6 +312,14 @@
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
+        <section class="lead">
+          <h2>Old contractor update forms</h2>
+          <p>Delete contractor profile-change forms that have already been approved or rejected. Pending requests, contractor accounts, licenses and current profile information will be kept.</p>
+          <div id="reviewedContractorFormsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="actions">
+            <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete old reviewed forms</button>
+          </div>
+        </section>
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -943,6 +951,49 @@
     }
   }
 
+  async function deleteReviewedContractorForms() {
+    if (!isAdmin) return;
+    const button = $("deleteReviewedContractorFormsBtn");
+    if (!button) return;
+    button.disabled = true;
+    clearMessage("reviewedContractorFormsMessage");
+    try {
+      const { data: requests, error } = await db.from("contractor_change_requests")
+        .select("contractor_id")
+        .in("status", ["approved", "rejected"])
+        .limit(10000);
+      if (error) throw error;
+      const rows = requests || [];
+      if (!rows.length) {
+        message("reviewedContractorFormsMessage", "There are no approved or rejected contractor forms to delete.", "success");
+        return;
+      }
+      const contractorIds = [...new Set(rows.map(row => row.contractor_id).filter(Boolean))];
+      if (!window.confirm(
+        "Delete " + rows.length + " reviewed contractor update form(s)?\n\n" +
+        "Only approved and rejected forms will be deleted. Pending requests, contractor accounts, licenses, " +
+        "documents and current profile information will be kept."
+      )) return;
+      let deleted = 0;
+      for (const contractorId of contractorIds) {
+        const { data, error: deleteError } = await db.rpc("admin_delete_reviewed_contractor_forms", {
+          p_contractor_id: contractorId
+        });
+        if (deleteError) throw deleteError;
+        deleted += Number(data) || 0;
+      }
+      message(
+        "reviewedContractorFormsMessage",
+        deleted + " old reviewed form(s) deleted. Pending requests and contractor account data were kept.",
+        "success"
+      );
+    } catch (e) {
+      message("reviewedContractorFormsMessage", "Could not delete old contractor forms: " + (e.message || "Unknown error"), "error");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function loadUnlicensedContractors() {
     if (!isAdmin) return;
     const list = $("unlicensedContractorsList");
@@ -1303,7 +1354,7 @@
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
     $("requestSearch").addEventListener("input", loadServiceRequests);
-    $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
