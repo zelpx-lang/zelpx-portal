@@ -150,6 +150,18 @@
     th { letter-spacing:.07em; }
     @media(max-width:700px) { .top { padding:14px 16px; border-radius:0 0 22px 22px; } .tabs { display:grid; border-radius:22px; } .tabs button { padding:10px 6px; } .lead { padding:18px 16px 18px 18px; } }
     @media(max-width:700px) { .statrow { grid-template-columns:1fr!important; gap:8px!important; } .stat { display:flex!important; justify-content:space-between; align-items:center; padding:12px 16px!important; } .stat .muted { display:block; margin:0; } .stat strong { font-size:22px!important; margin:0; } }
+    /* ===== dashboard header polish ===== */
+    .dashboard-intro { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:5px 2px 16px; }
+    .dashboard-intro-copy { min-width:0; }
+    .dashboard-eyebrow { display:inline-block; color:#c6531e; font-size:10px; font-weight:800; letter-spacing:.16em; margin-bottom:7px; }
+    .dashboard-intro h1 { margin:0 0 3px; }
+    .dashboard-intro #accountLine { margin:0; font-size:14px; }
+    .dashboard-mark { width:54px; height:54px; flex:0 0 54px; border-radius:17px; background:#fff0e8; display:flex; align-items:flex-end; justify-content:center; gap:4px; padding:13px; border:1px solid #f6d7c7; }
+    .dashboard-mark span { display:block; width:6px; border-radius:5px 5px 2px 2px; background:#ff6a2b; }
+    .dashboard-mark span:nth-child(1) { height:13px; opacity:.55; }
+    .dashboard-mark span:nth-child(2) { height:21px; }
+    .dashboard-mark span:nth-child(3) { height:16px; opacity:.75; }
+    @media(max-width:380px) { .dashboard-mark { width:44px; height:44px; flex-basis:44px; border-radius:14px; padding:10px; } }
     /* ===== compact leads v3 ===== */
     main { margin:18px auto; }
     .card { padding:18px; margin-bottom:12px; }
@@ -342,7 +354,14 @@
 
   <section id="appView" class="hidden">
     <div class="card">
-      <h1 id="welcomeTitle">Contractor dashboard</h1><p id="accountLine">Your ZELPX account</p>
+      <div class="dashboard-intro">
+        <div class="dashboard-intro-copy">
+          <span class="dashboard-eyebrow">YOUR BUSINESS. YOUR NEXT JOB.</span>
+          <h1 id="welcomeTitle">Contractor dashboard</h1>
+          <p id="accountLine">Your ZELPX account</p>
+        </div>
+        <div class="dashboard-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
       <div class="statrow">
         <div class="stat"><span class="muted">Credit balance</span><strong id="walletBalance">$0.00</strong></div>
         <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
