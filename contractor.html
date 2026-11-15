@@ -1899,7 +1899,8 @@
         if(request.status!=="pending")return;
         const kind=request.request_type==="profession_qualifications"?"professions and license details":request.request_type==="service_categories"?"selected work categories":"company profile or license information";
         const notice="A contractor has just submitted updated "+kind+". Open Admin → Contractor profile change requests to review the details.";
-        showAdminTopAlert("New contractor information received",notice,request.id);\n        message("contractorChangesMessage",notice,"success");
+        showAdminTopAlert("New contractor information received",notice,request.id);
+        message("contractorChangesMessage",notice,"success");
         if("Notification" in window && Notification.permission==="granted"){
           const n=new Notification("ZELPX — new contractor update",{body:notice,tag:"zelpx-change-"+(request.id||Date.now())});
           n.onclick=()=>{window.focus();switchTab("adminPanel");};
