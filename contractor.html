@@ -302,12 +302,14 @@
         <h3>Choose your work before creating your account</h3>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
         <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
-        <label>Professions / work types</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Loading professions…</span></div>
+        <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
+        <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
+        <p class="muted" style="font-size:12px;margin:5px 0">Choose No to see only work types confirmed as license-free for your state and work status.</p>
+        <label>Professions / work types</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
         <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
         <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
       </div>
-      <div><label for="hasLicense">Do you have the required current license / registration / trade credential?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
       <div id="signupLicenseFields" class="grid" style="grid-column:1/-1">
         <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
@@ -553,11 +555,15 @@
       return;
     }
     if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
+    const licenseAnswer=$("hasLicense").value;
+    if(licenseAnswer!=="yes" && licenseAnswer!=="no"){
+      root.textContent="Select Yes or No above before choosing professions. The list will then be filtered using your state and work status.";
+      return;
+    }
     // No personal license = show ONLY scopes affirmatively classified as
     // not requiring an individual license. This applies to employees and
     // independent contractors alike. Employer-supervised or contractor-license
     // scopes are not "license-free" and must not appear in this list.
-    const licenseAnswer=$("hasLicense").value;
     const showOnlyLicenseFree=licenseAnswer==="no";
     const visibleProfessions=signupProfessionCatalog.filter(p=>{
       const rule=signupRuleRows.find(r=>r.profession_id===p.id);
