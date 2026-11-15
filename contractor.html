@@ -623,7 +623,7 @@
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
     const statusLabels={
-      allowed_no_individual_license:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED",
+      allowed_no_individual_license:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY",
       individual_trade_credential_required:"INDIVIDUAL TRADE CREDENTIAL REQUIRED",
       contractor_license_or_registration_required:"CONTRACTOR LICENSE / REGISTRATION REQUIRED",
       employer_license_and_supervision:"EMPLOYER LICENSE / SUPERVISION REQUIRED",
@@ -706,7 +706,7 @@
       if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified"||status==="local_only")unverified=true;
       const row=document.createElement("div");row.style.margin="7px 0";
       const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
-      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS SCOPE",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
+      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
       const detail=document.createElement("div");detail.style.fontSize="12px";detail.textContent=r?.rule_summary||"No verified rule. Do not assume this work is license-free.";
       row.append(strong,stateLabel,detail);
       if(r?.licensing_authority){const authority=document.createElement("div");authority.style.cssText="font-size:12px;color:var(--muted);margin-top:5px";authority.textContent="Licensing authority: "+r.licensing_authority;row.append(authority);}
@@ -1054,7 +1054,7 @@
       const strong=document.createElement("strong"); strong.textContent=p.profession_name+": ";
       const status=document.createElement("span");
       const key=rule?.requirement_status||"unverified";
-      status.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[key]||"NOT YET VERIFIED";
+      status.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[key]||"NOT YET VERIFIED";
       row.append(strong,status);
       const detail=document.createElement("div"); detail.style.fontSize="12px"; detail.style.marginTop="2px";
       detail.textContent=rule?.rule_summary||"No verified state rule is available yet. Do not assume this work is license-free.";
