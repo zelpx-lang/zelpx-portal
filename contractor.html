@@ -305,7 +305,7 @@
         <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
         <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
         <p class="muted" style="font-size:12px;margin:5px 0">Choose No to see only work types confirmed as license-free for your state and work status.</p>
-        <label>Services / work types (full catalog)</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
+        <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
         <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
         <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
@@ -556,7 +556,9 @@
     const licenseAnswer=$("hasLicense").value;
     if(licenseAnswer!=="yes" && licenseAnswer!=="no"){root.textContent="Select Yes or No above before choosing services.";return;}
     const showOnlyLicenseFree=licenseAnswer==="no";
+    const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     const visibleCategories=signupServiceCatalog.filter(c=>{
+      if(searchTerm&&!c.name.toLowerCase().includes(searchTerm))return false;
       const map=signupCategoryMapRows.find(x=>x.category_id===c.id);
       if(!map || map.mapping_status!=="mapped" || !map.profession_id)return !showOnlyLicenseFree;
       const rule=signupRuleRows.find(r=>r.profession_id===map.profession_id);
@@ -687,7 +689,8 @@
       if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage",signupRole==="employee"?"A selected trade requires your own individual license or certificate. Enter its number, issuing state and type, or remove that profession.":"A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
     }
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
-    if(unverifiedSignup.length&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
+    const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
+    if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
     if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
@@ -1868,6 +1871,7 @@
     updateSignupLicenseFields();
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
+    $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
