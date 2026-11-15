@@ -729,15 +729,10 @@
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
-    // Enforce the No-license promise again at submission time. A stale page,
-    // altered browser state, or changed selection must not register an
-    // unlicensed applicant for a profession that is not explicitly cleared.
-    if(!hasLicense){
-      const notCleared=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status!=="allowed_no_individual_license");
-      if(notCleared.length){
-        return message("authMessage","With No selected, you may register only for work explicitly confirmed as license-free in "+serviceState+". Remove: "+notCleared.map(p=>p.profession_name).join(", ")+".","error");
-      }
-    }
+    // Unverified scopes may register without claiming they are license-free.
+    // The acknowledgement below keeps the account pending; credential-required
+    // scopes are still blocked by explicitlyRequiredWithoutLicense, and lead access
+    // remains unavailable until the profession qualification is approved.
     const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
     const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
