@@ -298,10 +298,23 @@
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
+        <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
       </nav>
+      <section id="adminFindContractorsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Find contractors</h2>
+          <p>Search all contractor accounts by person's name, business name, email, or phone number.</p>
+          <label for="adminFindContractorsInput">Search contractors</label>
+          <input id="adminFindContractorsInput" type="search" placeholder="Enter name, business, email or phone" autocomplete="off">
+          <div class="actions"><button id="adminFindContractorsRefresh" type="button" class="secondary">Refresh contractors</button><span id="adminFindContractorsCount" class="muted" aria-live="polite"></span></div>
+          <div id="adminFindContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="adminFindContractorsResults"><p class="muted">Enter a search term to find contractors.</p></div>
+        </section>
+      </section>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -807,6 +820,52 @@
       body.append(tr);
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
+  }
+
+  let adminContractorDirectory = [];
+  async function loadAdminContractorDirectory() {
+    if (!isAdmin) return;
+    const results = $("adminFindContractorsResults"), count = $("adminFindContractorsCount");
+    results.textContent = "Loading contractors…";
+    try {
+      const { data: contractors, error } = await db.from("contractors")
+        .select("id,user_id,company_name,email,verification_status,service_state,has_license")
+        .order("created_at", { ascending: false }).limit(1000);
+      if (error) throw error;
+      const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
+      const { data: profiles, error: profileError } = userIds.length
+        ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      adminContractorDirectory = (contractors || []).map(c => {
+        const p = profileMap.get(c.user_id) || {};
+        return { ...c, full_name: p.full_name || "", phone: p.phone || "",
+          search_text: [p.full_name,c.company_name,c.email,p.phone,c.service_state].filter(Boolean).join(" ").toLocaleLowerCase() };
+      });
+      filterAdminContractorDirectory();
+    } catch (e) {
+      results.textContent = "Could not load contractors: " + (e.message || "Unknown error");
+      if (count) count.textContent = "";
+    }
+  }
+  function filterAdminContractorDirectory() {
+    const input = $("adminFindContractorsInput"), results = $("adminFindContractorsResults"), count = $("adminFindContractorsCount");
+    if (!input || !results) return;
+    const term = input.value.trim().toLocaleLowerCase();
+    if (!term) { results.textContent = "Enter a name, business name, email or phone number to search."; if (count) count.textContent = "Total accounts: " + adminContractorDirectory.length; return; }
+    const matches = adminContractorDirectory.filter(c => c.search_text.includes(term));
+    results.replaceChildren();
+    if (count) count.textContent = "Found: " + matches.length;
+    if (!matches.length) { const p=document.createElement("p"); p.className="muted"; p.textContent="No contractors found for this search."; results.append(p); return; }
+    matches.forEach(c => {
+      const card=document.createElement("article"); card.className="lead";
+      const h=document.createElement("h3"); h.textContent=c.company_name || c.full_name || "Contractor"; card.append(h);
+      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value || "Not provided"));card.append(p);};
+      line("Name",c.full_name); line("Business",c.company_name); line("Email",c.email); line("Phone",c.phone);
+      line("State",c.service_state); line("Account status",c.verification_status); line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
+      results.append(card);
+    });
   }
 
   async function loadPendingContractors() {
@@ -1579,6 +1638,7 @@
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
+    if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
     if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
@@ -1614,6 +1674,8 @@
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
     $("requestSearch").addEventListener("input", loadServiceRequests);
     $("requestStatusFilter").addEventListener("change", loadServiceRequests);
+    $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
+    $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
     $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
