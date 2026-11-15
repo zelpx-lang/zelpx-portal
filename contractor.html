@@ -1046,33 +1046,31 @@
   function renderProfessionOptions() {
     const root=$("professionOptions"), query=($("professionSearch").value||"").trim().toLowerCase();
     root.replaceChildren();
-    const role=$("professionWorkRole").value;
-    const licenseChoice=$("profileHasLicense").value;
-    if(role==="independent" && licenseChoice!=="yes" && licenseChoice!=="no") {
-      root.textContent="Select Yes or No for your current license above before choosing professions.";
-      return;
-    }
-    const eligible=professionCatalog.filter(p=>{
-      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
-      if(!rule)return false;
-      // Employees do not use the contractor's personal-license Yes/No filter.
-      // Show work types according to employee-specific state eligibility.
-      if(role==="employee") return rule.eligibility_status==="allowed_no_individual_license";
-      if(licenseChoice==="no") return rule.eligibility_status==="allowed_no_individual_license";
-      return ["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status);
-    });
-    const matches=eligible.filter(p=>(p.profession_name+" "+p.category_name).toLowerCase().includes(query));
+    // Keep the complete profession catalog selectable for every state and license
+    // answer. Licensing eligibility is displayed separately and never hides a
+    // profession from registration or profile updates.
+    const matches=professionCatalog.filter(p=>(p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query));
+    const statusLabels={
+      allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
+      individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
+      contractor_license_or_registration_required:"CONTRACTOR LICENSE / REGISTRATION",
+      employer_license_and_supervision:"EMPLOYER LICENSE / SUPERVISION",
+      conditional:"CONDITIONAL / SCOPE REVIEW",
+      local_review_required:"LOCAL REVIEW REQUIRED"
+    };
     matches.forEach(p=>{
       const label=document.createElement("label");
       label.style.cssText="display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
       const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=selectedProfessionIds.has(p.id);
       cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
       cb.addEventListener("change",()=>{if(cb.checked)selectedProfessionIds.add(p.id);else selectedProfessionIds.delete(p.id);refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));});
-      const name=document.createElement("span"); name.textContent=p.profession_name; label.append(cb,name); root.append(label);
+      const name=document.createElement("span"); name.textContent=p.profession_name; name.style.flex="1";
+      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
+      const status=document.createElement("small"); status.textContent=rule? (statusLabels[rule.eligibility_status]||"NOT YET VERIFIED"):"NOT YET VERIFIED";
+      status.style.cssText="max-width:46%;text-align:right;color:var(--muted);font-size:10px;font-weight:700;line-height:1.3";
+      label.append(cb,name,status); root.append(label);
     });
-    if(!matches.length) root.textContent=licenseChoice==="no"
-      ?"No professions are confirmed as license-free for this state and work status."
-      :"No professions with verified license or registration requirements match this state and work status.";
+    if(!matches.length) root.textContent="No work types match your search. Clear the search to see the full catalog.";
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
