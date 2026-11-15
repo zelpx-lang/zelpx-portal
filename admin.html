@@ -327,11 +327,11 @@
     </section>
 
         <section id="adminPanel" class="card hidden">
-      <div class="admin-home-head">
+      <div id="adminPanelHeader" class="admin-home-head">
         <div><span class="admin-eyebrow">CONTROL CENTER</span><h2>Administrator dashboard</h2><p class="muted">Manage contractors, review customer requests and keep the marketplace running.</p></div>
         <span class="admin-live"><i></i> Admin workspace</span>
       </div>
-      <nav class="admin-page-nav" aria-label="Administrator sections">
+      <nav id="adminPanelNav" class="admin-page-nav" aria-label="Administrator sections">
         <button type="button" class="admin-nav-card" data-admin-page="adminApprovalsPage">
           <span class="admin-nav-icon">✓</span><span class="admin-nav-copy"><strong>Contractor approvals</strong><small>Review new registrations and profile changes</small></span><span class="admin-nav-arrow">›</span>
         </button>
@@ -345,7 +345,7 @@
           <span class="admin-nav-icon">⌕</span><span class="admin-nav-copy"><strong>Fraud protection</strong><small>Verify customer requests and review risk signals</small></span><span class="admin-nav-arrow">›</span>
         </button>
       </nav>
-      <div class="admin-home-foot"><span>Choose a workspace to get started</span><span> ZELPX · ADMIN </span></div>
+      <div id="adminPanelFooter" class="admin-home-foot"><span>Choose a workspace to get started</span><span> ZELPX · ADMIN </span></div>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -1464,6 +1464,7 @@
     if (!isAdmin) return;
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
+    ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.add("hidden"));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
@@ -1476,6 +1477,7 @@
     if (tabId === "adminPanel" && isAdmin) {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
+      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
     }
     window.scrollTo({ top:0, behavior:"smooth" });
   }
@@ -1488,6 +1490,7 @@
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
+      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
