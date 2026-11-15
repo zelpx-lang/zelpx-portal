@@ -607,8 +607,7 @@
   function renderSignupProfessionOptions(){
     updateSignupSelectedServices();
     const root=$("signupProfessionOptions");root.replaceChildren();
-    if(!$("serviceState").value){root.textContent="Select your state first, then choose the services you want to offer.";return;}
-    if(!signupServiceCatalog.length){root.textContent="No service categories are currently available.";return;}
+    if(!signupServiceCatalog.length){root.textContent="No service categories are currently available. Please refresh and try again.";return;}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     // The full active customer service catalog is visible in every state.
     // Licensing answers and state rules change the qualification label, never
