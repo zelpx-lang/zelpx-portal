@@ -1865,32 +1865,36 @@
     }
   }
 
-  // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
-  let adminPendingIds=new Set(),adminChangePoll=null,adminChangePrimed=false;
-  async function checkAdminContractorChanges(){
-    if(!isAdmin||!currentUser)return;
-    const {data,error}=await db.from("contractor_change_requests").select("id,contractor_id,request_type,requested_changes,created_at").eq("status","pending").order("created_at",{ascending:false}).limit(100);
-    if(error){console.warn("Admin change notification check failed:",error.message);return;}
-    const rows=data||[],ids=new Set(rows.map(r=>r.id)),badge=$("adminPendingBadge");
-    if(badge){badge.textContent=String(rows.length);badge.style.display=rows.length?"inline-block":"none";}
-    if(adminChangePrimed){
-      const fresh=rows.filter(r=>!adminPendingIds.has(r.id));
-      if(fresh.length){
-        const first=fresh[0],kind=first.request_type==="profession_qualifications"?"work types / professions":first.request_type==="service_categories"?"service categories":"company or license details";
-        const notice=fresh.length+" new contractor update"+(fresh.length===1?"":"s")+" waiting for review: "+kind+". Open Admin → Contractor profile change requests.";
-        message("contractorChangesMessage",notice,"success");
-        if("Notification" in window && Notification.permission==="granted")new Notification("ZELPX: contractor update",{body:notice,tag:"zelpx-contractor-change"});
-        await loadContractorChangeRequests();
-      }
-    }else adminChangePrimed=true;
-    adminPendingIds=ids;
+  // Instant admin alerts: Supabase Realtime delivers each submitted contractor change.
+  let adminChangeChannel=null;
+  async function refreshAdminPendingBadge(){
+    if(!isAdmin)return;
+    const {count,error}=await db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending");
+    if(error){console.warn("Admin pending badge refresh failed:",error.message);return;}
+    const badge=$("adminPendingBadge");
+    if(badge){badge.textContent=String(count||0);badge.style.display=count?"inline-block":"none";}
   }
   function startAdminChangeNotifications(){
-    if(adminChangePoll)window.clearInterval(adminChangePoll);
-    if(!isAdmin)return;
-    adminChangePrimed=false;adminPendingIds=new Set();
-    checkAdminContractorChanges();
-    adminChangePoll=window.setInterval(checkAdminContractorChanges,15000);
+    if(!isAdmin||!currentUser)return;
+    if(adminChangeChannel)db.removeChannel(adminChangeChannel);
+    refreshAdminPendingBadge();
+    adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},async(payload)=>{
+        const request=payload.new||{};
+        if(request.status!=="pending")return;
+        const kind=request.request_type==="profession_qualifications"?"professions and license details":request.request_type==="service_categories"?"selected work categories":"company profile or license information";
+        const notice="A contractor has just submitted updated "+kind+". Open Admin → Contractor profile change requests to review the details.";
+        message("contractorChangesMessage",notice,"success");
+        if("Notification" in window && Notification.permission==="granted"){
+          const n=new Notification("ZELPX — new contractor update",{body:notice,tag:"zelpx-change-"+(request.id||Date.now())});
+          n.onclick=()=>{window.focus();switchTab("adminPanel");};
+        }
+        await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
+      })
+      .subscribe((status,error)=>{
+        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Admin realtime notifications unavailable:",status,error||"");
+        if(status==="SUBSCRIBED")console.info("ZELPX admin realtime notifications connected.");
+      });
   }
 
   async function loadAdminContractorReviews(){
