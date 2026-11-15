@@ -1028,21 +1028,42 @@
   function renderProfessionOptions() {
     const root=$("professionOptions"), query=($("professionSearch").value||"").trim().toLowerCase();
     root.replaceChildren();
-    const matches=professionCatalog.filter(p=>(p.profession_name+" "+p.category_name).toLowerCase().includes(query));
+    const licenseChoice=$("profileHasLicense").value;
+    if(licenseChoice!=="yes" && licenseChoice!=="no") {
+      root.textContent="Select Yes or No for your current license before choosing professions.";
+      return;
+    }
+    const eligible=professionCatalog.filter(p=>{
+      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
+      if(!rule)return false;
+      if(licenseChoice==="no")return rule.eligibility_status==="allowed_no_individual_license";
+      return ["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status);
+    });
+    const matches=eligible.filter(p=>(p.profession_name+" "+p.category_name).toLowerCase().includes(query));
     matches.forEach(p=>{
       const label=document.createElement("label");
       label.style.cssText="display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
       const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=selectedProfessionIds.has(p.id);
       cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
-      cb.addEventListener("change",()=>{if(cb.checked)selectedProfessionIds.add(p.id);else selectedProfessionIds.delete(p.id);});
+      cb.addEventListener("change",()=>{if(cb.checked)selectedProfessionIds.add(p.id);else selectedProfessionIds.delete(p.id);refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));});
       const name=document.createElement("span"); name.textContent=p.profession_name; label.append(cb,name); root.append(label);
     });
-    if(!matches.length) root.textContent="No professions match your search.";
+    if(!matches.length) root.textContent=licenseChoice==="no"
+      ?"No professions are confirmed as license-free for this state and work status."
+      :"No professions with verified license or registration requirements match this state and work status.";
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
     if(!state) return;
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
+    const licenseChoice=$("profileHasLicense").value;
+    if(licenseChoice==="no") {
+      selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status==="allowed_no_individual_license"));
+    } else if(licenseChoice==="yes") {
+      const allowedWithLicense=new Set(["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"]);
+      selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>allowedWithLicense.has(professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status)));
+    }
+    renderProfessionOptions();
     const chosen=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
     const summary=$("professionComplianceSummary"); summary.replaceChildren();
     if(!chosen.length){summary.textContent="Select one or more professions to see the state requirements.";return;}
@@ -2043,7 +2064,11 @@
       updateSignupLicenseFields();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
     });
-    $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
+    $("profileHasLicense").addEventListener("change", async () => {
+      $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
+      try { await refreshProfessionRules(); }
+      catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
+    });
     $("serviceZip").addEventListener("change", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
     $("serviceZip").addEventListener("blur", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
     $("profileServiceZip").addEventListener("change", () => lookupUsZip($("profileServiceZip"), $("profileServiceCity"), $("profileServiceState"), null));
