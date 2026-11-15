@@ -1024,7 +1024,7 @@
       const contractorIds = [...new Set(requests.map(r => r.contractor_id).filter(Boolean))];
       const [profilesResult, contractorsResult] = await Promise.all([
         userIds.length ? db.from("profiles").select("id,full_name,phone").in("id", userIds) : Promise.resolve({data:[],error:null}),
-        contractorIds.length ? db.from("contractors").select("id,company_name,email").in("id", contractorIds) : Promise.resolve({data:[],error:null})
+        contractorIds.length ? db.from("contractors").select("id,user_id,company_name,email,service_address,service_city,service_state,service_zip_code,service_radius_miles,has_license,license_number,license_state,license_type,license_document_path,insurance_policy_number,insurance_expiration_date,insurance_document_path,lead_email_notifications").in("id", contractorIds) : Promise.resolve({data:[],error:null})
       ]);
       if (profilesResult.error) throw profilesResult.error;
       if (contractorsResult.error) throw contractorsResult.error;
@@ -1032,6 +1032,22 @@
       const contractors = new Map((contractorsResult.data || []).map(x => [x.id, x]));
       const professionIds = [...new Set(requests.flatMap(r => (r.requested_changes?.items || []).map(item => item.profession_id).filter(Boolean)))];
       const categoryIds = [...new Set(requests.flatMap(r => r.requested_changes?.category_ids || []))];
+      const [currentCategoriesResult, currentQualificationsResult] = await Promise.all([
+        contractorIds.length ? db.from("contractor_service_categories").select("contractor_id,category_id").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null}),
+        contractorIds.length ? db.from("contractor_profession_qualifications").select("contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,verification_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null})
+      ]);
+      if (currentCategoriesResult.error) throw currentCategoriesResult.error;
+      if (currentQualificationsResult.error) throw currentQualificationsResult.error;
+      const currentCategoryIds = new Map();
+      (currentCategoriesResult.data || []).forEach(row => {
+        if (!currentCategoryIds.has(row.contractor_id)) currentCategoryIds.set(row.contractor_id, []);
+        currentCategoryIds.get(row.contractor_id).push(row.category_id);
+      });
+      const currentQualifications = new Map();
+      (currentQualificationsResult.data || []).forEach(row => {
+        if (!currentQualifications.has(row.contractor_id)) currentQualifications.set(row.contractor_id, []);
+        currentQualifications.get(row.contractor_id).push(row);
+      });
       const [professionsResult, categoriesResult] = await Promise.all([
         professionIds.length ? db.from("zelpx_professions").select("id,profession_name").in("id", professionIds) : Promise.resolve({data:[],error:null}),
         categoryIds.length ? db.from("service_categories").select("id,name").in("id", categoryIds) : Promise.resolve({data:[],error:null})
@@ -1073,6 +1089,15 @@
           p.append(strong, document.createTextNode(typeof value === "object" ? JSON.stringify(value) : String(value)));
           details.append(p);
         };
+        const displayValue = value => value === null || value === undefined || value === "" ? "Not set" :
+          typeof value === "boolean" ? (value ? "YES" : "NO") :
+          typeof value === "object" ? JSON.stringify(value) : String(value);
+        const addChange = (label, before, after) => {
+          const p = document.createElement("p"), strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode("Before: " + displayValue(before) + "  →  Submitted: " + displayValue(after)));
+          details.append(p);
+        };
         const labels = {
           full_name:"Contact name", phone:"Phone", company_name:"Company name", email:"Company email",
           service_address:"Business address", service_city:"City", service_state:"State", service_zip_code:"ZIP code",
@@ -1083,24 +1108,45 @@
           lead_email_notifications:"Lead email notifications"
         };
         if (request.request_type === "company_profile") {
+          const current = {
+            full_name: profile.full_name, phone: profile.phone,
+            company_name: company.company_name, email: company.email,
+            service_address: company.service_address, service_city: company.service_city,
+            service_state: company.service_state, service_zip_code: company.service_zip_code,
+            service_radius_miles: company.service_radius_miles, has_license: company.has_license,
+            license_number: company.license_number, license_state: company.license_state,
+            license_type: company.license_type, license_document_path: company.license_document_path,
+            insurance_policy_number: company.insurance_policy_number,
+            insurance_expiration_date: company.insurance_expiration_date,
+            insurance_document_path: company.insurance_document_path,
+            lead_email_notifications: company.lead_email_notifications
+          };
           Object.entries(labels).forEach(([key,label]) => {
-            if (key === "has_license" && Object.prototype.hasOwnProperty.call(changes,key)) {
-              addDetail(label, changes[key] === true ? "YES — has a license" : changes[key] === false ? "NO — does not have a license" : "Not specified");
-            } else addDetail(label, changes[key]);
+            if (Object.prototype.hasOwnProperty.call(changes,key)) {
+              addChange(label, current[key], changes[key]);
+            }
           });
         } else if (request.request_type === "service_categories") {
-          addDetail("Selected work categories", (changes.category_ids || []).map(id => categoryNames.get(id) || "Unknown category").join(", ") || "No categories selected");
+          const before = (currentCategoryIds.get(request.contractor_id) || []).map(id => categoryNames.get(id) || "Unknown category");
+          const after = (changes.category_ids || []).map(id => categoryNames.get(id) || "Unknown category");
+          addChange("Selected work categories", before.join(", ") || "None selected", after.join(", ") || "None selected");
         } else if (request.request_type === "profession_qualifications") {
-          addDetail("State", changes.state_code); addDetail("Work arrangement", changes.work_role);
+          const beforeRows = currentQualifications.get(request.contractor_id) || [];
+          const beforeNames = beforeRows.map(row => professionNames.get(row.profession_id) || "Unknown profession");
+          const afterNames = (changes.items || []).map(item => professionNames.get(item.profession_id) || "Unknown profession");
+          addChange("Work types / professions", beforeNames.join(", ") || "None recorded", afterNames.join(", ") || "None submitted");
+          addDetail("State", changes.state_code);
+          addDetail("Work arrangement", changes.work_role);
           (changes.items || []).forEach((item, index) => {
-            addDetail("Profession " + (index + 1), professionNames.get(item.profession_id) || "Unknown profession");
-            addDetail("License required for this profession", item.license_required_at_registration === true ? "YES" : item.license_required_at_registration === false ? "NO" : "Not specified");
-            addDetail("License status", item.verification_status || "Not specified");
-            addDetail("License number", item.license_number);
-            addDetail("License type", item.license_type);
-            addDetail("Issuing authority", item.issuing_authority);
-            addDetail("License expiration", item.license_expiration_date);
-            addDetail("License document", item.license_document_path ? "Uploaded — " + item.license_document_path : "Not uploaded");
+            const old = beforeRows.find(row => row.profession_id === item.profession_id);
+            const name = professionNames.get(item.profession_id) || "Unknown profession";
+            addChange(name + " — license required", old?.license_required_at_registration, item.license_required_at_registration);
+            addChange(name + " — license number", old?.license_number, item.license_number);
+            addChange(name + " — license status", old?.verification_status, item.verification_status);
+            addDetail(name + " — license type", item.license_type);
+            addDetail(name + " — issuing authority", item.issuing_authority);
+            addDetail(name + " — expiration", item.license_expiration_date);
+            addDetail(name + " — document", item.license_document_path ? "Uploaded" : "Not uploaded");
           });
         } else {
           Object.entries(changes).forEach(([key,value]) => addDetail(key.replaceAll("_"," "), value));
