@@ -415,15 +415,6 @@
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><input id="profileServiceState" maxlength="2" autocomplete="address-level1"></div>
         <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Enter or update your ZIP code, wait for the lookup, then save.</small></div>
-        <div id="specialtiesSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5">
-          <h3 style="margin:0 0 5px">Services you provide</h3>
-          <p class="muted" style="margin:0 0 12px">Select every type of work your company performs. Only matching leads will appear in your lead list, and the server will block purchases outside your selected services.</p>
-          <input id="specialtySearch" type="search" placeholder="Search services…" aria-label="Search service specializations" style="margin-bottom:10px">
-          <div id="specialtySelectionSummary" class="muted" style="font-size:13px;margin-bottom:10px">Loading your selected services…</div>
-          <div id="specialtyOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:320px;overflow:auto;padding:2px"></div>
-          <div class="actions"><button id="saveSpecialtiesBtn" type="button">Save my services</button><button id="resetSpecialtiesBtn" type="button" class="secondary">Discard changes</button></div>
-          <div id="specialtiesMessage" class="message hidden" role="status" aria-live="polite"></div>
-        </div>
         <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
           <h3 style="margin:0 0 5px">Work types & license requirements</h3>
           <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
@@ -955,65 +946,16 @@
     finally { event.target.value = ""; }
   });
 
+  // Load saved service category IDs silently for lead matching. The duplicate
+  // Services you provide editor was removed; contractors manage work types in
+  // the single Work types & license requirements section below.
   async function loadContractorServiceCategories() {
-    const root = $("specialtyOptions");
-    if (!currentContractor) { root.textContent = "Complete your contractor profile first."; return; }
-    const [categoriesResult, selectedResult] = await Promise.all([
-      db.from("service_categories").select("id,name").eq("is_active", true).order("name"),
-      db.from("contractor_service_categories").select("category_id").eq("contractor_id", currentContractor.id)
-    ]);
-    if (categoriesResult.error) throw categoriesResult.error;
-    if (selectedResult.error) throw selectedResult.error;
-    availableServiceCategories = categoriesResult.data || [];
-    selectedContractorCategoryIds = new Set((selectedResult.data || []).map(row => row.category_id));
+    if (!currentContractor) return;
+    const { data, error } = await db.from("contractor_service_categories")
+      .select("category_id").eq("contractor_id", currentContractor.id);
+    if (error) throw error;
+    selectedContractorCategoryIds = new Set((data || []).map(row => row.category_id));
     savedContractorCategoryIds = new Set(selectedContractorCategoryIds);
-    renderSpecialtyOptions(); updateSpecialtySummary();
-  }
-
-  function updateSpecialtySummary() {
-    const count = selectedContractorCategoryIds.size;
-    $("specialtySelectionSummary").textContent = count
-      ? count + " service categories selected. Your lead feed is limited to these categories."
-      : "No services selected. Select at least one category to see matching leads and buy them.";
-  }
-
-  function renderSpecialtyOptions() {
-    const root = $("specialtyOptions"), query = ($("specialtySearch").value || "").trim().toLowerCase();
-    root.replaceChildren();
-    const matches = availableServiceCategories.filter(item => item.name.toLowerCase().includes(query));
-    if (!matches.length) { root.textContent = "No services match your search."; return; }
-    matches.forEach(item => {
-      const label = document.createElement("label");
-      label.style.cssText = "display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox"; checkbox.checked = selectedContractorCategoryIds.has(item.id);
-      checkbox.style.cssText = "width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
-      checkbox.addEventListener("change", () => {
-        if (checkbox.checked) selectedContractorCategoryIds.add(item.id); else selectedContractorCategoryIds.delete(item.id);
-        updateSpecialtySummary(); renderLeads(); $("specialtiesMessage").className = "message hidden";
-      });
-      const name = document.createElement("span"); name.textContent = item.name;
-      label.append(checkbox, name); root.append(label);
-    });
-  }
-
-  async function saveContractorServiceCategories() {
-    if (!currentContractor) return message("specialtiesMessage", "Contractor profile not found. Complete your company profile first.", "error");
-    const button = $("saveSpecialtiesBtn"); setBusy(button, true, "Saving services…");
-    try {
-      const ids = [...selectedContractorCategoryIds];
-      if (!ids.length) throw new Error("Select at least one service category before saving.");
-      const { data: requestId, error: requestError } = await db.rpc("submit_contractor_change_request", {
-        p_type:"service_categories", p_changes:{category_ids:ids}
-      });
-      if(requestError) throw requestError;
-      $("specialtiesMessage").className = "message";
-      $("specialtiesMessage").textContent = "Your service changes were submitted for administrator review. They will become active only after approval.";
-      $("saveSpecialtiesBtn").disabled = true;
-    } catch (error) {
-      $("specialtiesMessage").className = "message error";
-      $("specialtiesMessage").textContent = error.message || "Could not save your service categories.";
-    } finally { setBusy(button, false); }
   }
 
   let professionCatalog = [], selectedProfessionIds = new Set(), savedProfessionIds = new Set();
@@ -2292,7 +2234,6 @@
     $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
-    $("specialtySearch").addEventListener("input", renderSpecialtyOptions);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
     $("professionState").addEventListener("change",async()=>{
       try {
@@ -2317,7 +2258,6 @@
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
-    $("saveSpecialtiesBtn").addEventListener("click", saveContractorServiceCategories);
     $("resetSpecialtiesBtn").addEventListener("click", () => {
       selectedContractorCategoryIds = new Set(savedContractorCategoryIds);
       renderSpecialtyOptions(); updateSpecialtySummary(); renderLeads();
