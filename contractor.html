@@ -528,8 +528,18 @@
   }
   function addCell(row, value) { const td = document.createElement("td"); td.textContent = String(value ?? ""); row.append(td); }
   function initClient() {
-    if (!window.supabase || !window.supabase.createClient) throw new Error("Supabase library did not load. Refresh the page and try again.");
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); window.zelpxDb = db;
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      throw new Error("The secure sign-in service did not load. Please refresh the page. If it continues, contact support.");
+    }
+    if (!db || !db.auth || !db.functions) {
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+    if (!db || !db.auth || !db.functions) {
+      db = null;
+      throw new Error("The secure sign-in service could not initialize. Please refresh the page and try again.");
+    }
+    window.zelpxDb = db;
+    return db;
   }
   function setSignupMode(enabled) {
     signupMode = enabled;
@@ -544,7 +554,10 @@
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
 
   async function signIn() {
-    clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
+    clearMessage("authMessage");
+    try { if (!db || !db.auth || !db.functions) initClient(); }
+    catch (clientError) { return message("authMessage", clientError.message, "error"); }
+    const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
     try {
