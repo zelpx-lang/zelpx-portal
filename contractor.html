@@ -591,8 +591,21 @@
     const state=$("serviceState").value.trim().toUpperCase(),root=$("signupProfessionRules");
     root.replaceChildren();
     signupRuleRows=[];
-    if(/^[A-Z]{2}$/.test(state)){
+    // Fail closed: never leave a previously loaded profession list visible if
+    // the current state's licensing rules cannot be retrieved.
+    const optionsRoot=$("signupProfessionOptions");
+    optionsRoot.replaceChildren();
+    if(!/^[A-Z]{2}$/.test(state)){
+      renderSignupProfessionOptions();
+      root.textContent="Select your state first. No professions are shown until state rules can be checked.";
+      return;
+    }
+    try {
       signupRuleRows=await loadRoleEligibilityRules(state,$("signupWorkRole").value);
+    } catch(error) {
+      signupSelectedProfessionIds.clear();
+      optionsRoot.textContent="Could not verify licensing rules. Profession choices are temporarily hidden. Please retry.";
+      throw error;
     }
     renderSignupProfessionOptions();
     const employee=$("signupWorkRole").value==="employee";
@@ -626,6 +639,15 @@
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
+    // Enforce the No-license promise again at submission time. A stale page,
+    // altered browser state, or changed selection must not register an
+    // unlicensed applicant for a profession that is not explicitly cleared.
+    if(!hasLicense){
+      const notCleared=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status!=="allowed_no_individual_license");
+      if(notCleared.length){
+        return message("authMessage","With No selected, you may register only for work explicitly confirmed as license-free in "+serviceState+". Remove: "+notCleared.map(p=>p.profession_name).join(", ")+".","error");
+      }
+    }
     const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
     const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
     const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
