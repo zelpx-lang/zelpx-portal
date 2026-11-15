@@ -1237,7 +1237,6 @@
       const professionNames=new Map((professionsResult.data||[]).map(x=>[x.id,x.profession_name])), categoryNames=new Map((categoriesResult.data||[]).map(x=>[x.id,x.name]));
       const render=(list,allowReview)=>{
         if(!list)return;list.replaceChildren();
-        const cleanupAdded=new Set();
         if(!rows.length){list.textContent="No change requests yet.";return;}
         rows.forEach(r=>{
           const card=document.createElement("article");card.className="lead";
@@ -1260,28 +1259,6 @@
             Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
           }
           card.append(detail);
-          if(allowReview && isAdmin && r.contractor_id && !cleanupAdded.has(r.contractor_id) && rows.some(x=>x.contractor_id===r.contractor_id && ["approved","rejected"].includes(x.status))){
-            cleanupAdded.add(r.contractor_id);
-            const cleanupActions=document.createElement("div");cleanupActions.className="actions";
-            const cleanupButton=document.createElement("button");cleanupButton.type="button";cleanupButton.className="secondary";cleanupButton.textContent="Delete old reviewed forms";
-            cleanupButton.title="Deletes only approved or rejected submission forms. Pending forms and contractor account data are kept.";
-            cleanupButton.addEventListener("click",async()=>{
-              const confirmed=window.confirm("Delete all approved and rejected old forms for "+(company.company_name||profile.full_name||"this contractor")+"? Pending forms, contractor account, profile, licenses and current settings will be kept.");
-              if(!confirmed)return;
-              cleanupButton.disabled=true;
-              try{
-                const {data:deleted,error:deleteError}=await db.rpc("admin_delete_reviewed_contractor_forms",{p_contractor_id:r.contractor_id});
-                if(deleteError)throw deleteError;
-                message("contractorChangesMessage",(Number(deleted)||0)+" old reviewed form(s) deleted. Pending submissions and contractor account data were kept.","success");
-                await loadContractorChangeRequests();
-                await refreshAdminPendingBadge();
-              }catch(e){
-                message("contractorChangesMessage","Could not delete old forms: "+(e.message||"Unknown error"),"error");
-                cleanupButton.disabled=false;
-              }
-            });
-            cleanupActions.append(cleanupButton);card.append(cleanupActions);
-          }
           if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
           if(allowReview && r.status==="pending"){
             const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
