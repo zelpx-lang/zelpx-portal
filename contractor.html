@@ -2095,6 +2095,22 @@
               });actions.append(b);
             }card.append(actions);
           }
+          if(!allowReview && String(r.status||"").trim().toLowerCase()==="rejected"){
+            const actions=document.createElement("div");actions.className="actions";
+            const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete rejected request";
+            remove.addEventListener("click",async()=>{
+              if(!window.confirm("Delete this rejected change request? This cannot be undone."))return;
+              remove.disabled=true;remove.textContent="Deleting…";
+              try{
+                const {data:deleted,error:deleteError}=await db.from("contractor_change_requests")
+                  .delete().eq("id",r.id).eq("user_id",currentUser.id).ilike("status","rejected").select("id");
+                if(deleteError)throw deleteError;
+                if(!deleted||deleted.length===0)throw new Error("The request was not deleted. Refresh and try again.");
+                await loadContractorChangeRequests();
+              }catch(e){window.alert("Could not delete rejected request: "+(e.message||"Unknown error"));remove.disabled=false;remove.textContent="Delete rejected request";}
+            });
+            actions.append(remove);card.append(actions);
+          }
           list.append(card);
         });
       };
