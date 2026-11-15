@@ -380,7 +380,7 @@
     </div>
     <nav class="tabs">
       <button class="active" data-tab="availablePanel">All leads</button><button data-tab="purchasesPanel">My purchases</button>
-      <button data-tab="companyPanel">My company</button><button id="adminTabBtn" data-tab="adminPanel" class="hidden">Admin</button>
+      <button data-tab="companyPanel">My company</button><button id="adminTabBtn" data-tab="adminPanel" class="hidden">Admin <span id="adminPendingBadge" style="display:none;background:#d94820;color:#fff;border-radius:999px;padding:2px 7px;font-size:12px;margin-left:5px">0</span></button>
     </nav>
     <section id="availablePanel" class="card">
       <h2>Find your next job</h2><p>Browse service requests in your market. Customer contact details remain private until you purchase an available lead.</p>
@@ -1866,6 +1866,33 @@
   }
 
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
+  let adminPendingIds=new Set(),adminChangePoll=null,adminChangePrimed=false;
+  async function checkAdminContractorChanges(){
+    if(!isAdmin||!currentUser)return;
+    const {data,error}=await db.from("contractor_change_requests").select("id,contractor_id,request_type,requested_changes,created_at").eq("status","pending").order("created_at",{ascending:false}).limit(100);
+    if(error){console.warn("Admin change notification check failed:",error.message);return;}
+    const rows=data||[],ids=new Set(rows.map(r=>r.id)),badge=$("adminPendingBadge");
+    if(badge){badge.textContent=String(rows.length);badge.style.display=rows.length?"inline-block":"none";}
+    if(adminChangePrimed){
+      const fresh=rows.filter(r=>!adminPendingIds.has(r.id));
+      if(fresh.length){
+        const first=fresh[0],kind=first.request_type==="profession_qualifications"?"work types / professions":first.request_type==="service_categories"?"service categories":"company or license details";
+        const notice=fresh.length+" new contractor update"+(fresh.length===1?"":"s")+" waiting for review: "+kind+". Open Admin → Contractor profile change requests.";
+        message("contractorChangesMessage",notice,"success");
+        if("Notification" in window && Notification.permission==="granted")new Notification("ZELPX: contractor update",{body:notice,tag:"zelpx-contractor-change"});
+        await loadContractorChangeRequests();
+      }
+    }else adminChangePrimed=true;
+    adminPendingIds=ids;
+  }
+  function startAdminChangeNotifications(){
+    if(adminChangePoll)window.clearInterval(adminChangePoll);
+    if(!isAdmin)return;
+    adminChangePrimed=false;adminPendingIds=new Set();
+    checkAdminContractorChanges();
+    adminChangePoll=window.setInterval(checkAdminContractorChanges,15000);
+  }
+
   async function loadAdminContractorReviews(){
     if(!isAdmin)return;const root=$("adminContractorReviewList");root.textContent="Loading contractors…";
     try{
@@ -2063,7 +2090,7 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); loadAdminContractorReviews(); }
+    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); loadAdminContractorReviews(); if ("Notification" in window && Notification.permission==="default") Notification.requestPermission().catch(()=>{}); }
   }
   async function logout() {
     const { error } = await db.auth.signOut({ scope: "local" });
@@ -2183,7 +2210,7 @@
         history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
       }
       const { data: { session } } = await db.auth.getSession();
-      if (session) { await loadApp(); await handlePaymentReturn(); }
+      if (session) { await loadApp(); await handlePaymentReturn(); if(isAdmin)startAdminChangeNotifications(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
