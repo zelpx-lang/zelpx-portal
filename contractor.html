@@ -305,7 +305,7 @@
         <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
         <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
         <p class="muted" style="font-size:12px;margin:5px 0">Choose No to see only work types confirmed as license-free for your state and work status.</p>
-        <label>Professions / work types</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
+        <label>Services / work types (full catalog)</label><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
         <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
         <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
@@ -530,6 +530,7 @@
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
+  let signupServiceCatalog=[], signupCategoryMapRows=[], signupSelectedCategoryIds=new Set();
   async function loadRoleEligibilityRules(state,role){
     if(!/^[A-Z]{2}$/.test(state))return [];
     const {data,error}=await db.from("state_profession_eligibility")
@@ -550,36 +551,30 @@
   }
   function renderSignupProfessionOptions(){
     const root=$("signupProfessionOptions");root.replaceChildren();
-    if(!$("serviceState").value){
-      root.textContent="Select your state first, then choose all the professions you want to offer.";
-      return;
-    }
-    if(!signupProfessionCatalog.length){root.textContent="No professions are currently available.";return;}
+    if(!$("serviceState").value){root.textContent="Select your state first, then choose the services you want to offer.";return;}
+    if(!signupServiceCatalog.length){root.textContent="No service categories are currently available.";return;}
     const licenseAnswer=$("hasLicense").value;
-    if(licenseAnswer!=="yes" && licenseAnswer!=="no"){
-      root.textContent="Select Yes or No above before choosing professions. The list will then be filtered using your state and work status.";
-      return;
-    }
-    // No personal license = show ONLY scopes affirmatively classified as
-    // not requiring an individual license. This applies to employees and
-    // independent contractors alike. Employer-supervised or contractor-license
-    // scopes are not "license-free" and must not appear in this list.
+    if(licenseAnswer!=="yes" && licenseAnswer!=="no"){root.textContent="Select Yes or No above before choosing services.";return;}
     const showOnlyLicenseFree=licenseAnswer==="no";
-    const visibleProfessions=signupProfessionCatalog.filter(p=>{
-      const rule=signupRuleRows.find(r=>r.profession_id===p.id);
+    const visibleCategories=signupServiceCatalog.filter(c=>{
+      const map=signupCategoryMapRows.find(x=>x.category_id===c.id);
+      if(!map || map.mapping_status!=="mapped" || !map.profession_id)return !showOnlyLicenseFree;
+      const rule=signupRuleRows.find(r=>r.profession_id===map.profession_id);
       return !showOnlyLicenseFree || rule?.eligibility_status==="allowed_no_individual_license";
     });
-    const visibleIds=new Set(visibleProfessions.map(p=>p.id));
-    [...signupSelectedProfessionIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedProfessionIds.delete(id);});
-    if(!visibleProfessions.length){
-      root.textContent="No professions have been confirmed as license-free for this state and work status yet. ZELPX must verify the applicable state rules before listing them.";
-      return;
-    }
-    visibleProfessions.forEach(p=>{
-      const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
-      const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
-      cb.addEventListener("change",()=>{if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
-      const name=document.createElement("span");name.textContent=p.profession_name;label.append(cb,name);root.append(label);
+    const visibleIds=new Set(visibleCategories.map(c=>c.id));
+    [...signupSelectedCategoryIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedCategoryIds.delete(id);});
+    if(!visibleCategories.length){root.textContent="No services have been confirmed as license-free for this state and work status yet.";return;}
+    const groups=new Map();
+    visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
+    [...groups.entries()].forEach(([group,cats])=>{
+      const heading=document.createElement("div");heading.textContent=group;heading.style.cssText="grid-column:1/-1;font-weight:800;margin:10px 0 2px;color:var(--muted)";root.append(heading);
+      cats.forEach(c=>{
+        const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
+        const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedCategoryIds.has(c.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
+        cb.addEventListener("change",()=>{if(cb.checked)signupSelectedCategoryIds.add(c.id);else signupSelectedCategoryIds.delete(c.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
+        const name=document.createElement("span");name.textContent=c.name;label.append(cb,name);root.append(label);
+      });
     });
   }
   async function loadSignupWorkTypes(){
@@ -589,8 +584,17 @@
     stateSelect.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select state";stateSelect.append(placeholder);
     (states||[]).forEach(x=>{const o=document.createElement("option");o.value=x.state_code;o.textContent=x.state_name;stateSelect.append(o);});
     if(previousState)stateSelect.value=previousState;
-    const {data,error}=await db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name");
-    if(error)throw error;signupProfessionCatalog=data||[];
+    const [professionsResult,categoriesResult,mapsResult]=await Promise.all([
+      db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
+      db.from("service_categories").select("id,name,slug").eq("is_active",true).order("name"),
+      db.from("service_category_profession_map").select("category_id,profession_id,mapping_status,mapping_note")
+    ]);
+    if(professionsResult.error)throw professionsResult.error;
+    if(categoriesResult.error)throw categoriesResult.error;
+    if(mapsResult.error)throw mapsResult.error;
+    signupProfessionCatalog=professionsResult.data||[];
+    signupServiceCatalog=categoriesResult.data||[];
+    signupCategoryMapRows=mapsResult.data||[];
     await refreshSignupProfessionRules();
   }
   async function refreshSignupProfessionRules(){
@@ -613,6 +617,8 @@
       optionsRoot.textContent="Could not verify licensing rules. Profession choices are temporarily hidden. Please retry.";
       throw error;
     }
+    const selectedMaps=signupCategoryMapRows.filter(m=>signupSelectedCategoryIds.has(m.category_id)&&m.mapping_status==="mapped"&&m.profession_id);
+    signupSelectedProfessionIds=new Set(selectedMaps.map(m=>m.profession_id));
     renderSignupProfessionOptions();
     const employee=$("signupWorkRole").value==="employee";
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
@@ -631,6 +637,8 @@
       if(r?.official_source_url){const a=document.createElement("a");a.href=r.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(r.licensing_authority||"State authority");row.append(a);}
       root.append(row);
     });
+    const hasUnmappedSelected=[...signupSelectedCategoryIds].some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
+    if(hasUnmappedSelected)unverified=true;
     $("signupConditionalAckLabel").classList.toggle("hidden",!conditional);
     $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified);
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
@@ -644,7 +652,7 @@
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
-    const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
+    const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
     // Enforce the No-license promise again at submission time. A stale page,
     // altered browser state, or changed selection must not register an
     // unlicensed applicant for a profession that is not explicitly cleared.
@@ -670,7 +678,7 @@
       if(signupRole==="independent" && ["contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status))return true;
       return false;
     });
-    if(!selectedSignup.length)return message("authMessage","Select at least one profession before creating your account.","error");
+    if(!selectedServiceCategoryIds.length)return message("authMessage","Select at least one service before creating your account.","error");
     if(!hasLicense && explicitlyRequiredWithoutLicense.length){
       const names=explicitlyRequiredWithoutLicense.map(p=>p.profession_name).join(", ");
       return message("authMessage","A current license or trade credential is required for: "+names+". You cannot register to offer this work without the required credential. Remove these professions or provide your license details and upload the document.","error");
@@ -698,7 +706,7 @@
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, insurance_policy_number: signupRole==="independent" ? insurancePolicyNumber : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_work_role: signupRole } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, insurance_policy_number: signupRole==="independent" ? insurancePolicyNumber : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
