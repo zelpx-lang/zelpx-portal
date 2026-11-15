@@ -1061,7 +1061,7 @@
     toast.replaceChildren();
     const copy=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("div");
     strong.textContent=title;small.textContent=body;small.style.cssText="font-size:13px;opacity:.92;margin-top:3px";copy.append(strong,small);
-    const open=document.createElement("button");open.type="button";open.textContent="Open";open.style.cssText="background:#f59e0b;color:#202b3c;min-height:38px;padding:8px 12px";open.onclick=()=>{switchTab("adminPanel");loadContractorChangeRequests();toast.remove();};
+    const open=document.createElement("button");open.type="button";open.textContent="Open";open.style.cssText="background:#f59e0b;color:#202b3c;min-height:38px;padding:8px 12px";open.onclick=()=>{switchTab("adminPanel");showAdminPage("adminApprovalsPage");loadContractorChangeRequests();toast.remove();};
     const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close notification");close.style.cssText="background:transparent;padding:4px 8px;min-height:32px";close.onclick=()=>toast.remove();
     toast.append(copy,open,close);
     if(requestId)toast.dataset.requestId=requestId;
@@ -1350,7 +1350,7 @@
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (pageId === "adminApprovalsPage") loadPendingContractors();
+    if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadServiceRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
