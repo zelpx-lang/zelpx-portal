@@ -298,22 +298,24 @@
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
       <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
-      <div id="signupWorkPickerPanel" tabindex="0" aria-label="Scrollable work selection and licensing confirmations" style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5;max-height:min(68vh,620px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+      <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
         <h3>Choose your work before creating your account</h3>
-        <p class="muted" style="font-size:12px;margin:0 0 8px">Scroll inside this panel to review all work types and complete any required confirmations below.</p>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
         <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
         <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
         <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
         <p class="muted" style="font-size:12px;margin:5px 0">Choose No to see only work types confirmed as license-free for your state and work status.</p>
         <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state and license answer first.</span></div>
-        <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
-        <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
-        <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
-        <label id="signupReadAgreeLabel" style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:700;line-height:1.45">
-          <input id="signupReadAgree" type="checkbox" required style="width:22px;height:22px;min-width:22px;margin:2px 0 0;accent-color:#f0783c">
-          <span>I have read and agree to the licensing requirements and work-scope restrictions shown above. I will only perform work I am legally authorized to do.</span>
-        </label>
+        <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
+          <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
+          <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
+          <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
+          <label id="signupReadAgreeLabel" style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-weight:700;line-height:1.45">
+            <input id="signupReadAgree" type="checkbox" required style="width:22px;height:22px;min-width:22px;margin:2px 0 0;accent-color:#f0783c">
+            <span>I have read and agree to the licensing requirements and work-scope restrictions shown above. I will only perform work I am legally authorized to do.</span>
+          </label>
+        </div>
       </div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
         <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
