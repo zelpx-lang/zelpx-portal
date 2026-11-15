@@ -298,7 +298,6 @@
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
-        <button type="button" data-admin-page="adminContractorChangesPage">Contractor update requests</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
@@ -313,6 +312,14 @@
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
+      <section class="lead">
+        <h2>Contractor profile update requests</h2>
+        <p>Changes submitted by contractors. Compare the previous information with the new submission, including work categories and license status.</p>
+        <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
+        <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
+        <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
+      </section>
         <section class="lead">
           <h2>Old contractor update forms</h2>
           <p>Manually delete older submissions for each contractor. The newest submission is kept. Contractor accounts, licenses and current profile information are not changed.</p>
@@ -320,17 +327,6 @@
           <div class="actions">
             <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete older submissions</button>
           </div>
-        </section>
-      </section>
-      <section id="adminContractorChangesPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-          <h2>Contractor profile update requests</h2>
-          <p>Review company details, business address, license and insurance changes submitted from the contractor dashboard. Changes become active only after approval.</p>
-          <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
-          <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
-          <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
-          <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
         </section>
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
