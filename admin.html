@@ -235,6 +235,27 @@
       .admin-home-foot { font-size:10px; }
     }
 
+
+    /* Compact administrator review screens on phones */
+    @media(max-width:700px) {
+      #adminApprovalsPage, #adminUnlicensedPage { font-size:14px; }
+      #adminApprovalsPage > .lead, #adminUnlicensedPage > .lead { padding:12px!important; margin:8px 0!important; border-radius:14px; }
+      #adminApprovalsPage h2, #adminUnlicensedPage h2 { font-size:18px!important; line-height:1.25; margin:0 0 6px!important; }
+      #adminApprovalsPage p, #adminUnlicensedPage p { font-size:13px!important; line-height:1.4!important; margin:5px 0!important; }
+      #adminApprovalsPage .message, #adminUnlicensedPage .message { padding:9px 11px!important; margin:8px 0!important; font-size:13px!important; line-height:1.4!important; border-radius:11px; }
+      #adminApprovalsPage .actions, #adminUnlicensedPage .actions { display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:7px; margin:8px 0!important; }
+      #adminApprovalsPage .actions > button, #adminUnlicensedPage .actions > button { flex:0 1 auto!important; width:auto!important; min-height:36px; padding:7px 12px; font-size:12px; }
+      #pendingContractorsList .lead, #unlicensedContractorsList .lead, #contractorChangesList .lead { padding:11px 12px!important; margin:8px 0!important; border-radius:13px; box-shadow:none; }
+      #pendingContractorsList .lead::before, #unlicensedContractorsList .lead::before, #contractorChangesList .lead::before { top:10px; bottom:10px; width:3px; }
+      #pendingContractorsList h3, #unlicensedContractorsList h3, #contractorChangesList h3 { font-size:16px!important; margin:0 0 6px!important; }
+      #pendingContractorsList .lead p, #unlicensedContractorsList .lead p, #contractorChangesList .lead p { font-size:12px!important; line-height:1.35!important; margin:3px 0!important; overflow-wrap:anywhere; }
+      #pendingContractorsList .lead .actions, #unlicensedContractorsList .lead .actions, #contractorChangesList .lead .actions { display:flex; flex-direction:row; flex-wrap:wrap; gap:7px; margin-top:9px!important; }
+      #pendingContractorsList .lead .actions button, #unlicensedContractorsList .lead .actions button, #contractorChangesList .lead .actions button { flex:0 1 auto!important; width:auto!important; min-height:36px; padding:7px 11px; font-size:12px; }
+      #pendingContractorsList select, #unlicensedContractorsList select, #contractorChangesList select { min-height:38px; padding:7px 9px; font-size:13px; }
+      #adminApprovalsPage > [data-admin-home], #adminUnlicensedPage > [data-admin-home] { min-height:38px; padding:7px 13px; font-size:13px; margin-bottom:8px; }
+      #adminApprovalsPage > .lead > p:first-of-type, #adminUnlicensedPage > .lead > p:first-of-type { margin-bottom:8px!important; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
