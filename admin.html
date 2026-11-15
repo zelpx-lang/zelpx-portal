@@ -1,6 +1,6 @@
-<!doctype html>
+ф<!doctype html>
 <html lang="en">
-<head>
+<head>aa
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10243a">
@@ -24,7 +24,7 @@
     button,input,select,textarea { font:inherit; }
     button { min-height:44px; border:0; border-radius:9px; padding:11px 16px; background:var(--blue); color:white; font-weight:700; font-size:14px; cursor:pointer; touch-action:manipulation; }
     button.secondary { background:#e8eef5; color:var(--navy); }
-    button.danger { background:#fff0ef; color:var(--red); }
+    button.danger { background:#fff0ef; color:var(--red); }aaaaa
     button:disabled { opacity:.55; cursor:not-allowed; }
     input,select,textarea { display:block; width:100%; min-width:0; min-height:44px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#172b43; font-size:16px; }
     input:focus,select:focus,textarea:focus,button:focus-visible { outline:3px solid #8fc5f1; outline-offset:2px; }
@@ -89,423 +89,6 @@
       .statrow { grid-template-columns:1fr; } .stat { display:flex; justify-content:space-between; align-items:center; gap:8px; }
       .stat strong { font-size:20px; } .leadhead { flex-direction:column; } .price { white-space:normal; } }
     @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
-    /* ===== ZELPX redesign v2: warm paper + ink + orange ===== */
-    :root { --navy:#15171c; --ink:#15171c; --blue:#ff6a2b; --bg:#f6f2ec; --line:#e7e0d5; --muted:#6f6a62; --green:#0f8a5f; --red:#c2321f; --radius:20px; --page-width:1080px; --accent-soft:#fff0e8; }
-    body { font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; letter-spacing:-.005em; }
-    h1,h2,h3 { letter-spacing:-.02em; }
-    button { border-radius:999px; padding:11px 22px; background:var(--blue); color:#fff; transition:transform .15s,box-shadow .15s,background .15s; box-shadow:0 6px 16px #ff6a2b33; }
-    button:hover:not(:disabled) { transform:translateY(-1px); background:#f25a1a; }
-    button.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); box-shadow:none; }
-    button.secondary:hover:not(:disabled) { background:#faf7f2; }
-    button.danger { background:#fff0ee; color:var(--red); box-shadow:none; }
-    input,select,textarea { border:1.5px solid var(--line); border-radius:14px; background:#fffdfa; color:var(--ink); }
-    input:focus,select:focus,textarea:focus,button:focus-visible { outline:3px solid #ffc9b0; outline-offset:2px; border-color:var(--blue); }
-    .top { background:var(--ink); padding:18px 28px; border-radius:0 0 28px 28px; }
-    .brand { font-size:24px; letter-spacing:.28em; color:#fff; }
-    .brand::after { content:""; display:inline-block; width:9px; height:9px; margin-left:8px; border-radius:50%; background:var(--blue); vertical-align:middle; }
-    .top small { color:#a9a49b; letter-spacing:.04em; }
-    .card { background:#fffdfa; border:1px solid var(--line); box-shadow:0 1px 0 #fff inset,0 18px 40px -24px #3b2a1a40; }
-    p { color:var(--muted); }
-    label { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#58534b; }
-    .stat { background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 18px; }
-    .stat .muted { font-size:12px; text-transform:uppercase; letter-spacing:.07em; }
-    .stat strong { font-size:clamp(24px,3.4vw,32px); letter-spacing:-.03em; margin-top:4px; }
-    .statrow .stat:first-child { background:var(--ink); border-color:var(--ink); color:#fff; }
-    .statrow .stat:first-child .muted { color:#a9a49b; }
-    .tabs { background:#ece6dc; padding:5px; border-radius:999px; display:inline-flex; gap:2px; max-width:100%; }
-    .tabs button { background:transparent; color:#5d584f; box-shadow:none; padding:10px 20px; }
-    .tabs button:hover:not(:disabled) { background:#e3dccf; transform:none; }
-    .tabs button.active { background:#fff; color:var(--ink); box-shadow:0 2px 8px #3b2a1a22; }
-    .lead { border-radius:22px; border:1px solid var(--line); background:#fff; padding:22px; box-shadow:0 12px 30px -22px #3b2a1a55; position:relative; overflow:hidden; }
-    .lead::before { content:""; position:absolute; left:0; top:22px; bottom:22px; width:4px; border-radius:0 4px 4px 0; background:var(--blue); }
-    .lead:hover { border-color:#e0cdb8; box-shadow:0 20px 40px -24px #3b2a1a66; }
-    .lead h3 { font-size:19px; margin-bottom:4px; }
-    .leadhead { align-items:center; }
-    .price { background:var(--accent-soft); color:#c2410c; padding:6px 14px; border-radius:999px; font-size:20px; }
-    .lead-price-label { margin-bottom:6px; }
-    .lead .muted { font-size:14px; }
-    .lead > h3:not(:first-child) { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#8a847a; margin:14px 0 4px!important; }
-    .lead > p { margin:0; color:#3a3731; font-size:16px; }
-    .lead-badges { margin:12px 0 0; }
-    .pill { border-radius:999px; background:#f1ece3; color:#5d584f; margin-top:0; padding:5px 12px; }
-    .pill.available { background:#e3f5ec; color:var(--green); } .pill.sold { background:#fdebe8; color:var(--red); } .pill.urgent { background:#fff0e8; color:#c2410c; }
-    .lead-footer { border-top:1px dashed #e4dccf; margin-top:18px; }
-    .lead-controls { background:#f6f2ec; border:0; border-radius:18px; }
-    .lead-controls input,.lead-controls select { background:#fff; }
-    .contactbox { background:#eef8f2; border:1px solid #cfe9db; border-radius:16px; }
-    .message { border-radius:14px; background:#f3efe8; color:#3a3731; }
-    .chatbox,.chatmessages { background:#faf7f2; border-radius:16px; }
-    .chatbubble.contractor { background:#ffe3d3; } .chatbubble.customer { background:#ece6dc; }
-    th { letter-spacing:.07em; }
-    @media(max-width:700px) { .top { padding:14px 16px; border-radius:0 0 22px 22px; } .tabs { display:grid; border-radius:22px; } .tabs button { padding:10px 6px; } .lead { padding:18px 16px 18px 18px; } }
-    @media(max-width:700px) { .statrow { grid-template-columns:1fr!important; gap:8px!important; } .stat { display:flex!important; justify-content:space-between; align-items:center; padding:12px 16px!important; } .stat .muted { display:block; margin:0; } .stat strong { font-size:22px!important; margin:0; } }
-    /* ===== compact leads v3 ===== */
-    main { margin:18px auto; }
-    .card { padding:18px; margin-bottom:12px; }
-    h1 { font-size:clamp(20px,2.6vw,24px); margin-bottom:2px; }
-    #appView > .card > p#accountLine { margin:0 0 12px; font-size:14px; }
-    .statrow { gap:8px; }
-    .stat { padding:10px 14px; border-radius:14px; }
-    .stat strong { font-size:clamp(20px,2.8vw,24px); }
-    #contractorPushSection { padding:10px 14px!important; margin:10px 0!important; border-radius:14px; box-shadow:none; }
-    #contractorPushSection::before { display:none; }
-    #contractorPushSection h2 { font-size:13px; margin:0 0 2px; text-transform:uppercase; letter-spacing:.06em; color:#58534b; }
-    #contractorPushSection p { margin:0; font-size:13px; }
-    #appView .actions { margin-top:8px; }
-    #appView .actions + p.muted { font-size:12px; margin:8px 0 0; }
-    .tabs { margin-bottom:10px; }
-    .tabs button { min-height:38px; padding:8px 18px; }
-    #availablePanel { padding:16px; }
-    #availablePanel > h2 { font-size:19px; margin-bottom:2px; }
-    #availablePanel > p { font-size:14px; margin:0 0 8px; }
-    .lead-controls { padding:8px; gap:8px; margin:10px 0 6px; border-radius:14px; }
-    .lead-controls input,.lead-controls select { min-height:40px; padding:8px 12px; font-size:15px; }
-    .lead-toolbar { margin:6px 0; } .lead-toolbar button { min-height:36px; padding:6px 16px; }
-
-    #leadsList .lead { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-rows:auto auto auto; column-gap:14px; row-gap:4px; align-items:center; padding:12px 16px 12px 18px; margin:8px 0; border-radius:16px; box-shadow:0 8px 20px -18px #3b2a1a66; }
-    #leadsList .lead::before { top:12px; bottom:12px; width:3px; }
-    #leadsList .leadhead,#leadsList .lead-footer { display:contents; }
-    #leadsList .leadhead > div:first-child { grid-column:1; grid-row:1; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; min-width:0; }
-    #leadsList .lead h3 { font-size:16px; margin:0; }
-    #leadsList .lead .muted { font-size:13px; }
-    #leadsList .leadhead > div:last-child { grid-column:2; grid-row:1; display:flex; align-items:center; gap:8px; }
-    #leadsList .lead-price-label { display:none; }
-    #leadsList .price { font-size:16px; padding:4px 12px; }
-    #leadsList .lead-badges { grid-column:1; grid-row:2; margin:0; gap:5px; }
-    #leadsList .pill { padding:2px 9px; font-size:11px; }
-    #leadsList .lead > h3:not(:first-child) { display:none; }
-    #leadsList .lead > p { grid-column:1/-1; grid-row:3; margin:2px 0 0; font-size:14px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal!important; }
-    #leadsList .lead-footer button { grid-column:3; grid-row:1 / span 2; min-width:0; min-height:38px; padding:8px 18px; font-size:13px; }
-    #leadsList .lead-date { font-size:12px; }
-    #leadsList .lead-date:first-child { grid-column:2; grid-row:2; justify-self:end; white-space:nowrap; }
-    #leadsList .lead-date:last-child:not(:first-child) { grid-column:3; grid-row:1; justify-self:end; white-space:nowrap; }
-    #leadsList .lead-footer > .lead-date:first-child:empty { display:none; }
-
-    @media(max-width:700px) {
-      main { margin:12px auto; } .card { padding:14px; }
-      .statrow { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:6px!important; }
-      .stat { display:block!important; padding:8px 10px!important; } .stat .muted { font-size:11px!important; letter-spacing:0; text-transform:none; line-height:1.2; }
-      .stat strong { font-size:18px!important; margin-top:2px; }
-      .tabs { display:flex!important; width:100%; } .tabs button { flex:1 1 0; padding:8px 4px; font-size:13px; }
-      #availablePanel { padding:12px; }
-      #leadsList .lead { grid-template-columns:minmax(0,1fr) auto; padding:11px 12px 11px 15px; }
-      #leadsList .leadhead > div:last-child { grid-column:2; grid-row:1; justify-self:end; }
-      #leadsList .lead-badges { grid-column:1/-1; grid-row:2; }
-      #leadsList .lead > p { grid-row:3; }
-      #leadsList .lead-date:first-child { grid-column:1; grid-row:4; justify-self:start; }
-      #leadsList .lead-footer button { grid-column:2; grid-row:4; justify-self:end; width:auto; padding:7px 18px; }
-      #leadsList .lead-date:last-child:not(:first-child) { grid-column:2; grid-row:4; }
-    }
-  
-    .password-field { position:relative; width:100%; }
-    .password-field input { width:100%; padding-right:52px; }
-    .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
-    .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
-    .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
-
-    /* Administrator workspace navigation — responsive card dashboard */
-    body.admin-mode { background:#f5f2ed; }
-    #adminPanel { padding:clamp(16px,3vw,30px); border-radius:24px; }
-    .admin-home-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin:2px 0 24px; }
-    .admin-home-head h2 { font-size:clamp(24px,3vw,32px); margin:5px 0 6px; letter-spacing:-.04em; }
-    .admin-home-head p { margin:0; max-width:620px; font-size:14px; line-height:1.55; }
-    .admin-eyebrow { color:#e85f25; font-size:10px; font-weight:850; letter-spacing:.17em; }
-    .admin-live { display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border:1px solid #e8e1d7; border-radius:999px; background:#fff; color:#615b52; font-size:12px; font-weight:700; white-space:nowrap; }
-    .admin-live i { width:8px; height:8px; border-radius:50%; background:#16a36a; box-shadow:0 0 0 4px #e3f5ec; }
-    .admin-page-nav { display:flex; flex-direction:column; gap:9px; width:100%; margin:0; padding:0; background:transparent; border-radius:0; }
-    .admin-page-nav button.admin-nav-card { display:flex; align-items:center; gap:15px; width:100%; min-height:60px; padding:9px 14px; border:1px solid #e9e2d8; border-radius:12px; background:#fff; color:#211f1b; box-shadow:0 5px 18px #3427190a; text-align:left; white-space:normal; }
-    .admin-page-nav button.admin-nav-card:hover { background:#fffaf6; border-color:#f4b394; transform:translateY(-2px); box-shadow:0 12px 26px #34271912; }
-    .admin-nav-icon { flex:0 0 34px; width:34px; height:34px; display:grid; place-items:center; border-radius:14px; background:#fff0e8; color:#df5b24; font-size:19px; font-weight:800; }
-    .admin-nav-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:2px; }
-    .admin-nav-copy strong { font-size:14px; line-height:1.2; }
-    .admin-nav-copy small { color:#777066; font-size:11px; line-height:1.25; font-weight:500; }
-    .admin-nav-arrow { color:#b7afa4; font-size:22px; font-weight:400; }
-    .admin-home-foot { display:flex; justify-content:space-between; gap:12px; margin-top:22px; padding-top:14px; border-top:1px solid #eee7dd; color:#8a8379; font-size:11px; letter-spacing:.04em; }
-    #adminPanel .admin-page > [data-admin-home] { margin-bottom:16px; }
-    #adminPanel .admin-page > h2 { margin-top:4px; }
-    @media(max-width:650px) {
-      #adminPanel { padding:15px; border-radius:18px; }
-      .admin-home-head { flex-direction:column; gap:12px; margin-bottom:18px; }
-      .admin-home-head h2 { font-size:25px; }
-      .admin-page-nav { gap:8px; }
-      .admin-page-nav button.admin-nav-card { min-height:56px; padding:8px 11px; border-radius:11px; gap:10px; }
-      .admin-nav-icon { flex-basis:32px; width:32px; height:32px; border-radius:10px; }
-      .admin-nav-copy strong { font-size:15px; }
-      .admin-nav-copy small { font-size:11px; }
-      .admin-home-foot { font-size:10px; }
-    }
-
-
-    /* Compact administrator review screens on phones */
-    @media(max-width:700px) {
-      #adminApprovalsPage, #adminUnlicensedPage { font-size:14px; }
-      #adminApprovalsPage > .lead, #adminUnlicensedPage > .lead { padding:12px!important; margin:8px 0!important; border-radius:14px; }
-      #adminApprovalsPage h2, #adminUnlicensedPage h2 { font-size:18px!important; line-height:1.25; margin:0 0 6px!important; }
-      #adminApprovalsPage p, #adminUnlicensedPage p { font-size:13px!important; line-height:1.4!important; margin:5px 0!important; }
-      #adminApprovalsPage .message, #adminUnlicensedPage .message { padding:9px 11px!important; margin:8px 0!important; font-size:13px!important; line-height:1.4!important; border-radius:11px; }
-      #adminApprovalsPage .actions, #adminUnlicensedPage .actions { display:flex; flex-direction:row; align-items:center; flex-wrap:wrap; gap:7px; margin:8px 0!important; }
-      #adminApprovalsPage .actions > button, #adminUnlicensedPage .actions > button { flex:0 1 auto!important; width:auto!important; min-height:36px; padding:7px 12px; font-size:12px; }
-      #pendingContractorsList .lead, #unlicensedContractorsList .lead, #contractorChangesList .lead { padding:11px 12px!important; margin:8px 0!important; border-radius:13px; box-shadow:none; }
-      #pendingContractorsList .lead::before, #unlicensedContractorsList .lead::before, #contractorChangesList .lead::before { top:10px; bottom:10px; width:3px; }
-      #pendingContractorsList h3, #unlicensedContractorsList h3, #contractorChangesList h3 { font-size:16px!important; margin:0 0 6px!important; }
-      #pendingContractorsList .lead p, #unlicensedContractorsList .lead p, #contractorChangesList .lead p { font-size:12px!important; line-height:1.35!important; margin:3px 0!important; overflow-wrap:anywhere; }
-      #pendingContractorsList .lead .actions, #unlicensedContractorsList .lead .actions, #contractorChangesList .lead .actions { display:flex; flex-direction:row; flex-wrap:wrap; gap:7px; margin-top:9px!important; }
-      #pendingContractorsList .lead .actions button, #unlicensedContractorsList .lead .actions button, #contractorChangesList .lead .actions button { flex:0 1 auto!important; width:auto!important; min-height:36px; padding:7px 11px; font-size:12px; }
-      #pendingContractorsList select, #unlicensedContractorsList select, #contractorChangesList select { min-height:38px; padding:7px 9px; font-size:13px; }
-      #adminApprovalsPage > [data-admin-home], #adminUnlicensedPage > [data-admin-home] { min-height:38px; padding:7px 13px; font-size:13px; margin-bottom:8px; }
-      #adminApprovalsPage > .lead > p:first-of-type, #adminUnlicensedPage > .lead > p:first-of-type { margin-bottom:8px!important; }
-    }
-
-
-    /* Clean compact admin review list */
-    .admin-section-shell { background:#fffdfa; border:1px solid #e9e2d8; border-radius:18px; padding:16px; margin:8px 0; }
-    .admin-section-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
-    .admin-section-heading h2 { font-size:20px; margin:0 0 4px; }
-    .admin-section-heading p { font-size:13px; margin:0; line-height:1.4; }
-    .admin-section-tag { flex:0 0 auto; color:#c45a2b; background:#fff0e8; border-radius:30px; padding:5px 9px; font-size:10px; font-weight:800; letter-spacing:.08em; }
-    #contractorRegistrationAlert { padding:10px 12px; margin:8px 0; border-radius:12px; font-size:13px; line-height:1.4; }
-    .admin-review-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:5px 14px; padding:13px 14px; margin:8px 0; background:#fff; border:1px solid #ebe5dc; border-radius:14px; box-shadow:none; }
-    .admin-review-row::before { display:none; }
-    .admin-review-name { grid-column:1; margin:0 0 2px; font-size:16px; }
-    .admin-review-detail { grid-column:1/-1; margin:0!important; color:#5e5a53; font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
-    .admin-review-detail strong { color:#292722; font-weight:700; }
-    .admin-review-actions { grid-column:1/-1; display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:7px; }
-    .admin-review-actions button { min-height:36px; padding:7px 12px; font-size:12px; box-shadow:none; }
-    .admin-review-actions select { max-width:100%; min-height:40px; font-size:13px; }
-    @media(max-width:700px) {
-      #adminApprovalsPage, #adminUnlicensedPage { padding:0!important; }
-      #adminApprovalsPage > .admin-section-shell { padding:11px; margin:7px 0!important; border-radius:14px; }
-      .admin-section-heading { margin-bottom:9px; }
-      .admin-section-heading h2 { font-size:17px!important; }
-      .admin-section-heading p { font-size:11px!important; }
-      #refreshPendingContractorsBtn, #refreshContractorChangesBtn { min-height:34px!important; padding:6px 11px!important; font-size:11px!important; }
-      .admin-review-row { grid-template-columns:minmax(0,1fr); padding:10px 11px; gap:4px; border-radius:12px; }
-      .admin-review-name { font-size:15px!important; }
-      .admin-review-detail { font-size:11px!important; line-height:1.35!important; }
-      .admin-review-actions { margin-top:6px; gap:6px; }
-      .admin-review-actions button { min-height:34px; padding:6px 10px; font-size:11px; }
-      .admin-review-actions p { font-size:11px!important; }
-    }
-
-
-    .admin-review-row { display:block; padding:12px 14px; margin:8px 0; background:#fff; border:1px solid #e9e3da; border-radius:13px; box-shadow:0 2px 8px rgba(40,30,20,.035); }
-    .admin-review-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .admin-review-identity { min-width:0; }
-    .admin-review-name { margin:0!important; font-size:15px!important; font-weight:750; color:#24211d; }
-    .admin-review-email { margin:3px 0 0!important; color:#777168; font-size:12px!important; overflow-wrap:anywhere; }
-    .admin-review-status { flex:0 0 auto; padding:5px 9px; border-radius:30px; font-size:10px; line-height:1.2; font-weight:750; background:#fff3df; color:#9b6417; }
-    .admin-review-status.is-approved { background:#e9f7ef; color:#187344; }
-    .admin-review-status.is-rejected { background:#fff0ee; color:#b13e32; }
-    .admin-review-more { margin-top:9px; border-top:1px solid #f0ece6; padding-top:7px; }
-    .admin-review-more summary { cursor:pointer; color:#b65327; font-size:11px; font-weight:700; list-style:none; }
-    .admin-review-more summary::-webkit-details-marker { display:none; }
-    .admin-review-more summary:after { content:"＋"; float:right; font-size:14px; }
-    .admin-review-more[open] summary:after { content:"−"; }
-    .admin-review-details { padding-top:7px; }
-    .admin-review-detail { margin:4px 0!important; color:#5e5a53; font-size:11px!important; line-height:1.4; overflow-wrap:anywhere; }
-    .admin-review-detail strong { color:#292722; }
-    .admin-review-actions { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-top:9px; }
-    .admin-review-actions button { min-height:35px; padding:7px 11px; font-size:11px; }
-    @media(max-width:700px) {
-      .admin-review-row { padding:10px 11px; margin:7px 0; border-radius:12px; }
-      .admin-review-heading { align-items:flex-start; gap:8px; }
-      .admin-review-name { font-size:14px!important; }
-      .admin-review-email { font-size:11px!important; }
-      .admin-review-status { max-width:120px; white-space:normal; text-align:center; font-size:9px; }
-      .admin-review-more summary { font-size:10px; }
-      .admin-review-actions button { min-height:34px; }
-    }
-
-
-    /* ZELPX Admin: clear workspace tiles and comfortable review screens */
-    body.admin-mode { background:#f3f4f6; }
-    body.admin-mode .top { background:#17191f; border-radius:0; border-bottom:4px solid #ff6a2b; }
-    #adminPanel { background:#f8f8f7; border:1px solid #e5e5e3; border-radius:22px; padding:clamp(16px,3vw,30px); box-shadow:0 12px 35px rgba(20,24,30,.06); }
-    .admin-home-head { align-items:center; margin:0 0 22px; padding:4px 2px 18px; border-bottom:1px solid #e8e7e4; }
-    .admin-home-head h2 { font-size:clamp(25px,3vw,31px); letter-spacing:-.045em; color:#17191f; }
-    .admin-eyebrow { color:#e65d26; font-size:10px; letter-spacing:.2em; }
-    .admin-live { background:#eef8f1; border-color:#d9eee0; color:#28734a; }
-    .admin-live i { background:#24a260; }
-    .admin-page-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-    .admin-page-nav button.admin-nav-card { position:relative; min-height:142px; align-items:flex-start; flex-direction:column; gap:12px; padding:18px; border:1px solid #e5e5e2; border-radius:17px; background:#fff; box-shadow:0 4px 12px rgba(20,24,30,.035); }
-    .admin-page-nav button.admin-nav-card:hover { transform:translateY(-2px); border-color:#ffb18d; background:#fffaf7; box-shadow:0 12px 24px rgba(20,24,30,.08); }
-    .admin-nav-icon { width:42px; height:42px; flex-basis:42px; border-radius:13px; background:#fff0e8; color:#df5b24; font-size:21px; }
-    .admin-nav-copy { gap:5px; }
-    .admin-nav-copy strong { font-size:16px; color:#202127; }
-    .admin-nav-copy small { font-size:12px; line-height:1.4; color:#777a82; }
-    .admin-nav-arrow { position:absolute; right:16px; top:17px; color:#b2b4b9; font-size:24px; }
-    .admin-home-foot { margin-top:18px; color:#85878d; }
-    #adminPanel .admin-page { background:transparent; }
-    #adminPanel .admin-page > [data-admin-home] { position:sticky; top:8px; z-index:5; min-height:42px; margin:0 0 15px; padding:9px 16px; border:1px solid #dedfdf; border-radius:12px; background:#fff; color:#30333a; box-shadow:0 3px 10px rgba(20,24,30,.06); }
-    #adminPanel .admin-page > [data-admin-home]:hover { background:#fff5ef; border-color:#ffb18d; }
-    .admin-section-shell { padding:18px; border:1px solid #e5e5e2; border-radius:17px; background:#fff; }
-    .admin-section-heading { align-items:center; padding-bottom:13px; border-bottom:1px solid #efefed; }
-    .admin-section-heading h2 { font-size:21px; color:#202127; }
-    .admin-section-heading p { font-size:13px; color:#737780; }
-    .admin-section-tag { background:#fff0e8; color:#c64f1d; }
-    .admin-review-row { padding:16px; margin:10px 0; border:1px solid #e6e7e8; border-radius:15px; background:#fff; }
-    .admin-review-name { font-size:16px!important; }
-    .admin-review-email { font-size:12px!important; }
-    .admin-review-more { margin-top:12px; padding-top:10px; }
-    .admin-review-more summary { display:inline-flex; align-items:center; gap:8px; padding:8px 11px; border-radius:9px; background:#f3f4f5; color:#454850; font-size:12px; }
-    .admin-review-more summary:after { float:none; }
-    .admin-review-details { padding:10px 2px 2px; }
-    .admin-review-actions { margin-top:12px; padding-top:11px; border-top:1px solid #f0f0ee; }
-    .admin-review-actions button { min-height:40px; padding:9px 15px; font-size:12px; }
-    @media(max-width:520px) {
-      #adminPanel { padding:13px; border-radius:16px; }
-      .admin-home-head { align-items:flex-start; gap:10px; }
-      .admin-live { font-size:10px; padding:7px 9px; }
-      .admin-page-nav { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-      .admin-page-nav button.admin-nav-card { min-height:136px; padding:13px 11px; gap:10px; border-radius:14px; }
-      .admin-nav-icon { width:36px; height:36px; flex-basis:36px; font-size:18px; }
-      .admin-nav-copy strong { font-size:13px; line-height:1.25; }
-      .admin-nav-copy small { font-size:10px; line-height:1.35; }
-      .admin-nav-arrow { top:10px; right:11px; font-size:20px; }
-      .admin-home-foot { font-size:10px; }
-      .admin-section-shell { padding:12px; }
-      .admin-section-heading h2 { font-size:17px!important; }
-      .admin-review-row { padding:13px; }
-      .admin-review-actions { gap:7px; }
-      .admin-review-actions button { min-height:40px; padding:8px 12px; font-size:12px; }
-    }
-    @media(max-width:350px) {
-      .admin-nav-copy small { display:none; }
-      .admin-page-nav button.admin-nav-card { min-height:112px; }
-    }
-
-
-    /* ZELPX Admin — full workspace redesign: editorial sidebar + clean work area */
-    body.admin-mode { background:#f1f2f4; color:#20242b; }
-    body.admin-mode .top { min-height:76px; padding:15px clamp(18px,4vw,54px); background:#171a20; border:0; border-bottom:3px solid #f36b35; border-radius:0; box-shadow:0 3px 14px rgba(15,18,24,.12); }
-    body.admin-mode .brand { font-size:23px; letter-spacing:.25em; }
-    body.admin-mode main { width:min(100% - 32px,1320px); margin:28px auto; }
-    body.admin-mode #adminPanel { display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-rows:auto 1fr; gap:0 28px; align-items:start; padding:30px; background:#fff; border:1px solid #e3e5e8; border-radius:8px; box-shadow:0 12px 38px rgba(22,28,38,.07); }
-    body.admin-mode #adminPanelHeader { grid-column:1/-1; margin:0 0 25px; padding:0 0 22px; border-bottom:1px solid #e8e9ec; }
-    body.admin-mode .admin-home-head { align-items:flex-end; justify-content:space-between; gap:20px; }
-    body.admin-mode .admin-home-head h2 { margin:7px 0 5px; color:#1e232b; font-size:30px; font-weight:750; letter-spacing:-.045em; }
-    body.admin-mode .admin-home-head p { max-width:600px; margin:0; color:#777d86; font-size:14px; }
-    body.admin-mode .admin-eyebrow { color:#e6632e; font-size:10px; letter-spacing:.2em; }
-    body.admin-mode .admin-live { padding:8px 12px; border:1px solid #dcefe3; border-radius:5px; background:#f0f8f3; color:#34734d; font-size:11px; }
-    body.admin-mode .admin-page-nav { grid-column:1; display:flex; flex-direction:column; gap:5px; width:100%; margin:0; padding:8px; background:#f5f6f7; border:1px solid #eaebed; border-radius:6px; }
-    body.admin-mode .admin-page-nav button.admin-nav-card { position:relative; display:grid; grid-template-columns:34px minmax(0,1fr) 16px; align-items:center; gap:10px; width:100%; min-height:66px; padding:10px 11px; border:1px solid transparent; border-radius:5px; background:transparent; color:#272b32; box-shadow:none; text-align:left; }
-    body.admin-mode .admin-page-nav button.admin-nav-card:hover { transform:none; border-color:#f2d5c7; background:#fff; box-shadow:none; }
-    body.admin-mode .admin-nav-icon { width:32px; height:32px; flex-basis:32px; display:grid; place-items:center; border-radius:5px; background:#fff0e9; color:#d85c2b; font-size:17px; }
-    body.admin-mode .admin-nav-copy { gap:3px; }
-    body.admin-mode .admin-nav-copy strong { color:#292d34; font-size:13px; font-weight:750; }
-    body.admin-mode .admin-nav-copy small { color:#858a92; font-size:10px; line-height:1.3; }
-    body.admin-mode .admin-nav-arrow { position:static; color:#a6abb2; font-size:19px; }
-    body.admin-mode #adminPanelFooter { grid-column:1; margin:13px 0 0; padding:12px 5px 0; border-top:1px solid #eceef0; color:#9398a0; font-size:9px; }
-    body.admin-mode #adminPanel .admin-page { grid-column:2; grid-row:2/span 2; min-width:0; }
-    body.admin-mode #adminPanel .admin-page > [data-admin-home] { min-height:38px; margin:0 0 18px; padding:7px 12px; border:1px solid #e2e4e7; border-radius:4px; background:#fff; color:#535963; box-shadow:none; font-size:12px; }
-    body.admin-mode #adminPanel .admin-page > [data-admin-home]:hover { background:#fff5ef; border-color:#f1b99e; }
-    body.admin-mode .admin-section-shell { padding:22px; border:1px solid #e5e7ea; border-radius:6px; background:#fff; }
-    body.admin-mode .admin-section-heading { padding-bottom:15px; border-bottom:1px solid #eceef0; }
-    body.admin-mode .admin-section-heading h2 { color:#242830; font-size:21px; }
-    body.admin-mode .admin-section-heading p { color:#818791; font-size:12px; }
-    body.admin-mode .admin-section-tag { border-radius:4px; background:#fff0e9; color:#cf5929; }
-    body.admin-mode .admin-review-row { padding:16px 17px; border:1px solid #e6e8eb; border-radius:5px; box-shadow:none; }
-    body.admin-mode .admin-review-name { color:#252a32; font-size:15px!important; }
-    body.admin-mode .admin-review-email { color:#828791; }
-    body.admin-mode .admin-review-status { border-radius:4px; }
-    body.admin-mode .admin-review-more { border-color:#eceef0; }
-    body.admin-mode .admin-review-more summary { display:inline-flex; padding:7px 10px; border-radius:4px; background:#f4f5f6; color:#505660; font-size:11px; }
-    body.admin-mode .admin-review-actions { padding-top:12px; border-top:1px solid #eff0f2; }
-    body.admin-mode .admin-review-actions button { min-height:38px; border-radius:4px; box-shadow:none; }
-    body.admin-mode #adminUnlicensedPage > .lead { border:1px solid #e5e7ea; border-radius:6px; box-shadow:none; }
-    @media(max-width:760px) {
-      body.admin-mode main { width:calc(100% - 18px); margin:12px auto; }
-      body.admin-mode #adminPanel { display:block; padding:16px; border-radius:6px; }
-      body.admin-mode #adminPanelHeader { margin-bottom:15px; padding-bottom:14px; }
-      body.admin-mode .admin-home-head { align-items:flex-start; flex-direction:column; gap:9px; }
-      body.admin-mode .admin-home-head h2 { font-size:25px; }
-      body.admin-mode .admin-live { align-self:flex-start; }
-      body.admin-mode .admin-page-nav { display:flex; gap:4px; padding:5px; }
-      body.admin-mode .admin-page-nav button.admin-nav-card { min-height:60px; grid-template-columns:34px minmax(0,1fr) 16px; padding:8px; }
-      body.admin-mode .admin-nav-copy strong { font-size:13px; }
-      body.admin-mode .admin-nav-copy small { font-size:10px; }
-      body.admin-mode #adminPanelFooter { margin-top:10px; }
-      body.admin-mode #adminPanel .admin-page { margin-top:0; }
-      body.admin-mode .admin-section-shell { padding:13px; }
-      body.admin-mode .admin-review-row { padding:13px; }
-      body.admin-mode .admin-review-actions { gap:7px; }
-      body.admin-mode .admin-review-actions button { min-height:40px; padding:8px 12px; font-size:12px; }
-    }
-
-
-    /* ZELPX ADMIN — new command-center interface */
-    body.admin-mode { background:#ece9e3; color:#20201e; }
-    body.admin-mode main { width:min(100% - 32px,1440px); margin:22px auto; }
-    body.admin-mode #adminPanel {
-      display:grid !important; grid-template-columns:260px minmax(0,1fr);
-      grid-template-rows:auto auto minmax(0,1fr); gap:0 28px;
-      min-height:calc(100vh - 120px); padding:34px;
-      border:1px solid #ded9d0; border-radius:26px; background:#f8f7f4;
-      box-shadow:0 22px 70px #24211c12;
-    }
-    body.admin-mode #adminPanelHeader {
-      grid-column:1/-1; grid-row:1; display:flex; align-items:flex-end;
-      justify-content:space-between; gap:20px; padding:0 0 28px;
-      margin:0 0 26px; border-bottom:1px solid #e5e1d9;
-    }
-    body.admin-mode .admin-home-head h2 { font-size:clamp(30px,4vw,44px); font-weight:760; letter-spacing:-.055em; margin:8px 0; color:#1d1d1b; }
-    body.admin-mode .admin-home-head p { font-size:14px; color:#77736b; }
-    body.admin-mode .admin-eyebrow { color:#e45d25; font-size:10px; letter-spacing:.22em; }
-    body.admin-mode .admin-live { border:0; border-radius:10px; background:#eeece7; padding:10px 14px; color:#4b4944; }
-    body.admin-mode #adminPanelNav {
-      grid-column:1; grid-row:2/4; align-self:start; display:flex;
-      flex-direction:column; gap:8px; padding:12px; margin:0;
-      border-radius:18px; background:#20211f;
-    }
-    body.admin-mode #adminPanelNav button.admin-nav-card {
-      min-height:76px; padding:12px; border:1px solid transparent;
-      border-radius:12px; background:transparent; color:#f6f4ef;
-      box-shadow:none; gap:11px;
-    }
-    body.admin-mode #adminPanelNav button.admin-nav-card:hover,
-    body.admin-mode #adminPanelNav button.admin-nav-card.active {
-      background:#343530; border-color:#494a43; transform:none; box-shadow:none;
-    }
-    body.admin-mode .admin-nav-icon { width:36px; height:36px; flex-basis:36px; border-radius:11px; background:#ff6a2b; color:#fff; font-size:17px; }
-    body.admin-mode .admin-nav-copy strong { color:#fff; font-size:13px; }
-    body.admin-mode .admin-nav-copy small { color:#aaa99f; font-size:10px; line-height:1.35; }
-    body.admin-mode .admin-nav-arrow { color:#8f9087; }
-    body.admin-mode #adminPanelFooter { grid-column:1; grid-row:3; align-self:end; margin:18px 0 0; padding:12px 8px 0; border:0; color:#858178; font-size:10px; }
-    body.admin-mode #adminPanel > .admin-page { grid-column:2; grid-row:2/4; min-width:0; }
-    body.admin-mode .admin-section-shell { padding:26px; border:1px solid #e6e1d8; border-radius:18px; background:#fff; box-shadow:0 8px 30px #24211c08; }
-    body.admin-mode .admin-section-heading { padding-bottom:18px; border-bottom:1px solid #eeeae3; margin-bottom:18px; }
-    body.admin-mode .admin-section-heading h2 { font-size:25px; letter-spacing:-.04em; }
-    body.admin-mode .admin-section-tag { border-radius:6px; background:#fff0e8; color:#d6531e; padding:7px 10px; font-size:10px; letter-spacing:.12em; }
-    body.admin-mode #adminPanel button { border-radius:10px; }
-    body.admin-mode #adminPanel button.secondary { background:#f3f1ec; border:1px solid #e4dfd6; color:#35332f; box-shadow:none; }
-    body.admin-mode #adminPanel .message { border-radius:10px; }
-    body.admin-mode #adminPanel .lead,
-    body.admin-mode #adminPanel .request-card { border-radius:13px; border-color:#e9e5de; box-shadow:0 4px 14px #24211c08; }
-    body.admin-mode #adminPanel input,
-    body.admin-mode #adminPanel select,
-    body.admin-mode #adminPanel textarea { border-radius:10px; background:#fff; }
-    @media(max-width:760px) {
-      body.admin-mode main { width:calc(100% - 18px); margin:9px auto; }
-      body.admin-mode #adminPanel { display:flex !important; flex-direction:column; gap:16px; min-height:0; padding:17px; border-radius:19px; }
-      body.admin-mode #adminPanelHeader { display:flex; flex-direction:column; align-items:flex-start; gap:12px; padding-bottom:17px; margin-bottom:0; }
-      body.admin-mode .admin-home-head h2 { font-size:29px; }
-      body.admin-mode #adminPanelNav { display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:9px; border-radius:15px; }
-      body.admin-mode #adminPanelNav button.admin-nav-card { min-height:104px; align-items:flex-start; flex-wrap:wrap; padding:10px; gap:7px; }
-      body.admin-mode .admin-nav-icon { width:30px; height:30px; flex-basis:30px; border-radius:9px; }
-      body.admin-mode .admin-nav-copy { flex-basis:calc(100% - 42px); }
-      body.admin-mode .admin-nav-copy strong { font-size:12px; }
-      body.admin-mode .admin-nav-copy small { font-size:10px; }
-      body.admin-mode .admin-nav-arrow { display:none; }
-      body.admin-mode #adminPanelFooter { margin:0; padding:0; }
-      body.admin-mode #adminPanel > .admin-page { width:100%; }
-      body.admin-mode .admin-section-shell { padding:16px; }
-    }
-    @media(max-width:390px) {
-      body.admin-mode #adminPanelNav { grid-template-columns:1fr; }
-      body.admin-mode #adminPanelNav button.admin-nav-card { min-height:68px; align-items:center; }
-      body.admin-mode .admin-nav-copy { flex-basis:auto; }
-    }
-
   </style>
 </head>
 <body class="admin-mode">
@@ -519,28 +102,15 @@
     <div id="authMessage" class="message hidden"></div>
     <div class="grid">
       <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
-      <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+      <div><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
     </div>
     <div id="signupFields" class="grid hidden">
-      <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
-      <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
-      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
-      <div><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
-      <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
-      <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
-      <div><label for="serviceState">State</label><input id="serviceState" autocomplete="address-level1" maxlength="2" placeholder="e.g. WA" required></div>
-      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
-      <div><label for="hasLicense">Do you have a current license?</label><select id="hasLicense" required><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-      <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
-        <div><label for="licenseNumber">License number</label><input id="licenseNumber"></div>
-        <div><label for="licenseState">License state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
-        <div><label for="licenseType">License type</label><input id="licenseType" placeholder="Trade / license classification"></div>
-      </div>
-      <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
+      <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name"></div>
+      <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name"></div>
+      <div><label for="phone">Phone (optional)</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
     </div>
     <div class="actions">
       <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
-      <a id="forgotPasswordLink" href="/forgot-password.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
     </div>
     <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
@@ -581,75 +151,27 @@
         <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
         <div><label for="profileCompany">Company name</label><input id="profileCompany"></div>
         <div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
-        <div><label for="profileServiceAddress">Business street address</label><input id="profileServiceAddress" autocomplete="street-address"></div>
-        <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
-        <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
-        <div><label for="profileServiceState">State</label><input id="profileServiceState" maxlength="2" autocomplete="address-level1"></div>
-        <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
-        <div><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select></div>
-        <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
-          <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
-          <div><label for="profileLicenseState">License state</label><input id="profileLicenseState" maxlength="2"></div>
-          <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
-        </div>
-        <div style="grid-column:1/-1"><label for="licenseDocument">License document (PDF or image)</label><input id="licenseDocument" type="file" accept=".pdf,image/*"><small id="licenseDocumentStatus" class="muted">Upload is stored privately for administrator review.</small></div>
       </div>
       <div class="actions"><button id="saveCompanyBtn">Save company details</button></div>
     </section>
 
-        <section id="adminPanel" class="card hidden">
-      <div id="adminPanelHeader" class="admin-home-head">
-        <div><span class="admin-eyebrow">CONTROL CENTER</span><h2>Administrator dashboard</h2><p class="muted">Manage contractors, review customer requests and keep the marketplace running.</p></div>
-        <span class="admin-live"><i></i> Admin workspace</span>
-      </div>
-      <nav id="adminPanelNav" class="admin-page-nav" aria-label="Administrator sections">
-        <button type="button" class="admin-nav-card" data-admin-page="adminApprovalsPage">
-          <span class="admin-nav-icon">✓</span><span class="admin-nav-copy"><strong>Contractor approvals</strong><small>Review new registrations and profile changes</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminUnlicensedPage">
-          <span class="admin-nav-icon">▤</span><span class="admin-nav-copy"><strong>License review</strong><small>Find contractors without a current license</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminCreateLeadPage">
-          <span class="admin-nav-icon">＋</span><span class="admin-nav-copy"><strong>Create a lead</strong><small>Add a customer request to the marketplace</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminVerifyLeadPage">
-          <span class="admin-nav-icon">⌕</span><span class="admin-nav-copy"><strong>Fraud protection</strong><small>Verify customer requests and review risk signals</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-      </nav>
-      <div id="adminPanelFooter" class="admin-home-foot"><span>Choose a workspace to get started</span><span> ZELPX · ADMIN </span></div>
-      <section id="adminApprovalsPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="admin-section-shell">
-        <div class="admin-section-heading"><div><h2>Contractor approvals</h2><p>Review registrations and decide who can access leads.</p></div><span class="admin-section-tag">REVIEW</span></div>
-        <p>New contractor accounts stay blocked until an administrator approves them.</p>
-        <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
-        <div id="pendingContractorsMessage" class="message hidden"></div>
-        <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
+    <section id="adminPanel" class="card hidden">
+      <section class="lead" id="adminChatsSection">
+        <h2>All customer conversations</h2>
+        <p>Administrator-only, read-only overview of conversations and messages.</p>
+        <div class="actions"><button id="refreshAdminChatsBtn" type="button" class="secondary">Refresh conversations</button></div>
+        <div id="adminChatsMessage" class="message hidden"></div>
+        <div id="adminChatsList"><p class="muted">Loading conversations…</p></div>
+      </section>
+      <section class="lead">
+        <h2>Customer service requests</h2>
+        <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
+        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button></div>
+        <div id="serviceRequestsMessage" class="message hidden"></div>
+        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
+      </section>
 
-      <section class="admin-section-shell admin-changes-shell" style="margin-top:14px">
-        <div class="admin-section-heading"><div><h2>Profile change requests <span id="adminPendingBadge" class="pill" style="display:none">0</span></h2>
-        <p>Review company details, selected work types, licenses and service categories submitted by contractors. Changes are applied only after approval.</p></div></div>
-        <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh submissions</button></div>
-        <div id="contractorChangesList"><p class="muted">Loading contractor submissions…</p></div>
-      </section>
-      </section>
-      </section>
-      <section id="adminUnlicensedPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-        <h2>Contractors without a current license</h2>
-        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
-      </section>
-      </section>
-      <section id="adminCreateLeadPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <h2>Admin — create a lead</h2>
+      <h2>Admin — create a lead</h2>
       <p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p>
       <div id="adminMessage" class="message hidden"></div>
       <form id="leadForm">
@@ -677,26 +199,6 @@
         </div>
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
-      </section>
-      <section id="adminVerifyLeadPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-        <h2>ZELPX Fraud Protection</h2>
-        <p>Automatic checks run when a customer submits or edits a request. Risk signals help you review suspicious activity; every request still requires your manual approval before it becomes a contractor lead.</p>
-        <div id="fraudProtectionSummary" class="request-card" style="margin:14px 0">
-          <strong>Automatic verification checks</strong>
-          <p class="muted">Email confirmation · SMS phone confirmation · duplicate requests · ZIP format · repeated descriptions · submission frequency</p>
-          <p class="muted">ZIP existence is checked during the administrator's publish step. Photo reuse is not available yet because the customer request form currently has no photo upload.</p>
-        </div>
-        <div class="grid" style="margin:14px 0">
-          <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
-          <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
-        </div>
-        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button><span id="requestCount" class="muted"></span></div>
-        <div id="serviceRequestsMessage" class="message hidden"></div>
-        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
-      </section>
-      </section>
     </section>
   </section>
 </main>
@@ -737,10 +239,7 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
-  $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
-
   async function signIn() {
-    if (!db) initClient();
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
@@ -748,19 +247,13 @@
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   async function signUp() {
-    if (!db) initClient();
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
-    const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
-    const hasLicense = $("hasLicense").value === "yes";
-    const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
-    if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
-    if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
-    if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
+    if (!email || !password || !fullName || !companyName) return message("authMessage", "Enter email, password, your name, and company name.", "error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -788,13 +281,11 @@
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    // Keep the admin dashboard hidden until the server-backed profile role is checked.
-    currentUser = user; hide($("appView")); hide($("topUser")); show($("authView"));
-    $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
-      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+      currentUser = null;
       hide($("appView")); hide($("topUser")); show($("authView"));
       message("authMessage", "This account does not have administrator access.", "error");
       return;
@@ -803,11 +294,8 @@
       window.location.replace("/admin.html");
       return;
     }
-    hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); }
-    if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
-    if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
+    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
@@ -816,7 +304,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,has_license,license_number,license_state,license_type,license_document_path").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
@@ -826,14 +314,6 @@
     $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
     $("profileFullName").value = profile?.full_name || ""; $("profilePhone").value = profile?.phone || "";
     $("profileCompany").value = contractor?.company_name || ""; $("profileCompanyEmail").value = contractor?.email || "";
-    $("profileServiceAddress").value = contractor?.service_address || ""; $("profileServiceCity").value = contractor?.service_city || "";
-    $("profileServiceState").value = contractor?.service_state || ""; $("profileServiceZip").value = contractor?.service_zip_code || "";
-    $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
-    $("profileHasLicense").value = contractor?.has_license === true ? "yes" : contractor?.has_license === false ? "no" : "";
-    $("profileLicenseNumber").value = contractor?.license_number || ""; $("profileLicenseState").value = contractor?.license_state || "";
-    $("profileLicenseType").value = contractor?.license_type || "";
-    $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
-    $("licenseDocumentStatus").textContent = contractor?.license_document_path ? "A document is on file. Select a new file to replace it." : "No license document uploaded yet.";
   }
   async function addCredits() {
     clearMessage("appMessage");
@@ -998,38 +478,12 @@
     clearMessage("appMessage");
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
-      const hasLicense = $("profileHasLicense").value === "yes";
-      const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
-      const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
-      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Enter business street address, city, state, and a valid 5-digit ZIP code.");
-      if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
-      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id); if (pErr) throw pErr;
       if (currentContractor) {
-        let license_document_path = currentContractor.license_document_path || null;
-        const file = $("licenseDocument").files?.[0];
-        if (file) {
-          if (file.size > 10 * 1024 * 1024) throw new Error("License document must be 10 MB or smaller.");
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = currentUser.id + "/" + Date.now() + "-" + safeName;
-          const { error: uploadError } = await db.storage.from("contractor-licenses").upload(path, file, { upsert: false, contentType: file.type || "application/octet-stream" });
-          if (uploadError) throw uploadError;
-          license_document_path = path;
-        }
-        const { error: cErr } = await db.from("contractors").update({
-          company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim(),
-          service_address: $("profileServiceAddress").value.trim(), service_city: $("profileServiceCity").value.trim(),
-          service_state: state, service_zip_code: zip, service_radius_miles: Number($("profileServiceRadius").value),
-          service_latitude: Number($("profileServiceZip").dataset.latitude) || currentContractor.service_latitude || null,
-          service_longitude: Number($("profileServiceZip").dataset.longitude) || currentContractor.service_longitude || null,
-          has_license: hasLicense, license_review_status: hasLicense ? "pending" : "not_applicable", license_number: hasLicense ? licenseNumber : null,
-          license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_document_path
-        }).eq("id", currentContractor.id);
+        const { error: cErr } = await db.from("contractors").update({ company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim() }).eq("id", currentContractor.id);
         if (cErr) throw cErr;
       }
-      $("licenseDocument").value = "";
-      message("appMessage", "Company and service area details saved.", "success"); await loadAccount();
+      message("appMessage", "Company details saved.", "success"); await loadAccount();
     } catch (e) { message("appMessage", e.message, "error"); }
   }
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
@@ -1037,22 +491,12 @@
     const raw = zipInput.value.trim();
     const zip = raw.replace(/[^0-9]/g, "").slice(0, 5);
     if (zip.length !== 5) return;
-    if (zipInput.dataset.lookedUpZip !== zip) {
-      delete zipInput.dataset.latitude;
-      delete zipInput.dataset.longitude;
-      delete zipInput.dataset.lookedUpZip;
-    }
     if (statusElement) { statusElement.textContent = "Looking up ZIP code…"; statusElement.className = "muted"; }
     try {
       const response = await fetch("https://api.zippopotam.us/us/" + zip);
       if (!response.ok) throw new Error("ZIP code not found");
       const data = await response.json();
       const places = Array.isArray(data.places) ? data.places : [];
-      if (places[0]) {
-        zipInput.dataset.latitude = places[0].latitude || "";
-        zipInput.dataset.longitude = places[0].longitude || "";
-        zipInput.dataset.lookedUpZip = zip;
-      }
       if (!places.length) throw new Error("No city found for this ZIP code");
       // Prefer the first official place; keep the inputs editable in case the address uses another locality.
       cityInput.value = places[0]["place name"] || "";
@@ -1079,22 +523,10 @@
     if (!customerName || !customerPhone || !customerStreet || !customerCity || !customerState) return message("adminMessage", "Enter the customer's name, phone, street address, city, and state.", "error");
     const button = $("createLeadBtn"); setBusy(button, true, "Creating…");
     try {
-      const zip5 = zip.slice(0, 5);
-      if ($("leadZip").dataset.lookedUpZip !== zip5 ||
-          !$("leadZip").dataset.latitude || !$("leadZip").dataset.longitude) {
-        await lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup"));
-      }
-      const latitude = Number($("leadZip").dataset.latitude);
-      const longitude = Number($("leadZip").dataset.longitude);
-      if ($("leadZip").dataset.lookedUpZip !== zip5 ||
-          !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        throw new Error("Could not verify ZIP coordinates. Please check the ZIP code and try again.");
-      }
       const { error } = await db.rpc("admin_create_lead_with_contact", {
         p_service_category: category, p_zip_code: zip, p_urgency: $("leadUrgency").value, p_price_cents: Math.round(price * 100),
         p_description: $("leadDescription").value.trim(), p_customer_name: customerName, p_phone: customerPhone,
-        p_email: customerEmail || null, p_street_address: customerStreet, p_city: customerCity, p_state: customerState,
-        p_latitude: latitude, p_longitude: longitude
+        p_email: customerEmail || null, p_street_address: customerStreet, p_city: customerCity, p_state: customerState
       });
       if (error) throw error; $("leadForm").reset();
       message("adminMessage", "Lead created successfully. It is now visible to contractors. Customer contact details are stored privately.", "success");
@@ -1119,404 +551,70 @@
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
   }
 
-  async function loadPendingContractors() {
+  async function loadAdminChats() {
     if (!isAdmin) return;
-    const list = $("pendingContractorsList");
-    list.textContent = "Loading pending contractors…";
-    clearMessage("pendingContractorsMessage");
+    const list = $("adminChatsList");
+    list.textContent = "Loading conversations…";
+    clearMessage("adminChatsMessage");
     try {
-      const { data: contractors, error } = await db.rpc("admin_list_pending_contractors");
-      if (error) throw error;
+      const { data: conversations, error: conversationError } = await db
+        .from("lead_conversations")
+        .select("id,lead_id,contractor_id,created_at")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (conversationError) throw conversationError;
+      const ids = (conversations || []).map(c => c.id);
+      let messages = [];
+      if (ids.length) {
+        const { data, error } = await db.from("lead_messages")
+          .select("id,conversation_id,sender_type,sender_user_id,message,created_at")
+          .in("conversation_id", ids)
+          .order("created_at", { ascending: true })
+          .limit(2000);
+        if (error) throw error;
+        messages = data || [];
+      }
+      const byConversation = new Map();
+      messages.forEach(m => {
+        if (!byConversation.has(m.conversation_id)) byConversation.set(m.conversation_id, []);
+        byConversation.get(m.conversation_id).push(m);
+      });
       list.replaceChildren();
-      const alertBox = $("contractorRegistrationAlert");
-      const pendingCount = contractors?.length || 0;
-      const withoutLicense = (contractors || []).filter(c => c.has_license !== true).length;
-      if (alertBox) {
-        alertBox.classList.toggle("hidden", pendingCount === 0);
-        alertBox.className = pendingCount ? "message error" : "message hidden";
-        alertBox.textContent = pendingCount
-          ? `Contractors for license review: ${pendingCount}. Without a current license: ${withoutLicense}. Check each account and record your decision.`
-          : "";
+      if (!conversations?.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = "No conversations found."; list.append(empty); return;
       }
-      if (!contractors?.length) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "No contractor accounts found for license review.";
-        list.append(empty);
-        return;
-      }
-      contractors.forEach(contractor => {
-        const card = document.createElement("article");
-        card.className = "admin-review-row";
-        const accessLabel = contractor.verification_status === "verified"
-          ? (contractor.has_license === true ? "Approved · license verified" : "Approved · no license")
-          : contractor.verification_status === "rejected" ? "Rejected" : "Awaiting review";
-        const heading = document.createElement("div");
-        heading.className = "admin-review-heading";
-        const identity = document.createElement("div");
-        identity.className = "admin-review-identity";
-        const title = document.createElement("h3");
-        title.className = "admin-review-name";
-        title.textContent = contractor.company_name || "Contractor company";
-        const email = document.createElement("p");
-        email.className = "admin-review-email";
-        email.textContent = contractor.email || "Email not provided";
-        identity.append(title, email);
-        const status = document.createElement("span");
-        status.className = "admin-review-status " + (contractor.verification_status === "verified" ? "is-approved" : contractor.verification_status === "rejected" ? "is-rejected" : "is-pending");
-        status.textContent = accessLabel;
-        heading.append(identity, status);
-        card.append(heading);
-        const more = document.createElement("details");
-        more.className = "admin-review-more";
-        const moreSummary = document.createElement("summary");
-        moreSummary.textContent = "View company, license and registration details";
-        more.append(moreSummary);
-        const detailList = document.createElement("div");
-        detailList.className = "admin-review-details";
-        const details = [
-          ["Lead access", accessLabel],
-          ["Approval status", contractor.verification_status || "Unknown"],
-          ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
-          ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
-          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
-        ];
-        details.forEach(([label, value]) => {
-          const p = document.createElement("p");
-          const strong = document.createElement("strong");
-          strong.textContent = label + ": ";
-          p.className = "admin-review-detail";
-          p.append(strong, document.createTextNode(String(value)));
-          detailList.append(p);
-        });
-        more.append(detailList);
-        card.append(more);
-        const actions = document.createElement("div");
-        actions.className = "admin-review-actions";
-        if (contractor.license_document_path) {
-          const viewDocument = document.createElement("button");
-          viewDocument.type = "button";
-          viewDocument.className = "secondary";
-          viewDocument.textContent = "View license photo / document";
-          viewDocument.addEventListener("click", async () => {
-            viewDocument.disabled = true;
-            try {
-              const { data, error: fileError } = await db.storage
-                .from("contractor-licenses")
-                .createSignedUrl(contractor.license_document_path, 300);
-              if (fileError) throw fileError;
-              if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
-              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-            } catch (e) {
-              message("pendingContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
-            } finally {
-              viewDocument.disabled = false;
-            }
-          });
-          actions.append(viewDocument);
+      conversations.forEach(c => {
+        const card = document.createElement("article"); card.className = "lead";
+        const title = document.createElement("h3"); title.textContent = "Lead conversation"; card.append(title);
+        const meta = document.createElement("p"); meta.className = "muted";
+        meta.textContent = "Lead: " + c.lead_id + " · Contractor: " + c.contractor_id + " · Created: " + new Date(c.created_at).toLocaleString();
+        card.append(meta);
+        const thread = document.createElement("div"); thread.className = "chatmessages";
+        const threadMessages = byConversation.get(c.id) || [];
+        if (!threadMessages.length) {
+          const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No messages yet."; thread.append(empty);
         } else {
-          const noDocument = document.createElement("p");
-          noDocument.className = "muted";
-          noDocument.textContent = "No license photo or document uploaded.";
-          actions.append(noDocument);
-        }
-        const approve = document.createElement("button");
-        approve.type = "button";
-        approve.textContent = "Approve contractor";
-        approve.textContent = "Review license";
-        approve.addEventListener("click", () => {
-          if (actions.querySelector("select[data-contractor-decision]")) return;
-          const decision = document.createElement("select");
-          decision.dataset.contractorDecision = "true";
-          decision.setAttribute("aria-label", "Choose contractor license review decision");
-          decision.style.marginTop = "10px";
-          const placeholder = document.createElement("option");
-          placeholder.value = "";
-          placeholder.textContent = "Choose decision…";
-          placeholder.selected = true;
-          placeholder.disabled = true;
-          const yesOption = document.createElement("option");
-          yesOption.value = "approve";
-          yesOption.textContent = "Yes — license verified, approve registration";
-          const waiveOption = document.createElement("option");
-          waiveOption.value = "approve_without_license";
-          waiveOption.textContent = "Allow contractor without license verification";
-          const noOption = document.createElement("option");
-          noOption.value = "reject";
-          noOption.textContent = "No — license not verified, reject registration";
-          decision.append(placeholder, yesOption, waiveOption, noOption);
-          actions.append(decision);
-          decision.focus();
-          decision.addEventListener("change", async () => {
-            const choice = decision.value;
-            if (!choice) return;
-            approve.disabled = true;
-            decision.disabled = true;
-            setBusy(approve, true, choice === "reject" ? "Rejecting…" : "Approving…");
-            try {
-              const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
-                body: { contractor_id: contractor.id, decision: choice }
-              });
-              if (reviewError) throw reviewError;
-              if (data?.error) throw new Error(data.error);
-              const approved = choice !== "reject";
-              const statusText = choice === "approve_without_license"
-                ? "Contractor allowed without license verification. They can now sign in and purchase leads."
-                : approved
-                  ? "Contractor approved after license verification. They can now sign in and purchase leads."
-                  : "Contractor rejected. Their account remains blocked.";
-              const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
-              message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
-              await loadPendingContractors();
-            } catch (e) {
-              message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
-              decision.disabled = false;
-              decision.value = "";
-              approve.disabled = false;
-              approve.textContent = "Review license";
-            }
+          threadMessages.forEach(m => {
+            const bubble = document.createElement("div");
+            bubble.className = "chatbubble " + (m.sender_type === "contractor" ? "contractor" : "customer");
+            const sender = document.createElement("strong");
+            sender.textContent = String(m.sender_type || "unknown").toUpperCase();
+            const body = document.createElement("div"); body.textContent = m.message || "";
+            const time = document.createElement("div"); time.className = "chatmeta";
+            time.textContent = m.created_at ? new Date(m.created_at).toLocaleString() : "";
+            bubble.append(sender, body, time); thread.append(bubble);
           });
-        });
-        actions.append(approve);
-        card.append(actions);
-        list.append(card);
+        }
+        card.append(thread); list.append(card);
       });
     } catch (e) {
-      list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
-      message("pendingContractorsMessage", "Administrator approval access is required. " + (e.message || ""), "error");
-    }
-  }
-
-  async function loadUnlicensedContractors() {
-    if (!isAdmin) return;
-    const list = $("unlicensedContractorsList");
-    list.textContent = "Loading contractors…";
-    clearMessage("unlicensedContractorsMessage");
-    try {
-      const { data: contractors, error } = await db.rpc("admin_list_unlicensed_contractors");
-      if (error) throw error;
-      list.replaceChildren();
-      const count = contractors?.length || 0;
-      const alertBox = $("unlicensedContractorAlert");
-      if (alertBox) {
-        alertBox.className = count ? "message error" : "message hidden";
-        alertBox.textContent = count
-          ? `Attention: ${count} contractor account(s) in the database have no current license.`
-          : "";
-      }
-      if (!count) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "No active or pending contractors without a current license.";
-        list.append(empty);
-        return;
-      }
-      contractors.forEach(contractor => {
-        const card = document.createElement("article");
-        card.className = "lead";
-        const title = document.createElement("h3");
-        title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
-        const details = [
-          ["Email", contractor.email || "Not provided"],
-          ["Status", contractor.verification_status || "Unknown"],
-          ["License", "No current license indicated"],
-          ["Location", [contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
-          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
-        ];
-        details.forEach(([label, value]) => {
-          const p = document.createElement("p");
-          const strong = document.createElement("strong");
-          strong.textContent = label + ": ";
-          p.append(strong, document.createTextNode(String(value)));
-          card.append(p);
-        });
-        const actions = document.createElement("div");
-        actions.className = "actions";
-        const allowed = contractor.verification_status === "verified";
-        const accessStatus = document.createElement("p");
-        accessStatus.className = allowed ? "message success" : "message error";
-        accessStatus.textContent = allowed ? "Lead access: ALLOWED" : "Lead access: BLOCKED";
-        card.append(accessStatus);
-        const toggle = document.createElement("button");
-        toggle.type = "button";
-        toggle.className = allowed ? "danger" : "";
-        toggle.textContent = allowed ? "Block account access" : "Allow account access";
-        toggle.addEventListener("click", async () => {
-          const company = contractor.company_name || contractor.email || "this contractor";
-          const action = allowed ? "block" : "allow";
-          const prompt = allowed
-            ? "Block this contractor from viewing and purchasing leads? Their login, account, and transaction history will remain."
-            : "Allow this contractor to view and purchase eligible leads? Their account must still meet location and other lead requirements.";
-          if (!window.confirm(prompt + "\\n\\n" + company)) return;
-          toggle.disabled = true;
-          toggle.textContent = allowed ? "Blocking…" : "Allowing…";
-          try {
-            const { data, error } = await db.functions.invoke("admin-remove-unlicensed-contractor", {
-              body: { contractor_id: contractor.id, action }
-            });
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
-            message("unlicensedContractorsMessage",
-              (action === "allow" ? "Lead access allowed for " : "Lead access blocked for ") + company + ". Login and history unchanged.", "success");
-            await loadUnlicensedContractors();
-          } catch (e) {
-            message("unlicensedContractorsMessage", "Could not change lead access: " + (e.message || "Unknown error"), "error");
-            toggle.disabled = false;
-            toggle.textContent = allowed ? "Block account access" : "Allow account access";
-          }
-        });
-        actions.append(toggle);
-        card.append(actions);
-        list.append(card);
-      });
-    } catch (e) {
-      list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
-      message("unlicensedContractorsMessage", "Could not load unlicensed contractor records. " + (e.message || ""), "error");
+      list.textContent = "Could not load conversations: " + (e.message || "Unknown error");
+      message("adminChatsMessage", "Check the administrator SELECT policies for lead_conversations and lead_messages. " + (e.message || ""), "error");
     }
   }
 
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
-  let adminChangeChannel=null, adminChangePollTimer=null;
-  const adminSeenChangeIds=new Set();
-  async function refreshAdminPendingBadge(){
-    if(!isAdmin)return;
-    const {count,error}=await db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending");
-    if(error){console.warn("Admin pending badge refresh failed:",error.message);return;}
-    const badge=$("adminPendingBadge");
-    if(badge){badge.textContent=String(count||0);badge.style.display=count?"inline-block":"none";}
-  }
-  function showAdminTopAlert(title,body,requestId){
-    let toast=document.getElementById("zelpxAdminTopAlert");
-    if(!toast){
-      toast=document.createElement("div");toast.id="zelpxAdminTopAlert";
-      toast.style.cssText="position:fixed;top:env(safe-area-inset-top,0px);left:12px;right:12px;z-index:99999;background:#202b3c;color:#fff;border:2px solid #f59e0b;border-radius:14px;padding:14px 16px;box-shadow:0 10px 35px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;justify-content:space-between";
-      document.body.append(toast);
-    }
-    toast.replaceChildren();
-    const copy=document.createElement("div"),strong=document.createElement("strong"),small=document.createElement("div");
-    strong.textContent=title;small.textContent=body;small.style.cssText="font-size:13px;opacity:.92;margin-top:3px";copy.append(strong,small);
-    const open=document.createElement("button");open.type="button";open.textContent="Open";open.style.cssText="background:#f59e0b;color:#202b3c;min-height:38px;padding:8px 12px";open.onclick=()=>{switchTab("adminPanel");showAdminPage("adminApprovalsPage");loadContractorChangeRequests();toast.remove();};
-    const close=document.createElement("button");close.type="button";close.textContent="×";close.setAttribute("aria-label","Close notification");close.style.cssText="background:transparent;padding:4px 8px;min-height:32px";close.onclick=()=>toast.remove();
-    toast.append(copy,open,close);
-    if(requestId)toast.dataset.requestId=requestId;
-  }
-  function startAdminChangeNotifications(){
-    // This listener must never start in a contractor session.
-    if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
-    if(adminChangeChannel)db.removeChannel(adminChangeChannel);
-    if(adminChangePollTimer)clearInterval(adminChangePollTimer);
-    refreshAdminPendingBadge();
-    loadContractorChangeRequests();
-    const announceRequest=async(request)=>{
-      if(!request?.id||request.status!=="pending"||adminSeenChangeIds.has(request.id))return;
-      adminSeenChangeIds.add(request.id);
-      const kind=request.request_type==="profession_qualifications"?"selected professions and license details":request.request_type==="service_categories"?"selected work categories":"company details, license or insurance information";
-      const notice="A contractor submitted "+kind+". Please review and approve or reject this request.";
-      showAdminTopAlert("Approval required: new contractor submission",notice,request.id);
-      message("contractorChangesMessage",notice,"success");
-      if("Notification" in window && Notification.permission==="granted"){
-        const n=new Notification("ZELPX — administrator approval required",{body:notice,tag:"zelpx-change-"+request.id});
-        n.onclick=()=>{window.focus();switchTab("adminPanel");};
-      }
-      await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
-    };
-    // Load pending requests on admin sign-in and remember them to avoid duplicate alerts.
-    db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending")
-      .then(async({data,error})=>{
-        if(error){console.error("Admin pending request load failed:",error.message);return;}
-        (data||[]).forEach(r=>adminSeenChangeIds.add(r.id));
-        if(data?.length)showAdminTopAlert("Contractor submissions awaiting approval",
-          data.length+" pending submission"+(data.length===1?"":"s")+" require your review in Admin → Contractor profile change requests.");
-        await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
-      });
-    // Realtime for immediate delivery while the admin portal is open.
-    adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},payload=>announceRequest(payload.new||{}))
-      .subscribe((status,error)=>{
-        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Admin realtime notifications unavailable:",status,error||"");
-        if(status==="SUBSCRIBED")console.info("ZELPX admin realtime notifications connected.");
-      });
-    // Fallback: check only from the administrator portal if Realtime is delayed or disconnected.
-    adminChangePollTimer=setInterval(async()=>{
-      if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
-      const {data,error}=await db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending").order("created_at",{ascending:false}).limit(50);
-      if(error){console.warn("Admin pending request check failed:",error.message);return;}
-      for(const request of (data||[]).reverse())await announceRequest(request);
-    },8000);
-  }
-
-
-
-  async function loadContractorChangeRequests() {
-    const adminList=$("contractorChangesList");
-    if(adminList)adminList.textContent="Loading change requests…";
-    try {
-      let query=db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(100);
-      if(!isAdmin && currentUser?.id) query=query.eq("user_id",currentUser.id);
-      const {data,error}=await query; if(error)throw error;
-      const rows=data||[], userIds=[...new Set(rows.map(r=>r.user_id).filter(Boolean))], contractorIds=[...new Set(rows.map(r=>r.contractor_id).filter(Boolean))];
-      const [profilesResult,contractorsResult]=await Promise.all([
-        userIds.length?db.from("profiles").select("id,full_name,phone").in("id",userIds):Promise.resolve({data:[],error:null}),
-        contractorIds.length?db.from("contractors").select("id,user_id,company_name,email").in("id",contractorIds):Promise.resolve({data:[],error:null})
-      ]);
-      if(profilesResult.error)throw profilesResult.error;if(contractorsResult.error)throw contractorsResult.error;
-      const professionIds=[...new Set(rows.flatMap(r=>(r.requested_changes?.items||[]).map(x=>x.profession_id).filter(Boolean)))];
-      const categoryIds=[...new Set(rows.flatMap(r=>r.requested_changes?.category_ids||[]))];
-      const [professionsResult,categoriesResult]=await Promise.all([
-        professionIds.length?db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):Promise.resolve({data:[],error:null}),
-        categoryIds.length?db.from("service_categories").select("id,name").in("id",categoryIds):Promise.resolve({data:[],error:null})
-      ]);
-      if(professionsResult.error)throw professionsResult.error;if(categoriesResult.error)throw categoriesResult.error;
-      const profiles=new Map((profilesResult.data||[]).map(x=>[x.id,x])), contractors=new Map((contractorsResult.data||[]).map(x=>[x.id,x]));
-      const professionNames=new Map((professionsResult.data||[]).map(x=>[x.id,x.profession_name])), categoryNames=new Map((categoriesResult.data||[]).map(x=>[x.id,x.name]));
-      const render=(list,allowReview)=>{
-        if(!list)return;list.replaceChildren();
-        if(!rows.length){list.textContent="No change requests yet.";return;}
-        rows.forEach(r=>{
-          const card=document.createElement("article");card.className="lead";
-          const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
-          const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
-          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString()+" · "+(company.email||profile.phone||"Contact not provided");card.append(meta);
-          const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
-          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
-          if(r.request_type==="profession_qualifications"){
-            addDetail("State",changes.state_code);addDetail("Work arrangement",changes.work_role);
-            (changes.items||[]).forEach((item,index)=>{
-              const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
-              const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
-              addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
-              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);addDetail("Document",item.license_document_path);
-            });
-          }else if(r.request_type==="service_categories"){
-            addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
-          }else{
-            Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
-          }
-          card.append(detail);
-          if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
-          if(allowReview && r.status==="pending"){
-            const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
-            const actions=document.createElement("div");actions.className="actions";
-            for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
-              const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
-              b.addEventListener("click",async()=>{
-                if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
-                b.disabled=true;
-                try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
-                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();await loadAdminContractorReviews();}
-                }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
-              });actions.append(b);
-            }card.append(actions);
-          }
-          list.append(card);
-        });
-      };
-      render(adminList,true);
-    }catch(e){if(adminList)adminList.textContent="Could not load change requests: "+e.message;message("contractorChangesMessage","Could not load submissions: "+e.message,"error");}
-  }
-
-
   async function loadServiceRequests() {
     if (!isAdmin) return;
     const list = $("serviceRequestsList");
@@ -1524,57 +622,26 @@
     clearMessage("serviceRequestsMessage");
     try {
       const { data: requests, error } = await db.from("service_requests")
-        .select("id,user_id,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
+        .select("id,user_id,service_type,description,property_address,preferred_time,status,price,lead_id,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
-      const requestIds = (requests || []).map(request => request.id);
-      let verificationByRequest = {};
-      if (requestIds.length) {
-        const { data: verificationRows, error: verificationError } = await db
-          .from("lead_verification_checks")
-          .select("request_id,risk_score,risk_level,checks,checked_at")
-          .in("request_id", requestIds);
-        if (verificationError) {
-          console.warn("Automatic verification results could not be loaded:", verificationError.message);
-        } else {
-          (verificationRows || []).forEach(row => { verificationByRequest[row.request_id] = row; });
-        }
-      }
-      const { data: serviceCategories, error: categoriesError } = await db.from("service_categories")
-        .select("name").eq("is_active", true).order("name");
-      if (categoriesError) throw categoriesError;
 
       const userIds = [...new Set((requests || []).map(r => r.user_id).filter(Boolean))];
       let profilesById = {};
       if (userIds.length) {
-        // Admin-only SECURITY DEFINER RPC: ordinary profile RLS intentionally hides other users.
-        const { data: profiles, error: profilesError } = await db.rpc("admin_get_customer_profiles", { p_user_ids: userIds });
+        const { data: profiles, error: profilesError } = await db.from("profiles")
+          .select("id,full_name,phone").in("id", userIds);
         if (profilesError) console.warn("Could not load customer profile details:", profilesError.message);
-        else (profiles || []).forEach(p => { profilesById[p.user_id] = p; });
+        else (profiles || []).forEach(p => { profilesById[p.id] = p; });
       }
 
-      const searchTerm = ($("requestSearch")?.value || "").trim().toLowerCase();
-      const statusFilter = $("requestStatusFilter")?.value || "all";
-      const filteredRequests = (requests || []).filter(request => {
-        const profile = profilesById[request.user_id] || {};
-        const statusValue = request.lead_id || request.status === "published" ? "published" : (request.status || "other");
-        const statusMatch = statusFilter === "all" || (statusFilter === "new" && statusValue === "new") ||
-          (statusFilter === "published" && statusValue === "published") ||
-          (statusFilter === "other" && !["new","published"].includes(statusValue));
-        const searchable = [profile.full_name, profile.phone, request.service_type, request.description,
-          request.property_address, request.service_city, request.service_state, request.service_zip_code, request.id]
-          .filter(Boolean).join(" ").toLowerCase();
-        return statusMatch && (!searchTerm || searchable.includes(searchTerm));
-      });
-      $("requestCount").textContent = filteredRequests.length + " of " + (requests || []).length + " requests";
       list.replaceChildren();
-      if (!filteredRequests.length) {
+      if (!requests?.length) {
         const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = requests?.length ? "No requests match these filters." : "No customer service requests have been submitted.";
-        list.append(empty); return;
+        empty.textContent = "No customer service requests have been submitted."; list.append(empty); return;
       }
 
-      filteredRequests.forEach(request => {
+      requests.forEach(request => {
         const card = document.createElement("article"); card.className = "lead";
         const heading = document.createElement("div"); heading.className = "leadhead";
         const titleWrap = document.createElement("div");
@@ -1587,12 +654,10 @@
         heading.append(titleWrap, status); card.append(heading);
 
         const profile = profilesById[request.user_id] || {};
-        const addressParts = [request.property_address, request.service_city, request.service_state, request.service_zip_code].filter(v => v && String(v).trim());
-        const formattedAddress = addressParts.join(", ");
         const details = [
-          ["Customer", profile.full_name || "Name not provided"],
-          ["Phone", profile.phone || "Phone not provided"],
-          ["Address", formattedAddress || "Address not provided"],
+          ["Customer", profile.full_name || "Not available from profile"],
+          ["Phone", profile.phone || "Not available from profile"],
+          ["Address", request.property_address || "Missing"],
           ["Preferred time", request.preferred_time ? new Date(request.preferred_time).toLocaleString() : "Not specified"],
           ["Request ID", request.id]
         ];
@@ -1602,56 +667,6 @@
         });
         const description = document.createElement("p"); description.style.whiteSpace = "pre-wrap";
         description.textContent = request.description || "No description provided."; card.append(description);
-
-        const verification = verificationByRequest[request.id];
-        const verificationBox = document.createElement("div");
-        verificationBox.className = "request-card";
-        verificationBox.style.margin = "14px 0";
-        const verificationTitle = document.createElement("strong");
-        verificationTitle.textContent = "Automatic verification";
-        verificationBox.append(verificationTitle);
-        if (!verification) {
-          const pending = document.createElement("p"); pending.className = "muted";
-          pending.textContent = "No automatic result found. Refresh the request list or review manually.";
-          verificationBox.append(pending);
-        } else {
-          const risk = document.createElement("p");
-          risk.textContent = "Risk: " + verification.risk_level.toUpperCase() + " · Score " + verification.risk_score + "/100";
-          risk.style.fontWeight = "700";
-          risk.style.color = verification.risk_level === "high" ? "#b42318" : verification.risk_level === "review" ? "#a15c00" : "#147d55";
-          verificationBox.append(risk);
-          const checkLabels = [
-            ["email_confirmed", "Email confirmed"],
-            ["phone_sms_confirmed", "Phone confirmed by SMS"],
-            ["zip_format_valid", "ZIP format valid"],
-            ["same_customer_duplicate", "Possible repeat request from same customer"],
-            ["duplicate_description", "Repeated description detected"],
-            ["high_submission_frequency", "Multiple requests within 24 hours"]
-          ];
-          const checkList = document.createElement("ul");
-          checkList.style.margin = "8px 0";
-          checkList.style.paddingLeft = "20px";
-          checkLabels.forEach(([key, label]) => {
-            const item = document.createElement("li");
-            const passed = verification.checks?.[key] === true;
-            if (key === "phone_sms_confirmed" && !passed) {
-              item.textContent = label + ": SMS verification is not configured yet";
-              item.style.color = "#667085";
-            } else {
-              const flagged = ["same_customer_duplicate","duplicate_description","high_submission_frequency"].includes(key) ? passed : !passed;
-              item.textContent = label + ": " + (flagged ? "Needs attention" : "OK");
-              item.style.color = flagged ? "#a15c00" : "#147d55";
-            }
-            checkList.append(item);
-          });
-          const photos = document.createElement("p"); photos.className = "muted";
-          photos.textContent = "Photo reuse: not checked — customer photo upload is not enabled yet.";
-          verificationBox.append(checkList, photos);
-          const checkedAt = document.createElement("p"); checkedAt.className = "muted";
-          checkedAt.textContent = "Checked: " + new Date(verification.checked_at).toLocaleString();
-          verificationBox.append(checkedAt);
-        }
-        card.append(verificationBox);
 
         if (request.lead_id || request.status === "published") {
           const note = document.createElement("p"); note.className = "message success";
@@ -1664,19 +679,6 @@
         } else {
           const form = document.createElement("div");
           const fields = document.createElement("div"); fields.className = "grid";
-          const categoryWrap = document.createElement("div"), categoryLabel = document.createElement("label"), category = document.createElement("select");
-          categoryLabel.textContent = "Service category";
-          const categoryPlaceholder = document.createElement("option");
-          categoryPlaceholder.value = ""; categoryPlaceholder.textContent = "Choose a service";
-          category.append(categoryPlaceholder);
-          (serviceCategories || []).forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.name; option.textContent = item.name;
-            category.append(option);
-          });
-          const matchingCategory = [...category.options].find(option => option.value.toLowerCase() === String(request.service_type || "").toLowerCase());
-          if (matchingCategory) category.value = matchingCategory.value;
-          categoryLabel.append(category); categoryWrap.append(categoryLabel);
           const zipWrap = document.createElement("div"), zipLabel = document.createElement("label"), zip = document.createElement("input");
           zipLabel.textContent = "Verified ZIP code"; zip.maxLength = 10; zip.inputMode = "numeric"; zip.placeholder = "97201"; zip.value = "";
           zipLabel.append(zip); zipWrap.append(zipLabel);
@@ -1696,39 +698,27 @@
           zipWrap.append(zipLookupNote);
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
-          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
+          fields.append(zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
           publish.addEventListener("click", async () => {
-            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
-            if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
+            const zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
             if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
             if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) { feedback.textContent = "Enter the verified city and 2-letter state code."; feedback.className = "message error"; return; }
             if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
               feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places."; feedback.className = "message error"; return;
             }
             const customerName = profile.full_name || "Unavailable";
-            if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + categoryValue +
+            if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + (request.service_type || "Home service") +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
               "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
               "\n\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
-              // Resolve ZIP coordinates before publishing so contractor radius filtering can work.
-            const zipLookupInput = document.createElement("input");
-            zipLookupInput.value = zipValue;
-            await lookupUsZip(zipLookupInput, city, state, zipLookupNote);
-            const latitude = Number(zipLookupInput.dataset.latitude);
-            const longitude = Number(zipLookupInput.dataset.longitude);
-            if (zipLookupInput.dataset.lookedUpZip !== zipValue.slice(0, 5) ||
-                !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-              throw new Error("Could not determine coordinates for this ZIP code. Verify the ZIP and try again.");
-            }
-            const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
-                p_request_id: request.id, p_zip_code: zipValue, p_city: city.value.trim(), p_state: state.value.trim().toUpperCase(),
-                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
-                p_latitude: latitude, p_longitude: longitude
+              const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
+                p_request_id: request.id, p_zip_code: zipValue, p_city: cityValue, p_state: stateValue,
+                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100)
               });
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
@@ -1749,57 +739,26 @@
     }
   }
 
-  function showAdminPage(pageId) {
-    if (!isAdmin) return;
-    document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
-    document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
-    ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.add("hidden"));
-    window.scrollTo({ top:0, behavior:"smooth" });
-    if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
-    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
-    if (pageId === "adminVerifyLeadPage") loadServiceRequests();
-    if (pageId === "adminCreateLeadPage") loadCategories();
-  }
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
-    if (tabId === "adminPanel" && isAdmin) {
-      document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
-      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
-      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
-    }
     window.scrollTo({ top:0, behavior:"smooth" });
+    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); }
   }
   async function logout() {
     await db.auth.signOut(); currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
-    document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
-    document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
-      document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
-      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
-      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
-      window.scrollTo({ top:0, behavior:"smooth" });
-    }));
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
-    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests);
-    $("requestSearch").addEventListener("input", loadServiceRequests);
-    $("requestStatusFilter").addEventListener("change", loadServiceRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
-    $("saveCompanyBtn").addEventListener("click", saveCompany);
-    $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
-    $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
-    $("serviceZip").addEventListener("change", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
-    $("serviceZip").addEventListener("blur", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
-    $("profileServiceZip").addEventListener("change", () => lookupUsZip($("profileServiceZip"), $("profileServiceCity"), $("profileServiceState"), null));
-    $("profileServiceZip").addEventListener("blur", () => lookupUsZip($("profileServiceZip"), $("profileServiceCity"), $("profileServiceState"), null));
-    $("addCreditsBtn").addEventListener("click", addCredits);
+    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
+    $("saveCompanyBtn").addEventListener("click", saveCompany); $("addCreditsBtn").addEventListener("click", addCredits);
     $("refreshBalanceBtn").addEventListener("click", async () => {
       try { await loadAccount(); message("appMessage", "Balance refreshed.", "success"); }
       catch (e) { message("appMessage", "Could not refresh balance: " + e.message, "error"); }
@@ -1810,7 +769,7 @@
   async function start() {
     wireEvents();
     try {
-      if (!db) initClient(); const { data: { session } } = await db.auth.getSession();
+      initClient(); const { data: { session } } = await db.auth.getSession();
       if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
@@ -1820,21 +779,5 @@
   start();
 })();
 </script>
-<script src="/zelpx-push.js"></script>
-
-<script>
-  document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
-    toggle.addEventListener("click", () => {
-      const input = document.getElementById(toggle.dataset.passwordToggle);
-      if (!input) return;
-      const showing = input.type === "password";
-      input.type = showing ? "text" : "password";
-      toggle.innerHTML = showing ? "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 3 18 18\"></path><path d=\"M10.6 10.6a2 2 0 0 0 2.8 2.8\"></path><path d=\"M9.9 5.2A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a16.5 16.5 0 0 1-3.1 3.9\"></path><path d=\"M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.3 0 2.5-.3 3.6-.8\"></path></svg>" : "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z\"></path><circle cx=\"12\" cy=\"12\" r=\"3\"></circle></svg>";
-      toggle.setAttribute("aria-label", showing ? "Hide password" : "Show password");
-      toggle.setAttribute("aria-pressed", String(showing));
-    });
-  });
-</script>
-
 </body>
 </html>
