@@ -1026,17 +1026,21 @@
     clearMessage("reviewedContractorFormsMessage");
     try {
       const { data: requests, error } = await db.from("contractor_change_requests")
-        .select("id,contractor_id")
+        .select("id,contractor_id,request_type,status")
         .order("created_at", { ascending: false })
         .limit(10000);
       if (error) throw error;
       const rows = requests || [];
-      const latestByContractor = new Set();
+      const latestByContractorType = new Set();
       let olderCount = 0;
       rows.forEach(row => {
         if (!row.contractor_id) return;
-        if (latestByContractor.has(row.contractor_id)) olderCount++;
-        else latestByContractor.add(row.contractor_id);
+        const groupKey = row.contractor_id + "::" + (row.request_type || "unknown");
+        if (!latestByContractorType.has(groupKey)) {
+          latestByContractorType.add(groupKey);
+          return;
+        }
+        if (String(row.status || "").trim().toLowerCase() !== "pending") olderCount++;
       });
       if (!olderCount) {
         message("reviewedContractorFormsMessage", "No older submissions to delete. The newest submission for each contractor will be kept.", "success");
