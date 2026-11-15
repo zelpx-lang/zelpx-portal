@@ -310,7 +310,7 @@
         <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
         <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
       </div>
-      <div id="signupLicenseFields" class="grid" style="grid-column:1/-1">
+      <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
         <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
         <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
@@ -1857,6 +1857,7 @@
     window.location.replace("/");
   }
   function wireEvents() {
+    updateSignupLicenseFields();
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
@@ -1912,10 +1913,17 @@
       renderSpecialtyOptions(); updateSpecialtySummary(); renderLeads();
       $("specialtiesMessage").className = "message hidden";
     });
-    $("hasLicense").addEventListener("change", () => {
+    function updateSignupLicenseFields(){
       const showLicense=$("hasLicense").value==="yes";
-      // Keep the license upload fields visible; require them only when Yes is selected.
-      ["licenseNumber","licenseState","licenseType","signupLicenseDocument"].forEach(id=>$(id).required=showLicense);
+      $("signupLicenseFields").classList.toggle("hidden",!showLicense);
+      ["licenseNumber","licenseState","licenseType","signupLicenseDocument"].forEach(id=>{
+        $(id).required=showLicense;
+        if(!showLicense && $(id).type!=="file") $(id).value="";
+        if(!showLicense && $(id).type==="file") $(id).value="";
+      });
+    }
+    $("hasLicense").addEventListener("change", () => {
+      updateSignupLicenseFields();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
     });
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
