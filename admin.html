@@ -432,7 +432,81 @@
       body.admin-mode .admin-review-actions button { min-height:40px; padding:8px 12px; font-size:12px; }
     }
 
-</style>
+
+    /* ZELPX ADMIN — new command-center interface */
+    body.admin-mode { background:#ece9e3; color:#20201e; }
+    body.admin-mode main { width:min(100% - 32px,1440px); margin:22px auto; }
+    body.admin-mode #adminPanel {
+      display:grid !important; grid-template-columns:260px minmax(0,1fr);
+      grid-template-rows:auto auto minmax(0,1fr); gap:0 28px;
+      min-height:calc(100vh - 120px); padding:34px;
+      border:1px solid #ded9d0; border-radius:26px; background:#f8f7f4;
+      box-shadow:0 22px 70px #24211c12;
+    }
+    body.admin-mode #adminPanelHeader {
+      grid-column:1/-1; grid-row:1; display:flex; align-items:flex-end;
+      justify-content:space-between; gap:20px; padding:0 0 28px;
+      margin:0 0 26px; border-bottom:1px solid #e5e1d9;
+    }
+    body.admin-mode .admin-home-head h2 { font-size:clamp(30px,4vw,44px); font-weight:760; letter-spacing:-.055em; margin:8px 0; color:#1d1d1b; }
+    body.admin-mode .admin-home-head p { font-size:14px; color:#77736b; }
+    body.admin-mode .admin-eyebrow { color:#e45d25; font-size:10px; letter-spacing:.22em; }
+    body.admin-mode .admin-live { border:0; border-radius:10px; background:#eeece7; padding:10px 14px; color:#4b4944; }
+    body.admin-mode #adminPanelNav {
+      grid-column:1; grid-row:2/4; align-self:start; display:flex;
+      flex-direction:column; gap:8px; padding:12px; margin:0;
+      border-radius:18px; background:#20211f;
+    }
+    body.admin-mode #adminPanelNav button.admin-nav-card {
+      min-height:76px; padding:12px; border:1px solid transparent;
+      border-radius:12px; background:transparent; color:#f6f4ef;
+      box-shadow:none; gap:11px;
+    }
+    body.admin-mode #adminPanelNav button.admin-nav-card:hover,
+    body.admin-mode #adminPanelNav button.admin-nav-card.active {
+      background:#343530; border-color:#494a43; transform:none; box-shadow:none;
+    }
+    body.admin-mode .admin-nav-icon { width:36px; height:36px; flex-basis:36px; border-radius:11px; background:#ff6a2b; color:#fff; font-size:17px; }
+    body.admin-mode .admin-nav-copy strong { color:#fff; font-size:13px; }
+    body.admin-mode .admin-nav-copy small { color:#aaa99f; font-size:10px; line-height:1.35; }
+    body.admin-mode .admin-nav-arrow { color:#8f9087; }
+    body.admin-mode #adminPanelFooter { grid-column:1; grid-row:3; align-self:end; margin:18px 0 0; padding:12px 8px 0; border:0; color:#858178; font-size:10px; }
+    body.admin-mode #adminPanel > .admin-page { grid-column:2; grid-row:2/4; min-width:0; }
+    body.admin-mode .admin-section-shell { padding:26px; border:1px solid #e6e1d8; border-radius:18px; background:#fff; box-shadow:0 8px 30px #24211c08; }
+    body.admin-mode .admin-section-heading { padding-bottom:18px; border-bottom:1px solid #eeeae3; margin-bottom:18px; }
+    body.admin-mode .admin-section-heading h2 { font-size:25px; letter-spacing:-.04em; }
+    body.admin-mode .admin-section-tag { border-radius:6px; background:#fff0e8; color:#d6531e; padding:7px 10px; font-size:10px; letter-spacing:.12em; }
+    body.admin-mode #adminPanel button { border-radius:10px; }
+    body.admin-mode #adminPanel button.secondary { background:#f3f1ec; border:1px solid #e4dfd6; color:#35332f; box-shadow:none; }
+    body.admin-mode #adminPanel .message { border-radius:10px; }
+    body.admin-mode #adminPanel .lead,
+    body.admin-mode #adminPanel .request-card { border-radius:13px; border-color:#e9e5de; box-shadow:0 4px 14px #24211c08; }
+    body.admin-mode #adminPanel input,
+    body.admin-mode #adminPanel select,
+    body.admin-mode #adminPanel textarea { border-radius:10px; background:#fff; }
+    @media(max-width:760px) {
+      body.admin-mode main { width:calc(100% - 18px); margin:9px auto; }
+      body.admin-mode #adminPanel { display:flex !important; flex-direction:column; gap:16px; min-height:0; padding:17px; border-radius:19px; }
+      body.admin-mode #adminPanelHeader { display:flex; flex-direction:column; align-items:flex-start; gap:12px; padding-bottom:17px; margin-bottom:0; }
+      body.admin-mode .admin-home-head h2 { font-size:29px; }
+      body.admin-mode #adminPanelNav { display:grid; grid-template-columns:1fr 1fr; gap:7px; padding:9px; border-radius:15px; }
+      body.admin-mode #adminPanelNav button.admin-nav-card { min-height:104px; align-items:flex-start; flex-wrap:wrap; padding:10px; gap:7px; }
+      body.admin-mode .admin-nav-icon { width:30px; height:30px; flex-basis:30px; border-radius:9px; }
+      body.admin-mode .admin-nav-copy { flex-basis:calc(100% - 42px); }
+      body.admin-mode .admin-nav-copy strong { font-size:12px; }
+      body.admin-mode .admin-nav-copy small { font-size:10px; }
+      body.admin-mode .admin-nav-arrow { display:none; }
+      body.admin-mode #adminPanelFooter { margin:0; padding:0; }
+      body.admin-mode #adminPanel > .admin-page { width:100%; }
+      body.admin-mode .admin-section-shell { padding:16px; }
+    }
+    @media(max-width:390px) {
+      body.admin-mode #adminPanelNav { grid-template-columns:1fr; }
+      body.admin-mode #adminPanelNav button.admin-nav-card { min-height:68px; align-items:center; }
+      body.admin-mode .admin-nav-copy { flex-basis:auto; }
+    }
+
+  </style>
 </head>
 <body class="admin-mode">
 <header class="top">
