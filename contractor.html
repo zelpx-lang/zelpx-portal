@@ -810,8 +810,8 @@
     await loadAccount();
     if (!isAdmin && currentContractor) {
       try {
-        await syncSignupProfessionQualifications(user);
         await syncSignupContractorDocuments(user);
+        await syncSignupProfessionQualifications(user);
       } catch (documentError) {
         message("appMessage", "Your account is open, but a license or insurance document could not be saved: " + (documentError.message || "Please try again from My Company."), "error");
       }
@@ -888,7 +888,7 @@
     if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
     const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
     const rules=await loadRoleEligibilityRules(state,role);
-    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null};});
+    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,license_document_path:req?(currentContractor.license_document_path||null):null};});
     const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
     if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
