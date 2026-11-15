@@ -636,7 +636,7 @@
       const stateLabel=document.createElement("span");stateLabel.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS SCOPE",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
       const detail=document.createElement("div");detail.style.fontSize="12px";detail.textContent=r?.rule_summary||"No verified rule. Do not assume this work is license-free.";
       row.append(strong,stateLabel,detail);
-      if(r?.official_source_url){const a=document.createElement("a");a.href=r.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(r.licensing_authority||"State authority");row.append(a);}
+      if(r?.licensing_authority){const authority=document.createElement("div");authority.style.cssText="font-size:12px;color:var(--muted);margin-top:5px";authority.textContent="Licensing authority: "+r.licensing_authority;row.append(authority);}
       root.append(row);
     });
     const hasUnmappedSelected=[...signupSelectedCategoryIds].some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
@@ -1003,7 +1003,7 @@
       const detail=document.createElement("div"); detail.style.fontSize="12px"; detail.style.marginTop="2px";
       detail.textContent=rule?.rule_summary||"No verified state rule is available yet. Do not assume this work is license-free.";
       row.append(detail);
-      if(rule?.official_source_url){const a=document.createElement("a");a.href=rule.official_source_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Official source: "+(rule.licensing_authority||"State authority");a.style.fontSize="12px";row.append(a);}
+      if(rule?.licensing_authority){const authority=document.createElement("div");authority.style.cssText="font-size:12px;color:var(--muted);margin-top:5px";authority.textContent="Licensing authority: "+rule.licensing_authority;row.append(authority);}
       summary.append(row);
     });
     if($("professionWorkRole").value==="employee"){
