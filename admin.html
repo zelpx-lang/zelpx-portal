@@ -425,6 +425,7 @@
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
 
   async function signIn() {
+    if (!db) initClient();
     clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
@@ -432,6 +433,7 @@
     catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   async function signUp() {
+    if (!db) initClient();
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
@@ -1113,6 +1115,75 @@
 
 
 
+  async function loadContractorChangeRequests() {
+    const adminList=$("contractorChangesList");
+    if(adminList)adminList.textContent="Loading change requests…";
+    try {
+      let query=db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(100);
+      if(!isAdmin && currentUser?.id) query=query.eq("user_id",currentUser.id);
+      const {data,error}=await query; if(error)throw error;
+      const rows=data||[], userIds=[...new Set(rows.map(r=>r.user_id).filter(Boolean))], contractorIds=[...new Set(rows.map(r=>r.contractor_id).filter(Boolean))];
+      const [profilesResult,contractorsResult]=await Promise.all([
+        userIds.length?db.from("profiles").select("id,full_name,phone").in("id",userIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractors").select("id,user_id,company_name,email").in("id",contractorIds):Promise.resolve({data:[],error:null})
+      ]);
+      if(profilesResult.error)throw profilesResult.error;if(contractorsResult.error)throw contractorsResult.error;
+      const professionIds=[...new Set(rows.flatMap(r=>(r.requested_changes?.items||[]).map(x=>x.profession_id).filter(Boolean)))];
+      const categoryIds=[...new Set(rows.flatMap(r=>r.requested_changes?.category_ids||[]))];
+      const [professionsResult,categoriesResult]=await Promise.all([
+        professionIds.length?db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):Promise.resolve({data:[],error:null}),
+        categoryIds.length?db.from("service_categories").select("id,name").in("id",categoryIds):Promise.resolve({data:[],error:null})
+      ]);
+      if(professionsResult.error)throw professionsResult.error;if(categoriesResult.error)throw categoriesResult.error;
+      const profiles=new Map((profilesResult.data||[]).map(x=>[x.id,x])), contractors=new Map((contractorsResult.data||[]).map(x=>[x.id,x]));
+      const professionNames=new Map((professionsResult.data||[]).map(x=>[x.id,x.profession_name])), categoryNames=new Map((categoriesResult.data||[]).map(x=>[x.id,x.name]));
+      const render=(list,allowReview)=>{
+        if(!list)return;list.replaceChildren();
+        if(!rows.length){list.textContent="No change requests yet.";return;}
+        rows.forEach(r=>{
+          const card=document.createElement("article");card.className="lead";
+          const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
+          const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
+          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString()+" · "+(company.email||profile.phone||"Contact not provided");card.append(meta);
+          const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
+          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
+          if(r.request_type==="profession_qualifications"){
+            addDetail("State",changes.state_code);addDetail("Work arrangement",changes.work_role);
+            (changes.items||[]).forEach((item,index)=>{
+              const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
+              const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
+              addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
+              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);addDetail("Document",item.license_document_path);
+            });
+          }else if(r.request_type==="service_categories"){
+            addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
+          }else{
+            Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
+          }
+          card.append(detail);
+          if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          if(allowReview && r.status==="pending"){
+            const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
+            const actions=document.createElement("div");actions.className="actions";
+            for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
+              const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
+              b.addEventListener("click",async()=>{
+                if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
+                b.disabled=true;
+                try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
+                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();await loadAdminContractorReviews();}
+                }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
+              });actions.append(b);
+            }card.append(actions);
+          }
+          list.append(card);
+        });
+      };
+      render(adminList,true);
+    }catch(e){if(adminList)adminList.textContent="Could not load change requests: "+e.message;message("contractorChangesMessage","Could not load submissions: "+e.message,"error");}
+  }
+
+
   async function loadServiceRequests() {
     if (!isAdmin) return;
     const list = $("serviceRequestsList");
@@ -1403,7 +1474,7 @@
   async function start() {
     wireEvents();
     try {
-      initClient(); const { data: { session } } = await db.auth.getSession();
+      if (!db) initClient(); const { data: { session } } = await db.auth.getSession();
       if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
