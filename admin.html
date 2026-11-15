@@ -316,6 +316,64 @@
       .admin-review-actions button { min-height:34px; }
     }
 
+
+    /* ZELPX Admin: clear workspace tiles and comfortable review screens */
+    body.admin-mode { background:#f3f4f6; }
+    body.admin-mode .top { background:#17191f; border-radius:0; border-bottom:4px solid #ff6a2b; }
+    #adminPanel { background:#f8f8f7; border:1px solid #e5e5e3; border-radius:22px; padding:clamp(16px,3vw,30px); box-shadow:0 12px 35px rgba(20,24,30,.06); }
+    .admin-home-head { align-items:center; margin:0 0 22px; padding:4px 2px 18px; border-bottom:1px solid #e8e7e4; }
+    .admin-home-head h2 { font-size:clamp(25px,3vw,31px); letter-spacing:-.045em; color:#17191f; }
+    .admin-eyebrow { color:#e65d26; font-size:10px; letter-spacing:.2em; }
+    .admin-live { background:#eef8f1; border-color:#d9eee0; color:#28734a; }
+    .admin-live i { background:#24a260; }
+    .admin-page-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .admin-page-nav button.admin-nav-card { position:relative; min-height:142px; align-items:flex-start; flex-direction:column; gap:12px; padding:18px; border:1px solid #e5e5e2; border-radius:17px; background:#fff; box-shadow:0 4px 12px rgba(20,24,30,.035); }
+    .admin-page-nav button.admin-nav-card:hover { transform:translateY(-2px); border-color:#ffb18d; background:#fffaf7; box-shadow:0 12px 24px rgba(20,24,30,.08); }
+    .admin-nav-icon { width:42px; height:42px; flex-basis:42px; border-radius:13px; background:#fff0e8; color:#df5b24; font-size:21px; }
+    .admin-nav-copy { gap:5px; }
+    .admin-nav-copy strong { font-size:16px; color:#202127; }
+    .admin-nav-copy small { font-size:12px; line-height:1.4; color:#777a82; }
+    .admin-nav-arrow { position:absolute; right:16px; top:17px; color:#b2b4b9; font-size:24px; }
+    .admin-home-foot { margin-top:18px; color:#85878d; }
+    #adminPanel .admin-page { background:transparent; }
+    #adminPanel .admin-page > [data-admin-home] { position:sticky; top:8px; z-index:5; min-height:42px; margin:0 0 15px; padding:9px 16px; border:1px solid #dedfdf; border-radius:12px; background:#fff; color:#30333a; box-shadow:0 3px 10px rgba(20,24,30,.06); }
+    #adminPanel .admin-page > [data-admin-home]:hover { background:#fff5ef; border-color:#ffb18d; }
+    .admin-section-shell { padding:18px; border:1px solid #e5e5e2; border-radius:17px; background:#fff; }
+    .admin-section-heading { align-items:center; padding-bottom:13px; border-bottom:1px solid #efefed; }
+    .admin-section-heading h2 { font-size:21px; color:#202127; }
+    .admin-section-heading p { font-size:13px; color:#737780; }
+    .admin-section-tag { background:#fff0e8; color:#c64f1d; }
+    .admin-review-row { padding:16px; margin:10px 0; border:1px solid #e6e7e8; border-radius:15px; background:#fff; }
+    .admin-review-name { font-size:16px!important; }
+    .admin-review-email { font-size:12px!important; }
+    .admin-review-more { margin-top:12px; padding-top:10px; }
+    .admin-review-more summary { display:inline-flex; align-items:center; gap:8px; padding:8px 11px; border-radius:9px; background:#f3f4f5; color:#454850; font-size:12px; }
+    .admin-review-more summary:after { float:none; }
+    .admin-review-details { padding:10px 2px 2px; }
+    .admin-review-actions { margin-top:12px; padding-top:11px; border-top:1px solid #f0f0ee; }
+    .admin-review-actions button { min-height:40px; padding:9px 15px; font-size:12px; }
+    @media(max-width:520px) {
+      #adminPanel { padding:13px; border-radius:16px; }
+      .admin-home-head { align-items:flex-start; gap:10px; }
+      .admin-live { font-size:10px; padding:7px 9px; }
+      .admin-page-nav { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+      .admin-page-nav button.admin-nav-card { min-height:136px; padding:13px 11px; gap:10px; border-radius:14px; }
+      .admin-nav-icon { width:36px; height:36px; flex-basis:36px; font-size:18px; }
+      .admin-nav-copy strong { font-size:13px; line-height:1.25; }
+      .admin-nav-copy small { font-size:10px; line-height:1.35; }
+      .admin-nav-arrow { top:10px; right:11px; font-size:20px; }
+      .admin-home-foot { font-size:10px; }
+      .admin-section-shell { padding:12px; }
+      .admin-section-heading h2 { font-size:17px!important; }
+      .admin-review-row { padding:13px; }
+      .admin-review-actions { gap:7px; }
+      .admin-review-actions button { min-height:40px; padding:8px 12px; font-size:12px; }
+    }
+    @media(max-width:350px) {
+      .admin-nav-copy small { display:none; }
+      .admin-page-nav button.admin-nav-card { min-height:112px; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
