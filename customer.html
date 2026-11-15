@@ -1692,7 +1692,7 @@
                   .delete()
                   .eq("id", request.id)
                   .eq("user_id", session.user.id)
-                  .eq("status", "rejected")
+                  .ilike("status", "rejected")
                   .select("id");
                 if (deleteError) throw deleteError;
                 if (!deletedRows || deletedRows.length === 0) {
@@ -1709,7 +1709,8 @@
           } else {
             actions.append(status);
           }
-          details.appendChild(actions);
+          // Keep the rejected-request delete action visible on the collapsed request card.
+          card.appendChild(actions);
 
           if (request.lead_id) {
             card.dataset.leadId = request.lead_id;
