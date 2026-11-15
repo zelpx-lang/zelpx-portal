@@ -1915,6 +1915,8 @@ body.admin-mode #adminPanel .admin-page button.secondary{background:#f5f6f7;bord
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
     const overview = $("adminOverview"); if (overview) overview.classList.add("hidden");
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
+    const pageTitles = {adminApprovalsPage:"Contractor approvals",adminUnlicensedPage:"License review",adminCreateLeadPage:"Create a lead",adminVerifyLeadPage:"Request verification"};
+    const title = $("adminWorkspaceTitle"); if (title) title.textContent = pageTitles[pageId] || "Overview";
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
@@ -1928,6 +1930,8 @@ body.admin-mode #adminPanel .admin-page button.secondary{background:#f5f6f7;bord
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       const overview = $("adminOverview"); if (overview) overview.classList.remove("hidden");
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
+      document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.classList.add("active"));
+      const title = $("adminWorkspaceTitle"); if (title) title.textContent = "Overview";
     }
     window.scrollTo({ top:0, behavior:"smooth" });
   }
@@ -1941,6 +1945,8 @@ body.admin-mode #adminPanel .admin-page button.secondary{background:#f5f6f7;bord
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       const overview = $("adminOverview"); if (overview) overview.classList.remove("hidden");
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
+      document.querySelectorAll("#adminPanel [data-admin-home]").forEach(item => item.classList.add("active"));
+      const title = $("adminWorkspaceTitle"); if (title) title.textContent = "Overview";
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
