@@ -1889,7 +1889,8 @@
   }
 
   // Instant admin alerts: Supabase Realtime delivers each submitted contractor change.
-  let adminChangeChannel=null;
+  let adminChangeChannel=null, adminChangePollTimer=null;
+  const adminSeenChangeIds=new Set();
   async function refreshAdminPendingBadge(){
     if(!isAdmin)return;
     const {count,error}=await db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending");
@@ -1913,35 +1914,48 @@
     if(requestId)toast.dataset.requestId=requestId;
   }
   function startAdminChangeNotifications(){
-    if(!isAdmin||!currentUser)return;
+    // This listener must never start in a contractor session.
+    if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
     if(adminChangeChannel)db.removeChannel(adminChangeChannel);
+    if(adminChangePollTimer)clearInterval(adminChangePollTimer);
     refreshAdminPendingBadge();
     loadContractorChangeRequests();
-    // Surface any requests that arrived while the administrator was away.
-    db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending")
-      .then(({count,error})=>{
-        if(error){console.error("Could not check pending contractor updates:",error.message);return;}
-        if(count>0)showAdminTopAlert("Contractor updates waiting for review",
-          count+" pending contractor submission"+(count===1?"":"s")+" are waiting. Open the review list to see company details, selected work and documents.");
-      });
-    adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},async(payload)=>{
-        const request=payload.new||{};
-        if(request.status!=="pending")return;
-        const kind=request.request_type==="profession_qualifications"?"professions and license details":request.request_type==="service_categories"?"selected work categories":"company profile or license information";
-        const notice="A contractor has just submitted updated "+kind+". Open Admin → Contractor profile change requests to review the details.";
-        showAdminTopAlert("New contractor information received",notice,request.id);
-        message("contractorChangesMessage",notice,"success");
-        if("Notification" in window && Notification.permission==="granted"){
-          const n=new Notification("ZELPX — new contractor update",{body:notice,tag:"zelpx-change-"+(request.id||Date.now())});
-          n.onclick=()=>{window.focus();switchTab("adminPanel");};
-        }
+    const announceRequest=async(request)=>{
+      if(!request?.id||request.status!=="pending"||adminSeenChangeIds.has(request.id))return;
+      adminSeenChangeIds.add(request.id);
+      const kind=request.request_type==="profession_qualifications"?"selected professions and license details":request.request_type==="service_categories"?"selected work categories":"company details, license or insurance information";
+      const notice="A contractor submitted "+kind+". Please review and approve or reject this request.";
+      showAdminTopAlert("Approval required: new contractor submission",notice,request.id);
+      message("contractorChangesMessage",notice,"success");
+      if("Notification" in window && Notification.permission==="granted"){
+        const n=new Notification("ZELPX — administrator approval required",{body:notice,tag:"zelpx-change-"+request.id});
+        n.onclick=()=>{window.focus();switchTab("adminPanel");};
+      }
+      await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
+    };
+    // Load pending requests on admin sign-in and remember them to avoid duplicate alerts.
+    db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending")
+      .then(async({data,error})=>{
+        if(error){console.error("Admin pending request load failed:",error.message);return;}
+        (data||[]).forEach(r=>adminSeenChangeIds.add(r.id));
+        if(data?.length)showAdminTopAlert("Contractor submissions awaiting approval",
+          data.length+" pending submission"+(data.length===1?"":"s")+" require your review in Admin → Contractor profile change requests.");
         await Promise.all([refreshAdminPendingBadge(),loadContractorChangeRequests()]);
-      })
+      });
+    // Realtime for immediate delivery while the admin portal is open.
+    adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},payload=>announceRequest(payload.new||{}))
       .subscribe((status,error)=>{
         if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.error("Admin realtime notifications unavailable:",status,error||"");
         if(status==="SUBSCRIBED")console.info("ZELPX admin realtime notifications connected.");
       });
+    // Fallback: check only from the administrator portal if Realtime is delayed or disconnected.
+    adminChangePollTimer=setInterval(async()=>{
+      if(!IS_ADMIN_PORTAL||!isAdmin||!currentUser)return;
+      const {data,error}=await db.from("contractor_change_requests").select("id,request_type,status").eq("status","pending").order("created_at",{ascending:false}).limit(50);
+      if(error){console.warn("Admin pending request check failed:",error.message);return;}
+      for(const request of (data||[]).reverse())await announceRequest(request);
+    },8000);
   }
 
   async function loadAdminContractorReviews(){
