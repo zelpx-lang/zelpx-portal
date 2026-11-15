@@ -1056,7 +1056,7 @@
       if(!rule)return false;
       // Employees do not use the contractor's personal-license Yes/No filter.
       // Show work types according to employee-specific state eligibility.
-      if(role==="employee") return ["allowed_no_individual_license","individual_trade_credential_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status);
+      if(role==="employee") return rule.eligibility_status==="allowed_no_individual_license";
       if(licenseChoice==="no") return rule.eligibility_status==="allowed_no_individual_license";
       return ["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status);
     });
@@ -1086,7 +1086,7 @@
       const allowedWithLicense=new Set(["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision","conditional"]);
       selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>allowedWithLicense.has(professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status)));
     } else if(role==="employee") {
-      const employeeEligible=new Set(["allowed_no_individual_license","individual_trade_credential_required","employer_license_and_supervision","conditional"]);
+      const employeeEligible=new Set(["allowed_no_individual_license"]);
       selectedProfessionIds=new Set([...selectedProfessionIds].filter(id=>employeeEligible.has(professionRuleRows.find(r=>r.profession_id===id)?.eligibility_status)));
     }
     renderProfessionOptions();
