@@ -452,7 +452,8 @@
         <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
         <div style="grid-column:1/-1"><label for="insuranceDocument">Insurance certificate (COI) photo or PDF</label><input id="insuranceDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small id="insuranceDocumentStatus" class="muted">No insurance certificate uploaded yet. JPG, PNG, WebP or PDF · Max 10 MB · Private administrator review.</small></div>
       </div>
-      <div class="actions"><button id="saveCompanyBtn">Save company details</button></div>
+      <div class="actions"><button id="saveCompanyBtn" type="button" aria-busy="false">Save company details</button></div>
+      <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
     </section>
 
     <section id="adminPanel" class="card hidden">
@@ -1680,7 +1681,19 @@
   }
 
   async function saveCompany() {
+    const saveButton = $("saveCompanyBtn");
+    const saveStatus = $("companySaveStatus");
+    const originalButtonText = "Save company details";
+    if (saveButton.disabled) return;
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving…";
+    saveButton.setAttribute("aria-busy", "true");
+    if (saveStatus) {
+      saveStatus.textContent = "Saving your company details and documents…";
+      saveStatus.className = "message";
+    }
     clearMessage("appMessage");
+    let saved = false;
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
       const hasLicense = $("profileHasLicense").value === "yes";
@@ -1756,8 +1769,21 @@
         }
       }
       $("licenseDocument").value = ""; $("insuranceDocument").value = "";
-      message("appMessage", "Your company details, selected work types, license, and insurance were submitted together for administrator review. Existing approved details remain active until approval.", "success");
-    } catch (e) { message("appMessage", e.message, "error"); }
+      const successText = "Submitted successfully. Your company details, selected work types, license, and insurance are now waiting for administrator review. Existing approved details remain active until approval.";
+      message("appMessage", successText, "success");
+      if (saveStatus) { saveStatus.textContent = "✓ " + successText; saveStatus.className = "message success"; }
+      saveButton.textContent = "Submitted ✓";
+      saved = true;
+    } catch (e) {
+      const errorText = e.message || "Could not save your company details. Please try again.";
+      message("appMessage", errorText, "error");
+      if (saveStatus) { saveStatus.textContent = "Not saved: " + errorText; saveStatus.className = "message error"; }
+      saveButton.textContent = "Try again";
+    } finally {
+      saveButton.disabled = false;
+      saveButton.setAttribute("aria-busy", "false");
+      if (!saved) saveButton.textContent = "Save company details";
+    }
   }
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
   async function lookupUsZip(zipInput, cityInput, stateInput, statusElement) {
