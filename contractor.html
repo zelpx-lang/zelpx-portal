@@ -1295,8 +1295,13 @@
       const rule=ruleByProfession.get(map.profession_id);
       const verified=qualificationByProfession.get(map.profession_id)==="verified";
       // Contractors who declared that they have no license see only work explicitly verified as not requiring an individual trade license.
-      const allowed=rule==="allowed_no_individual_license" ||
-        (currentContractor.has_license === true && ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule) && verified);
+      const companyLicenseVerified = currentContractor.has_license === true &&
+        currentContractor.license_review_status === "verified" &&
+        String(currentContractor.license_state || "").trim().toUpperCase() === state;
+      const allowed = rule === "allowed_no_individual_license" ||
+        (companyLicenseVerified &&
+          ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule) &&
+          verified);
       if(allowed) licenseEligibleLeadCategories.add(map.category_id);
     });
     const {data: categories, error: categoriesError}=await db.from("service_categories").select("id,name").eq("is_active",true);
