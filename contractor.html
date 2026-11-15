@@ -1917,6 +1917,13 @@
     if(adminChangeChannel)db.removeChannel(adminChangeChannel);
     refreshAdminPendingBadge();
     loadContractorChangeRequests();
+    // Surface any requests that arrived while the administrator was away.
+    db.from("contractor_change_requests").select("id",{count:"exact",head:true}).eq("status","pending")
+      .then(({count,error})=>{
+        if(error){console.error("Could not check pending contractor updates:",error.message);return;}
+        if(count>0)showAdminTopAlert("Contractor updates waiting for review",
+          count+" pending contractor submission"+(count===1?"":"s")+" are waiting. Open the review list to see company details, selected work and documents.");
+      });
     adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},async(payload)=>{
         const request=payload.new||{};
