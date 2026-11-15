@@ -314,10 +314,10 @@
       </section>
         <section class="lead">
           <h2>Old contractor update forms</h2>
-          <p>Delete contractor profile-change forms that have already been approved or rejected. Pending requests, contractor accounts, licenses and current profile information will be kept.</p>
+          <p>Manually delete older submissions for each contractor. The newest submission is kept. Contractor accounts, licenses and current profile information are not changed.</p>
           <div id="reviewedContractorFormsMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div class="actions">
-            <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete old reviewed forms</button>
+            <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete older submissions</button>
           </div>
         </section>
       </section>
@@ -959,36 +959,38 @@
     clearMessage("reviewedContractorFormsMessage");
     try {
       const { data: requests, error } = await db.from("contractor_change_requests")
-        .select("contractor_id")
-        .in("status", ["approved", "rejected"])
+        .select("id,contractor_id")
+        .order("created_at", { ascending: false })
         .limit(10000);
       if (error) throw error;
       const rows = requests || [];
-      if (!rows.length) {
-        message("reviewedContractorFormsMessage", "There are no approved or rejected contractor forms to delete.", "success");
+      const latestByContractor = new Set();
+      let olderCount = 0;
+      rows.forEach(row => {
+        if (!row.contractor_id) return;
+        if (latestByContractor.has(row.contractor_id)) olderCount++;
+        else latestByContractor.add(row.contractor_id);
+      });
+      if (!olderCount) {
+        message("reviewedContractorFormsMessage", "No older submissions to delete. The newest submission for each contractor will be kept.", "success");
         return;
       }
-      const contractorIds = [...new Set(rows.map(row => row.contractor_id).filter(Boolean))];
       if (!window.confirm(
-        "Delete " + rows.length + " reviewed contractor update form(s)?\n\n" +
-        "Only approved and rejected forms will be deleted. Pending requests, contractor accounts, licenses, " +
-        "documents and current profile information will be kept."
+        "Delete " + olderCount + " older contractor submission(s)?\n\n" +
+        "The newest submission for each contractor will be kept. Contractor accounts, licenses, " +
+        "documents and current profile information will not be changed."
       )) return;
-      let deleted = 0;
-      for (const contractorId of contractorIds) {
-        const { data, error: deleteError } = await db.rpc("admin_delete_reviewed_contractor_forms", {
-          p_contractor_id: contractorId
-        });
-        if (deleteError) throw deleteError;
-        deleted += Number(data) || 0;
-      }
+      const { data, error: deleteError } = await db.rpc("admin_delete_old_contractor_change_requests");
+      if (deleteError) throw deleteError;
       message(
         "reviewedContractorFormsMessage",
-        deleted + " old reviewed form(s) deleted. Pending requests and contractor account data were kept.",
+        (Number(data) || 0) + " older submission(s) deleted. The newest submission for each contractor was kept.",
         "success"
       );
+      await loadContractorChangeRequests();
+      await refreshAdminPendingBadge();
     } catch (e) {
-      message("reviewedContractorFormsMessage", "Could not delete old contractor forms: " + (e.message || "Unknown error"), "error");
+      message("reviewedContractorFormsMessage", "Could not delete older contractor submissions: " + (e.message || "Unknown error"), "error");
     } finally {
       button.disabled = false;
     }
