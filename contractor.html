@@ -457,7 +457,7 @@
     </section>
 
     <section id="adminPanel" class="card hidden">
-<section class="lead" id="contractorChangeReviewSection">
+<section class="lead" id="adminContractorReviewSection"><h2>Contractor services & license verification</h2><p>Review selected services, professions, work state, license number, type and documents. Approve each profession only when the credential covers that work.</p><div class="actions"><button id="refreshContractorReviewBtn" type="button" class="secondary">Refresh contractors</button></div><div id="adminContractorReviewMessage" class="message hidden"></div><div id="adminContractorReviewList">Loading contractors…</div></section><section class="lead" id="contractorChangeReviewSection">
         <h2>Contractor profile change requests</h2>
         <p>Review and approve contractor profile, service category, and profession changes. Pending changes do not become active until approved.</p>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh change requests</button></div>
@@ -1866,6 +1866,36 @@
   }
 
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
+  async function loadAdminContractorReviews(){
+    if(!isAdmin)return;const root=$("adminContractorReviewList");root.textContent="Loading contractors…";
+    try{
+      const {data:cs,error}=await db.from("contractors").select("id,user_id,company_name,email,verification_status,service_state,has_license,license_number,license_state,license_type,license_document_path,license_review_status,insurance_review_status,insurance_policy_number,insurance_expiration_date").order("created_at",{ascending:false}).limit(200);if(error)throw error;
+      root.replaceChildren();if(!cs?.length){root.textContent="No contractors found.";return;}
+      const ids=cs.map(c=>c.id),uids=cs.map(c=>c.user_id).filter(Boolean);
+      const [cr,qr,pr]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids)]);
+      if(cr.error)throw cr.error;if(qr.error)throw qr.error;if(pr.error)throw pr.error;
+      const qids=[...new Set((qr.data||[]).map(q=>q.profession_id))];const rr=qids.length?await db.from("zelpx_professions").select("id,profession_name").in("id",qids):{data:[],error:null};if(rr.error)throw rr.error;
+      const names=new Map((rr.data||[]).map(p=>[p.id,p.profession_name])),profiles=new Map((pr.data||[]).map(p=>[p.id,p]));
+      const line=(el,k,v)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=k+": ";p.append(b,document.createTextNode(v==null||v===""?"Not provided":String(v)));el.append(p);};
+      for(const c of cs){
+        const card=document.createElement("article");card.className="lead";const prof=profiles.get(c.user_id)||{};const h=document.createElement("h3");h.textContent=c.company_name||prof.full_name||"Contractor";card.append(h);
+        line(card,"Contact",c.email||prof.phone);line(card,"Account status",c.verification_status);line(card,"State",c.service_state);
+        line(card,"Selected service categories",(cr.data||[]).filter(x=>x.contractor_id===c.id).map(x=>x.service_categories?.name).filter(Boolean).join(", "));
+        const lic=document.createElement("section");lic.style.cssText="padding:12px;background:#fffaf5;border-radius:12px;margin:10px 0";const lh=document.createElement("h4");lh.textContent="Company license";lic.append(lh);
+        line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",c.license_state);line(lic,"Type",c.license_type);line(lic,"Review status",c.license_review_status);
+        if(c.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open company license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(c.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};lic.append(doc);}
+        if(c.has_license&&c.license_document_path&&c.license_review_status!=="verified"){const b=document.createElement("button");b.textContent="Verify company license";b.onclick=async()=>{b.disabled=true;const {error}=await db.from("contractors").update({license_review_status:"verified"}).eq("id",c.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Company license verified. Approve individual professions separately.","success");loadAdminContractorReviews();};lic.append(b);}card.append(lic);
+        line(card,"Insurance",(c.insurance_review_status||"not submitted")+" · policy "+(c.insurance_policy_number||"not provided")+" · expires "+(c.insurance_expiration_date||"not provided"));
+        const qs=(qr.data||[]).filter(q=>q.contractor_id===c.id);const qh=document.createElement("h4");qh.textContent="Selected professions / credentials";card.append(qh);if(!qs.length)line(card,"Professions","None selected");
+        for(const q of qs){const box=document.createElement("section");box.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0";const title=document.createElement("h4");title.textContent=names.get(q.profession_id)||"Profession";box.append(title);
+          line(box,"State / work status",q.state_code+" / "+q.work_role);line(box,"License required",q.license_required_at_registration?"Yes":"No / conditional");line(box,"License number",q.license_number);line(box,"Type",q.license_type);line(box,"Issuing authority",q.issuing_authority);line(box,"Expiration",q.license_expiration_date);line(box,"Review status",q.verification_status);
+          if(q.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open profession license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(q.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};box.append(doc);}
+          if(q.verification_status!=="verified"){const note=document.createElement("textarea");note.rows=2;note.placeholder="Admin verification note";box.append(note);const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(q.license_required_at_registration&&(!q.license_number||!q.license_type||!q.license_document_path))return message("adminContractorReviewMessage","Missing profession-specific license number, type, or document.","error");b.disabled=true;const {error}=await db.from("contractor_profession_qualifications").update({verification_status:"verified",verified_at:new Date().toISOString(),admin_notes:note.value.trim()||null}).eq("id",q.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(b);}card.append(box);
+        }root.append(card);
+      }
+    }catch(e){root.textContent="Could not load contractor reviews: "+e.message;}
+  }
+
   async function loadContractorChangeRequests() {
     const adminList=$("contractorChangesList"), ownList=$("contractorOwnChangesList");
     [adminList,ownList].filter(Boolean).forEach(x=>x.textContent="Loading change requests…");
@@ -2033,7 +2063,7 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); }
+    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); loadAdminContractorReviews(); }
   }
   async function logout() {
     const { error } = await db.auth.signOut({ scope: "local" });
@@ -2080,6 +2110,7 @@
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
     $("refreshContractorChangesBtn").addEventListener("click",loadContractorChangeRequests);
+    $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("specialtySearch").addEventListener("input", renderSpecialtyOptions);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
