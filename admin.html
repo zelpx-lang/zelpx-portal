@@ -287,35 +287,6 @@
       .admin-review-actions p { font-size:11px!important; }
     }
 
-
-    .admin-review-row { display:block; padding:12px 14px; margin:8px 0; background:#fff; border:1px solid #e9e3da; border-radius:13px; box-shadow:0 2px 8px rgba(40,30,20,.035); }
-    .admin-review-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .admin-review-identity { min-width:0; }
-    .admin-review-name { margin:0!important; font-size:15px!important; font-weight:750; color:#24211d; }
-    .admin-review-email { margin:3px 0 0!important; color:#777168; font-size:12px!important; overflow-wrap:anywhere; }
-    .admin-review-status { flex:0 0 auto; padding:5px 9px; border-radius:30px; font-size:10px; line-height:1.2; font-weight:750; background:#fff3df; color:#9b6417; }
-    .admin-review-status.is-approved { background:#e9f7ef; color:#187344; }
-    .admin-review-status.is-rejected { background:#fff0ee; color:#b13e32; }
-    .admin-review-more { margin-top:9px; border-top:1px solid #f0ece6; padding-top:7px; }
-    .admin-review-more summary { cursor:pointer; color:#b65327; font-size:11px; font-weight:700; list-style:none; }
-    .admin-review-more summary::-webkit-details-marker { display:none; }
-    .admin-review-more summary:after { content:"＋"; float:right; font-size:14px; }
-    .admin-review-more[open] summary:after { content:"−"; }
-    .admin-review-details { padding-top:7px; }
-    .admin-review-detail { margin:4px 0!important; color:#5e5a53; font-size:11px!important; line-height:1.4; overflow-wrap:anywhere; }
-    .admin-review-detail strong { color:#292722; }
-    .admin-review-actions { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-top:9px; }
-    .admin-review-actions button { min-height:35px; padding:7px 11px; font-size:11px; }
-    @media(max-width:700px) {
-      .admin-review-row { padding:10px 11px; margin:7px 0; border-radius:12px; }
-      .admin-review-heading { align-items:flex-start; gap:8px; }
-      .admin-review-name { font-size:14px!important; }
-      .admin-review-email { font-size:11px!important; }
-      .admin-review-status { max-width:120px; white-space:normal; text-align:center; font-size:9px; }
-      .admin-review-more summary { font-size:10px; }
-      .admin-review-actions button { min-height:34px; }
-    }
-
 </style>
 </head>
 <body class="admin-mode">
@@ -958,35 +929,21 @@
       contractors.forEach(contractor => {
         const card = document.createElement("article");
         card.className = "admin-review-row";
-        const accessLabel = contractor.verification_status === "verified"
-          ? (contractor.has_license === true ? "Approved · license verified" : "Approved · no license")
-          : contractor.verification_status === "rejected" ? "Rejected" : "Awaiting review";
-        const heading = document.createElement("div");
-        heading.className = "admin-review-heading";
-        const identity = document.createElement("div");
-        identity.className = "admin-review-identity";
         const title = document.createElement("h3");
         title.className = "admin-review-name";
         title.textContent = contractor.company_name || "Contractor company";
-        const email = document.createElement("p");
-        email.className = "admin-review-email";
-        email.textContent = contractor.email || "Email not provided";
-        identity.append(title, email);
-        const status = document.createElement("span");
-        status.className = "admin-review-status " + (contractor.verification_status === "verified" ? "is-approved" : contractor.verification_status === "rejected" ? "is-rejected" : "is-pending");
-        status.textContent = accessLabel;
-        heading.append(identity, status);
-        card.append(heading);
-        const more = document.createElement("details");
-        more.className = "admin-review-more";
-        const moreSummary = document.createElement("summary");
-        moreSummary.textContent = "View company, license and registration details";
-        more.append(moreSummary);
-        const detailList = document.createElement("div");
-        detailList.className = "admin-review-details";
+        card.append(title);
+        const accessLabel = contractor.verification_status === "verified"
+          ? (contractor.has_license === true
+              ? "ACCESS ALLOWED — license verified"
+              : "ACCESS ALLOWED — administrator exception (no license)")
+          : contractor.verification_status === "rejected"
+            ? "ACCESS DENIED — rejected by administrator"
+            : "NO ACCESS — awaiting administrator decision";
         const details = [
+          ["Email", contractor.email || "Not provided"],
           ["Lead access", accessLabel],
-          ["Approval status", contractor.verification_status || "Unknown"],
+          ["Current approval status", contractor.verification_status || "Unknown"],
           ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
           ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
@@ -997,10 +954,8 @@
           strong.textContent = label + ": ";
           p.className = "admin-review-detail";
           p.append(strong, document.createTextNode(String(value)));
-          detailList.append(p);
+          card.append(p);
         });
-        more.append(detailList);
-        card.append(more);
         const actions = document.createElement("div");
         actions.className = "admin-review-actions";
         if (contractor.license_document_path) {
