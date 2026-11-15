@@ -391,8 +391,8 @@
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><input id="profileServiceState" maxlength="2" autocomplete="address-level1"></div>
         <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Enter or update your ZIP code, wait for the lookup, then save.</small></div>
-        <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">\n          <h3 style="margin:0 0 5px">My Services & License Requirements</h3>\n          <p class="muted" style="margin:0 0 14px">Choose the services your company provides, then review the license requirements for your state and work status below. Your selected services control which leads you can see and purchase.</p>\n        <div id="specialtiesSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5">
-          <h4 style="margin:0 0 5px">Services you provide</h4>
+        <div id="specialtiesSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5">
+          <h3 style="margin:0 0 5px">Services you provide</h3>
           <p class="muted" style="margin:0 0 12px">Select every type of work your company performs. Only matching leads will appear in your lead list, and the server will block purchases outside your selected services.</p>
           <input id="specialtySearch" type="search" placeholder="Search services…" aria-label="Search service specializations" style="margin-bottom:10px">
           <div id="specialtySelectionSummary" class="muted" style="font-size:13px;margin-bottom:10px">Loading your selected services…</div>
@@ -400,8 +400,8 @@
           <div class="actions"><button id="saveSpecialtiesBtn" type="button">Save my services</button><button id="resetSpecialtiesBtn" type="button" class="secondary">Discard changes</button></div>
           <div id="specialtiesMessage" class="message hidden" role="status" aria-live="polite"></div>
         </div>
-
-          <h4 style="margin:18px 0 5px">Profession and state licensing review</h4>
+        <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
+          <h3 style="margin:0 0 5px">Work types & license requirements</h3>
           <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
