@@ -2178,6 +2178,7 @@
               const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
                 p_request_id: request.id, p_zip_code: zipValue, p_city: cityValue, p_state: stateValue,
                 p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100),
+                p_service_category: request.service_type,
                 p_latitude: Number(zip.dataset.latitude) || null,
                 p_longitude: Number(zip.dataset.longitude) || null
               });
