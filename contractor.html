@@ -577,19 +577,30 @@
     if(!signupServiceCatalog.length){root.textContent="No service categories are currently available.";return;}
     const licenseAnswer=$("hasLicense").value;
     if(licenseAnswer!=="yes" && licenseAnswer!=="no"){root.textContent="Select Yes or No above before choosing services.";return;}
-    const showOnlyLicenseFree=licenseAnswer==="no";
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
+    const LICENSE_FREE_STATUS="allowed_no_individual_license";
+    const LICENSE_REQUIRED_STATUSES=new Set([
+      "individual_trade_credential_required",
+      "contractor_license_or_registration_required",
+      "employer_license_and_supervision",
+      "conditional"
+    ]);
+    // Show only the service group that matches the applicant's Yes/No answer.
+    // Unmapped, unverified and local-review categories are never treated as license-free.
     const visibleCategories=signupServiceCatalog.filter(c=>{
       if(searchTerm&&!c.name.toLowerCase().includes(searchTerm))return false;
       const map=signupCategoryMapRows.find(x=>x.category_id===c.id);
-      if(!map || map.mapping_status!=="mapped" || !map.profession_id)return !showOnlyLicenseFree;
+      if(!map || map.mapping_status!=="mapped" || !map.profession_id)return false;
       const rule=signupRuleRows.find(r=>r.profession_id===map.profession_id);
-      return !showOnlyLicenseFree || rule?.eligibility_status==="allowed_no_individual_license";
+      if(!rule)return false;
+      return licenseAnswer==="no"
+        ? rule.eligibility_status===LICENSE_FREE_STATUS
+        : LICENSE_REQUIRED_STATUSES.has(rule.eligibility_status);
     });
     const visibleIds=new Set(visibleCategories.map(c=>c.id));
     [...signupSelectedCategoryIds].forEach(id=>{if(!visibleIds.has(id))signupSelectedCategoryIds.delete(id);});
     updateSignupSelectedServices();
-    if(!visibleCategories.length){root.textContent="No services have been confirmed as license-free for this state and work status yet.";return;}
+    if(!visibleCategories.length){root.textContent=licenseAnswer==="no"?"No work types are confirmed as not requiring an individual license for this state and work status.":"No work types with confirmed license, registration, or trade-credential requirements are available for this state and work status.";return;}
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
     [...groups.entries()].forEach(([group,cats])=>{
