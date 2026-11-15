@@ -1129,21 +1129,35 @@
           addChange("Selected work categories", before.join(", ") || "None selected", after.join(", ") || "None selected");
         } else if (request.request_type === "profession_qualifications") {
           const beforeRows = currentQualifications.get(request.contractor_id) || [];
-          const beforeNames = beforeRows.map(row => professionNames.get(row.profession_id) || "Unknown profession");
-          const afterNames = (changes.items || []).map(item => professionNames.get(item.profession_id) || "Unknown profession");
+          const uniqueByProfession = rows => [...new Map(rows.filter(row => row.profession_id).map(row => [row.profession_id, row])).values()];
+          const uniqueBeforeRows = uniqueByProfession(beforeRows);
+          const uniqueItems = uniqueByProfession(changes.items || []);
+          const beforeNames = uniqueBeforeRows.map(row => professionNames.get(row.profession_id) || "Unknown profession");
+          const afterNames = uniqueItems.map(item => professionNames.get(item.profession_id) || "Unknown profession");
           addChange("Work types / professions", beforeNames.join(", ") || "None recorded", afterNames.join(", ") || "None submitted");
           addDetail("State", changes.state_code);
           addDetail("Work arrangement", changes.work_role);
-          (changes.items || []).forEach((item, index) => {
-            const old = beforeRows.find(row => row.profession_id === item.profession_id);
+          uniqueItems.forEach(item => {
+            const old = uniqueBeforeRows.find(row => row.profession_id === item.profession_id);
             const name = professionNames.get(item.profession_id) || "Unknown profession";
-            addChange(name + " — license required", old?.license_required_at_registration, item.license_required_at_registration);
-            addChange(name + " — license number", old?.license_number, item.license_number);
-            addChange(name + " — license status", old?.verification_status, item.verification_status);
-            addDetail(name + " — license type", item.license_type);
-            addDetail(name + " — issuing authority", item.issuing_authority);
-            addDetail(name + " — expiration", item.license_expiration_date);
-            addDetail(name + " — document", item.license_document_path ? "Uploaded" : "Not uploaded");
+            const p = document.createElement("p");
+            const strong = document.createElement("strong");
+            strong.textContent = name + ": ";
+            const licenseRequired = item.license_required_at_registration === true ? "Required" :
+              item.license_required_at_registration === false ? "Not required" : "Not specified";
+            const status = item.verification_status || "Not specified";
+            const number = item.license_number || "Not provided";
+            const type = item.license_type || "Not provided";
+            const expiration = item.license_expiration_date || "Not provided";
+            const documentStatus = item.license_document_path ? "Uploaded" : "Not uploaded";
+            const changed = old ? "Previous license: " + (old.license_number || "Not provided") : "New profession";
+            p.append(strong, document.createTextNode(
+              "License " + licenseRequired + " · Status: " + status +
+              " · Number: " + number + " · Type: " + type +
+              " · Expiration: " + expiration + " · Document: " + documentStatus +
+              " · " + changed
+            ));
+            details.append(p);
           });
         } else {
           Object.entries(changes).forEach(([key,value]) => addDetail(key.replaceAll("_"," "), value));
