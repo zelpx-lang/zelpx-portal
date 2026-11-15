@@ -202,39 +202,6 @@
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
     .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
     .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
-
-    /* Administrator workspace navigation — responsive card dashboard */
-    body.admin-mode { background:#f5f2ed; }
-    #adminPanel { padding:clamp(16px,3vw,30px); border-radius:24px; }
-    .admin-home-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin:2px 0 24px; }
-    .admin-home-head h2 { font-size:clamp(24px,3vw,32px); margin:5px 0 6px; letter-spacing:-.04em; }
-    .admin-home-head p { margin:0; max-width:620px; font-size:14px; line-height:1.55; }
-    .admin-eyebrow { color:#e85f25; font-size:10px; font-weight:850; letter-spacing:.17em; }
-    .admin-live { display:inline-flex; align-items:center; gap:8px; padding:9px 13px; border:1px solid #e8e1d7; border-radius:999px; background:#fff; color:#615b52; font-size:12px; font-weight:700; white-space:nowrap; }
-    .admin-live i { width:8px; height:8px; border-radius:50%; background:#16a36a; box-shadow:0 0 0 4px #e3f5ec; }
-    .admin-page-nav { display:flex; flex-direction:column; gap:9px; width:100%; margin:0; padding:0; background:transparent; border-radius:0; }
-    .admin-page-nav button.admin-nav-card { display:flex; align-items:center; gap:15px; width:100%; min-height:60px; padding:9px 14px; border:1px solid #e9e2d8; border-radius:12px; background:#fff; color:#211f1b; box-shadow:0 5px 18px #3427190a; text-align:left; white-space:normal; }
-    .admin-page-nav button.admin-nav-card:hover { background:#fffaf6; border-color:#f4b394; transform:translateY(-2px); box-shadow:0 12px 26px #34271912; }
-    .admin-nav-icon { flex:0 0 34px; width:34px; height:34px; display:grid; place-items:center; border-radius:14px; background:#fff0e8; color:#df5b24; font-size:19px; font-weight:800; }
-    .admin-nav-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:2px; }
-    .admin-nav-copy strong { font-size:14px; line-height:1.2; }
-    .admin-nav-copy small { color:#777066; font-size:11px; line-height:1.25; font-weight:500; }
-    .admin-nav-arrow { color:#b7afa4; font-size:22px; font-weight:400; }
-    .admin-home-foot { display:flex; justify-content:space-between; gap:12px; margin-top:22px; padding-top:14px; border-top:1px solid #eee7dd; color:#8a8379; font-size:11px; letter-spacing:.04em; }
-    #adminPanel .admin-page > [data-admin-home] { margin-bottom:16px; }
-    #adminPanel .admin-page > h2 { margin-top:4px; }
-    @media(max-width:650px) {
-      #adminPanel { padding:15px; border-radius:18px; }
-      .admin-home-head { flex-direction:column; gap:12px; margin-bottom:18px; }
-      .admin-home-head h2 { font-size:25px; }
-      .admin-page-nav { gap:8px; }
-      .admin-page-nav button.admin-nav-card { min-height:56px; padding:8px 11px; border-radius:11px; gap:10px; }
-      .admin-nav-icon { flex-basis:32px; width:32px; height:32px; border-radius:10px; }
-      .admin-nav-copy strong { font-size:15px; }
-      .admin-nav-copy small { font-size:11px; }
-      .admin-home-foot { font-size:10px; }
-    }
-
 </style>
 </head>
 <body class="admin-mode">
@@ -327,25 +294,14 @@
     </section>
 
         <section id="adminPanel" class="card hidden">
-      <div id="adminPanelHeader" class="admin-home-head">
-        <div><span class="admin-eyebrow">CONTROL CENTER</span><h2>Administrator dashboard</h2><p class="muted">Manage contractors, review customer requests and keep the marketplace running.</p></div>
-        <span class="admin-live"><i></i> Admin workspace</span>
-      </div>
-      <nav id="adminPanelNav" class="admin-page-nav" aria-label="Administrator sections">
-        <button type="button" class="admin-nav-card" data-admin-page="adminApprovalsPage">
-          <span class="admin-nav-icon">✓</span><span class="admin-nav-copy"><strong>Contractor approvals</strong><small>Review new registrations and profile changes</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminUnlicensedPage">
-          <span class="admin-nav-icon">▤</span><span class="admin-nav-copy"><strong>License review</strong><small>Find contractors without a current license</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminCreateLeadPage">
-          <span class="admin-nav-icon">＋</span><span class="admin-nav-copy"><strong>Create a lead</strong><small>Add a customer request to the marketplace</small></span><span class="admin-nav-arrow">›</span>
-        </button>
-        <button type="button" class="admin-nav-card" data-admin-page="adminVerifyLeadPage">
-          <span class="admin-nav-icon">⌕</span><span class="admin-nav-copy"><strong>Fraud protection</strong><small>Verify customer requests and review risk signals</small></span><span class="admin-nav-arrow">›</span>
-        </button>
+      <h2>Administrator workspace</h2>
+      <p class="muted">Choose a section. Each tool opens on its own page.</p>
+      <nav class="tabs admin-page-nav" aria-label="Administrator pages">
+        <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
+        <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
+        <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
       </nav>
-      <div id="adminPanelFooter" class="admin-home-foot"><span>Choose a workspace to get started</span><span> ZELPX · ADMIN </span></div>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -1464,7 +1420,6 @@
     if (!isAdmin) return;
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
-    ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.add("hidden"));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminApprovalsPage") { loadPendingContractors(); loadContractorChangeRequests(); }
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
@@ -1477,7 +1432,6 @@
     if (tabId === "adminPanel" && isAdmin) {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
-      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
     }
     window.scrollTo({ top:0, behavior:"smooth" });
   }
@@ -1490,7 +1444,6 @@
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
-      ["adminPanelHeader","adminPanelNav","adminPanelFooter"].forEach(id => $(id)?.classList.remove("hidden"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
