@@ -1893,6 +1893,7 @@
     if(!isAdmin||!currentUser)return;
     if(adminChangeChannel)db.removeChannel(adminChangeChannel);
     refreshAdminPendingBadge();
+    loadContractorChangeRequests();
     adminChangeChannel=db.channel("zelpx-admin-contractor-changes")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},async(payload)=>{
         const request=payload.new||{};
