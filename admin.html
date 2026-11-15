@@ -256,6 +256,37 @@
       #adminApprovalsPage > .lead > p:first-of-type, #adminUnlicensedPage > .lead > p:first-of-type { margin-bottom:8px!important; }
     }
 
+
+    /* Clean compact admin review list */
+    .admin-section-shell { background:#fffdfa; border:1px solid #e9e2d8; border-radius:18px; padding:16px; margin:8px 0; }
+    .admin-section-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .admin-section-heading h2 { font-size:20px; margin:0 0 4px; }
+    .admin-section-heading p { font-size:13px; margin:0; line-height:1.4; }
+    .admin-section-tag { flex:0 0 auto; color:#c45a2b; background:#fff0e8; border-radius:30px; padding:5px 9px; font-size:10px; font-weight:800; letter-spacing:.08em; }
+    #contractorRegistrationAlert { padding:10px 12px; margin:8px 0; border-radius:12px; font-size:13px; line-height:1.4; }
+    .admin-review-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:5px 14px; padding:13px 14px; margin:8px 0; background:#fff; border:1px solid #ebe5dc; border-radius:14px; box-shadow:none; }
+    .admin-review-row::before { display:none; }
+    .admin-review-name { grid-column:1; margin:0 0 2px; font-size:16px; }
+    .admin-review-detail { grid-column:1/-1; margin:0!important; color:#5e5a53; font-size:12px; line-height:1.4; overflow-wrap:anywhere; }
+    .admin-review-detail strong { color:#292722; font-weight:700; }
+    .admin-review-actions { grid-column:1/-1; display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:7px; }
+    .admin-review-actions button { min-height:36px; padding:7px 12px; font-size:12px; box-shadow:none; }
+    .admin-review-actions select { max-width:100%; min-height:40px; font-size:13px; }
+    @media(max-width:700px) {
+      #adminApprovalsPage, #adminUnlicensedPage { padding:0!important; }
+      #adminApprovalsPage > .admin-section-shell { padding:11px; margin:7px 0!important; border-radius:14px; }
+      .admin-section-heading { margin-bottom:9px; }
+      .admin-section-heading h2 { font-size:17px!important; }
+      .admin-section-heading p { font-size:11px!important; }
+      #refreshPendingContractorsBtn, #refreshContractorChangesBtn { min-height:34px!important; padding:6px 11px!important; font-size:11px!important; }
+      .admin-review-row { grid-template-columns:minmax(0,1fr); padding:10px 11px; gap:4px; border-radius:12px; }
+      .admin-review-name { font-size:15px!important; }
+      .admin-review-detail { font-size:11px!important; line-height:1.35!important; }
+      .admin-review-actions { margin-top:6px; gap:6px; }
+      .admin-review-actions button { min-height:34px; padding:6px 10px; font-size:11px; }
+      .admin-review-actions p { font-size:11px!important; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
@@ -369,17 +400,17 @@
       <div id="adminPanelFooter" class="admin-home-foot"><span>Choose a workspace to get started</span><span> ZELPX · ADMIN </span></div>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-        <h2>Contractor approvals</h2>
+        <section class="admin-section-shell">
+        <div class="admin-section-heading"><div><h2>Contractor approvals</h2><p>Review registrations and decide who can access leads.</p></div><span class="admin-section-tag">REVIEW</span></div>
         <p>New contractor accounts stay blocked until an administrator approves them.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
 
-      <section class="lead" style="margin-top:18px">
-        <h2>Contractor profile change requests <span id="adminPendingBadge" class="pill" style="display:none">0</span></h2>
-        <p>Review company details, selected work types, licenses and service categories submitted by contractors. Changes are applied only after approval.</p>
+      <section class="admin-section-shell admin-changes-shell" style="margin-top:14px">
+        <div class="admin-section-heading"><div><h2>Profile change requests <span id="adminPendingBadge" class="pill" style="display:none">0</span></h2>
+        <p>Review company details, selected work types, licenses and service categories submitted by contractors. Changes are applied only after approval.</p></div></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh submissions</button></div>
         <div id="contractorChangesList"><p class="muted">Loading contractor submissions…</p></div>
@@ -897,8 +928,9 @@
       }
       contractors.forEach(contractor => {
         const card = document.createElement("article");
-        card.className = "lead";
+        card.className = "admin-review-row";
         const title = document.createElement("h3");
+        title.className = "admin-review-name";
         title.textContent = contractor.company_name || "Contractor company";
         card.append(title);
         const accessLabel = contractor.verification_status === "verified"
@@ -920,11 +952,12 @@
           const p = document.createElement("p");
           const strong = document.createElement("strong");
           strong.textContent = label + ": ";
+          p.className = "admin-review-detail";
           p.append(strong, document.createTextNode(String(value)));
           card.append(p);
         });
         const actions = document.createElement("div");
-        actions.className = "actions";
+        actions.className = "admin-review-actions";
         if (contractor.license_document_path) {
           const viewDocument = document.createElement("button");
           viewDocument.type = "button";
