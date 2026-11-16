@@ -2022,15 +2022,25 @@
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
-    // Dedicated capture handler for the Incoming leads review screen.
+    // Open Incoming leads directly and make the review workspace visible before loading data.
     document.addEventListener("click", event => {
-      const incomingButton = event.target.closest && event.target.closest('[data-admin-page="adminIncomingLeadsPage"]');
+      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+      const incomingButton = target?.closest('[data-admin-page="adminIncomingLeadsPage"]');
       if (!incomingButton) return;
       event.preventDefault();
-      event.stopPropagation();
-      if (!isAdmin) return;
-      document.querySelectorAll("#adminPanel .admin-page").forEach(page => {
-        page.classList.toggle("hidden", page.id !== "adminIncomingLeadsPage");
+      event.stopImmediatePropagation();
+      const panel = $("adminPanel");
+      const page = $("adminIncomingLeadsPage");
+      if (!panel || !page) return;
+      if (!isAdmin) {
+        message("appMessage", "Administrator access is required to open Incoming leads.", "error");
+        return;
+      }
+      show($("appView"));
+      hide($("authView"));
+      show(panel);
+      document.querySelectorAll("#adminPanel .admin-page").forEach(item => {
+        item.classList.toggle("hidden", item !== page);
       });
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => {
         button.classList.toggle("active", button === incomingButton);
