@@ -617,10 +617,22 @@
     // The full active customer service catalog is visible in every state.
     // Licensing answers and state rules change the qualification label, never
     // whether a service category is displayed.
-    const visibleCategories=signupServiceCatalog.filter(c=>
-      !searchTerm || c.name.toLowerCase().includes(searchTerm)
-    );
-    if(!visibleCategories.length){root.textContent="No services match your search. Clear the search to see the full catalog.";return;}
+    const licenseChoice=$("hasLicense")?.value||"";
+    const role=$("signupWorkRole")?.value||"independent";
+    const visibleCategories=signupServiceCatalog.filter(category=>{
+      const map=signupCategoryMapRows.find(x=>x.category_id===category.id);
+      const rule=map?.mapping_status==="mapped"&&map.profession_id
+        ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
+        : null;
+      const status=rule?.requirement_status||"unverified";
+      const licenseMatch=licenseChoice==="yes"
+        ? ["required","conditional"].includes(status)
+        : licenseChoice==="no"
+          ? status==="not_required"
+          : true;
+      return licenseMatch && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
+    });
+    if(!visibleCategories.length){root.textContent=licenseChoice==="yes"?"No verified licensed work types match this state and work status.":"No verified license-free work types match this state and work status.";return;}
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
     const statusLabels={
@@ -1055,7 +1067,17 @@
     // Keep the complete profession catalog selectable for every state and license
     // answer. Licensing eligibility is displayed separately and never hides a
     // profession from registration or profile updates.
-    const matches=professionCatalog.filter(p=>(p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query));
+    const licenseChoice=$("profileHasLicense")?.value||"";
+    const matches=professionCatalog.filter(p=>{
+      const rule=professionRuleRows.find(x=>x.profession_id===p.id);
+      const status=rule?.requirement_status||"unverified";
+      const licenseMatch=licenseChoice==="yes"
+        ? ["required","conditional"].includes(status)
+        : licenseChoice==="no"
+          ? status==="not_required"
+          : true;
+      return licenseMatch && (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
+    });
     const statusLabels={
       allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
       individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
@@ -1073,7 +1095,7 @@
       const name=document.createElement("span"); name.textContent=p.profession_name; name.style.flex="1";
       label.append(cb,name); root.append(label);
     });
-    if(!matches.length) root.textContent="No work types match your search. Clear the search to see the full catalog.";
+    if(!matches.length) root.textContent=licenseChoice==="yes"?"No verified licensed work types match this state and work status.":"No verified license-free work types match this state and work status.";
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
@@ -2407,6 +2429,8 @@
       });
     }
     $("hasLicense").addEventListener("change", () => {
+      signupSelectedCategoryIds.clear();
+      signupSelectedProfessionIds.clear();
       updateSignupLicenseFields();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
     });
