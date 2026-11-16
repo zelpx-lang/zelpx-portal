@@ -1852,6 +1852,15 @@
             option.value = item.name; option.textContent = item.name;
             category.append(option);
           });
+          // Preserve the customer's submitted service even if the active category
+          // catalogue is temporarily unavailable or the service is newly added.
+          if (request.service_type && ![...category.options].some(option =>
+              option.value.toLowerCase() === String(request.service_type).toLowerCase())) {
+            const submittedOption = document.createElement("option");
+            submittedOption.value = request.service_type;
+            submittedOption.textContent = request.service_type + " (submitted)";
+            category.append(submittedOption);
+          }
           const matchingCategory = [...category.options].find(option => option.value.toLowerCase() === String(request.service_type || "").toLowerCase());
           if (matchingCategory) category.value = matchingCategory.value;
           categoryLabel.append(category); categoryWrap.append(categoryLabel);
