@@ -510,7 +510,6 @@
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    // Keep the admin dashboard hidden until the server-backed profile role is checked.
     currentUser = user; hide($("appView")); hide($("topUser")); show($("authView"));
     $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
@@ -526,9 +525,29 @@
       return;
     }
     hide($("authView")); show($("appView")); show($("topUser"));
-    await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
-    if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
+    // A secondary dashboard query must never lock an authenticated administrator out.
+    const runPanel = async (label, task) => {
+      try { await task(); }
+      catch (e) {
+        console.error("ZELPX panel load failed:", label, e);
+        const target = isAdmin ? "adminMessage" : "appMessage";
+        message(target, label + " could not load: " + (e?.message || "Unknown error"), "error");
+      }
+    };
+    await runPanel("Service categories", loadCategories);
+    await runPanel("Leads", loadLeads);
+    await runPanel("Purchases", loadPurchases);
+    if (isAdmin) {
+      await runPanel("Pending contractor approvals", loadPendingContractors);
+      await runPanel("Unlicensed contractors", loadUnlicensedContractors);
+      await runPanel("Admin leads", loadAdminLeads);
+      await runPanel("Service requests", loadServiceRequests);
+      await runPanel("Contractor update requests", loadContractorChangeRequests);
+      await runPanel("Contractor update alerts", startContractorChangeAlerts);
+      if (typeof window.ZELPXAutoSubscribe === "function") {
+        await runPanel("Admin notifications", () => window.ZELPXAutoSubscribe(db, "admin"));
+      }
+    }
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
