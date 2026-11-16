@@ -980,8 +980,10 @@
     list.textContent = "Loading pending contractors…";
     clearMessage("pendingContractorsMessage");
     try {
-      const { data: contractors, error } = await db.rpc("admin_list_pending_contractors");
+      const { data, error } = await db.functions.invoke("admin-list-new-contractors", { body: {} });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
       list.replaceChildren();
       const alertBox = $("contractorRegistrationAlert");
       const pendingCount = contractors?.length || 0;
@@ -990,13 +992,13 @@
         alertBox.classList.toggle("hidden", pendingCount === 0);
         alertBox.className = pendingCount ? "message error" : "message hidden";
         alertBox.textContent = pendingCount
-          ? `Contractors for license review: ${pendingCount}. Without a current license: ${withoutLicense}. Check each account and record your decision.`
+          ? `New contractor registrations awaiting your decision: ${pendingCount}. Without a current license: ${withoutLicense}. Review each registration and approve or reject it.`
           : "";
       }
       if (!contractors?.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = "No contractor accounts found for license review.";
+        empty.textContent = "No new contractor registrations are waiting for review.";
         list.append(empty);
         return;
       }
@@ -1120,7 +1122,7 @@
       });
     } catch (e) {
       list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
-      message("pendingContractorsMessage", "Administrator approval access is required. " + (e.message || ""), "error");
+      message("pendingContractorsMessage", "Could not load new contractor registrations: " + (e.message || "Unknown error"), "error");
     }
   }
 
