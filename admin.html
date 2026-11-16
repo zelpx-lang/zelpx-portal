@@ -129,6 +129,7 @@
     .tabs button.active { background:#fff; color:var(--ink); box-shadow:0 2px 8px #3b2a1a22; }
     .lead { border-radius:22px; border:1px solid var(--line); background:#fff; padding:22px; box-shadow:0 12px 30px -22px #3b2a1a55; position:relative; overflow:hidden; }
     .lead::before { content:""; position:absolute; left:0; top:22px; bottom:22px; width:4px; border-radius:0 4px 4px 0; background:var(--blue); }
+    .lead::before, #leadsList .lead::before { display:none !important; }
     #newContractorRegistrationsSection::before { display:none; }
     .lead:hover { border-color:#e0cdb8; box-shadow:0 20px 40px -24px #3b2a1a66; }
     .lead h3 { font-size:19px; margin-bottom:4px; }
@@ -1007,7 +1008,7 @@
     if (!matches.length) { const p=document.createElement("p"); p.className="muted"; p.textContent="No contractors found for this search."; results.append(p); return; }
     matches.forEach(c => {
       const card=document.createElement("article");
-      card.style.cssText="display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+      card.style.cssText="display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:0;border-radius:0;background:transparent;box-shadow:none;";
       const heading=document.createElement("button");
       heading.type="button"; heading.className="secondary";
       heading.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
@@ -1047,7 +1048,7 @@
       if (data?.error) throw new Error(data.error);
       const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
       list.replaceChildren();
-      list.style.cssText = "display:block;width:100%;border-left:3px solid #f36b38;padding:0 0 0 0;margin:8px 0 0;";
+      list.style.cssText = "display:block;width:100%;padding:0;margin:8px 0 0;";
       const alertBox = $("contractorRegistrationAlert");
       const pendingCount = contractors?.length || 0;
       
