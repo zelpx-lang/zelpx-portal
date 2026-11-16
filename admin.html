@@ -1490,13 +1490,23 @@
         const title = document.createElement("button");
         title.type = "button";
         title.className = "secondary";
-        title.style.cssText = "display:block;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:10px 12px;background:transparent;border:0;";
-        title.textContent = "＋ " + (contractor.company_name || "Contractor company");
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:12px 14px;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || "Contractor company";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
         title.setAttribute("aria-expanded", "false");
         const detailPanel = document.createElement("div");
         detailPanel.className = "hidden";
-        detailPanel.style.cssText = "padding:10px 12px 4px;border-top:1px solid #eadfd3;margin-top:6px;";
-        title.addEventListener("click", () => openContractorDetail(contractor, detailPanel, title));
+        detailPanel.style.cssText = "padding:10px 14px 8px;border-top:1px solid #eadfd3;margin-top:0;";
+        title.addEventListener("click", () => {
+          openContractorDetail(contractor, detailPanel, title);
+          const expanded = title.getAttribute("aria-expanded") === "true";
+          expandIcon.textContent = expanded ? "−" : "+";
+        });
         card.append(title, detailPanel);
         const details = [
           ["Email", contractor.email || "Not provided"],
