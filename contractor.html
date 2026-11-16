@@ -1382,25 +1382,29 @@
     if (qualificationError) throw qualificationError;
     const professionIds = [...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
     if (!professionIds.length) return;
+    // Lead purchases are for independent contractors only. Employee qualifications
+    // must never unlock direct customer-job purchases.
     const {data: rules, error: rulesError} = await db.from("state_profession_eligibility")
       .select("profession_id,worker_role,eligibility_status")
-      .eq("state_code",state).in("worker_role",["independent","employee"]).in("profession_id",professionIds);
+      .eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds);
     if (rulesError) throw rulesError;
-    const qualificationByProfessionRole = new Map((qualifications||[]).map(q=>[q.profession_id+"|"+q.work_role,q.verification_status]));
-    const ruleByProfessionRole = new Map((rules||[]).map(r=>[r.profession_id+"|"+r.worker_role,r.eligibility_status]));
+    const independentQualifications = new Map((qualifications||[])
+      .filter(q=>q.work_role==="independent")
+      .map(q=>[q.profession_id,q.verification_status]));
+    const independentRules = new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
     const companyLicenseVerified = currentContractor.has_license === true &&
       currentContractor.license_review_status === "verified" &&
       String(currentContractor.license_state || "").trim().toUpperCase() === state;
     (maps||[]).forEach(map=>{
       if(map.mapping_status!=="mapped"||!map.profession_id)return;
-      const allowedForRole=["independent","employee"].some(role=>{
-        const rule=ruleByProfessionRole.get(map.profession_id+"|"+role);
-        const verified=qualificationByProfessionRole.get(map.profession_id+"|"+role)==="verified";
-        return rule==="allowed_no_individual_license" ||
-          (companyLicenseVerified && verified &&
-            ["individual_trade_credential_required","contractor_license_or_registration_required","employer_license_and_supervision"].includes(rule));
-      });
-      if(allowedForRole) licenseEligibleLeadCategories.add(map.category_id);
+      const rule=independentRules.get(map.profession_id);
+      const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
+      const licenseFree=rule==="allowed_no_individual_license";
+      const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
+        ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
+      // Conditional, local-review and unverified work stays blocked until its
+      // state-specific requirements are explicitly resolved.
+      if(licenseFree || licensedAndVerified) licenseEligibleLeadCategories.add(map.category_id);
     });
     const {data: categories, error: categoriesError}=await db.from("service_categories").select("id,name").eq("is_active",true);
     if(categoriesError) throw categoriesError;
