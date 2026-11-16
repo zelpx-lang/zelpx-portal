@@ -404,15 +404,14 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
         <h2>Contractor approvals</h2>
-        <p>New contractors who submit complete license details and documents appear here for administrator verification.</p>
+        <p>All new contractor registrations and all submitted contractor profile, profession, category and license updates appear here for administrator review.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
-      </section>
-      <section class="lead">
-        <h2>Contractor approvals — profile and license updates</h2>
-        <p>New company details, work categories, professions and license updates submitted by contractors. Review each request and choose whether the contractor belongs in With License or Without License.</p>
+      <div class="divider"></div>
+<h3>Contractor profile and license updates</h3>
+        <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject.</p>
         <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
@@ -425,7 +424,7 @@
           <div class="actions">
             <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete older submissions</button>
           </div>
-        </section>
+        
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -983,7 +982,7 @@
         alertBox.classList.toggle("hidden", pendingCount === 0);
         alertBox.className = pendingCount ? "message error" : "message hidden";
         alertBox.textContent = pendingCount
-          ? `New contractor registrations awaiting your decision: ${pendingCount}. Without a current license: ${withoutLicense}. Review each registration and approve or reject it.`
+          ? `New contractor registrations awaiting your decision: ${pendingCount}. Review each registration and choose With License, Without License, or Reject.`
           : "";
       }
       if (!contractors?.length) {
@@ -1067,11 +1066,14 @@
           placeholder.disabled = true;
           const yesOption = document.createElement("option");
           yesOption.value = "approve";
-          yesOption.textContent = "Yes — license verified, approve registration";
-          const noOption = document.createElement("option");
-          noOption.value = "reject";
-          noOption.textContent = "No — license not verified, reject registration";
-          decision.append(placeholder, yesOption, noOption);
+          yesOption.textContent = "Approve — With License";
+          const noLicenseOption = document.createElement("option");
+          noLicenseOption.value = "approve_without_license";
+          noLicenseOption.textContent = "Approve — Without License";
+          const rejectOption = document.createElement("option");
+          rejectOption.value = "reject";
+          rejectOption.textContent = "Reject registration";
+          decision.append(placeholder, yesOption, noLicenseOption, rejectOption);
           actions.append(decision);
           decision.focus();
           decision.addEventListener("change", async () => {
@@ -1087,9 +1089,7 @@
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
               const approved = choice !== "reject";
-              const statusText = approved
-                ? "License approved. Contractor moved to Contractors with a license."
-                : "Registration rejected. Contractor remains blocked.";
+              const statusText = choice === "approve" ? "Registration approved. Contractor moved to Contractors with a license." : choice === "approve_without_license" ? "Registration approved. Contractor moved to Contractors without a license." : "Registration rejected. Contractor remains blocked.";
               const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
               message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
