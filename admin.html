@@ -1050,6 +1050,9 @@
       accessStatus.className = "message " + (blocked ? "error" : "success");
       accessButton.textContent = blocked ? "Unblock contractor" : "Block contractor";
       accessButton.className = blocked ? "secondary" : "danger";
+      accessButton.style.cssText = blocked
+        ? "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;color:#c45b28;background:#fffdfa;border:1px solid #e7dfd5;"
+        : "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;color:#a83225;background:#fde9e7;border:1px solid #f3c7c2;";
       accessButton.disabled = false;
       accessButton.onclick = () => {
         const nextAction = blocked ? "unblock" : "block";
