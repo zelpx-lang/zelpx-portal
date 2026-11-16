@@ -1398,26 +1398,34 @@
     if (!isAdmin || !currentUser) return;
     if (contractorChangesChannel) db.removeChannel(contractorChangesChannel);
     if (contractorChangesPoll) clearInterval(contractorChangesPoll);
+    const adminSessionStartedAt = new Date().toISOString();
     const announce = request => {
       if (!request?.id || request.status !== "pending" || seenContractorChangeIds.has(request.id)) return;
       seenContractorChangeIds.add(request.id);
       const alert = $("contractorChangesAlert");
       if (alert) {
         alert.className = "message error";
-        alert.textContent = "New contractor update request received. Open Contractor approvals to review it.";
+        alert.textContent = "NEW: Contractor update received. Open Contractor approvals to review it.";
       }
+      const badge = $("contractorChangesAlert");
+      if (badge) badge.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("ZELPX — contractor update request", {
-          body: "A contractor submitted company, license or insurance changes for administrator review.",
+        new Notification("ZELPX — new contractor update", {
+          body: "A contractor submitted company, license, profession or category changes. Review it in Contractor approvals.",
           tag: "zelpx-contractor-change-" + request.id
         });
       }
       loadContractorChangeRequests();
     };
-    db.from("contractor_change_requests").select("id,status").eq("status","pending")
+    // Treat requests created before this admin session as existing, but announce requests
+    // submitted while the administrator was already signed in (including just before reload).
+    db.from("contractor_change_requests").select("id,status,created_at").eq("status","pending")
       .then(({data,error}) => {
         if (error) { console.warn("Could not load pending contractor changes:",error.message); return; }
-        (data || []).forEach(r => seenContractorChangeIds.add(r.id));
+        (data || []).forEach(r => {
+          if (r.created_at && r.created_at < adminSessionStartedAt) seenContractorChangeIds.add(r.id);
+          else announce(r);
+        });
         loadContractorChangeRequests();
       });
     contractorChangesChannel = db.channel("zelpx-admin-change-requests")
@@ -1429,10 +1437,10 @@
     contractorChangesPoll = setInterval(async () => {
       if (!isAdmin || !currentUser) return;
       const {data,error} = await db.from("contractor_change_requests")
-        .select("id,status").eq("status","pending").order("created_at",{ascending:false}).limit(50);
+        .select("id,status,created_at").eq("status","pending").order("created_at",{ascending:false}).limit(100);
       if (error) { console.warn("Contractor update polling failed:",error.message); return; }
       (data || []).forEach(announce);
-    }, 10000);
+    }, 5000);
   }
 
   async function loadUnlicensedContractors() {
