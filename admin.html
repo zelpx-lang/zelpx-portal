@@ -2022,6 +2022,22 @@
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
+    // Dedicated capture handler for the Incoming leads review screen.
+    document.addEventListener("click", event => {
+      const incomingButton = event.target.closest && event.target.closest('[data-admin-page="adminIncomingLeadsPage"]');
+      if (!incomingButton) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!isAdmin) return;
+      document.querySelectorAll("#adminPanel .admin-page").forEach(page => {
+        page.classList.toggle("hidden", page.id !== "adminIncomingLeadsPage");
+      });
+      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => {
+        button.classList.toggle("active", button === incomingButton);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      loadServiceRequests();
+    }, true);
     // Delegate admin navigation so page buttons remain responsive.
     $("adminPanel")?.addEventListener("click", event => {
       const button = event.target.closest("[data-admin-page]");
