@@ -1559,13 +1559,14 @@
     }
   }
 
-  let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null;
+  let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null, contractorRegistrationPoll = null;
   const seenContractorChangeIds = new Set();
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
     if (contractorChangesChannel) db.removeChannel(contractorChangesChannel);
     if (contractorChangesPoll) clearInterval(contractorChangesPoll);
     if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);
+    if (contractorRegistrationPoll) clearInterval(contractorRegistrationPoll);
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
@@ -1619,10 +1620,17 @@
       (data || []).forEach(announce);
     }, 5000);
     // Fallback refresh: keep both approval lists current if realtime delivery is delayed.
-    const contractorRegistrationPoll = setInterval(() => {
-      if (isAdmin && currentUser) loadPendingContractors();
+    let lastRegistrationIds = null;
+    contractorRegistrationPoll = setInterval(async () => {
+      if (!isAdmin || !currentUser) return;
+      try {
+        const {data,error} = await db.functions.invoke("admin-list-new-contractors",{body:{}});
+        if (error || data?.error) return;
+        const ids = (Array.isArray(data?.contractors)?data.contractors:[]).map(x=>x.id).sort().join("|");
+        if (lastRegistrationIds === null) { lastRegistrationIds = ids; return; }
+        if (ids !== lastRegistrationIds) { lastRegistrationIds = ids; loadPendingContractors(); }
+      } catch(e) { console.warn("Contractor registration polling failed:",e.message||e); }
     }, 5000);
-    window.addEventListener("beforeunload", () => clearInterval(contractorRegistrationPoll), { once:true });
   }
 
   async function loadUnlicensedContractors() {
