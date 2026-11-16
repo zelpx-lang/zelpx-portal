@@ -1,0 +1,64 @@
+{
+  "rewrites": [
+    {
+      "source": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/admin/",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/contractor",
+      "destination": "/contractor.html"
+    },
+    {
+      "source": "/customer",
+      "destination": "/customer.html"
+    },
+    {
+      "source": "/customer-chat",
+      "destination": "/customer-chat.html"
+    },
+    {
+      "source": "/browse-jobs",
+      "destination": "/browse-jobs.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/admin.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, max-age=0"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
+    },
+    {
+      "source": "/admin/",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
+    }
+  ]
+}
