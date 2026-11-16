@@ -1099,6 +1099,22 @@
       noDoc.textContent = "No license photo or document uploaded.";
       panel.append(noDoc);
     }
+
+    const closeRow = document.createElement("div");
+    closeRow.style.cssText = "display:flex;justify-content:flex-end;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "secondary";
+    closeButton.textContent = "Close −";
+    closeButton.style.cssText = "min-width:110px;color:#e8753b;font-weight:800;";
+    closeButton.addEventListener("click", () => {
+      panel.classList.add("hidden");
+      toggleButton.setAttribute("aria-expanded", "false");
+      const icon = toggleButton.querySelector("span:last-child");
+      if (icon) icon.textContent = "+";
+    });
+    closeRow.append(closeButton);
+    panel.append(closeRow);
   }
 
   async function loadPendingContractors() {
