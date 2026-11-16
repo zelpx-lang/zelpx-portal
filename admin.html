@@ -1509,6 +1509,7 @@
   }
 
   let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null, contractorRegistrationPoll = null;
+  let serviceRequestsChannel = null, serviceRequestsPoll = null;
   const seenContractorChangeIds = new Set();
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
@@ -1516,6 +1517,21 @@
     if (contractorChangesPoll) clearInterval(contractorChangesPoll);
     if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);
     if (contractorRegistrationPoll) clearInterval(contractorRegistrationPoll);
+    if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
+    if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
+    serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},() => {
+        if (isAdmin && currentUser) loadServiceRequests();
+      })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Service request realtime unavailable:",status,error || "");
+      });
+    serviceRequestsPoll = setInterval(() => {
+      if (!isAdmin || !currentUser) return;
+      const page = $("adminIncomingLeadsPage");
+      if (page && !page.classList.contains("hidden")) loadServiceRequests();
+    }, 10000);
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
