@@ -1074,11 +1074,23 @@
         return;
       }
       contractors.forEach(contractor => {
-        const card = document.createElement("article");
+        const card = document.createElement("details");
         card.className = "lead";
-        const title = document.createElement("h3");
+        card.style.marginBottom = "10px";
+        const summary = document.createElement("summary");
+        summary.style.cssText = "cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none;font-weight:700;padding:4px 0;";
+        const title = document.createElement("span");
         title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
+        const plus = document.createElement("span");
+        plus.textContent = "+";
+        plus.setAttribute("aria-hidden","true");
+        plus.style.cssText = "font-size:26px;color:var(--muted);flex:0 0 auto;";
+        summary.append(title,plus);
+        card.append(summary);
+        card.addEventListener("toggle",()=>{plus.textContent=card.open?"−":"+";});
+        const content = document.createElement("div");
+        content.style.paddingTop = "10px";
+        card.append(content);
         const accessLabel = contractor.verification_status === "verified"
           ? (contractor.has_license === true
               ? "ACCESS ALLOWED — license verified"
@@ -1099,7 +1111,7 @@
           const strong = document.createElement("strong");
           strong.textContent = label + ": ";
           p.append(strong, document.createTextNode(String(value)));
-          card.append(p);
+          content.append(p);
         });
         const actions = document.createElement("div");
         actions.className = "actions";
@@ -1184,11 +1196,9 @@
           });
         });
         actions.append(approve);
-        card.append(actions);
-        requestsCards.push(card);
+        content.append(actions);
+        list.append(card);
       });
-      list.append(slider);
-      renderSlide();
     } catch (e) {
       list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
       message("pendingContractorsMessage", "Could not load new contractor registrations: " + (e.message || "Unknown error"), "error");
