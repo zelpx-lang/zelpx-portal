@@ -335,10 +335,6 @@
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
-        <section id="contractorDetailPage" class="hidden" aria-live="polite">
-          <button id="contractorDetailBackBtn" type="button" class="secondary">← Back to contractor list</button>
-          <div id="contractorDetailContent" class="lead" style="margin-top:14px"></div>
-        </section>
       </section>
       <section class="lead">
         <h2>Contractor profile update requests</h2>
@@ -909,15 +905,14 @@
     });
   }
 
-  function openContractorDetail(contractor) {
-    const list = $("pendingContractorsList");
-    const detailPage = $("contractorDetailPage");
-    const content = $("contractorDetailContent");
-    if (!list || !detailPage || !content) return;
-    content.replaceChildren();
-    const heading = document.createElement("h2");
-    heading.textContent = contractor.company_name || "Contractor details";
-    content.append(heading);
+  function openContractorDetail(contractor, panel, toggleButton) {
+    if (!panel || !toggleButton) return;
+    const isOpen = !panel.classList.contains("hidden");
+    panel.classList.toggle("hidden", isOpen);
+    toggleButton.setAttribute("aria-expanded", String(!isOpen));
+    toggleButton.textContent = (isOpen ? "＋ " : "− ") + (contractor.company_name || "Contractor company");
+    if (isOpen || panel.dataset.loaded === "true") return;
+    panel.dataset.loaded = "true";
     const fields = [
       ["Contact name", contractor.full_name],
       ["Business name", contractor.company_name],
@@ -939,15 +934,16 @@
       const strong = document.createElement("strong");
       strong.textContent = label + ": ";
       p.append(strong, document.createTextNode(String(value)));
-      content.append(p);
+      panel.append(p);
     });
     const access = document.createElement("p");
     access.className = "message " + (contractor.verification_status === "verified" ? "success" : "error");
     access.textContent = contractor.verification_status === "verified" ? "Lead access: ALLOWED" : "Lead access: BLOCKED until approved";
-    content.append(access);
+    panel.append(access);
     if (contractor.license_document_path) {
       const docButton = document.createElement("button");
       docButton.type = "button";
+      docButton.className = "secondary";
       docButton.textContent = "View license photo / document";
       docButton.addEventListener("click", async () => {
         docButton.disabled = true;
@@ -960,16 +956,13 @@
           message("pendingContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
         } finally { docButton.disabled = false; }
       });
-      content.append(docButton);
+      panel.append(docButton);
     } else {
       const noDoc = document.createElement("p");
       noDoc.className = "muted";
       noDoc.textContent = "No license photo or document uploaded.";
-      content.append(noDoc);
+      panel.append(noDoc);
     }
-    list.classList.add("hidden");
-    detailPage.classList.remove("hidden");
-    window.scrollTo({ top:0, behavior:"smooth" });
   }
 
   async function loadPendingContractors() {
@@ -1497,10 +1490,14 @@
         const title = document.createElement("button");
         title.type = "button";
         title.className = "secondary";
-        title.style.cssText = "display:block;width:100%;text-align:left;font-size:17px;font-weight:800;margin:0 0 8px;padding:10px 12px;";
-        title.textContent = contractor.company_name || "Contractor company";
-        title.addEventListener("click", () => openContractorDetail(contractor));
-        card.append(title);
+        title.style.cssText = "display:block;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:10px 12px;background:transparent;border:0;";
+        title.textContent = "＋ " + (contractor.company_name || "Contractor company");
+        title.setAttribute("aria-expanded", "false");
+        const detailPanel = document.createElement("div");
+        detailPanel.className = "hidden";
+        detailPanel.style.cssText = "padding:10px 12px 4px;border-top:1px solid #eadfd3;margin-top:6px;";
+        title.addEventListener("click", () => openContractorDetail(contractor, detailPanel, title));
+        card.append(title, detailPanel);
         const details = [
           ["Email", contractor.email || "Not provided"],
           ["Status", contractor.verification_status || "Unknown"],
@@ -1825,11 +1822,6 @@
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
-    $("contractorDetailBackBtn")?.addEventListener("click", () => {
-      $("contractorDetailPage")?.classList.add("hidden");
-      $("pendingContractorsList")?.classList.remove("hidden");
-      window.scrollTo({ top:0, behavior:"smooth" });
-    });
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
