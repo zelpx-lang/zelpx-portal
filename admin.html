@@ -387,7 +387,7 @@
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
+        <button type="button" data-admin-page="adminBlockedContractorsPage">Blocked contractors</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -476,6 +476,19 @@
         </div>
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
+      </section>
+      <section id="adminBlockedContractorsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Blocked contractors</h2>
+          <p>All contractor accounts currently blocked from signing in. You can restore access from this list.</p>
+          <div class="actions">
+            <button id="refreshBlockedContractorsBtn" type="button" class="secondary">Refresh blocked list</button>
+            <span id="blockedContractorsCount" class="muted" aria-live="polite"></span>
+          </div>
+          <div id="blockedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="blockedContractorsList"><p class="muted">Loading blocked contractors…</p></div>
+        </section>
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -961,6 +974,74 @@
       if (count) count.textContent = "";
     }
   }
+  async function loadBlockedContractors() {
+    if (!isAdmin) return;
+    const list = $("blockedContractorsList"), count = $("blockedContractorsCount"), messageEl = $("blockedContractorsMessage");
+    if (!list) return;
+    list.replaceChildren();
+    const loading = document.createElement("p"); loading.className = "muted"; loading.textContent = "Loading blocked contractors…"; list.append(loading);
+    if (messageEl) { messageEl.className = "message hidden"; messageEl.textContent = ""; }
+    try {
+      const { data, error } = await db.functions.invoke("admin-list-blocked-contractors", { body: {} });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
+      list.replaceChildren();
+      if (count) count.textContent = "Blocked: " + contractors.length;
+      if (!contractors.length) {
+        const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "There are no blocked contractor accounts."; list.append(empty); return;
+      }
+      contractors.forEach(contractor => {
+        const card = document.createElement("article"); card.className = "lead";
+        card.style.cssText = "margin:10px 0;padding:14px;";
+        const heading = document.createElement("h3");
+        heading.textContent = contractor.company_name || contractor.full_name || "Contractor";
+        heading.style.margin = "0 0 10px";
+        card.append(heading);
+        const details = [
+          ["Contact name", contractor.full_name],
+          ["Business name", contractor.company_name],
+          ["Email", contractor.email],
+          ["Phone", contractor.phone],
+          ["Approval status", contractor.verification_status],
+          ["Blocked since", contractor.banned_until ? new Date(contractor.banned_until).toLocaleString() : ""]
+        ];
+        details.forEach(([label, value]) => {
+          if (!value) return;
+          const p = document.createElement("p");
+          const strong = document.createElement("strong"); strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value))); card.append(p);
+        });
+        const status = document.createElement("p"); status.className = "message error"; status.textContent = "Account access: BLOCKED"; card.append(status);
+        const actions = document.createElement("div"); actions.className = "actions";
+        const unblock = document.createElement("button"); unblock.type = "button"; unblock.className = "secondary"; unblock.textContent = "Unblock contractor";
+        unblock.addEventListener("click", async () => {
+          unblock.disabled = true; unblock.textContent = "Unblocking…";
+          try {
+            const { data: result, error: actionError } = await db.functions.invoke("admin-toggle-contractor-access", { body: { contractor_id: contractor.id, action: "unblock" } });
+            if (actionError) throw actionError;
+            if (result?.error) throw new Error(result.error);
+            if (result?.success !== true || result.blocked !== false) throw new Error("The server did not confirm that access was restored.");
+            status.className = "message success"; status.textContent = "Account access: ACTIVE";
+            card.style.opacity = "0.65";
+            unblock.textContent = "Unblocked";
+            unblock.disabled = true;
+            if (count) count.textContent = "Blocked: " + Math.max(0, contractors.length - list.querySelectorAll("article").length + [...list.querySelectorAll("article")].filter(el => el.querySelector("button")?.textContent === "Unblocked").length);
+            window.setTimeout(() => { card.remove(); const remaining = list.querySelectorAll("article").length; if (count) count.textContent = "Blocked: " + remaining; if (!remaining) { const empty=document.createElement("p"); empty.className="muted"; empty.textContent="There are no blocked contractor accounts."; list.append(empty); } }, 500);
+          } catch (e) {
+            unblock.disabled = false; unblock.textContent = "Retry unblock";
+            if (messageEl) { messageEl.textContent = "Could not unblock contractor: " + (e.message || "Unknown error"); messageEl.className = "message error"; }
+          }
+        });
+        actions.append(unblock); card.append(actions); list.append(card);
+      });
+    } catch (e) {
+      list.replaceChildren();
+      if (count) count.textContent = "";
+      if (messageEl) { messageEl.textContent = "Could not load blocked contractors: " + (e.message || "Unknown error"); messageEl.className = "message error"; }
+    }
+  }
+
   function filterAdminContractorDirectory() {
     const input = $("adminFindContractorsInput"), results = $("adminFindContractorsResults"), count = $("adminFindContractorsCount");
     if (!input || !results) return;
@@ -1999,6 +2080,7 @@
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadServiceRequests();
+    if (pageId === "adminBlockedContractorsPage") loadBlockedContractors();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -2032,6 +2114,7 @@
     $("requestStatusFilter").addEventListener("change", loadServiceRequests);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
+    $("refreshBlockedContractorsBtn").addEventListener("click", loadBlockedContractors);
     $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn")?.addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
