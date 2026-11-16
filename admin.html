@@ -1448,8 +1448,10 @@
           });
           const actions = document.createElement("div"); actions.className = "actions"; actions.append(remove); card.append(actions);
         }
-        list.append(card);
+        requestsCards.push(card);
       });
+      list.append(slider);
+      renderSlide();
     } catch (e) {
       list.textContent = "Could not load contractor update requests: " + (e.message || "Unknown error");
       message("contractorChangesMessage","Check administrator access to contractor_change_requests. " + (e.message || ""),"error");
