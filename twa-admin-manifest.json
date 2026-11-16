@@ -1,0 +1,32 @@
+{
+  "packageId": "com.zelpx.admin",
+  "host": "app.zelpx.com",
+  "name": "ZELPX Admin",
+  "launcherName": "ZELPX Admin",
+  "display": "standalone",
+  "themeColor": "#10243a",
+  "themeColorDark": "#10243a",
+  "navigationColor": "#10243a",
+  "navigationColorDark": "#10243a",
+  "navigationDividerColor": "#10243a",
+  "navigationDividerColorDark": "#10243a",
+  "backgroundColor": "#f3f6fa",
+  "enableNotifications": true,
+  "startUrl": "/admin.html",
+  "iconUrl": "https://app.zelpx.com/icons/zelpx-512.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0",
+  "generatorApp": "bubblewrap",
+  "webManifestUrl": "https://app.zelpx.com/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "enableSiteSettingsShortcut": true,
+  "orientation": "portrait",
+  "minSdkVersion": 24,
+  "fingerprints": [],
+  "additionalTrustedOrigins": []
+}
