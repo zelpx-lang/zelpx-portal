@@ -404,7 +404,7 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
         <h2>Contractor approvals</h2>
-        <p>New contractor accounts stay blocked until an administrator approves them.</p>
+        <p>New contractors who submit complete license details and documents appear here for administrator verification.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
@@ -473,7 +473,7 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
           <h2>Contractors with a license</h2>
-          <p>All contractor accounts that indicated they have a current professional license. Review their license details and uploaded documents here.</p>
+          <p>Only contractors whose license information and documents were approved by an administrator appear here.</p>
           <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
           <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
@@ -978,7 +978,7 @@
       list.replaceChildren();
       const alertBox = $("contractorRegistrationAlert");
       const pendingCount = contractors?.length || 0;
-      const withoutLicense = (contractors || []).filter(c => c.has_license !== true).length;
+      
       if (alertBox) {
         alertBox.classList.toggle("hidden", pendingCount === 0);
         alertBox.className = pendingCount ? "message error" : "message hidden";
@@ -1068,13 +1068,10 @@
           const yesOption = document.createElement("option");
           yesOption.value = "approve";
           yesOption.textContent = "Yes — license verified, approve registration";
-          const waiveOption = document.createElement("option");
-          waiveOption.value = "approve_without_license";
-          waiveOption.textContent = "Allow contractor without license verification";
           const noOption = document.createElement("option");
           noOption.value = "reject";
           noOption.textContent = "No — license not verified, reject registration";
-          decision.append(placeholder, yesOption, waiveOption, noOption);
+          decision.append(placeholder, yesOption, noOption);
           actions.append(decision);
           decision.focus();
           decision.addEventListener("change", async () => {
@@ -1090,11 +1087,9 @@
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
               const approved = choice !== "reject";
-              const statusText = choice === "approve_without_license"
-                ? "Contractor allowed without license verification. They can now sign in and purchase leads."
-                : approved
-                  ? "Contractor approved after license verification. They can now sign in and purchase leads."
-                  : "Contractor rejected. Their account remains blocked.";
+              const statusText = approved
+                ? "License approved. Contractor moved to Contractors with a license."
+                : "Registration rejected. Contractor remains blocked.";
               const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
               message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
@@ -1760,6 +1755,8 @@
       const { data: contractors, error } = await db.from("contractors")
         .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,license_document_path,created_at")
         .eq("has_license", true)
+        .eq("verification_status", "verified")
+        .eq("license_review_status", "verified")
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
