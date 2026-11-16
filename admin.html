@@ -1056,6 +1056,7 @@
       if (data?.error) throw new Error(data.error);
       const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
       list.replaceChildren();
+      list.style.cssText = "display:block;width:100%;border-left:3px solid #f36b38;padding:0 0 0 0;margin:8px 0 0;";
       const alertBox = $("contractorRegistrationAlert");
       const pendingCount = contractors?.length || 0;
       
@@ -1075,7 +1076,7 @@
       }
       contractors.forEach(contractor => {
         const card = document.createElement("article");
-        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+        card.style.cssText = "display:block;width:100%;box-sizing:border-box;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-radius:0;background:transparent;box-shadow:none;";
         const heading = document.createElement("button");
         heading.type = "button"; heading.className = "secondary";
         heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
