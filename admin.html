@@ -1043,30 +1043,51 @@
     accessControls.append(accessStatus, accessButton);
     panel.append(accessControls);
 
+    const renderAccessState = (blocked) => {
+      accessStatus.textContent = blocked
+        ? "Account access: BLOCKED — contractor cannot sign in."
+        : "Account access: ACTIVE — contractor can sign in if approved.";
+      accessStatus.className = "message " + (blocked ? "error" : "success");
+      accessButton.textContent = blocked ? "Unblock contractor" : "Block contractor";
+      accessButton.className = blocked ? "secondary" : "danger";
+      accessButton.disabled = false;
+      accessButton.onclick = () => {
+        const nextAction = blocked ? "unblock" : "block";
+        const confirmation = blocked
+          ? "Unblock this contractor's login account?"
+          : "Block this contractor's login account? They will be signed out and will not be able to sign in until unblocked.";
+        if (window.confirm(confirmation)) updateAccessControl(nextAction);
+      };
+    };
+
     const updateAccessControl = async (action = "status") => {
       accessButton.disabled = true;
       if (action !== "status") accessButton.textContent = action === "block" ? "Blocking…" : "Unblocking…";
+      else accessButton.textContent = "Checking…";
       try {
         const { data, error } = await db.functions.invoke("admin-toggle-contractor-access", {
           body: { contractor_id: contractor.id, action }
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        const blocked = data.blocked === true;
-        accessStatus.textContent = blocked
-          ? "Account access: BLOCKED — contractor cannot sign in."
-          : "Account access: ACTIVE — contractor can sign in if approved.";
-        accessStatus.className = "message " + (blocked ? "error" : "success");
-        accessButton.textContent = blocked ? "Unblock contractor" : "Block contractor";
-        accessButton.className = blocked ? "secondary" : "danger";
-        accessButton.disabled = false;
-        accessButton.onclick = () => {
-          const nextAction = blocked ? "unblock" : "block";
-          const confirmation = blocked
-            ? "Unblock this contractor's login account?"
-            : "Block this contractor's login account? They will be signed out and will not be able to sign in until unblocked.";
-          if (window.confirm(confirmation)) updateAccessControl(nextAction);
-        };
+        if (data?.success !== true || typeof data.blocked !== "boolean") {
+          throw new Error("The server did not confirm the account access status.");
+        }
+        // Render immediately from the confirmed mutation response.
+        renderAccessState(data.blocked);
+
+        // Then read the persisted state again so the label always reflects Supabase.
+        if (action !== "status") {
+          const { data: fresh, error: refreshError } = await db.functions.invoke("admin-toggle-contractor-access", {
+            body: { contractor_id: contractor.id, action: "status" }
+          });
+          if (refreshError) throw refreshError;
+          if (fresh?.error) throw new Error(fresh.error);
+          if (fresh?.success !== true || typeof fresh.blocked !== "boolean") {
+            throw new Error("Could not verify the saved account access status.");
+          }
+          renderAccessState(fresh.blocked);
+        }
       } catch (e) {
         accessStatus.textContent = "Could not check or change account access: " + (e.message || "Unknown error");
         accessStatus.className = "message error";
