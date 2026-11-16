@@ -407,14 +407,12 @@
         <h2>Contractor approvals</h2>
         <p>All new contractor registrations and all submitted contractor profile, profession, category and license updates appear here for administrator review.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       <div class="divider"></div>
 <h3>Contractor profile and license updates</h3>
         <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject.</p>
         <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
         <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
       </section>
@@ -1561,12 +1559,22 @@
     }
   }
 
-  let contractorChangesChannel = null, contractorChangesPoll = null;
+  let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null;
   const seenContractorChangeIds = new Set();
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
     if (contractorChangesChannel) db.removeChannel(contractorChangesChannel);
     if (contractorChangesPoll) clearInterval(contractorChangesPoll);
+    if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);
+    contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadPendingContractors();
+      })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Contractor registration realtime unavailable:",status,error || "");
+      });
     const adminSessionStartedAt = new Date().toISOString();
     const announce = request => {
       if (!request?.id || request.status !== "pending" || seenContractorChangeIds.has(request.id)) return;
@@ -1610,6 +1618,11 @@
       if (error) { console.warn("Contractor update polling failed:",error.message); return; }
       (data || []).forEach(announce);
     }, 5000);
+    // Fallback refresh: keep both approval lists current if realtime delivery is delayed.
+    const contractorRegistrationPoll = setInterval(() => {
+      if (isAdmin && currentUser) loadPendingContractors();
+    }, 5000);
+    window.addEventListener("beforeunload", () => clearInterval(contractorRegistrationPoll), { once:true });
   }
 
   async function loadUnlicensedContractors() {
@@ -2068,7 +2081,7 @@
     $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
