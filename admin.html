@@ -1239,16 +1239,24 @@
       const indicator = document.createElement("span"); indicator.className = "muted";
       const next = document.createElement("button");
       next.type = "button"; next.className = "secondary"; next.textContent = "Next →";
+      slides.style.display = "flex";
+      slides.style.flexWrap = "nowrap";
+      slides.style.width = "100%";
+      slides.style.overflow = "hidden";
+      slides.style.touchAction = "pan-y";
+      slides.style.transition = "transform 280ms ease";
       const renderSlide = () => {
-        // Keep exactly one request card in the slide viewport at a time.
         const cards = requestsCards;
-        slides.replaceChildren();
-        if (cards[slideIndex]) {
-          cards[slideIndex].hidden = false;
-          cards[slideIndex].style.removeProperty("display");
-          cards[slideIndex].setAttribute("aria-hidden","false");
-          slides.append(cards[slideIndex]);
-        }
+        cards.forEach(card => {
+          card.style.display = "block";
+          card.style.flex = "0 0 100%";
+          card.style.width = "100%";
+          card.style.minWidth = "100%";
+          card.hidden = false;
+          card.setAttribute("aria-hidden","false");
+        });
+        slides.replaceChildren(...cards);
+        slides.style.transform = "translateX(-" + (slideIndex * 100) + "%)";
         indicator.textContent = (slideIndex + 1) + " / " + requests.length;
         previous.disabled = slideIndex === 0;
         next.disabled = slideIndex === requests.length - 1;
