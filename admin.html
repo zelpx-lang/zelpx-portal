@@ -417,15 +417,6 @@
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
         <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
       </section>
-        <section class="lead">
-          <h2>Old contractor update forms</h2>
-          <p>Manually delete older submissions for each contractor. The newest submission is kept. Contractor accounts, licenses and current profile information are not changed.</p>
-          <div id="reviewedContractorFormsMessage" class="message hidden" role="status" aria-live="polite"></div>
-          <div class="actions">
-            <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete older submissions</button>
-          </div>
-        
-      </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -1200,55 +1191,6 @@
     } catch (e) {
       list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
       message("pendingContractorsMessage", "Could not load new contractor registrations: " + (e.message || "Unknown error"), "error");
-    }
-  }
-
-  async function deleteReviewedContractorForms() {
-    if (!isAdmin) return;
-    const button = $("deleteReviewedContractorFormsBtn");
-    if (!button) return;
-    button.disabled = true;
-    clearMessage("reviewedContractorFormsMessage");
-    try {
-      const { data: requests, error } = await db.from("contractor_change_requests")
-        .select("id,contractor_id,request_type,status")
-        .order("created_at", { ascending: false })
-        .limit(10000);
-      if (error) throw error;
-      const rows = requests || [];
-      const latestByContractorType = new Set();
-      let olderCount = 0;
-      rows.forEach(row => {
-        if (!row.contractor_id) return;
-        const groupKey = row.contractor_id + "::" + (row.request_type || "unknown");
-        if (!latestByContractorType.has(groupKey)) {
-          latestByContractorType.add(groupKey);
-          return;
-        }
-        if (String(row.status || "").trim().toLowerCase() !== "pending") olderCount++;
-      });
-      if (!olderCount) {
-        message("reviewedContractorFormsMessage", "No older submissions to delete. The newest submission for each contractor will be kept.", "success");
-        return;
-      }
-      if (!window.confirm(
-        "Delete " + olderCount + " older contractor submission(s)?\n\n" +
-        "The newest submission for each contractor will be kept. Contractor accounts, licenses, " +
-        "documents and current profile information will not be changed."
-      )) return;
-      const { data, error: deleteError } = await db.rpc("admin_delete_old_contractor_change_requests");
-      if (deleteError) throw deleteError;
-      message(
-        "reviewedContractorFormsMessage",
-        (Number(data) || 0) + " older submission(s) deleted. The newest submission for each contractor was kept.",
-        "success"
-      );
-      await loadContractorChangeRequests();
-      await refreshAdminPendingBadge();
-    } catch (e) {
-      message("reviewedContractorFormsMessage", "Could not delete older contractor submissions: " + (e.message || "Unknown error"), "error");
-    } finally {
-      button.disabled = false;
     }
   }
 
@@ -2090,7 +2032,7 @@
     $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-    $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+$("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
