@@ -386,7 +386,7 @@
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">Contractors with a license</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -472,21 +472,12 @@
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-        <h2>ZELPX Fraud Protection</h2>
-        <p>Automatic checks run when a customer submits or edits a request. Risk signals help you review suspicious activity; every request still requires your manual approval before it becomes a contractor lead.</p>
-        <div id="fraudProtectionSummary" class="request-card" style="margin:14px 0">
-          <strong>Automatic verification checks</strong>
-          <p class="muted">Email confirmation · SMS phone confirmation · duplicate requests · ZIP format · repeated descriptions · submission frequency</p>
-          <p class="muted">ZIP existence is checked during the administrator's publish step. Photo reuse is not available yet because the customer request form currently has no photo upload.</p>
-        </div>
-        <div class="grid" style="margin:14px 0">
-          <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
-          <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
-        </div>
-        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button><span id="requestCount" class="muted"></span></div>
-        <div id="serviceRequestsMessage" class="message hidden"></div>
-        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
-      </section>
+          <h2>Contractors with a license</h2>
+          <p>All contractor accounts that indicated they have a current professional license. Review their license details and uploaded documents here.</p>
+          <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
+          <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
+        </section>
       </section>
     </section>
   </section>
@@ -1758,6 +1749,95 @@
     }
   }
 
+  async function loadLicensedContractors() {
+    if (!isAdmin) return;
+    const list = $("licensedContractorsList");
+    const count = $("licensedContractorsCount");
+    list.textContent = "Loading licensed contractors…";
+    clearMessage("licensedContractorsMessage");
+    if (count) count.textContent = "";
+    try {
+      const { data: contractors, error } = await db.from("contractors")
+        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,license_document_path,created_at")
+        .eq("has_license", true)
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
+      const { data: profiles, error: profileError } = userIds.length
+        ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      list.replaceChildren();
+      if (count) count.textContent = "Total: " + (contractors || []).length;
+      if (!contractors?.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No contractors with a current license were found.";
+        list.append(empty);
+        return;
+      }
+      contractors.forEach(contractor => {
+        const profile = profileMap.get(contractor.user_id) || {};
+        const card = document.createElement("article");
+        card.className = "lead";
+        const title = document.createElement("h3");
+        title.textContent = contractor.company_name || profile.full_name || "Contractor";
+        card.append(title);
+        const details = [
+          ["Contact name", profile.full_name || "Not provided"],
+          ["Email", contractor.email || "Not provided"],
+          ["Phone", profile.phone || "Not provided"],
+          ["License number", contractor.license_number || "Not provided"],
+          ["License state", contractor.license_state || "Not provided"],
+          ["License type", contractor.license_type || "Not provided"],
+          ["License review", contractor.license_review_status || "Not specified"],
+          ["Account approval", contractor.verification_status || "Not specified"],
+          ["Business location", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
+          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+        ];
+        details.forEach(([label, value]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          card.append(p);
+        });
+        if (contractor.license_document_path) {
+          const view = document.createElement("button");
+          view.type = "button";
+          view.className = "secondary";
+          view.textContent = "View license document";
+          view.addEventListener("click", async () => {
+            view.disabled = true;
+            try {
+              const { data, error: fileError } = await db.storage.from("contractor-licenses")
+                .createSignedUrl(contractor.license_document_path, 300);
+              if (fileError) throw fileError;
+              if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
+              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+            } catch (e) {
+              message("licensedContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
+            } finally {
+              view.disabled = false;
+            }
+          });
+          card.append(view);
+        } else {
+          const note = document.createElement("p");
+          note.className = "muted";
+          note.textContent = "No license document uploaded.";
+          card.append(note);
+        }
+        list.append(card);
+      });
+    } catch (e) {
+      list.textContent = "Could not load licensed contractors: " + (e.message || "Unknown error");
+      message("licensedContractorsMessage", "Check administrator access to the contractors and profiles tables. " + (e.message || ""), "error");
+    }
+  }
+
   function showAdminPage(pageId) {
     if (!isAdmin) return;
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
@@ -1767,7 +1847,7 @@
     if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
-    if (pageId === "adminVerifyLeadPage") loadServiceRequests();
+    if (pageId === "adminVerifyLeadPage") loadLicensedContractors();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -1796,9 +1876,7 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshRequestsBtn").addEventListener("click", loadServiceRequests);
-    $("requestSearch").addEventListener("input", loadServiceRequests);
-    $("requestStatusFilter").addEventListener("change", loadServiceRequests);
+    $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
     $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
