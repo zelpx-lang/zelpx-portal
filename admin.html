@@ -1241,13 +1241,24 @@
       nav.style.display = "flex";
       nav.style.alignItems = "center";
       nav.style.justifyContent = "center";
-      nav.style.gap = "12px";
+      nav.style.gap = "8px";
+      nav.style.margin = "10px auto 16px";
+      nav.style.padding = "6px 10px";
+      nav.style.width = "fit-content";
+      nav.style.border = "1px solid var(--line)";
+      nav.style.borderRadius = "14px";
+      nav.style.background = "var(--card, #fff)";
       let slideIndex = 0;
       const previous = document.createElement("button");
-      previous.type = "button"; previous.className = "secondary"; previous.textContent = "← Previous";
+      previous.type = "button"; previous.className = "secondary"; previous.textContent = "‹";
+      previous.setAttribute("aria-label","Previous page");
+      previous.style.cssText = "min-width:38px;width:38px;height:36px;padding:0;border-radius:10px;font-size:22px;line-height:1;";
       const indicator = document.createElement("span"); indicator.className = "muted";
+      indicator.style.cssText = "min-width:42px;text-align:center;font-size:13px;font-weight:700;";
       const next = document.createElement("button");
-      next.type = "button"; next.className = "secondary"; next.textContent = "Next →";
+      next.type = "button"; next.className = "secondary"; next.textContent = "›";
+      next.setAttribute("aria-label","Next page");
+      next.style.cssText = "min-width:38px;width:38px;height:36px;padding:0;border-radius:10px;font-size:22px;line-height:1;";
       viewport.style.touchAction = "pan-y";
       const renderSlide = () => {
         const cards = requestsCards;
@@ -1355,7 +1366,7 @@
           const uniqueItems = uniqueByProfession(changes.items || []);
           const beforeNames = uniqueBeforeRows.map(row => professionNames.get(row.profession_id) || "Unknown profession");
           const afterNames = uniqueItems.map(item => professionNames.get(item.profession_id) || "Unknown profession");
-          addChange("Work types / professions", beforeNames.join(", ") || "None recorded", afterNames.join(", ") || "None submitted");
+          // Profession names are already shown once in the qualification summary below.
           addDetail("State", changes.state_code);
           addDetail("Work arrangement", changes.work_role);
           const qualificationList = document.createElement("div");
