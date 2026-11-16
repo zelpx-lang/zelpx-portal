@@ -2078,11 +2078,29 @@
       showAdminPage(button.dataset.adminPage);
     });
     $("adminIncomingLeadsPage")?.addEventListener("focusin", event => {
-      if (event.target.matches("input,select,textarea")) serviceRequestsEditing = true;
+      // Pause automatic list replacement only while an admin is editing a request card.
+      // Search and status filters must never lock or trigger a full list reload.
+      if (event.target.matches("input,select,textarea") &&
+          !event.target.matches("#requestSearch,#requestStatusFilter") &&
+          event.target.closest("#serviceRequestsList")) serviceRequestsEditing = true;
     });
     $("refreshRequestsBtn")?.addEventListener("click", () => { serviceRequestsEditing = false; loadServiceRequests(); });
-    $("requestSearch")?.addEventListener("input", loadServiceRequests);
-    $("requestStatusFilter")?.addEventListener("change", loadServiceRequests);
+    $("requestSearch")?.addEventListener("input", () => {
+      const term = ($("requestSearch").value || "").trim().toLowerCase();
+      const cards = [...$("serviceRequestsList").children].filter(node => node.matches("article.lead"));
+      let visible = 0;
+      cards.forEach(card => {
+        const match = !term || card.textContent.toLowerCase().includes(term);
+        card.classList.toggle("hidden", !match);
+        if (match) visible++;
+      });
+      const total = cards.length;
+      $("requestCount").textContent = visible + " of " + total + " requests";
+    });
+    $("requestStatusFilter")?.addEventListener("change", () => {
+      serviceRequestsEditing = false;
+      loadServiceRequests();
+    });
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
