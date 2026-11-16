@@ -387,6 +387,7 @@
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">Contractors with a license</button>
+        <button type="button" data-admin-page="adminPurchasedLeadsPage">Purchased leads</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -467,6 +468,16 @@
         </div>
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
+      </section>
+      <section id="adminPurchasedLeadsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Purchased leads</h2>
+          <p>All leads purchased by contractors. Each purchase is shown separately; expand a row to see its details.</p>
+          <div class="actions"><button id="refreshAdminPurchasedLeads" type="button" class="secondary">Refresh purchased leads</button><span id="adminPurchasedLeadsCount" class="muted"></span></div>
+          <div id="adminPurchasedLeadsMessage" class="message hidden" role="status"></div>
+          <div id="adminPurchasedLeadsList"><p class="muted">Open this page to load purchases.</p></div>
+        </section>
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -879,6 +890,76 @@
       await loadAdminLeads(); await loadLeads();
     } catch (e) { message("adminMessage", "Could not create lead: " + e.message, "error"); } finally { setBusy(button, false); }
   }
+  async function loadAdminPurchasedLeads() {
+    if (!isAdmin) return;
+    const list = $("adminPurchasedLeadsList"), count = $("adminPurchasedLeadsCount");
+    if (!list) return;
+    list.textContent = "Loading purchased leads…";
+    clearMessage("adminPurchasedLeadsMessage");
+    try {
+      const { data: purchases, error } = await db.from("lead_purchases")
+        .select("id,lead_id,contractor_id,price_cents,purchased_at")
+        .order("purchased_at", { ascending: false }).limit(500);
+      if (error) throw error;
+      const rows = purchases || [];
+      count.textContent = "Total purchases: " + rows.length;
+      if (!rows.length) { list.textContent = "No purchased leads yet."; return; }
+      const leadIds = [...new Set(rows.map(x => x.lead_id).filter(Boolean))];
+      const contractorIds = [...new Set(rows.map(x => x.contractor_id).filter(Boolean))];
+      const [{data: leads,error: leadError},{data: contractors,error: contractorError}] = await Promise.all([
+        leadIds.length ? db.from("leads").select("id,service_category,zip_code,urgency,description,status,created_at").in("id",leadIds) : Promise.resolve({data:[],error:null}),
+        contractorIds.length ? db.from("contractors").select("id,company_name,email").in("id",contractorIds) : Promise.resolve({data:[],error:null})
+      ]);
+      if (leadError) throw leadError;
+      if (contractorError) throw contractorError;
+      const leadMap = new Map((leads || []).map(x => [x.id,x]));
+      const contractorMap = new Map((contractors || []).map(x => [x.id,x]));
+      const fragment = document.createDocumentFragment();
+      rows.forEach(purchase => {
+        const lead = leadMap.get(purchase.lead_id) || {};
+        const contractor = contractorMap.get(purchase.contractor_id) || {};
+        const details = document.createElement("details");
+        details.className = "lead";
+        details.style.marginBottom = "10px";
+        const summary = document.createElement("summary");
+        summary.style.cssText = "cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none;font-weight:700;padding:4px 0;";
+        const title = document.createElement("span");
+        title.textContent = lead.service_category || "Purchased lead";
+        const plus = document.createElement("span");
+        plus.textContent = "+";
+        plus.setAttribute("aria-hidden","true");
+        plus.style.cssText = "font-size:26px;color:var(--muted);flex:0 0 auto;";
+        summary.append(title,plus);
+        details.addEventListener("toggle",()=>{plus.textContent=details.open?"−":"+";});
+        details.append(summary);
+        const sub = document.createElement("p");
+        sub.className = "muted";
+        sub.textContent = "Purchased " + (purchase.purchased_at ? new Date(purchase.purchased_at).toLocaleString() : "date unavailable") + " · " + money(purchase.price_cents);
+        details.append(sub);
+        const info = document.createElement("div");
+        [
+          ["Contractor",contractor.company_name || "Unknown contractor"],
+          ["Contractor email",contractor.email || "Not available"],
+          ["ZIP code",lead.zip_code || "Not provided"],
+          ["Urgency",lead.urgency || "Not specified"],
+          ["Lead status",lead.status || "Unknown"],
+          ["Work details",lead.description || "No description"],
+          ["Lead ID",purchase.lead_id || "Unavailable"],
+          ["Purchase ID",purchase.id || "Unavailable"]
+        ].forEach(([label,value])=>{
+          const p=document.createElement("p"), strong=document.createElement("strong");
+          strong.textContent=label+": "; p.append(strong,document.createTextNode(String(value))); info.append(p);
+        });
+        details.append(info);
+        fragment.append(details);
+      });
+      list.replaceChildren(fragment);
+    } catch (e) {
+      list.textContent = "Could not load purchased leads: " + (e.message || "Unknown error");
+      message("adminPurchasedLeadsMessage","Check administrator access to purchased leads. " + (e.message || ""),"error");
+    }
+  }
+
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
@@ -1945,6 +2026,7 @@
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadLicensedContractors();
+    if (pageId === "adminPurchasedLeadsPage") loadAdminPurchasedLeads();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -1962,6 +2044,7 @@
   }
   function wireEvents() {
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
+    $("refreshAdminPurchasedLeads")?.addEventListener("click", loadAdminPurchasedLeads);
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
