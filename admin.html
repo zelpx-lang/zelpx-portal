@@ -383,9 +383,8 @@
       <h2>Administrator workspace</h2>
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
-        <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
+        <button type="button" data-admin-page="adminApprovalsPage">New contractors</button>
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
-        <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminBlockedContractorsPage">Blocked contractors</button>
       </nav>
@@ -404,10 +403,10 @@
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-        <h2>Contractor approvals</h2>
-        <p>New contractor accounts stay blocked until an administrator approves them.</p>
+        <h2>New contractors</h2>
+        <p>All newly registered contractor accounts appear here. Review each registration and choose whether to approve or block the contractor.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
+        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh new contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
@@ -433,17 +432,6 @@
           <div id="licenseProfessionChangesList"><p class="muted">Loading license and profession requests…</p></div>
           <div class="actions"><button id="licenseProfessionBackBtn" type="button" class="secondary">← Back to Company Profile</button></div>
         </div>
-      </section>
-      </section>
-      <section id="adminUnlicensedPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-        <h2>Contractors without a current license</h2>
-        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
       </section>
       </section>
       <section id="adminCreateLeadPage" class="admin-page hidden">
@@ -1383,7 +1371,7 @@
           waiveOption.textContent = "Allow contractor without license verification";
           const noOption = document.createElement("option");
           noOption.value = "reject";
-          noOption.textContent = "No — license not verified, reject registration";
+          noOption.textContent = "Block contractor — move to Blocked contractors";
           decision.append(placeholder, yesOption, waiveOption, noOption);
           actions.append(decision);
           decision.focus();
@@ -1399,12 +1387,22 @@
               });
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
+              if (choice === "reject") {
+                const { data: blockResult, error: blockError } = await db.functions.invoke("admin-toggle-contractor-access", {
+                  body: { contractor_id: contractor.id, action: "block" }
+                });
+                if (blockError) throw blockError;
+                if (blockResult?.error) throw new Error(blockResult.error);
+                if (blockResult?.success !== true || blockResult.blocked !== true) {
+                  throw new Error("The server did not confirm that the contractor was added to the blocked list.");
+                }
+              }
               const approved = choice !== "reject";
               const statusText = choice === "approve_without_license"
                 ? "Contractor allowed without license verification. They can now sign in and purchase leads."
                 : approved
                   ? "Contractor approved after license verification. They can now sign in and purchase leads."
-                  : "Contractor rejected. Their account remains blocked.";
+                  : "Contractor blocked. Their account is now in Blocked contractors.";
               const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
               message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
@@ -2116,7 +2114,6 @@
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
     if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
-    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadServiceRequests();
     if (pageId === "adminBlockedContractorsPage") loadBlockedContractors();
     if (pageId === "adminCreateLeadPage") loadCategories();
@@ -2153,7 +2150,7 @@
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
     $("refreshBlockedContractorsBtn").addEventListener("click", loadBlockedContractors);
-    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn")?.addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn")?.addEventListener("click", deleteReviewedContractorForms); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
