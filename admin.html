@@ -1028,17 +1028,8 @@
         });
         actions.append(approve);
         card.append(actions);
-        const targetList = request.request_type === "company_profile" ? companyList : licenseList;
-        targetList.append(card);
+        list.append(card);
       });
-      if (!companyList.children.length) {
-        const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = "No company profile requests."; companyList.append(empty);
-      }
-      if (!licenseList.children.length) {
-        const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = "No license, insurance or profession requests."; licenseList.append(empty);
-      }
     } catch (e) {
       list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
       message("pendingContractorsMessage", "Administrator approval access is required. " + (e.message || ""), "error");
