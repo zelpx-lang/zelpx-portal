@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "destination": "/admin.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
@@ -38,6 +42,23 @@
           "value": "no-cache"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
+    },
+    {
+      "source": "/admin/",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a",
+      "permanent": false
     }
   ]
 }
