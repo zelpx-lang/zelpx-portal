@@ -811,6 +811,7 @@
     if (!isAdmin && currentContractor) {
       try {
         await syncSignupContractorDocuments(user);
+        await syncSignupContractorServiceCategories(user);
         await syncSignupProfessionQualifications(user);
       } catch (documentError) {
         message("appMessage", "Your account is open, but a license or insurance document could not be saved: " + (documentError.message || "Please try again from My Company."), "error");
@@ -878,6 +879,25 @@
     }
     const {error:metadataError}=await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null,zelpx_signup_work_role:null}});
     if(metadataError)console.warn("Could not clear one-time credential metadata:",metadataError.message);
+  }
+
+  async function syncSignupContractorServiceCategories(user){
+    const metadata=user?.user_metadata||{};
+    const ids=Array.isArray(metadata.zelpx_signup_service_category_ids)
+      ? [...new Set(metadata.zelpx_signup_service_category_ids.filter(id=>typeof id==="string"))] : [];
+    if(!currentContractor || !ids.length) return;
+    const {data:existing,error:readError}=await db.from("contractor_service_categories")
+      .select("category_id").eq("contractor_id",currentContractor.id);
+    if(readError) throw readError;
+    const existingIds=new Set((existing||[]).map(row=>row.category_id));
+    const missing=ids.filter(id=>!existingIds.has(id));
+    if(missing.length){
+      const {error:insertError}=await db.from("contractor_service_categories")
+        .insert(missing.map(category_id=>({contractor_id:currentContractor.id,category_id})));
+      if(insertError) throw insertError;
+    }
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_service_category_ids:null}});
+    if(metadataError) console.warn("Could not clear one-time service category metadata:",metadataError.message);
   }
 
   async function syncSignupProfessionQualifications(user){
