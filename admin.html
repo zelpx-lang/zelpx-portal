@@ -992,12 +992,31 @@
         const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "There are no blocked contractor accounts."; list.append(empty); return;
       }
       contractors.forEach(contractor => {
-        const card = document.createElement("article"); card.className = "lead";
-        card.style.cssText = "margin:10px 0;padding:14px;";
-        const heading = document.createElement("h3");
-        heading.textContent = contractor.company_name || contractor.full_name || "Contractor";
-        heading.style.margin = "0 0 10px";
-        card.append(heading);
+        const card = document.createElement("article");
+        card.className = "contractor-list-row";
+        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+        const title = document.createElement("button");
+        title.type = "button";
+        title.className = "secondary";
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || contractor.full_name || "Contractor";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
+        title.setAttribute("aria-expanded", "false");
+        const panel = document.createElement("div");
+        panel.className = "hidden";
+        panel.style.cssText = "padding-top:10px;";
+        title.addEventListener("click", () => {
+          const expanded = !panel.classList.contains("hidden");
+          panel.classList.toggle("hidden", expanded);
+          title.setAttribute("aria-expanded", String(!expanded));
+          expandIcon.textContent = expanded ? "+" : "−";
+        });
+        card.append(title, panel);
         const details = [
           ["Contact name", contractor.full_name],
           ["Business name", contractor.company_name],
@@ -1010,11 +1029,17 @@
           if (!value) return;
           const p = document.createElement("p");
           const strong = document.createElement("strong"); strong.textContent = label + ": ";
-          p.append(strong, document.createTextNode(String(value))); card.append(p);
+          p.append(strong, document.createTextNode(String(value))); panel.append(p);
         });
-        const status = document.createElement("p"); status.className = "message error"; status.textContent = "Account access: BLOCKED"; card.append(status);
-        const actions = document.createElement("div"); actions.className = "actions";
-        const unblock = document.createElement("button"); unblock.type = "button"; unblock.className = "secondary"; unblock.textContent = "Unblock contractor";
+        const status = document.createElement("p");
+        status.className = "message error";
+        status.textContent = "Account access: BLOCKED — contractor cannot sign in.";
+        panel.append(status);
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        actions.style.cssText = "display:flex;justify-content:flex-start;gap:14px;flex-wrap:wrap;width:100%;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+        const unblock = document.createElement("button");
+        unblock.type = "button"; unblock.className = "secondary"; unblock.textContent = "Unblock contractor";
         unblock.addEventListener("click", async () => {
           unblock.disabled = true; unblock.textContent = "Unblocking…";
           try {
@@ -1022,18 +1047,31 @@
             if (actionError) throw actionError;
             if (result?.error) throw new Error(result.error);
             if (result?.success !== true || result.blocked !== false) throw new Error("The server did not confirm that access was restored.");
-            status.className = "message success"; status.textContent = "Account access: ACTIVE";
-            card.style.opacity = "0.65";
-            unblock.textContent = "Unblocked";
-            unblock.disabled = true;
-            if (count) count.textContent = "Blocked: " + Math.max(0, contractors.length - list.querySelectorAll("article").length + [...list.querySelectorAll("article")].filter(el => el.querySelector("button")?.textContent === "Unblocked").length);
-            window.setTimeout(() => { card.remove(); const remaining = list.querySelectorAll("article").length; if (count) count.textContent = "Blocked: " + remaining; if (!remaining) { const empty=document.createElement("p"); empty.className="muted"; empty.textContent="There are no blocked contractor accounts."; list.append(empty); } }, 500);
+            status.className = "message success"; status.textContent = "Account access: ACTIVE — contractor can sign in.";
+            unblock.textContent = "Unblocked"; unblock.disabled = true;
+            if (count) count.textContent = "Blocked: " + Math.max(0, Number((count.textContent.match(/\\d+/)||["0"])[0]) - 1);
+            window.setTimeout(() => {
+              card.remove();
+              const remaining = list.querySelectorAll("article").length;
+              if (count) count.textContent = "Blocked: " + remaining;
+              if (!remaining) { const empty=document.createElement("p"); empty.className="muted"; empty.textContent="There are no blocked contractor accounts."; list.append(empty); }
+            }, 500);
           } catch (e) {
             unblock.disabled = false; unblock.textContent = "Retry unblock";
             if (messageEl) { messageEl.textContent = "Could not unblock contractor: " + (e.message || "Unknown error"); messageEl.className = "message error"; }
           }
         });
-        actions.append(unblock); card.append(actions); list.append(card);
+        const close = document.createElement("button");
+        close.type = "button"; close.className = "secondary"; close.textContent = "Close −";
+        close.style.cssText = "color:#e8753b;font-weight:800;";
+        close.addEventListener("click", () => {
+          panel.classList.add("hidden");
+          title.setAttribute("aria-expanded", "false");
+          expandIcon.textContent = "+";
+        });
+        actions.append(unblock, close);
+        panel.append(actions);
+        list.append(card);
       });
     } catch (e) {
       list.replaceChildren();
