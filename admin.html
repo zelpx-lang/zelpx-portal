@@ -866,7 +866,7 @@
     results.textContent = "Loading contractors…";
     try {
       const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_state,has_license")
+        .select("*")
         .order("created_at", { ascending: false }).limit(1000);
       if (error) throw error;
       const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
@@ -897,11 +897,24 @@
     if (!matches.length) { const p=document.createElement("p"); p.className="muted"; p.textContent="No contractors found for this search."; results.append(p); return; }
     matches.forEach(c => {
       const card=document.createElement("article"); card.className="lead";
-      const h=document.createElement("h3"); h.textContent=c.company_name || c.full_name || "Contractor"; card.append(h);
-      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value || "Not provided"));card.append(p);};
-      line("Name",c.full_name); line("Business",c.company_name); line("Email",c.email); line("Phone",c.phone);
-      line("State",c.service_state); line("Account status",c.verification_status); line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
-      results.append(card);
+      card.style.cssText="padding:0;margin:0;border:0;border-bottom:1px solid #eadfd3;border-radius:0;background:transparent;box-shadow:none;";
+      const title=document.createElement("button");
+      title.type="button"; title.className="secondary";
+      title.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;background:transparent;border:0;";
+      const name=document.createElement("span");
+      name.textContent=c.company_name || c.full_name || "Contractor";
+      name.style.cssText="font-size:16px;font-weight:800;";
+      const plus=document.createElement("span");
+      plus.textContent="+"; plus.style.cssText="font-size:22px;font-weight:500;color:#e8753b;line-height:1;";
+      title.append(name,plus); title.setAttribute("aria-expanded","false");
+      const panel=document.createElement("div");
+      panel.className="hidden"; panel.style.cssText="padding:10px 14px 14px;border-top:1px solid #eadfd3;";
+      title.addEventListener("click",()=>{
+        openContractorDetail(c,panel,title);
+        const expanded=title.getAttribute("aria-expanded")==="true";
+        plus.textContent=expanded?"−":"+";
+      });
+      card.append(title,panel); results.append(card);
     });
   }
 
@@ -910,7 +923,6 @@
     const isOpen = !panel.classList.contains("hidden");
     panel.classList.toggle("hidden", isOpen);
     toggleButton.setAttribute("aria-expanded", String(!isOpen));
-    toggleButton.textContent = (isOpen ? "＋ " : "− ") + (contractor.company_name || "Contractor company");
     if (isOpen || panel.dataset.loaded === "true") return;
     panel.dataset.loaded = "true";
     const fields = [
