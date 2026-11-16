@@ -1103,12 +1103,13 @@
     }
 
     const closeRow = document.createElement("div");
-    closeRow.style.cssText = "display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+    closeRow.style.cssText = "display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:16px;flex-wrap:nowrap;width:100%;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+    accessButton.style.cssText = "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;";
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.className = "secondary";
     closeButton.textContent = "Close −";
-    closeButton.style.cssText = "flex:1 1 120px;min-width:0;margin:0;color:#e8753b;font-weight:800;";
+    closeButton.style.cssText = "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;color:#e8753b;font-weight:800;font-size:14px;white-space:normal;";
     closeButton.addEventListener("click", () => {
       panel.classList.add("hidden");
       toggleButton.setAttribute("aria-expanded", "false");
