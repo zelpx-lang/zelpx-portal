@@ -2038,32 +2038,20 @@
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
-    // Open Incoming leads directly and make the review workspace visible before loading data.
-    document.addEventListener("click", event => {
-      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      const incomingButton = target?.closest('[data-admin-page="adminIncomingLeadsPage"]');
-      if (!incomingButton) return;
+    // Bind Incoming leads directly so the navigation works even if another
+    // document-level click handler interferes with delegated events.
+    const incomingLeadsButton = document.querySelector('#adminPanel [data-admin-page="adminIncomingLeadsPage"]');
+    incomingLeadsButton?.addEventListener("click", event => {
       event.preventDefault();
-      event.stopImmediatePropagation();
-      const panel = $("adminPanel");
-      const page = $("adminIncomingLeadsPage");
-      if (!panel || !page) return;
       if (!isAdmin) {
         message("appMessage", "Administrator access is required to open Incoming leads.", "error");
         return;
       }
       show($("appView"));
       hide($("authView"));
-      show(panel);
-      document.querySelectorAll("#adminPanel .admin-page").forEach(item => {
-        item.classList.toggle("hidden", item !== page);
-      });
-      document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => {
-        button.classList.toggle("active", button === incomingButton);
-      });
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      loadServiceRequests();
-    }, true);
+      show($("adminPanel"));
+      showAdminPage("adminIncomingLeadsPage");
+    });
     // Delegate admin navigation so page buttons remain responsive.
     $("adminPanel")?.addEventListener("click", event => {
       const button = event.target.closest("[data-admin-page]");
