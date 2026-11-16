@@ -1104,7 +1104,7 @@
         });
         actions.append(approve);
         card.append(actions);
-        slides.append(card);
+        requestsCards.push(card);
       });
       list.append(slider);
       renderSlide();
@@ -1240,13 +1240,15 @@
       const next = document.createElement("button");
       next.type = "button"; next.className = "secondary"; next.textContent = "Next →";
       const renderSlide = () => {
-        [...slides.children].forEach((node,index) => {
-          const active = index === slideIndex;
-          node.hidden = !active;
-          if (active) node.style.removeProperty("display");
-          else node.style.setProperty("display","none","important");
-          node.setAttribute("aria-hidden", active ? "false" : "true");
-        });
+        // Keep exactly one request card in the slide viewport at a time.
+        const cards = requestsCards;
+        slides.replaceChildren();
+        if (cards[slideIndex]) {
+          cards[slideIndex].hidden = false;
+          cards[slideIndex].style.removeProperty("display");
+          cards[slideIndex].setAttribute("aria-hidden","false");
+          slides.append(cards[slideIndex]);
+        }
         indicator.textContent = (slideIndex + 1) + " / " + requests.length;
         previous.disabled = slideIndex === 0;
         next.disabled = slideIndex === requests.length - 1;
@@ -1266,6 +1268,7 @@
         }
         touchStartX = null;
       }, {passive:true});
+      const requestsCards = [];
       requests.forEach(request => {
         const company = contractors.get(request.contractor_id) || {};
         const profile = profiles.get(request.user_id) || {};
