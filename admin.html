@@ -1029,13 +1029,15 @@
     panel.append(access);
 
     const accessControls = document.createElement("div");
-    accessControls.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:12px 0;";
+    accessControls.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0;";
     const accessStatus = document.createElement("p");
     accessStatus.className = "muted";
+    accessStatus.style.cssText = "flex-basis:100%;margin:0 0 2px;";
     accessStatus.textContent = "Checking account access…";
     const accessButton = document.createElement("button");
     accessButton.type = "button";
     accessButton.className = "danger";
+    accessButton.style.cssText = "flex:1 1 180px;min-width:0;margin:0;";
     accessButton.disabled = true;
     accessButton.textContent = "Loading…";
     accessControls.append(accessStatus, accessButton);
@@ -1101,19 +1103,19 @@
     }
 
     const closeRow = document.createElement("div");
-    closeRow.style.cssText = "display:flex;justify-content:flex-end;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+    closeRow.style.cssText = "display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
     const closeButton = document.createElement("button");
     closeButton.type = "button";
     closeButton.className = "secondary";
     closeButton.textContent = "Close −";
-    closeButton.style.cssText = "min-width:110px;color:#e8753b;font-weight:800;";
+    closeButton.style.cssText = "flex:1 1 120px;min-width:0;margin:0;color:#e8753b;font-weight:800;";
     closeButton.addEventListener("click", () => {
       panel.classList.add("hidden");
       toggleButton.setAttribute("aria-expanded", "false");
       const icon = toggleButton.querySelector("span:last-child");
       if (icon) icon.textContent = "+";
     });
-    closeRow.append(closeButton);
+    closeRow.append(accessButton, closeButton);
     panel.append(closeRow);
   }
 
