@@ -317,7 +317,7 @@
         <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
         <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
         <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><label style="margin:0">Services / work types (full catalog)</label><button id="clearSignupServicesBtn" type="button" class="secondary" style="min-height:36px;padding:7px 14px;font-size:12px">Clear selected services</button></div><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:8px 0"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state first, then choose the services you offer.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Your selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen work types will appear here.</span></div></div>
+        <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state first, then choose the services you offer.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Your selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen work types will appear here.</span></div></div>
         <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
           <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
           <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
@@ -423,7 +423,7 @@
             <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select></div>
             <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes — show licensed work types</option><option value="no">No — show license-free work types</option></select></div>
           </div>
-          <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><label for="professionSearch" style="margin:0">FIND A PROFESSION</label><button id="clearProfileProfessionsBtn" type="button" class="secondary" style="min-height:36px;padding:7px 14px;font-size:12px">Clear selected services</button></div><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
           <p class="muted" style="font-size:12px;margin:8px 0 0">Important: ZELPX does not issue legal approvals. “Not required” applies only to the described scope and does not replace city permits, business registration, insurance, or individual trade certificates. Unverified states are never treated as license-free.</p>
@@ -2333,11 +2333,6 @@
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
-    $("clearSignupServicesBtn").addEventListener("click",()=>{
-      signupSelectedCategoryIds.clear(); signupSelectedProfessionIds.clear();
-      renderSignupProfessionOptions();
-      refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
-    });
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
@@ -2373,6 +2368,11 @@
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
+    $("clearProfileProfessionsBtn").addEventListener("click",()=>{
+      selectedProfessionIds.clear();
+      renderProfessionOptions();
+      refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));
+    });
     $("professionState").addEventListener("change",async()=>{
       try {
         const {data,error}=await db.from("contractor_profession_qualifications").select("profession_id,work_role")
