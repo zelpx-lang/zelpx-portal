@@ -933,8 +933,10 @@
       }
       contractors.forEach(contractor => {
         const card = document.createElement("article");
-        card.className = "lead";
+        card.className = "contractor-list-row";
+        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
         const title = document.createElement("h3");
+        title.style.cssText = "margin:0 0 6px;font-size:16px;";
         title.textContent = contractor.company_name || "Contractor company";
         card.append(title);
         const accessLabel = contractor.verification_status === "verified"
@@ -956,11 +958,13 @@
           const p = document.createElement("p");
           const strong = document.createElement("strong");
           strong.textContent = label + ": ";
+          p.style.cssText = "display:inline-block;margin:3px 16px 3px 0;font-size:13px;line-height:1.4;";
           p.append(strong, document.createTextNode(String(value)));
           card.append(p);
         });
         const actions = document.createElement("div");
         actions.className = "actions";
+        actions.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;";
         if (contractor.license_document_path) {
           const viewDocument = document.createElement("button");
           viewDocument.type = "button";
