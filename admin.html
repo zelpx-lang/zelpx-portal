@@ -960,9 +960,9 @@
       line("Current approval status",c.verification_status);
       line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
       const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
-      const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
-      const accessButton=document.createElement("button"); accessButton.type="button"; accessButton.className="secondary"; accessButton.disabled=true; accessButton.textContent="Checking…";
-      const close=document.createElement("button"); close.type="button"; close.className="secondary"; close.textContent="Close −"; close.style.cssText="color:#e8753b;font-weight:800;";
+      const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:stretch;justify-content:flex-start;gap:12px;flex-wrap:nowrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+      const accessButton=document.createElement("button"); accessButton.type="button"; accessButton.className="secondary"; accessButton.disabled=true; accessButton.style.cssText="flex:1 1 0;width:0;min-width:0;max-width:none;margin:0;padding:12px 8px;font-size:14px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;"; accessButton.textContent="Checking…";
+      const close=document.createElement("button"); close.type="button"; close.className="secondary"; close.textContent="Close −"; close.style.cssText="flex:1 1 0;width:0;min-width:0;max-width:none;margin:0;padding:12px 8px;font-size:14px;line-height:1.25;white-space:normal;color:#e8753b;font-weight:800;";
       close.addEventListener("click",()=>{panel.classList.add("hidden");heading.setAttribute("aria-expanded","false");icon.textContent="+";});
       actions.append(accessButton,close); panel.append(actions);
       let blocked=null, busy=false;
