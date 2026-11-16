@@ -1241,8 +1241,11 @@
       next.type = "button"; next.className = "secondary"; next.textContent = "Next →";
       const renderSlide = () => {
         [...slides.children].forEach((node,index) => {
-          node.hidden = index !== slideIndex;
-          node.style.display = index === slideIndex ? "" : "none";
+          const active = index === slideIndex;
+          node.hidden = !active;
+          if (active) node.style.removeProperty("display");
+          else node.style.setProperty("display","none","important");
+          node.setAttribute("aria-hidden", active ? "false" : "true");
         });
         indicator.textContent = (slideIndex + 1) + " / " + requests.length;
         previous.disabled = slideIndex === 0;
