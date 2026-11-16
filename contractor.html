@@ -1236,6 +1236,13 @@
       message("appMessage", "Purchase failed: " + friendly, "error"); await loadLeads();
     } finally { setBusy(button, false); }
   }
+  let purchasedLeadIds = new Set();
+  function splitLeadDescription(description) {
+    const raw = String(description || "").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n");
+    const marker = /(?:^|\n)\s*ADDITIONAL CUSTOMER NOTES\s*\n?/i;
+    const match = marker.exec(raw);
+    return match ? { work: raw.slice(0, match.index).trim(), notes: raw.slice(match.index + match[0].length).trim() } : { work: raw.trim(), notes: "" };
+  }
   function renderLeads() {
     const list = $("leadsList"), query = ($("leadSearch").value || "").trim().toLowerCase();
     const category = $("leadCategoryFilter").value, statusFilter = $("leadStatusFilter").value;
@@ -1274,7 +1281,14 @@
       if (lead.urgency === "urgent") { const urgent = document.createElement("span"); urgent.className = "pill urgent"; urgent.textContent = "Urgent"; badges.append(urgent); }
       if (lead.status === "available") { const privacy = document.createElement("span"); privacy.className = "pill"; privacy.textContent = "Contact details protected"; badges.append(privacy); }
       const descTitle = document.createElement("h3"); descTitle.className = "lead-details-label"; descTitle.textContent = "Work details";
-      const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = lead.description ? String(lead.description).replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n") : "No work details provided.";
+      const descriptionParts = splitLeadDescription(lead.description);
+      const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = descriptionParts.work || "No work details provided.";
+      const ownsPurchase = purchasedLeadIds.has(lead.id);
+      if (ownsPurchase && descriptionParts.notes) {
+        const notesTitle = document.createElement("h3"); notesTitle.className = "lead-details-label"; notesTitle.textContent = "Additional customer notes";
+        const notes = document.createElement("p"); notes.className = "lead-details-description"; notes.textContent = descriptionParts.notes;
+        details.append(badges, descTitle, desc, notesTitle, notes);
+      }
       const footer = document.createElement("div"); footer.className = "lead-footer";
       const date = document.createElement("span"); date.className = "lead-date"; date.textContent = lead.created_at ? "Posted " + new Date(lead.created_at).toLocaleDateString() : ""; footer.append(date);
       if (lead.status === "available") {
@@ -1294,7 +1308,8 @@
         if (canBuy) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
-      details.append(badges, descTitle, desc, footer); card.append(details);
+      if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
+      details.append(footer); card.append(details);
       summary.addEventListener("click", () => {
         const opening = details.classList.contains("hidden");
         details.classList.toggle("hidden", !opening); summary.setAttribute("aria-expanded", String(opening)); chevron.textContent = opening ? "−" : "＋";
@@ -1385,6 +1400,14 @@
     const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load leads: " + error.message; $("leadResultsCount").textContent = "Unable to load leads"; return; }
     cachedLeads = data || [];
+    purchasedLeadIds = new Set();
+    if (currentContractor?.id && cachedLeads.length) {
+      const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
+        .select("lead_id").eq("contractor_id", currentContractor.id)
+        .in("lead_id", cachedLeads.map(lead => lead.id));
+      if (purchasesError) console.warn("Could not load purchased lead access:", purchasesError.message);
+      else purchasedLeadIds = new Set((purchases || []).map(row => row.lead_id));
+    }
     try { await loadLicenseEligibleLeadCategories(); }
     catch (eligibilityError) {
       console.error("Could not verify profession eligibility:", eligibilityError);
