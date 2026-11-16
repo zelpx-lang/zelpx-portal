@@ -1138,9 +1138,19 @@
         p_changes:{state_code:state,work_role:role,items:rows.map(({profession_id,license_required_at_registration,verification_status})=>({profession_id,license_required_at_registration,verification_status}))}
       });
       if(requestError) throw requestError;
-      message("professionComplianceSummary","Your work types were submitted for administrator review. They will become active only after approval.","success");
+      const summary=$("professionComplianceSummary");
+      let saveStatus=$("professionSaveStatus");
+      if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
+      saveStatus.className="message success";
+      saveStatus.textContent="Your work types were submitted for administrator review. The descriptions remain visible below. They become active after approval.";
       $("saveProfessionQualificationsBtn").disabled=true;
-    } catch(e) { message("professionComplianceSummary","Could not save work types: "+(e.message||"Unknown error"),"error"); }
+    } catch(e) {
+      const summary=$("professionComplianceSummary");
+      let saveStatus=$("professionSaveStatus");
+      if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
+      saveStatus.className="message error";
+      saveStatus.textContent="Could not save work types: "+(e.message||"Unknown error");
+    }
     finally {setBusy(button,false);}
   }
 
