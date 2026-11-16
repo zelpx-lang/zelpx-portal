@@ -1274,6 +1274,19 @@
           const reviewed = document.createElement("p"); reviewed.className = "muted";
           reviewed.textContent = "Reviewed: " + (request.reviewed_at ? new Date(request.reviewed_at).toLocaleString() : "Not recorded");
           card.append(reviewed);
+          const remove = document.createElement("button"); remove.type = "button"; remove.className = "secondary"; remove.textContent = "Delete reviewed request";
+          remove.addEventListener("click", async () => {
+            if (!window.confirm("Delete this reviewed request from history? Contractor account, current profile, licenses, documents, leads, purchases and messages will remain.")) return;
+            remove.disabled = true; remove.textContent = "Deleting…";
+            try {
+              const { data, error } = await db.rpc("admin_delete_contractor_change_request", { p_request_id: request.id });
+              if (error) throw error;
+              if (data !== true) throw new Error("Request was not deleted.");
+              message("contractorChangesMessage", "Reviewed request deleted. Contractor data was kept.", "success");
+              await loadContractorChangeRequests();
+            } catch (e) { message("contractorChangesMessage", "Could not delete request: " + (e.message || "Unknown error"), "error"); remove.disabled = false; remove.textContent = "Delete reviewed request"; }
+          });
+          const actions = document.createElement("div"); actions.className = "actions"; actions.append(remove); card.append(actions);
         }
         list.append(card);
       });

@@ -947,22 +947,22 @@
     const draftValue = (key, activeValue) =>
       Object.prototype.hasOwnProperty.call(draft, key) ? (draft[key] ?? "") : (activeValue ?? "");
 
-    $("profileFullName").value = draftValue("full_name", profile?.full_name);
-    $("profilePhone").value = draftValue("phone", profile?.phone);
+    $("profileFullName").value = profile?.full_name || "";
+    $("profilePhone").value = profile?.phone || "";
     $("contractorAvatarPreview").src = profile?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-    $("profileCompany").value = draftValue("company_name", contractor?.company_name);
-    $("profileCompanyEmail").value = draftValue("email", contractor?.email);
-    $("profileServiceAddress").value = draftValue("service_address", contractor?.service_address);
-    $("profileServiceCity").value = draftValue("service_city", contractor?.service_city);
+    $("profileCompany").value = contractor?.company_name || "";
+    $("profileCompanyEmail").value = contractor?.email || "";
+    $("profileServiceAddress").value = contractor?.service_address || "";
+    $("profileServiceCity").value = contractor?.service_city || "";
     const { data: profileStates, error: profileStatesError } = await db.from("us_states").select("state_code,state_name").eq("is_active", true).order("state_name");
     if (profileStatesError) throw profileStatesError;
     const profileStateSelect = $("profileServiceState");
     profileStateSelect.replaceChildren(new Option("Select state", ""));
     (profileStates || []).forEach(s => profileStateSelect.add(new Option(s.state_name, s.state_code)));
-    profileStateSelect.value = draftValue("service_state", contractor?.service_state);
-    $("profileServiceZip").value = draftValue("service_zip_code", contractor?.service_zip_code);
-    $("profileServiceRadius").value = String(draftValue("service_radius_miles", contractor?.service_radius_miles) || 25);
-    $("profileLeadEmailNotifications").checked = draftValue("lead_email_notifications", contractor?.lead_email_notifications) !== false;
+    profileStateSelect.value = contractor?.service_state || "";
+    $("profileServiceZip").value = contractor?.service_zip_code || "";
+    $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
+    $("profileLeadEmailNotifications").checked = contractor?.lead_email_notifications !== false;
     const draftHasLicense = draftValue("has_license", contractor?.has_license);
     $("profileHasLicense").value = draftHasLicense === true ? "yes" : draftHasLicense === false ? "no" : "";
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
@@ -1764,8 +1764,34 @@
           insurance_policy_number: $("profileInsurancePolicy").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
-        const {data:requestId,error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:changes});
+        // Save ordinary contact and location fields directly so they remain current
+        // after logout/login. License and insurance changes still require admin review.
+        const { error: profileUpdateError } = await db.from("profiles")
+          .update({ full_name, phone }).eq("id", currentUser.id);
+        if (profileUpdateError) throw profileUpdateError;
+        const activeProfileChanges = {
+          company_name: changes.company_name, email: changes.email,
+          service_address: changes.service_address, service_city: changes.service_city,
+          service_state: changes.service_state, service_zip_code: changes.service_zip_code,
+          service_radius_miles: changes.service_radius_miles,
+          service_latitude: changes.service_latitude, service_longitude: changes.service_longitude,
+          lead_email_notifications: changes.lead_email_notifications
+        };
+        const { error: contractorUpdateError } = await db.from("contractors")
+          .update(activeProfileChanges).eq("id", currentContractor.id).eq("user_id", currentUser.id);
+        if (contractorUpdateError) throw contractorUpdateError;
+        const complianceChanges = {
+          has_license: changes.has_license, license_number: changes.license_number,
+          license_state: changes.license_state, license_type: changes.license_type,
+          license_document_path: changes.license_document_path,
+          insurance_document_path: changes.insurance_document_path,
+          insurance_policy_number: changes.insurance_policy_number,
+          insurance_expiration_date: changes.insurance_expiration_date
+        };
+        const {error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:complianceChanges});
         if(requestError) throw requestError;
+        currentContractor = { ...currentContractor, ...activeProfileChanges };
+        currentProfile = { ...currentProfile, full_name, phone };
 
         // Submit selected professions from the same Save company details action.
         if (selectedProfessionIds.size) {
@@ -1792,7 +1818,7 @@
         }
       }
       $("licenseDocument").value = ""; $("insuranceDocument").value = "";
-      const successText = "Submitted successfully. Your company details, selected work types, license, and insurance are now waiting for administrator review. Existing approved details remain active until approval.";
+      const successText = "Saved successfully. Your name, phone, company and location details are now active. License, insurance and profession changes remain pending administrator review.";
       message("appMessage", successText, "success");
       if (saveStatus) { saveStatus.textContent = "✓ " + successText; saveStatus.className = "message success"; }
       saveButton.textContent = "Submitted ✓";
@@ -2118,19 +2144,18 @@
               });actions.append(b);
             }card.append(actions);
           }
-          if(!allowReview && String(r.status||"").trim().toLowerCase()==="rejected"){
+          if(!allowReview && String(r.status||"").trim().toLowerCase()!=="pending"){
             const actions=document.createElement("div");actions.className="actions";
-            const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete rejected request";
+            const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete reviewed request";
             remove.addEventListener("click",async()=>{
               if(!window.confirm("Delete this rejected change request? This cannot be undone."))return;
               remove.disabled=true;remove.textContent="Deleting…";
               try{
-                const {data:deleted,error:deleteError}=await db.from("contractor_change_requests")
-                  .delete().eq("id",r.id).eq("user_id",currentUser.id).ilike("status","rejected").select("id");
+                const {data:deleted,error:deleteError}=await db.rpc("delete_own_reviewed_contractor_change_request",{p_request_id:r.id});
                 if(deleteError)throw deleteError;
-                if(!deleted||deleted.length===0)throw new Error("The request was not deleted. Refresh and try again.");
+                if(deleted!==true)throw new Error("Only reviewed requests can be deleted. Refresh and try again.");
                 await loadContractorChangeRequests();
-              }catch(e){window.alert("Could not delete rejected request: "+(e.message||"Unknown error"));remove.disabled=false;remove.textContent="Delete rejected request";}
+              }catch(e){window.alert("Could not delete rejected request: "+(e.message||"Unknown error"));remove.disabled=false;remove.textContent="Delete reviewed request";}
             });
             actions.append(remove);card.append(actions);
           }
