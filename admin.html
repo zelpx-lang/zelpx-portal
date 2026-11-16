@@ -411,8 +411,8 @@
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
       <section class="lead">
-        <h2>Contractor profile update requests</h2>
-        <p>Changes submitted by contractors. Compare the previous information with the new submission, including work categories and license status.</p>
+        <h2>Contractor approvals — profile and license updates</h2>
+        <p>New company details, work categories, professions and license updates submitted by contractors. Review each request and choose whether the contractor belongs in With License or Without License.</p>
         <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
@@ -1170,7 +1170,7 @@
     try {
       const { data: rows, error } = await db.from("contractor_change_requests")
         .select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at")
-        .neq("status", "rejected")
+        .eq("status", "pending")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       const requests = rows || [];
@@ -1327,7 +1327,11 @@
           note.setAttribute("aria-label", "Administrator review note");
           card.append(note);
           const actions = document.createElement("div"); actions.className = "actions";
-          for (const [decision,label] of [["approved","Approve request"],["rejected","Reject request"]]) {
+          for (const [decision,label] of [
+            ["approved_with_license","Approve — With License"],
+            ["approved_without_license","Approve — Without License"],
+            ["rejected","Reject request"]
+          ]) {
             const button = document.createElement("button"); button.type = "button";
             button.textContent = label;
             if (decision === "rejected") button.className = "secondary";
@@ -1335,19 +1339,28 @@
               if (decision === "rejected" && !note.value.trim()) {
                 note.focus(); message("contractorChangesMessage","Enter a reason before rejecting this request.","error"); return;
               }
+              if (decision !== "rejected" && !window.confirm(
+                decision === "approved_with_license"
+                  ? "Approve these updates and place the contractor in Contractors with a license?"
+                  : "Approve these updates and place the contractor in Contractors without a license?"
+              )) return;
               button.disabled = true;
+              actions.querySelectorAll("button").forEach(x => x.disabled = true);
               try {
                 const { error: reviewError } = await db.rpc("review_contractor_change_request", {
                   p_request_id: request.id, p_decision: decision, p_admin_note: note.value.trim() || null
                 });
                 if (reviewError) throw reviewError;
-                message("contractorChangesMessage","Contractor update request " + decision + ".","success");
+                const resultLabel = decision === "rejected" ? "rejected" :
+                  decision === "approved_with_license" ? "approved and routed to Contractors with a license" :
+                  "approved and routed to Contractors without a license";
+                message("contractorChangesMessage","Contractor update request " + resultLabel + ".","success");
                 await loadContractorChangeRequests();
                 await loadPendingContractors();
                 await loadUnlicensedContractors();
               } catch (e) {
                 message("contractorChangesMessage","Could not review request: " + (e.message || "Unknown error"),"error");
-                button.disabled = false;
+                actions.querySelectorAll("button").forEach(x => x.disabled = false);
               }
             });
             actions.append(button);
@@ -1391,7 +1404,7 @@
       const alert = $("contractorChangesAlert");
       if (alert) {
         alert.className = "message error";
-        alert.textContent = "New contractor update request received. Open Admin → Contractor update requests to review it.";
+        alert.textContent = "New contractor update request received. Open Contractor approvals to review it.";
       }
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("ZELPX — contractor update request", {
