@@ -1240,14 +1240,11 @@
     const list = $("leadsList"), query = ($("leadSearch").value || "").trim().toLowerCase();
     const category = $("leadCategoryFilter").value, statusFilter = $("leadStatusFilter").value;
     const selectedNames = new Set(availableServiceCategories.filter(item => selectedContractorCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
-    const specialtyReady = isAdmin || selectedNames.size > 0;
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
-      const licenseEligible = isAdmin || (licenseEligibleLeadCategories && licenseEligibleLeadCategories.has(String(lead.service_category || "").toLowerCase()));
-      const specialtyMatch = isAdmin || (licenseEligible && selectedNames.has(String(lead.service_category || "").toLowerCase()));
       const categoryMatch = !category || lead.service_category === category;
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return specialtyReady && specialtyMatch && statusMatch && categoryMatch && (!query || haystack.includes(query));
+      return statusMatch && categoryMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
@@ -1255,11 +1252,9 @@
       const empty = document.createElement("div"); empty.className = "lead";
       const title = document.createElement("h3"); title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
       const note = document.createElement("p"); note.className = "muted";
-      note.textContent = !isAdmin && !licenseEligibleLeadCategories?.size
-        ? "No leads are shown until your state, profession, and required license or credential have been verified. Unverified or restricted work is hidden."
-        : !isAdmin && selectedContractorCategoryIds.size === 0
-          ? "Your eligible work types are verified, but no service categories are selected for lead matching."
-          : cachedLeads.length ? "No leads match your selected services, verified license eligibility, and current filters." : "New service requests will appear here when they are published.";
+      note.textContent = cachedLeads.length
+        ? "No leads match your current filters."
+        : "New service requests will appear here when they are published.";
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
@@ -1283,8 +1278,21 @@
       const footer = document.createElement("div"); footer.className = "lead-footer";
       const date = document.createElement("span"); date.className = "lead-date"; date.textContent = lead.created_at ? "Posted " + new Date(lead.created_at).toLocaleDateString() : ""; footer.append(date);
       if (lead.status === "available") {
-        const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "View & Buy Lead";
-        buyButton.addEventListener("click", () => buyLead(lead, buyButton)); footer.append(buyButton);
+        const leadCategoryName = String(lead.service_category || "").toLowerCase();
+        const serviceSelected = selectedNames.has(leadCategoryName);
+        const licenseEligible = licenseEligibleLeadCategories?.has(leadCategoryName) === true;
+        const canBuy = !isAdmin && serviceSelected && licenseEligible;
+        if (!isAdmin && !canBuy) {
+          const eligibility = document.createElement("span");
+          eligibility.className = "pill";
+          eligibility.textContent = !serviceSelected ? "Select this service in your profile" : "License eligibility review required";
+          badges.append(eligibility);
+        }
+        const buyButton = document.createElement("button"); buyButton.type = "button";
+        buyButton.textContent = canBuy ? "View & Buy Lead" : "Not eligible to purchase";
+        buyButton.disabled = !canBuy;
+        if (canBuy) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+        footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       details.append(badges, descTitle, desc, footer); card.append(details);
       summary.addEventListener("click", () => {
@@ -1382,8 +1390,7 @@
       console.error("Could not verify profession eligibility:", eligibilityError);
       licenseEligibleLeadCategories = new Set();
     }
-    const available = cachedLeads.filter(lead => lead.status === "available" &&
-      (isAdmin || (licenseEligibleLeadCategories && licenseEligibleLeadCategories.has(String(lead.service_category||"").toLowerCase()))));
+    const available = cachedLeads.filter(lead => lead.status === "available");
     $("availableCount").textContent = String(available.length);
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
