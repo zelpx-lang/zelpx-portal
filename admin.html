@@ -389,7 +389,7 @@
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">Contractors with a license</button>
-        <button type="button" data-admin-page="adminPurchasedLeadsPage">Purchased leads</button>
+        <button type="button" data-admin-page="adminPurchasedLeadsPage">Incoming leads</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -464,11 +464,15 @@
       <section id="adminPurchasedLeadsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-          <h2>Purchased leads</h2>
-          <p>All leads purchased by contractors. Each purchase is shown separately; expand a row to see its details.</p>
-          <div class="actions"><button id="refreshAdminPurchasedLeads" type="button" class="secondary">Refresh purchased leads</button><span id="adminPurchasedLeadsCount" class="muted"></span></div>
-          <div id="adminPurchasedLeadsMessage" class="message hidden" role="status"></div>
-          <div id="adminPurchasedLeadsList"><p class="muted">Open this page to load purchases.</p></div>
+          <h2>Incoming leads</h2>
+          <p>New customer service requests arrive here first. Review the details, verify the service category and location, set the lead price, and publish only after your approval. Published leads become available in the contractor portal.</p>
+          <div class="grid" style="margin:14px 0">
+            <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
+            <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
+          </div>
+          <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh incoming leads</button><span id="requestCount" class="muted"></span></div>
+          <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
+          <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
         </section>
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
@@ -2001,7 +2005,7 @@
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadLicensedContractors();
-    if (pageId === "adminPurchasedLeadsPage") loadAdminPurchasedLeads();
+    if (pageId === "adminPurchasedLeadsPage") loadServiceRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -2019,7 +2023,9 @@
   }
   function wireEvents() {
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
-    $("refreshAdminPurchasedLeads")?.addEventListener("click", loadAdminPurchasedLeads);
+    $("refreshRequestsBtn")?.addEventListener("click", loadServiceRequests);
+    $("requestSearch")?.addEventListener("input", loadServiceRequests);
+    $("requestStatusFilter")?.addEventListener("change", loadServiceRequests);
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
