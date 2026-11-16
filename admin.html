@@ -1074,23 +1074,21 @@
         return;
       }
       contractors.forEach(contractor => {
-        const card = document.createElement("details");
-        card.className = "lead";
-        card.style.marginBottom = "10px";
-        const summary = document.createElement("summary");
-        summary.style.cssText = "cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none;font-weight:700;padding:4px 0;";
+        const card = document.createElement("article");
+        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+        const heading = document.createElement("button");
+        heading.type = "button"; heading.className = "secondary";
+        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
         const title = document.createElement("span");
-        title.textContent = contractor.company_name || "Contractor company";
+        title.textContent = contractor.company_name || contractor.full_name || "Contractor";
         const plus = document.createElement("span");
-        plus.textContent = "+";
-        plus.setAttribute("aria-hidden","true");
-        plus.style.cssText = "font-size:26px;color:var(--muted);flex:0 0 auto;";
-        summary.append(title,plus);
-        card.append(summary);
-        card.addEventListener("toggle",()=>{plus.textContent=card.open?"−":"+";});
+        plus.textContent = "+"; plus.setAttribute("aria-hidden","true");
+        plus.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        heading.append(title,plus); heading.setAttribute("aria-expanded","false");
         const content = document.createElement("div");
-        content.style.paddingTop = "10px";
-        card.append(content);
+        content.className = "hidden"; content.style.cssText = "padding-top:10px;";
+        heading.addEventListener("click",()=>{const open=!content.classList.contains("hidden");content.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));plus.textContent=open?"+":"−";});
+        card.append(heading,content);
         const accessLabel = contractor.verification_status === "verified"
           ? (contractor.has_license === true
               ? "ACCESS ALLOWED — license verified"
