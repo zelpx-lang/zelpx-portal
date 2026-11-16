@@ -213,6 +213,81 @@
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
     .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
     .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
+
+    /* ===== Administrator mobile layout ===== */
+    @media (max-width:700px) {
+      body.admin-mode { overflow-x:hidden; }
+      body.admin-mode .top { gap:10px; align-items:center; }
+      body.admin-mode .top > div:first-child { min-width:0; }
+      body.admin-mode #topUser { max-width:58%; min-width:0; gap:7px; }
+      body.admin-mode #userEmail { max-width:100%; overflow-wrap:anywhere; text-align:right; }
+      body.admin-mode main { width:calc(100% - 16px); margin:10px auto; }
+      body.admin-mode #adminPanel { padding:12px; border-radius:16px; }
+      body.admin-mode #adminPanel > h2 { font-size:20px; }
+      body.admin-mode #adminPanel > p { font-size:13px; margin:4px 0 12px; }
+      body.admin-mode #adminPanel .admin-page-nav {
+        display:grid!important; grid-template-columns:1fr!important; width:100%;
+        gap:7px; padding:0; margin:0 0 14px; background:transparent; border-radius:0;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button {
+        display:flex; align-items:center; justify-content:flex-start; width:100%;
+        min-height:48px; padding:12px 15px; border-radius:13px;
+        background:#fffdfa; border:1px solid var(--line); color:var(--ink);
+        text-align:left; white-space:normal; line-height:1.3; box-shadow:none;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button.active {
+        background:var(--ink); border-color:var(--ink); color:#fff;
+      }
+      body.admin-mode #adminPanel .admin-page > [data-admin-home] {
+        width:100%; justify-content:center; margin:0 0 12px;
+      }
+      body.admin-mode #adminPanel .admin-page > .lead,
+      body.admin-mode #adminPanel .admin-page .lead {
+        min-width:0; padding:13px 12px; margin:10px 0; border-radius:15px;
+      }
+      body.admin-mode #adminPanel .admin-page h2 { font-size:18px; }
+      body.admin-mode #adminPanel .admin-page h3 { font-size:16px; }
+      body.admin-mode #adminPanel .admin-page p { font-size:13px; line-height:1.45; }
+      body.admin-mode #adminPanel .admin-page .actions { display:flex; flex-direction:column; align-items:stretch; width:100%; gap:8px; }
+      body.admin-mode #adminPanel .admin-page .actions > button,
+      body.admin-mode #adminPanel .admin-page .actions > select,
+      body.admin-mode #adminPanel .admin-page .actions > div { width:100%!important; max-width:none!important; }
+      body.admin-mode #adminPanel .admin-page .tabs {
+        display:grid!important; grid-template-columns:1fr!important; width:100%;
+        border-radius:14px; padding:5px; gap:5px;
+      }
+      body.admin-mode #adminPanel .admin-page .tabs button {
+        width:100%; min-width:0; white-space:normal; line-height:1.3;
+      }
+      body.admin-mode #adminPanel .admin-page .grid { grid-template-columns:minmax(0,1fr)!important; }
+      body.admin-mode #adminPanel .admin-page [style*="grid-column"] { grid-column:1/-1!important; }
+      body.admin-mode #adminPanel .admin-page input,
+      body.admin-mode #adminPanel .admin-page select,
+      body.admin-mode #adminPanel .admin-page textarea { width:100%; max-width:100%; min-width:0; }
+      body.admin-mode #adminPanel .admin-page .tablewrap {
+        max-width:100%; overflow-x:auto; border:1px solid var(--line);
+        border-radius:10px; background:#fff; overscroll-behavior-x:contain;
+      }
+      body.admin-mode #adminPanel .admin-page table { min-width:600px; font-size:13px; }
+      body.admin-mode #adminPanel .admin-page th,
+      body.admin-mode #adminPanel .admin-page td { padding:9px 8px; }
+      body.admin-mode #adminPanel .admin-page article,
+      body.admin-mode #adminPanel .admin-page .contractor-list-row { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+      body.admin-mode #adminPanel .admin-page button { white-space:normal; overflow-wrap:anywhere; }
+      body.admin-mode #adminPanel .admin-page .message { font-size:13px; }
+      body.admin-mode #adminPanel .admin-page iframe,
+      body.admin-mode #adminPanel .admin-page img { max-width:100%; }
+      body.admin-mode #adminPanel .admin-page pre,
+      body.admin-mode #adminPanel .admin-page code { white-space:pre-wrap; overflow-wrap:anywhere; }
+    }
+    @media (max-width:380px) {
+      body.admin-mode #topUser { max-width:100%; width:100%; justify-content:space-between; }
+      body.admin-mode .top { align-items:stretch; }
+      body.admin-mode #adminPanel { padding:10px; }
+      body.admin-mode #adminPanel .admin-page .lead { padding:11px 9px; }
+      body.admin-mode #adminPanel .admin-page .admin-page-nav button { font-size:13px; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
@@ -308,11 +383,10 @@
       <h2>Administrator workspace</h2>
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
-        <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
+        <button type="button" data-admin-page="adminApprovalsPage">New contractors</button>
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
-        <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a current license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">ZELPX Fraud Protection</button>
+        <button type="button" data-admin-page="adminBlockedContractorsPage">Blocked contractors</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -329,10 +403,10 @@
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-        <h2>Contractor approvals</h2>
-        <p>New contractor accounts stay blocked until an administrator approves them.</p>
+        <h2>New contractors</h2>
+        <p>All newly registered contractor accounts appear here. Review each registration and choose whether to approve or block the contractor.</p>
         <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh pending contractors</button></div>
+        <div class="actions"><button id="refreshPendingContractorsBtn" type="button" class="secondary">Refresh new contractors</button></div>
         <div id="pendingContractorsMessage" class="message hidden"></div>
         <div id="pendingContractorsList"><p class="muted">Loading pending contractors…</p></div>
       </section>
@@ -342,26 +416,22 @@
         <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh update requests</button></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
-        <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
-      </section>
-        <section class="lead">
-          <h2>Old contractor update forms</h2>
-          <p>Manually delete older submissions for each contractor. The newest submission is kept. Contractor accounts, licenses and current profile information are not changed.</p>
-          <div id="reviewedContractorFormsMessage" class="message hidden" role="status" aria-live="polite"></div>
-          <div class="actions">
-            <button id="deleteReviewedContractorFormsBtn" type="button" class="danger">Delete older submissions</button>
-          </div>
-        </section>
-      </section>
-      <section id="adminUnlicensedPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-        <h2>Contractors without a current license</h2>
-        <p>New and active contractor accounts that indicated they do not have a current license. This list is separate from approval requests.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+        <div class="tabs" role="tablist" aria-label="Contractor update request pages">
+          <button id="companyProfileSlideBtn" type="button" class="active" role="tab" aria-selected="true">1. Company Profile</button>
+          <button id="licenseProfessionSlideBtn" type="button" class="secondary" role="tab" aria-selected="false">2. Licenses &amp; Professions</button>
+        </div>
+        <div id="companyProfileSlide" role="tabpanel">
+          <h3>Company profile changes</h3>
+          <p class="muted">Contact details, company name, phone, address and service area.</p>
+          <div id="companyProfileChangesList"><p class="muted">Loading company profile requests…</p></div>
+          <div class="actions"><button id="companyProfileNextBtn" type="button">Next: Licenses &amp; Professions →</button></div>
+        </div>
+        <div id="licenseProfessionSlide" class="hidden" role="tabpanel">
+          <h3>Licenses, insurance &amp; professions</h3>
+          <p class="muted">Review license documents, insurance and selected work types.</p>
+          <div id="licenseProfessionChangesList"><p class="muted">Loading license and profession requests…</p></div>
+          <div class="actions"><button id="licenseProfessionBackBtn" type="button" class="secondary">← Back to Company Profile</button></div>
+        </div>
       </section>
       </section>
       <section id="adminCreateLeadPage" class="admin-page hidden">
@@ -395,6 +465,19 @@
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
       </section>
+      <section id="adminBlockedContractorsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Blocked contractors</h2>
+          <p>All contractor accounts currently blocked from signing in. You can restore access from this list.</p>
+          <div class="actions">
+            <button id="refreshBlockedContractorsBtn" type="button" class="secondary">Refresh blocked list</button>
+            <span id="blockedContractorsCount" class="muted" aria-live="polite"></span>
+          </div>
+          <div id="blockedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="blockedContractorsList"><p class="muted">Loading blocked contractors…</p></div>
+        </section>
+      </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -422,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const IS_ADMIN_PORTAL = window.location.pathname.endsWith("/admin.html");
+  const IS_ADMIN_PORTAL = window.location.pathname === "/admin.html" || window.location.pathname === "/zelpx-control-7f3a9c2e8b614d50a6c1e9f4b2d7830a";
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const $ = (id) => document.getElementById(id);
@@ -503,7 +586,6 @@
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    // Keep the admin dashboard hidden until the server-backed profile role is checked.
     currentUser = user; hide($("appView")); hide($("topUser")); show($("authView"));
     $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
@@ -519,9 +601,29 @@
       return;
     }
     hide($("authView")); show($("appView")); show($("topUser"));
-    await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
-    if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
+    // A secondary dashboard query must never lock an authenticated administrator out.
+    const runPanel = async (label, task) => {
+      try { await task(); }
+      catch (e) {
+        console.error("ZELPX panel load failed:", label, e);
+        const target = isAdmin ? "adminMessage" : "appMessage";
+        message(target, label + " could not load: " + (e?.message || "Unknown error"), "error");
+      }
+    };
+    await runPanel("Service categories", loadCategories);
+    await runPanel("Leads", loadLeads);
+    await runPanel("Purchases", loadPurchases);
+    if (isAdmin) {
+      await runPanel("Pending contractor approvals", loadPendingContractors);
+      await runPanel("Unlicensed contractors", loadUnlicensedContractors);
+      await runPanel("Admin leads", loadAdminLeads);
+      await runPanel("Service requests", loadServiceRequests);
+      await runPanel("Contractor update requests", loadContractorChangeRequests);
+      await runPanel("Contractor update alerts", startContractorChangeAlerts);
+      if (typeof window.ZELPXAutoSubscribe === "function") {
+        await runPanel("Admin notifications", () => window.ZELPXAutoSubscribe(db, "admin"));
+      }
+    }
   }
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role").eq("id", currentUser.id).maybeSingle();
@@ -840,7 +942,7 @@
     results.textContent = "Loading contractors…";
     try {
       const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_state,has_license")
+        .select("*")
         .order("created_at", { ascending: false }).limit(1000);
       if (error) throw error;
       const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
@@ -860,6 +962,112 @@
       if (count) count.textContent = "";
     }
   }
+  async function loadBlockedContractors() {
+    if (!isAdmin) return;
+    const list = $("blockedContractorsList"), count = $("blockedContractorsCount"), messageEl = $("blockedContractorsMessage");
+    if (!list) return;
+    list.replaceChildren();
+    const loading = document.createElement("p"); loading.className = "muted"; loading.textContent = "Loading blocked contractors…"; list.append(loading);
+    if (messageEl) { messageEl.className = "message hidden"; messageEl.textContent = ""; }
+    try {
+      const { data, error } = await db.functions.invoke("admin-list-blocked-contractors", { body: {} });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
+      list.replaceChildren();
+      if (count) count.textContent = "Blocked: " + contractors.length;
+      if (!contractors.length) {
+        const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "There are no blocked contractor accounts."; list.append(empty); return;
+      }
+      contractors.forEach(contractor => {
+        const card = document.createElement("article");
+        card.className = "contractor-list-row";
+        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+        const title = document.createElement("button");
+        title.type = "button";
+        title.className = "secondary";
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || contractor.full_name || "Contractor";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
+        title.setAttribute("aria-expanded", "false");
+        const panel = document.createElement("div");
+        panel.className = "hidden";
+        panel.style.cssText = "padding-top:10px;";
+        title.addEventListener("click", () => {
+          const expanded = !panel.classList.contains("hidden");
+          panel.classList.toggle("hidden", expanded);
+          title.setAttribute("aria-expanded", String(!expanded));
+          expandIcon.textContent = expanded ? "+" : "−";
+        });
+        card.append(title, panel);
+        const details = [
+          ["Contact name", contractor.full_name],
+          ["Business name", contractor.company_name],
+          ["Email", contractor.email],
+          ["Phone", contractor.phone],
+          ["Approval status", contractor.verification_status],
+          ["Blocked since", contractor.banned_until ? new Date(contractor.banned_until).toLocaleString() : ""]
+        ];
+        details.forEach(([label, value]) => {
+          if (!value) return;
+          const p = document.createElement("p");
+          const strong = document.createElement("strong"); strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value))); panel.append(p);
+        });
+        const status = document.createElement("p");
+        status.className = "message error";
+        status.textContent = "Account access: BLOCKED — contractor cannot sign in.";
+        panel.append(status);
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        actions.style.cssText = "display:flex;justify-content:flex-start;gap:14px;flex-wrap:wrap;width:100%;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+        const unblock = document.createElement("button");
+        unblock.type = "button"; unblock.className = "secondary"; unblock.textContent = "Unblock contractor";
+        unblock.addEventListener("click", async () => {
+          unblock.disabled = true; unblock.textContent = "Unblocking…";
+          try {
+            const { data: result, error: actionError } = await db.functions.invoke("admin-toggle-contractor-access", { body: { contractor_id: contractor.id, action: "unblock" } });
+            if (actionError) throw actionError;
+            if (result?.error) throw new Error(result.error);
+            if (result?.success !== true || result.blocked !== false) throw new Error("The server did not confirm that access was restored.");
+            status.className = "message success"; status.textContent = "Account access: ACTIVE — contractor can sign in.";
+            unblock.textContent = "Unblocked"; unblock.disabled = true;
+            if (count) count.textContent = "Blocked: " + Math.max(0, Number((count.textContent.match(/\\d+/)||["0"])[0]) - 1);
+            window.setTimeout(() => {
+              card.remove();
+              const remaining = list.querySelectorAll("article").length;
+              if (count) count.textContent = "Blocked: " + remaining;
+              if (!remaining) { const empty=document.createElement("p"); empty.className="muted"; empty.textContent="There are no blocked contractor accounts."; list.append(empty); }
+            }, 500);
+          } catch (e) {
+            unblock.disabled = false; unblock.textContent = "Retry unblock";
+            if (messageEl) { messageEl.textContent = "Could not unblock contractor: " + (e.message || "Unknown error"); messageEl.className = "message error"; }
+          }
+        });
+        const close = document.createElement("button");
+        close.type = "button"; close.className = "secondary"; close.textContent = "Close −";
+        close.style.cssText = "color:#e8753b;font-weight:800;";
+        close.addEventListener("click", () => {
+          panel.classList.add("hidden");
+          title.setAttribute("aria-expanded", "false");
+          expandIcon.textContent = "+";
+        });
+        actions.append(unblock, close);
+        panel.append(actions);
+        list.append(card);
+      });
+    } catch (e) {
+      list.replaceChildren();
+      if (count) count.textContent = "";
+      if (messageEl) { messageEl.textContent = "Could not load blocked contractors: " + (e.message || "Unknown error"); messageEl.className = "message error"; }
+    }
+  }
+
   function filterAdminContractorDirectory() {
     const input = $("adminFindContractorsInput"), results = $("adminFindContractorsResults"), count = $("adminFindContractorsCount");
     if (!input || !results) return;
@@ -871,12 +1079,168 @@
     if (!matches.length) { const p=document.createElement("p"); p.className="muted"; p.textContent="No contractors found for this search."; results.append(p); return; }
     matches.forEach(c => {
       const card=document.createElement("article"); card.className="lead";
-      const h=document.createElement("h3"); h.textContent=c.company_name || c.full_name || "Contractor"; card.append(h);
-      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value || "Not provided"));card.append(p);};
-      line("Name",c.full_name); line("Business",c.company_name); line("Email",c.email); line("Phone",c.phone);
-      line("State",c.service_state); line("Account status",c.verification_status); line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
-      results.append(card);
+      card.style.cssText="padding:0;margin:0;border:0;border-bottom:1px solid #eadfd3;border-radius:0;background:transparent;box-shadow:none;";
+      const title=document.createElement("button");
+      title.type="button"; title.className="secondary";
+      title.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 14px;text-align:left;background:transparent;border:0;";
+      const name=document.createElement("span");
+      name.textContent=c.company_name || c.full_name || "Contractor";
+      name.style.cssText="font-size:16px;font-weight:800;";
+      const plus=document.createElement("span");
+      plus.textContent="+"; plus.style.cssText="font-size:22px;font-weight:500;color:#e8753b;line-height:1;";
+      title.append(name,plus); title.setAttribute("aria-expanded","false");
+      const panel=document.createElement("div");
+      panel.className="hidden"; panel.style.cssText="padding:10px 14px 14px;border-top:1px solid #eadfd3;";
+      title.addEventListener("click",()=>{
+        openContractorDetail(c,panel,title);
+        const expanded=title.getAttribute("aria-expanded")==="true";
+        plus.textContent=expanded?"−":"+";
+      });
+      card.append(title,panel); results.append(card);
     });
+  }
+
+  function openContractorDetail(contractor, panel, toggleButton) {
+    if (!panel || !toggleButton) return;
+    const isOpen = !panel.classList.contains("hidden");
+    panel.classList.toggle("hidden", isOpen);
+    toggleButton.setAttribute("aria-expanded", String(!isOpen));
+    if (isOpen || panel.dataset.loaded === "true") return;
+    panel.dataset.loaded = "true";
+    const fields = [
+      ["Contact name", contractor.full_name],
+      ["Business name", contractor.company_name],
+      ["Email", contractor.email],
+      ["Phone", contractor.phone],
+      ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ")],
+      ["Service radius", contractor.service_radius_miles ? contractor.service_radius_miles + " miles" : ""],
+      ["Work categories", Array.isArray(contractor.service_categories) ? contractor.service_categories.join(", ") : (Array.isArray(contractor.categories) ? contractor.categories.join(", ") : contractor.service_categories)],
+      ["Current approval status", contractor.verification_status],
+      ["Has current license", contractor.has_license === true ? "Yes" : contractor.has_license === false ? "No" : "Not specified"],
+      ["License number", contractor.license_number],
+      ["License state", contractor.license_state],
+      ["License type", contractor.license_type],
+      ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : ""]
+    ];
+    fields.forEach(([label, value]) => {
+      if (value === null || value === undefined || value === "") return;
+      const p = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = label + ": ";
+      p.append(strong, document.createTextNode(String(value)));
+      panel.append(p);
+    });
+    const accessControls = document.createElement("div");
+    accessControls.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0;";
+    const accessStatus = document.createElement("p");
+    accessStatus.className = "muted";
+    accessStatus.style.cssText = "flex-basis:100%;margin:0 0 2px;";
+    accessStatus.textContent = "Checking account access…";
+    const accessButton = document.createElement("button");
+    accessButton.type = "button";
+    accessButton.className = "danger";
+    accessButton.style.cssText = "flex:1 1 180px;min-width:0;margin:0;";
+    accessButton.disabled = true;
+    accessButton.textContent = "Loading…";
+    accessControls.append(accessStatus, accessButton);
+    panel.append(accessControls);
+
+    const renderAccessState = (blocked) => {
+      accessStatus.textContent = blocked
+        ? "Account access: BLOCKED — contractor cannot sign in."
+        : "Account access: ACTIVE — contractor can sign in if approved.";
+      accessStatus.className = "message " + (blocked ? "error" : "success");
+      accessButton.textContent = blocked ? "Unblock contractor" : "Block contractor";
+      accessButton.className = blocked ? "secondary" : "danger";
+      accessButton.style.cssText = blocked
+        ? "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;color:#c45b28;background:#fffdfa;border:1px solid #e7dfd5;"
+        : "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;color:#a83225;background:#fde9e7;border:1px solid #f3c7c2;";
+      accessButton.disabled = false;
+      accessButton.onclick = () => {
+        const nextAction = blocked ? "unblock" : "block";
+        updateAccessControl(nextAction);
+      };
+    };
+
+    const updateAccessControl = async (action = "status") => {
+      accessButton.disabled = true;
+      if (action !== "status") accessButton.textContent = action === "block" ? "Blocking…" : "Unblocking…";
+      else accessButton.textContent = "Checking…";
+      try {
+        const { data, error } = await db.functions.invoke("admin-toggle-contractor-access", {
+          body: { contractor_id: contractor.id, action }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (data?.success !== true || typeof data.blocked !== "boolean") {
+          throw new Error("The server did not confirm the account access status.");
+        }
+        // Render immediately from the confirmed mutation response.
+        renderAccessState(data.blocked);
+
+        // Then read the persisted state again so the label always reflects Supabase.
+        if (action !== "status") {
+          const { data: fresh, error: refreshError } = await db.functions.invoke("admin-toggle-contractor-access", {
+            body: { contractor_id: contractor.id, action: "status" }
+          });
+          if (refreshError) throw refreshError;
+          if (fresh?.error) throw new Error(fresh.error);
+          if (fresh?.success !== true || typeof fresh.blocked !== "boolean") {
+            throw new Error("Could not verify the saved account access status.");
+          }
+          renderAccessState(fresh.blocked);
+        }
+      } catch (e) {
+        accessStatus.textContent = "Could not check or change account access: " + (e.message || "Unknown error");
+        accessStatus.className = "message error";
+        accessButton.textContent = "Retry access check";
+        accessButton.className = "secondary";
+        accessButton.disabled = false;
+        accessButton.onclick = () => updateAccessControl("status");
+      }
+    };
+    updateAccessControl();
+
+    if (contractor.license_document_path) {
+      const docButton = document.createElement("button");
+      docButton.type = "button";
+      docButton.className = "secondary";
+      docButton.textContent = "View license photo / document";
+      docButton.addEventListener("click", async () => {
+        docButton.disabled = true;
+        try {
+          const { data, error } = await db.storage.from("contractor-licenses").createSignedUrl(contractor.license_document_path, 300);
+          if (error) throw error;
+          if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
+          window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+        } catch (e) {
+          message("pendingContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
+        } finally { docButton.disabled = false; }
+      });
+      panel.append(docButton);
+    } else {
+      const noDoc = document.createElement("p");
+      noDoc.className = "muted";
+      noDoc.textContent = "No license photo or document uploaded.";
+      panel.append(noDoc);
+    }
+
+    const closeRow = document.createElement("div");
+    closeRow.style.cssText = "display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:16px;flex-wrap:nowrap;width:100%;margin:14px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+    accessButton.style.cssText = "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;font-size:14px;white-space:normal;";
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "secondary";
+    closeButton.textContent = "Close −";
+    closeButton.style.cssText = "flex:0 1 200px;width:calc(50% - 8px);max-width:200px;min-width:0;margin:0;padding:12px 14px;color:#e8753b;font-weight:800;font-size:14px;white-space:normal;";
+    closeButton.addEventListener("click", () => {
+      panel.classList.add("hidden");
+      toggleButton.setAttribute("aria-expanded", "false");
+      const icon = toggleButton.querySelector("span:last-child");
+      if (icon) icon.textContent = "+";
+    });
+    closeRow.append(accessButton, closeButton);
+    panel.append(closeRow);
   }
 
   async function loadPendingContractors() {
@@ -895,22 +1259,42 @@
         alertBox.classList.toggle("hidden", pendingCount === 0);
         alertBox.className = pendingCount ? "message error" : "message hidden";
         alertBox.textContent = pendingCount
-          ? `Contractors for license review: ${pendingCount}. Without a current license: ${withoutLicense}. Check each account and record your decision.`
+          ? `New contractor registrations awaiting your decision: ${pendingCount}. Without a current license: ${withoutLicense}. Review each registration and choose Approve or Block.`
           : "";
       }
       if (!contractors?.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = "No contractor accounts found for license review.";
+        empty.textContent = "No new contractor registrations are waiting for review.";
         list.append(empty);
         return;
       }
       contractors.forEach(contractor => {
         const card = document.createElement("article");
-        card.className = "lead";
-        const title = document.createElement("h3");
-        title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
+        card.className = "contractor-list-row";
+        card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+        const title = document.createElement("button");
+        title.type = "button";
+        title.className = "secondary";
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || "Contractor company";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
+        title.setAttribute("aria-expanded", "false");
+        const detailPanel = document.createElement("div");
+        detailPanel.className = "hidden";
+        detailPanel.style.cssText = "padding-top:10px;";
+        title.addEventListener("click", () => {
+          const expanded = !detailPanel.classList.contains("hidden");
+          detailPanel.classList.toggle("hidden", expanded);
+          title.setAttribute("aria-expanded", String(!expanded));
+          expandIcon.textContent = expanded ? "+" : "−";
+        });
+        card.append(title, detailPanel);
         const accessLabel = contractor.verification_status === "verified"
           ? (contractor.has_license === true
               ? "ACCESS ALLOWED — license verified"
@@ -930,11 +1314,13 @@
           const p = document.createElement("p");
           const strong = document.createElement("strong");
           strong.textContent = label + ": ";
+          p.style.cssText = "display:inline-block;margin:3px 16px 3px 0;font-size:13px;line-height:1.4;";
           p.append(strong, document.createTextNode(String(value)));
-          card.append(p);
+          detailPanel.append(p);
         });
         const actions = document.createElement("div");
         actions.className = "actions";
+        actions.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;";
         if (contractor.license_document_path) {
           const viewDocument = document.createElement("button");
           viewDocument.type = "button";
@@ -964,8 +1350,7 @@
         }
         const approve = document.createElement("button");
         approve.type = "button";
-        approve.textContent = "Approve contractor";
-        approve.textContent = "Review license";
+        approve.textContent = "Review contractor";
         approve.addEventListener("click", () => {
           if (actions.querySelector("select[data-contractor-decision]")) return;
           const decision = document.createElement("select");
@@ -985,7 +1370,7 @@
           waiveOption.textContent = "Allow contractor without license verification";
           const noOption = document.createElement("option");
           noOption.value = "reject";
-          noOption.textContent = "No — license not verified, reject registration";
+          noOption.textContent = "Block contractor — move to Blocked contractors";
           decision.append(placeholder, yesOption, waiveOption, noOption);
           actions.append(decision);
           decision.focus();
@@ -1001,12 +1386,22 @@
               });
               if (reviewError) throw reviewError;
               if (data?.error) throw new Error(data.error);
+              if (choice === "reject") {
+                const { data: blockResult, error: blockError } = await db.functions.invoke("admin-toggle-contractor-access", {
+                  body: { contractor_id: contractor.id, action: "block" }
+                });
+                if (blockError) throw blockError;
+                if (blockResult?.error) throw new Error(blockResult.error);
+                if (blockResult?.success !== true || blockResult.blocked !== true) {
+                  throw new Error("The server did not confirm that the contractor was added to the blocked list.");
+                }
+              }
               const approved = choice !== "reject";
               const statusText = choice === "approve_without_license"
                 ? "Contractor allowed without license verification. They can now sign in and purchase leads."
                 : approved
                   ? "Contractor approved after license verification. They can now sign in and purchase leads."
-                  : "Contractor rejected. Their account remains blocked.";
+                  : "Contractor blocked. Their account is now in Blocked contractors.";
               const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
               message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
               await loadPendingContractors();
@@ -1020,11 +1415,11 @@
           });
         });
         actions.append(approve);
-        card.append(actions);
+        detailPanel.append(actions);
         list.append(card);
       });
     } catch (e) {
-      list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
+      list.textContent = "Could not load new contractor registrations: " + (e.message || "Unknown error");
       message("pendingContractorsMessage", "Administrator approval access is required. " + (e.message || ""), "error");
     }
   }
@@ -1078,11 +1473,27 @@
     }
   }
 
+  function showContractorChangeSlide(which) {
+    const company = which === "company";
+    $("companyProfileSlide").classList.toggle("hidden", !company);
+    $("licenseProfessionSlide").classList.toggle("hidden", company);
+    $("companyProfileSlideBtn").classList.toggle("active", company);
+    $("licenseProfessionSlideBtn").classList.toggle("active", !company);
+    $("companyProfileSlideBtn").setAttribute("aria-selected", company ? "true" : "false");
+    $("licenseProfessionSlideBtn").setAttribute("aria-selected", company ? "false" : "true");
+  }
+  $("companyProfileSlideBtn")?.addEventListener("click", () => showContractorChangeSlide("company"));
+  $("licenseProfessionSlideBtn")?.addEventListener("click", () => showContractorChangeSlide("licenses"));
+  $("companyProfileNextBtn")?.addEventListener("click", () => showContractorChangeSlide("licenses"));
+  $("licenseProfessionBackBtn")?.addEventListener("click", () => showContractorChangeSlide("company"));
+
   async function loadContractorChangeRequests() {
     if (!isAdmin) return;
-    const list = $("contractorChangesList");
-    if (!list) return;
-    list.textContent = "Loading contractor update requests…";
+    const companyList = $("companyProfileChangesList");
+    const licenseList = $("licenseProfessionChangesList");
+    if (!companyList || !licenseList) return;
+    companyList.textContent = "Loading company profile requests…";
+    licenseList.textContent = "Loading license and profession requests…";
     clearMessage("contractorChangesMessage");
     try {
       const { data: rows, error } = await db.from("contractor_change_requests")
@@ -1127,7 +1538,8 @@
       if (categoriesResult.error) throw categoriesResult.error;
       const professionNames = new Map((professionsResult.data || []).map(x => [x.id, x.profession_name]));
       const categoryNames = new Map((categoriesResult.data || []).map(x => [x.id, x.name]));
-      list.replaceChildren();
+      companyList.replaceChildren();
+      licenseList.replaceChildren();
       const pendingCount = requests.filter(r => r.status === "pending").length;
       const alert = $("contractorChangesAlert");
       if (alert) {
@@ -1135,8 +1547,11 @@
         alert.textContent = pendingCount ? pendingCount + " contractor update request(s) are waiting for review." : "";
       }
       if (!requests.length) {
-        const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = "No contractor update requests have been submitted yet."; list.append(empty); return;
+        const emptyCompany = document.createElement("p"); emptyCompany.className = "muted";
+        emptyCompany.textContent = "No company profile requests.";
+        const emptyLicenses = document.createElement("p"); emptyLicenses.className = "muted";
+        emptyLicenses.textContent = "No license or profession requests.";
+        companyList.append(emptyCompany); licenseList.append(emptyLicenses); return;
       }
       requests.forEach(request => {
         const company = contractors.get(request.contractor_id) || {};
@@ -1288,10 +1703,21 @@
           });
           const actions = document.createElement("div"); actions.className = "actions"; actions.append(remove); card.append(actions);
         }
-        list.append(card);
+        const targetList = request.request_type === "company_profile" ? companyList : licenseList;
+        targetList.append(card);
       });
+      if (!companyList.children.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = "No company profile requests."; companyList.append(empty);
+      }
+      if (!licenseList.children.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = "No license, insurance or profession requests."; licenseList.append(empty);
+      }
     } catch (e) {
-      list.textContent = "Could not load contractor update requests: " + (e.message || "Unknown error");
+      const errorText = "Could not load contractor update requests: " + (e.message || "Unknown error");
+      companyList.textContent = errorText;
+      licenseList.textContent = errorText;
       message("contractorChangesMessage","Check administrator access to contractor_change_requests. " + (e.message || ""),"error");
     }
   }
@@ -1366,9 +1792,27 @@
       contractors.forEach(contractor => {
         const card = document.createElement("article");
         card.className = "lead";
-        const title = document.createElement("h3");
-        title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
+        const title = document.createElement("button");
+        title.type = "button";
+        title.className = "secondary";
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:12px 14px;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || "Contractor company";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
+        title.setAttribute("aria-expanded", "false");
+        const detailPanel = document.createElement("div");
+        detailPanel.className = "hidden";
+        detailPanel.style.cssText = "padding:10px 14px 8px;border-top:1px solid #eadfd3;margin-top:0;";
+        title.addEventListener("click", () => {
+          openContractorDetail(contractor, detailPanel, title);
+          const expanded = title.getAttribute("aria-expanded") === "true";
+          expandIcon.textContent = expanded ? "−" : "+";
+        });
+        card.append(title, detailPanel);
         const details = [
           ["Email", contractor.email || "Not provided"],
           ["Status", contractor.verification_status || "Unknown"],
@@ -1669,8 +2113,8 @@
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
     if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
-    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadServiceRequests();
+    if (pageId === "adminBlockedContractorsPage") loadBlockedContractors();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -1704,7 +2148,8 @@
     $("requestStatusFilter").addEventListener("change", loadServiceRequests);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn").addEventListener("click", deleteReviewedContractorForms); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+    $("refreshBlockedContractorsBtn").addEventListener("click", loadBlockedContractors);
+    $("refreshContractorChangesBtn").addEventListener("click", loadContractorChangeRequests); $("refreshPendingContractorsBtn").addEventListener("click", loadPendingContractors); $("deleteReviewedContractorFormsBtn")?.addEventListener("click", deleteReviewedContractorForms); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
