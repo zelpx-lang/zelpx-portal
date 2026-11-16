@@ -1051,10 +1051,7 @@
       accessButton.disabled = false;
       accessButton.onclick = () => {
         const nextAction = blocked ? "unblock" : "block";
-        const confirmation = blocked
-          ? "Unblock this contractor's login account?"
-          : "Block this contractor's login account? They will be signed out and will not be able to sign in until unblocked.";
-        if (window.confirm(confirmation)) updateAccessControl(nextAction);
+        updateAccessControl(nextAction);
       };
     };
 
