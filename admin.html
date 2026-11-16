@@ -1027,6 +1027,55 @@
     access.className = "message " + (contractor.verification_status === "verified" ? "success" : "error");
     access.textContent = contractor.verification_status === "verified" ? "Lead access: ALLOWED" : "Lead access: BLOCKED until approved";
     panel.append(access);
+
+    const accessControls = document.createElement("div");
+    accessControls.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:12px 0;";
+    const accessStatus = document.createElement("p");
+    accessStatus.className = "muted";
+    accessStatus.textContent = "Checking account access…";
+    const accessButton = document.createElement("button");
+    accessButton.type = "button";
+    accessButton.className = "danger";
+    accessButton.disabled = true;
+    accessButton.textContent = "Loading…";
+    accessControls.append(accessStatus, accessButton);
+    panel.append(accessControls);
+
+    const updateAccessControl = async (action = "status") => {
+      accessButton.disabled = true;
+      if (action !== "status") accessButton.textContent = action === "block" ? "Blocking…" : "Unblocking…";
+      try {
+        const { data, error } = await db.functions.invoke("admin-toggle-contractor-access", {
+          body: { contractor_id: contractor.id, action }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        const blocked = data.blocked === true;
+        accessStatus.textContent = blocked
+          ? "Account access: BLOCKED — contractor cannot sign in."
+          : "Account access: ACTIVE — contractor can sign in if approved.";
+        accessStatus.className = "message " + (blocked ? "error" : "success");
+        accessButton.textContent = blocked ? "Unblock contractor" : "Block contractor";
+        accessButton.className = blocked ? "secondary" : "danger";
+        accessButton.disabled = false;
+        accessButton.onclick = () => {
+          const nextAction = blocked ? "unblock" : "block";
+          const confirmation = blocked
+            ? "Unblock this contractor's login account?"
+            : "Block this contractor's login account? They will be signed out and will not be able to sign in until unblocked.";
+          if (window.confirm(confirmation)) updateAccessControl(nextAction);
+        };
+      } catch (e) {
+        accessStatus.textContent = "Could not check or change account access: " + (e.message || "Unknown error");
+        accessStatus.className = "message error";
+        accessButton.textContent = "Retry access check";
+        accessButton.className = "secondary";
+        accessButton.disabled = false;
+        accessButton.onclick = () => updateAccessControl("status");
+      }
+    };
+    updateAccessControl();
+
     if (contractor.license_document_path) {
       const docButton = document.createElement("button");
       docButton.type = "button";
