@@ -944,12 +944,33 @@
     if (count) count.textContent = "Found: " + matches.length;
     if (!matches.length) { const p=document.createElement("p"); p.className="muted"; p.textContent="No contractors found for this search."; results.append(p); return; }
     matches.forEach(c => {
-      const card=document.createElement("article"); card.className="lead";
-      const h=document.createElement("h3"); h.textContent=c.company_name || c.full_name || "Contractor"; card.append(h);
-      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value || "Not provided"));card.append(p);};
-      line("Name",c.full_name); line("Business",c.company_name); line("Email",c.email); line("Phone",c.phone);
-      line("State",c.service_state); line("Account status",c.verification_status); line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
+      const card=document.createElement("article");
+      card.style.cssText="display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
+      const heading=document.createElement("button");
+      heading.type="button"; heading.className="secondary";
+      heading.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+      const name=document.createElement("span"); name.textContent=c.company_name || c.full_name || "Contractor";
+      const icon=document.createElement("span"); icon.textContent="+"; icon.setAttribute("aria-hidden","true"); icon.style.cssText="font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+      heading.append(name,icon); heading.setAttribute("aria-expanded","false");
+      const panel=document.createElement("div"); panel.className="hidden"; panel.style.cssText="padding-top:10px;";
+      heading.addEventListener("click",()=>{const open=!panel.classList.contains("hidden");panel.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));icon.textContent=open?"+":"−";});
+      card.append(heading,panel);
+      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value||"Not provided"));panel.append(p);};
+      line("Contact name",c.full_name); line("Business name",c.company_name); line("Email",c.email); line("Phone",c.phone); line("State",c.service_state);
+      line("Current approval status",c.verification_status);
+      line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
+      const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
+      const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
+      const accessButton=document.createElement("button"); accessButton.type="button"; accessButton.className="secondary"; accessButton.disabled=true; accessButton.textContent="Checking…";
+      const close=document.createElement("button"); close.type="button"; close.className="secondary"; close.textContent="Close −"; close.style.cssText="color:#e8753b;font-weight:800;";
+      close.addEventListener("click",()=>{panel.classList.add("hidden");heading.setAttribute("aria-expanded","false");icon.textContent="+";});
+      actions.append(accessButton,close); panel.append(actions);
+      let blocked=null, busy=false;
+      const setAccessUI=(isBlocked)=>{blocked=isBlocked;status.className=isBlocked?"message error":"message success";status.textContent=isBlocked?"Account access: BLOCKED — contractor cannot sign in.":"Account access: ACTIVE — contractor can sign in if approved.";accessButton.disabled=false;accessButton.textContent=isBlocked?"Unblock contractor":"Block contractor";};
+      const checkAccess=async()=>{try{const {data,error}=await db.functions.invoke("admin-toggle-contractor-access",{body:{contractor_id:c.id,action:"status"}});if(error)throw error;if(data?.error)throw new Error(data.error);if(data?.success!==true||typeof data.blocked!=="boolean")throw new Error("Could not verify account access.");setAccessUI(data.blocked);}catch(e){status.className="message error";status.textContent="Could not check account access: "+(e.message||"Unknown error");accessButton.textContent="Retry access check";accessButton.disabled=false;blocked=null;}};
+      accessButton.addEventListener("click",async()=>{if(busy)return;if(blocked===null){accessButton.disabled=true;accessButton.textContent="Checking…";await checkAccess();return;}busy=true;const action=blocked?"unblock":"block";accessButton.disabled=true;accessButton.textContent=action==="block"?"Blocking…":"Unblocking…";try{const {data,error}=await db.functions.invoke("admin-toggle-contractor-access",{body:{contractor_id:c.id,action}});if(error)throw error;if(data?.error)throw new Error(data.error);if(data?.success!==true||data.blocked!==(action==="block"))throw new Error("The server did not confirm the access change.");setAccessUI(data.blocked);}catch(e){status.className="message error";status.textContent="Could not change account access: "+(e.message||"Unknown error");accessButton.textContent=blocked?"Retry unblock":"Retry block";accessButton.disabled=false;}finally{busy=false;}});
       results.append(card);
+      checkAccess();
     });
   }
 
