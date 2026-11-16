@@ -1332,8 +1332,17 @@
           });
           const actions = document.createElement("div"); actions.className = "actions"; actions.append(remove); card.append(actions);
         }
-        list.append(card);
+        const targetList = request.request_type === "company_profile" ? companyList : licenseList;
+        targetList.append(card);
       });
+      if (!companyList.children.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = "No company profile requests."; companyList.append(empty);
+      }
+      if (!licenseList.children.length) {
+        const empty = document.createElement("p"); empty.className = "muted";
+        empty.textContent = "No license, insurance or profession requests."; licenseList.append(empty);
+      }
     } catch (e) {
       const errorText = "Could not load contractor update requests: " + (e.message || "Unknown error");
       companyList.textContent = errorText;
