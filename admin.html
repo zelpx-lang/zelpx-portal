@@ -129,6 +129,7 @@
     .tabs button.active { background:#fff; color:var(--ink); box-shadow:0 2px 8px #3b2a1a22; }
     .lead { border-radius:22px; border:1px solid var(--line); background:#fff; padding:22px; box-shadow:0 12px 30px -22px #3b2a1a55; position:relative; overflow:hidden; }
     .lead::before { content:""; position:absolute; left:0; top:22px; bottom:22px; width:4px; border-radius:0 4px 4px 0; background:var(--blue); }
+    #newContractorRegistrationsSection::before { display:none; }
     .lead:hover { border-color:#e0cdb8; box-shadow:0 20px 40px -24px #3b2a1a66; }
     .lead h3 { font-size:19px; margin-bottom:4px; }
     .leadhead { align-items:center; }
@@ -403,7 +404,7 @@
       </section>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
+        <section id="newContractorRegistrationsSection" class="lead">
           <h2>New contractor registrations</h2>
           <p>Review new contractor applications and approve with a license, approve without a license, or reject.</p>
           <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
