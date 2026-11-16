@@ -389,7 +389,7 @@
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">Contractors with a license</button>
-        <button type="button" data-admin-page="adminPurchasedLeadsPage">Incoming leads</button>
+        <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -461,7 +461,7 @@
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
       </section>
-      <section id="adminPurchasedLeadsPage" class="admin-page hidden">
+      <section id="adminIncomingLeadsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
           <h2>Incoming leads</h2>
@@ -2005,7 +2005,7 @@
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") loadLicensedContractors();
-    if (pageId === "adminPurchasedLeadsPage") loadServiceRequests();
+    if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -2022,7 +2022,13 @@
     hide($("appView")); hide($("topUser")); show($("authView"));
   }
   function wireEvents() {
-    document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.addEventListener("click", () => showAdminPage(button.dataset.adminPage)));
+    // Delegate admin navigation so page buttons remain responsive.
+    $("adminPanel")?.addEventListener("click", event => {
+      const button = event.target.closest("[data-admin-page]");
+      if (!button || !event.currentTarget.contains(button)) return;
+      event.preventDefault();
+      showAdminPage(button.dataset.adminPage);
+    });
     $("refreshRequestsBtn")?.addEventListener("click", loadServiceRequests);
     $("requestSearch")?.addEventListener("input", loadServiceRequests);
     $("requestStatusFilter")?.addEventListener("change", loadServiceRequests);
