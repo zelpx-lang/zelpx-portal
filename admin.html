@@ -1023,11 +1023,6 @@
       p.append(strong, document.createTextNode(String(value)));
       panel.append(p);
     });
-    const access = document.createElement("p");
-    access.className = "message " + (contractor.verification_status === "verified" ? "success" : "error");
-    access.textContent = contractor.verification_status === "verified" ? "Lead access: ALLOWED" : "Lead access: BLOCKED until approved";
-    panel.append(access);
-
     const accessControls = document.createElement("div");
     accessControls.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0;";
     const accessStatus = document.createElement("p");
