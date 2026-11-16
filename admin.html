@@ -1007,10 +1007,28 @@
         const card = document.createElement("article");
         card.className = "contractor-list-row";
         card.style.cssText = "display:block;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-left:3px solid #f36b38;border-radius:0;background:transparent;box-shadow:none;";
-        const title = document.createElement("h3");
-        title.style.cssText = "margin:0 0 6px;font-size:16px;";
-        title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
+        const title = document.createElement("button");
+        title.type = "button";
+        title.className = "secondary";
+        title.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+        const companyName = document.createElement("span");
+        companyName.textContent = contractor.company_name || "Contractor company";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        title.append(companyName, expandIcon);
+        title.setAttribute("aria-expanded", "false");
+        const detailPanel = document.createElement("div");
+        detailPanel.className = "hidden";
+        detailPanel.style.cssText = "padding-top:10px;";
+        title.addEventListener("click", () => {
+          const expanded = !detailPanel.classList.contains("hidden");
+          detailPanel.classList.toggle("hidden", expanded);
+          title.setAttribute("aria-expanded", String(!expanded));
+          expandIcon.textContent = expanded ? "+" : "−";
+        });
+        card.append(title, detailPanel);
         const accessLabel = contractor.verification_status === "verified"
           ? (contractor.has_license === true
               ? "ACCESS ALLOWED — license verified"
@@ -1032,7 +1050,7 @@
           strong.textContent = label + ": ";
           p.style.cssText = "display:inline-block;margin:3px 16px 3px 0;font-size:13px;line-height:1.4;";
           p.append(strong, document.createTextNode(String(value)));
-          card.append(p);
+          detailPanel.append(p);
         });
         const actions = document.createElement("div");
         actions.className = "actions";
@@ -1122,7 +1140,7 @@
           });
         });
         actions.append(approve);
-        card.append(actions);
+        detailPanel.append(actions);
         list.append(card);
       });
     } catch (e) {
