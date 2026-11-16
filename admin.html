@@ -1510,7 +1510,7 @@
   }
 
   let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null, contractorRegistrationPoll = null;
-  let serviceRequestsChannel = null, serviceRequestsPoll = null;
+  let serviceRequestsChannel = null, serviceRequestsPoll = null, serviceRequestsEditing = false;
   const seenContractorChangeIds = new Set();
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
@@ -1522,7 +1522,7 @@
     if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
     serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},() => {
-        if (isAdmin && currentUser) loadServiceRequests();
+        if (isAdmin && currentUser && !serviceRequestsEditing) loadServiceRequests();
       })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
@@ -1531,7 +1531,7 @@
     serviceRequestsPoll = setInterval(() => {
       if (!isAdmin || !currentUser) return;
       const page = $("adminIncomingLeadsPage");
-      if (page && !page.classList.contains("hidden")) loadServiceRequests();
+      if (page && !page.classList.contains("hidden") && !serviceRequestsEditing) loadServiceRequests();
     }, 10000);
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
@@ -1920,6 +1920,7 @@
               });
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
+              serviceRequestsEditing = false;
               message("serviceRequestsMessage", "Request published successfully. Lead ID: " + leadId, "success");
               await loadServiceRequests(); await loadAdminLeads(); await loadLeads();
             } catch (e) {
@@ -2076,7 +2077,10 @@
       event.preventDefault();
       showAdminPage(button.dataset.adminPage);
     });
-    $("refreshRequestsBtn")?.addEventListener("click", loadServiceRequests);
+    $("adminIncomingLeadsPage")?.addEventListener("focusin", event => {
+      if (event.target.matches("input,select,textarea")) serviceRequestsEditing = true;
+    });
+    $("refreshRequestsBtn")?.addEventListener("click", () => { serviceRequestsEditing = false; loadServiceRequests(); });
     $("requestSearch")?.addEventListener("input", loadServiceRequests);
     $("requestStatusFilter")?.addEventListener("change", loadServiceRequests);
     document.querySelectorAll("#adminPanel [data-admin-home]").forEach(button => button.addEventListener("click", () => {
