@@ -213,6 +213,81 @@
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
     .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
     .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
+
+    /* ===== Administrator mobile layout ===== */
+    @media (max-width:700px) {
+      body.admin-mode { overflow-x:hidden; }
+      body.admin-mode .top { gap:10px; align-items:center; }
+      body.admin-mode .top > div:first-child { min-width:0; }
+      body.admin-mode #topUser { max-width:58%; min-width:0; gap:7px; }
+      body.admin-mode #userEmail { max-width:100%; overflow-wrap:anywhere; text-align:right; }
+      body.admin-mode main { width:calc(100% - 16px); margin:10px auto; }
+      body.admin-mode #adminPanel { padding:12px; border-radius:16px; }
+      body.admin-mode #adminPanel > h2 { font-size:20px; }
+      body.admin-mode #adminPanel > p { font-size:13px; margin:4px 0 12px; }
+      body.admin-mode #adminPanel .admin-page-nav {
+        display:grid!important; grid-template-columns:1fr!important; width:100%;
+        gap:7px; padding:0; margin:0 0 14px; background:transparent; border-radius:0;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button {
+        display:flex; align-items:center; justify-content:flex-start; width:100%;
+        min-height:48px; padding:12px 15px; border-radius:13px;
+        background:#fffdfa; border:1px solid var(--line); color:var(--ink);
+        text-align:left; white-space:normal; line-height:1.3; box-shadow:none;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button.active {
+        background:var(--ink); border-color:var(--ink); color:#fff;
+      }
+      body.admin-mode #adminPanel .admin-page > [data-admin-home] {
+        width:100%; justify-content:center; margin:0 0 12px;
+      }
+      body.admin-mode #adminPanel .admin-page > .lead,
+      body.admin-mode #adminPanel .admin-page .lead {
+        min-width:0; padding:13px 12px; margin:10px 0; border-radius:15px;
+      }
+      body.admin-mode #adminPanel .admin-page h2 { font-size:18px; }
+      body.admin-mode #adminPanel .admin-page h3 { font-size:16px; }
+      body.admin-mode #adminPanel .admin-page p { font-size:13px; line-height:1.45; }
+      body.admin-mode #adminPanel .admin-page .actions { display:flex; flex-direction:column; align-items:stretch; width:100%; gap:8px; }
+      body.admin-mode #adminPanel .admin-page .actions > button,
+      body.admin-mode #adminPanel .admin-page .actions > select,
+      body.admin-mode #adminPanel .admin-page .actions > div { width:100%!important; max-width:none!important; }
+      body.admin-mode #adminPanel .admin-page .tabs {
+        display:grid!important; grid-template-columns:1fr!important; width:100%;
+        border-radius:14px; padding:5px; gap:5px;
+      }
+      body.admin-mode #adminPanel .admin-page .tabs button {
+        width:100%; min-width:0; white-space:normal; line-height:1.3;
+      }
+      body.admin-mode #adminPanel .admin-page .grid { grid-template-columns:minmax(0,1fr)!important; }
+      body.admin-mode #adminPanel .admin-page [style*="grid-column"] { grid-column:1/-1!important; }
+      body.admin-mode #adminPanel .admin-page input,
+      body.admin-mode #adminPanel .admin-page select,
+      body.admin-mode #adminPanel .admin-page textarea { width:100%; max-width:100%; min-width:0; }
+      body.admin-mode #adminPanel .admin-page .tablewrap {
+        max-width:100%; overflow-x:auto; border:1px solid var(--line);
+        border-radius:10px; background:#fff; overscroll-behavior-x:contain;
+      }
+      body.admin-mode #adminPanel .admin-page table { min-width:600px; font-size:13px; }
+      body.admin-mode #adminPanel .admin-page th,
+      body.admin-mode #adminPanel .admin-page td { padding:9px 8px; }
+      body.admin-mode #adminPanel .admin-page article,
+      body.admin-mode #adminPanel .admin-page .contractor-list-row { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+      body.admin-mode #adminPanel .admin-page button { white-space:normal; overflow-wrap:anywhere; }
+      body.admin-mode #adminPanel .admin-page .message { font-size:13px; }
+      body.admin-mode #adminPanel .admin-page iframe,
+      body.admin-mode #adminPanel .admin-page img { max-width:100%; }
+      body.admin-mode #adminPanel .admin-page pre,
+      body.admin-mode #adminPanel .admin-page code { white-space:pre-wrap; overflow-wrap:anywhere; }
+    }
+    @media (max-width:380px) {
+      body.admin-mode #topUser { max-width:100%; width:100%; justify-content:space-between; }
+      body.admin-mode .top { align-items:stretch; }
+      body.admin-mode #adminPanel { padding:10px; }
+      body.admin-mode #adminPanel .admin-page .lead { padding:11px 9px; }
+      body.admin-mode #adminPanel .admin-page .admin-page-nav button { font-size:13px; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
