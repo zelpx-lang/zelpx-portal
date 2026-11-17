@@ -414,7 +414,7 @@
         <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><select id="profileServiceState" autocomplete="address-level1"><option value="">Select state</option></select></div>
-        <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Enter or update your ZIP code, wait for the lookup, then save.</small></div>
+        <div><label for="profileServiceRadius">Service radius</label><div style="display:flex;gap:10px;align-items:stretch"><select id="profileServiceRadius" style="flex:1;min-width:0"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><button id="saveServiceRadiusBtn" type="button" class="secondary" style="white-space:nowrap;flex:0 0 auto">Save radius</button></div><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Save the radius separately without resubmitting your company profile.</small><div id="serviceRadiusSaveStatus" class="message hidden" role="status" aria-live="polite"></div></div>
         <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
           <h3 style="margin:0 0 5px">Work types & license requirements</h3>
           <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
@@ -1753,6 +1753,38 @@
     return result;
   }
 
+  async function saveServiceRadius() {
+    const button = $("saveServiceRadiusBtn");
+    const status = $("serviceRadiusSaveStatus");
+    const radius = Number($("profileServiceRadius").value);
+    if (!currentContractor || !currentUser) {
+      if (status) { status.textContent = "Contractor profile is not ready. Please sign in again."; status.className = "message error"; }
+      return;
+    }
+    if (![10,25,50,100,150,250].includes(radius)) {
+      if (status) { status.textContent = "Choose a valid service radius."; status.className = "message error"; }
+      return;
+    }
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = "Saving…";
+    try {
+      const { error } = await db.from("contractors")
+        .update({ service_radius_miles: radius })
+        .eq("id", currentContractor.id)
+        .eq("user_id", currentUser.id);
+      if (error) throw error;
+      currentContractor = { ...currentContractor, service_radius_miles: radius };
+      if (status) { status.textContent = "Service radius saved."; status.className = "message success"; }
+      button.textContent = "Saved ✓";
+    } catch (e) {
+      if (status) { status.textContent = "Could not save service radius: " + (e.message || "Unknown error"); status.className = "message error"; }
+      button.textContent = "Save radius";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function saveCompany() {
     const saveButton = $("saveCompanyBtn");
     const saveStatus = $("companySaveStatus");
@@ -2386,6 +2418,7 @@
     $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
+    $("saveServiceRadiusBtn").addEventListener("click", saveServiceRadius);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
     $("clearProfileProfessionsBtn").addEventListener("click",()=>{
       selectedProfessionIds.clear();
