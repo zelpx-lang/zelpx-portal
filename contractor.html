@@ -1356,48 +1356,42 @@
   let licenseEligibleLeadCategories = null;
   async function loadLicenseEligibleLeadCategories() {
     licenseEligibleLeadCategories = new Set();
-    if (isAdmin) return;
-    if (!currentContractor?.service_state || !currentContractor?.id) return;
-    const state = String(currentContractor.service_state).trim().toUpperCase();
-    if (!/^[A-Z]{2}$/.test(state)) return;
-    const [{data: maps, error: mapError}, {data: qualifications, error: qualificationError}] = await Promise.all([
+    if (isAdmin || !currentContractor?.id) return;
+    const states=[...new Set([currentContractor.service_state,currentContractor.license_state,currentContractor.license_state_2]
+      .map(value=>String(value||"").trim().toUpperCase()).filter(value=>/^[A-Z]{2}$/.test(value)))];
+    if(!states.length)return;
+    const [{data:maps,error:mapError},{data:categories,error:categoriesError}]=await Promise.all([
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state)
+      db.from("service_categories").select("id,name").eq("is_active",true)
     ]);
-    if (mapError) throw mapError;
-    if (qualificationError) throw qualificationError;
-    const professionIds = [...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
-    if (!professionIds.length) return;
-    // Lead purchases are for independent contractors only. Employee qualifications
-    // must never unlock direct customer-job purchases.
-    const {data: rules, error: rulesError} = await db.from("state_profession_eligibility")
-      .select("profession_id,worker_role,eligibility_status")
-      .eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds);
-    if (rulesError) throw rulesError;
-    const independentQualifications = new Map((qualifications||[])
-      .filter(q=>q.work_role==="independent")
-      .map(q=>[q.profession_id,q.verification_status]));
-    const independentRules = new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
-    const companyLicenseVerified = currentContractor.has_license === true &&
-      currentContractor.license_review_status === "verified" &&
-      [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
-    (maps||[]).forEach(map=>{
-      if(map.mapping_status!=="mapped"||!map.profession_id)return;
-      const rule=independentRules.get(map.profession_id);
-      const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
-      const licenseFree=rule==="allowed_no_individual_license";
-      const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
-        ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
-      // Conditional, local-review and unverified work stays blocked until its
-      // state-specific requirements are explicitly resolved.
-      if(licenseFree || licensedAndVerified) licenseEligibleLeadCategories.add(map.category_id);
-    });
-    const {data: categories, error: categoriesError}=await db.from("service_categories").select("id,name").eq("is_active",true);
-    if(categoriesError) throw categoriesError;
-    // Populate the category catalog used to match saved contractor category IDs
-    // against lead names. Without this, every lead looks unselected in the UI.
-    availableServiceCategories = categories || [];
-    const eligibleNames=new Set(availableServiceCategories.filter(c=>licenseEligibleLeadCategories.has(c.id)).map(c=>c.name.toLowerCase()));
+    if(mapError)throw mapError;
+    if(categoriesError)throw categoriesError;
+    availableServiceCategories=categories||[];
+    const professionIds=[...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
+    if(!professionIds.length)return;
+    for(const state of states){
+      const [{data:qualifications,error:qualificationError},{data:rules,error:rulesError}]=await Promise.all([
+        db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state),
+        db.from("state_profession_eligibility").select("profession_id,worker_role,eligibility_status").eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds)
+      ]);
+      if(qualificationError)throw qualificationError;
+      if(rulesError)throw rulesError;
+      const independentQualifications=new Map((qualifications||[]).filter(q=>q.work_role==="independent").map(q=>[q.profession_id,q.verification_status]));
+      const independentRules=new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
+      const companyLicenseVerified=currentContractor.has_license===true &&
+        currentContractor.license_review_status==="verified" &&
+        [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
+      (maps||[]).forEach(map=>{
+        if(map.mapping_status!=="mapped"||!map.profession_id)return;
+        const rule=independentRules.get(map.profession_id);
+        const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
+        const licenseFree=rule==="allowed_no_individual_license";
+        const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
+          ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
+        if(licenseFree||licensedAndVerified)licenseEligibleLeadCategories.add(map.category_id);
+      });
+    }
+    const eligibleNames=new Set(availableServiceCategories.filter(item=>licenseEligibleLeadCategories.has(item.id)).map(item=>item.name.toLowerCase()));
     licenseEligibleLeadCategories=eligibleNames;
   }
 
