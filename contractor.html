@@ -2255,8 +2255,30 @@
               b.addEventListener("click",async()=>{
                 if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
                 b.disabled=true;
-                try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
-                  message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();await loadAdminContractorReviews();}
+                try{
+                  let rpcDecision = decision;
+                  if (decision === "approved") {
+                    const licenseRequired = r.request_type === "company_profile"
+                      ? changes.has_license === true
+                      : r.request_type === "profession_qualifications"
+                        ? (Array.isArray(changes.items) && changes.items.some(item => item.license_required_at_registration === true))
+                        : false;
+                    rpcDecision = licenseRequired ? "approved_with_license" : "approved_without_license";
+                  }
+                  const { data: reviewData, error: reviewError } = await db.rpc("admin_approve_contractor_change_request_with_cleanup", {
+                    p_request_id: r.id, p_decision: decision === "rejected" ? "rejected" : rpcDecision,
+                    p_admin_note: note.value.trim() || null
+                  });
+                  if (reviewError) throw reviewError;
+                  if (decision === "approved" && reviewData?.old_files?.length) {
+                    const { error: cleanupError } = await db.functions.invoke("cleanup-contractor-documents", {
+                      body: { contractor_id: reviewData.contractor_id, user_id: reviewData.user_id, old_files: reviewData.old_files }
+                    });
+                    if (cleanupError) throw cleanupError;
+                  }
+                  message("contractorChangesMessage","Request "+decision+".","success");
+                  await loadContractorChangeRequests();
+                  if (decision === "approved") { await loadAdminLeads(); await loadAccount(); await loadAdminContractorReviews(); }
                 }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
               });actions.append(b);
             }card.append(actions);
