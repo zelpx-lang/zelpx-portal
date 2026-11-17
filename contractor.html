@@ -444,12 +444,15 @@
           <div><label for="profileLicenseNumber2">Second license number</label><input id="profileLicenseNumber2"></div>
           <div><label for="profileLicenseType2">Second license type</label><input id="profileLicenseType2"></div>
         </div>
-        <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
+        <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
+          <p class="muted" style="margin:0 0 10px;font-size:13px">Required for independent contractors. Employees do not need to provide their own business insurance.</p>
+          <div class="grid">
+            <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
+            <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
+          </div>
         </div>
-        <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
-        <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
-        <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
       </div>
       <div class="actions"><button id="saveCompanyBtn" type="button" aria-busy="false">Save company details</button></div>
       <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
@@ -1043,6 +1046,8 @@
     selectedProfessionIds=new Set(pendingItems ? pendingItems.map(x=>x.profession_id).filter(Boolean) : activeIds);
     savedProfessionIds=new Set(activeIds);
     $("professionWorkRole").value=pendingItems ? (pending.work_role||"independent") : (saved[0]?.work_role||"independent");
+    const insuranceSection=$("profileBusinessInsuranceSection");
+    if(insuranceSection) insuranceSection.classList.toggle("hidden",$("professionWorkRole").value!=="independent");
     renderProfessionOptions();
     await refreshProfessionRules();
     if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after refresh. They become active after approval.","success");
@@ -1085,6 +1090,8 @@
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
+    const insuranceSection=$("profileBusinessInsuranceSection");
+    if(insuranceSection) insuranceSection.classList.toggle("hidden",$("professionWorkRole").value!=="independent");
     if(!state) return;
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     const licenseChoice=$("profileHasLicense").value;
