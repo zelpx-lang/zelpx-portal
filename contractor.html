@@ -458,7 +458,7 @@
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearProfileProfessionsBtn" type="button" style="background:#ff6a2b;color:#fff;min-height:44px;padding:10px 20px;font-size:13px">Clear selected services</button></div>
-          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
+          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
@@ -1156,7 +1156,7 @@
   }
   async function saveProfessionQualifications() {
     if(!currentContractor) return message("specialtiesMessage","Contractor profile not found.","error");
-    if(!selectedProfessionIds.size) return message("professionComplianceSummary","Select at least one profession before saving.","error");
+    if(!selectedProfessionIds.size) return message("specialtiesMessage","Select at least one profession before saving.","error");
     const button=$("saveProfessionQualificationsBtn"); setBusy(button,true,"Saving…");
     try {
       await refreshProfessionRules();
@@ -1179,7 +1179,7 @@
       let saveStatus=$("professionSaveStatus");
       if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
       saveStatus.className="message success";
-      saveStatus.textContent="Your work types were submitted for administrator review. The descriptions remain visible below. They become active after approval.";
+      saveStatus.textContent="Your work types were submitted for administrator review. They become active after approval.";
       $("saveProfessionQualificationsBtn").disabled=true;
     } catch(e) {
       const summary=$("professionComplianceSummary");
