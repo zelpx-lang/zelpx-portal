@@ -34,6 +34,65 @@ main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);fon
 .note{background:#fff8f2;border:1px solid #f4dfd2;border-radius:12px;padding:11px 13px;color:#6e5143;font-size:12px;margin-top:10px}
 .state{background:var(--white);border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:14px}
 @media(max-width:850px){.navlinks{display:none}}\n@media(max-width:560px){.navwrap{width:calc(100% - 30px)}.logo{font-size:24px}.navright .outline{display:none}}\n@media(max-width:480px){.filters{grid-template-columns:1fr 1fr}.refresh{grid-column:1/-1;height:38px}.list{max-height:62vh}.job{padding:11px}.price{font-size:15px}}
+
+/* ZELPX responsive jobs page — final overrides */
+html{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
+.job,.job-summary,.job-details,.job-actions,.details{min-width:0;max-width:100%}
+.job{overflow:hidden}
+.job-summary-main{min-width:0;overflow-wrap:anywhere}
+.job h2{overflow-wrap:anywhere}
+.job-details p,.claim{overflow-wrap:anywhere;word-break:normal}
+.list{width:100%;min-width:0}
+@media(max-width:640px){
+  header{height:68px}
+  .navwrap{width:calc(100% - 30px)}
+  .logo{font-size:25px}
+  .btn.small{min-height:42px;padding:0 18px}
+  main.wrap{width:calc(100% - 28px);padding:18px 0 28px}
+  .intro{margin-bottom:14px}
+  .eyebrow{font-size:11px}
+  .intro h1{font-size:clamp(27px,7.2vw,36px);line-height:1.08;overflow-wrap:anywhere;margin:8px 0}
+  .intro p{font-size:14px;line-height:1.5}
+  .filters{position:static;top:auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px 0}
+  .filters input,.filters select{height:46px;min-width:0;width:100%;font-size:14px;padding:0 10px}
+  .refresh{grid-column:1/-1;width:100%;height:44px}
+  .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:12px;margin-bottom:10px}
+  .live{white-space:normal;line-height:1.4}
+  .list{display:flex;flex-direction:column;gap:9px;max-height:none!important;height:auto;min-height:0;overflow:visible!important;overscroll-behavior:auto;padding:1px 0 8px}
+  .job{padding:0!important;border-radius:15px;overflow:hidden}
+  .job-summary{width:100%;min-height:64px;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;padding:11px 12px}
+  .job h2{font-size:15px;line-height:1.25}
+  .job-summary-meta{font-size:12px}
+  .price{font-size:15px;white-space:nowrap}
+  .open-label{font-size:11px;white-space:nowrap}
+  .job-details{padding:11px 12px 13px}
+  .details{display:flex;flex-wrap:wrap;gap:8px 12px;font-size:12px;line-height:1.45}
+  .details>span{min-width:0;overflow-wrap:anywhere}
+  .job-details p{font-size:13px;line-height:1.5;margin:10px 0}
+  .job-actions{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px;margin-top:12px}
+  .claim{display:block;width:100%;font-size:13px;line-height:1.45}
+  .close-job{width:100%;min-height:42px}
+  .note{font-size:12px;line-height:1.5;margin-top:12px}
+}
+@media(max-width:380px){
+  main.wrap{width:calc(100% - 22px)}
+  .navwrap{width:calc(100% - 24px)}
+  .filters{grid-template-columns:minmax(0,1fr)}
+  .refresh{grid-column:auto}
+  .job-summary{grid-template-columns:minmax(0,1fr) auto;gap:5px 8px}
+  .price{grid-column:2;grid-row:1}
+  .open-label{grid-column:2;grid-row:2;justify-self:end}
+  .job h2{font-size:14px}
+  .job-details{padding:10px}
+  .details{gap:7px 9px}
+}
+@media(min-width:641px){
+  .list{max-height:none;overflow:visible}
+}
+
 </style>
 </head>
 <body>
