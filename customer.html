@@ -482,6 +482,14 @@
     .service-suggestion:hover,.service-suggestion:focus { background:#eaf2fb; }
     .service-search-hint { color:#667085; font-size:13px; margin:6px 0 12px; }
   
+    .social-auth { margin-top:22px; display:grid; gap:10px; }
+    .social-auth-divider { display:flex; align-items:center; gap:12px; color:var(--customer-muted); font-size:12px; font-weight:700; }
+    .social-auth-divider::before,.social-auth-divider::after { content:""; height:1px; flex:1; background:var(--customer-line); }
+    .social-auth-button { width:100%; min-height:48px; margin:0; display:flex; align-items:center; justify-content:center; gap:11px; border:1px solid #d9d4cc; border-radius:999px; background:#fff; color:#202124; box-shadow:none; font-size:14px; font-weight:700; }
+    .social-auth-button:hover:not(:disabled) { background:#faf7f2; border-color:#c9c1b6; color:#202124; box-shadow:none; }
+    .social-google-mark { font:800 21px/1 Arial,sans-serif; color:#4285f4; }
+    .social-apple-mark { width:19px; height:19px; }
+    .social-auth-button:disabled { opacity:.6; cursor:wait; }
     .password-field { position:relative; width:100%; }
     .password-field input { width:100%; padding-right:52px; }
     .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
@@ -534,6 +542,18 @@
       <div class="switch">
         <span id="switchText">Already have an account?</span>
         <a id="switchLink" href="#">Log In</a>
+      </div>
+
+      <div class="social-auth" aria-label="Other sign-in options">
+        <div class="social-auth-divider"><span>Or continue with</span></div>
+        <button id="googleSignInButton" class="social-auth-button" type="button">
+          <span class="social-google-mark" aria-hidden="true">G</span>
+          Continue with Google
+        </button>
+        <button id="appleSignInButton" class="social-auth-button" type="button">
+          <svg class="social-apple-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.58c.02 2.17 1.9 2.89 1.92 2.9-.02.05-.3 1.03-.99 2.04-.6.88-1.22 1.76-2.2 1.78-.96.02-1.27-.57-2.37-.57-1.1 0-1.45.55-2.35.59-.94.04-1.66-.95-2.27-1.83-1.24-1.79-2.19-5.06-.92-7.27.63-1.1 1.76-1.8 2.98-1.82.93-.02 1.8.63 2.37.63.57 0 1.64-.78 2.77-.67.47.02 1.8.19 2.65 1.43-.07.04-1.58.92-1.59 2.79ZM14.55 6.94c.5-.6.84-1.44.75-2.27-.72.03-1.59.48-2.1 1.08-.46.53-.87 1.38-.76 2.19.8.06 1.62-.4 2.11-1Z"/></svg>
+          Continue with Apple
+        </button>
       </div>
     </section>
 
@@ -769,6 +789,33 @@
         ? "Create Account"
         : "Log In";
     }
+
+    // Social sign-in is available only on the customer portal.
+    async function signInCustomerWithProvider(provider, buttonId) {
+      const buttons = ["googleSignInButton", "appleSignInButton"].map(id => $(id));
+      buttons.forEach(button => { button.disabled = true; });
+      const button = $(buttonId);
+      const originalText = button.textContent.trim();
+      button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Apple...";
+      clearMessage("message");
+      try {
+        const { error } = await db.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: window.location.origin + "/customer",
+            ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
+          }
+        });
+        if (error) throw error;
+      } catch (error) {
+        showMessage("message", error.message || "Social sign-in could not be started. Please try again.", "error");
+        button.lastChild.textContent = " " + (provider === "google" ? "Continue with Google" : "Continue with Apple");
+        buttons.forEach(item => { item.disabled = false; });
+      }
+    }
+
+    $("googleSignInButton").addEventListener("click", () => signInCustomerWithProvider("google", "googleSignInButton"));
+    $("appleSignInButton").addEventListener("click", () => signInCustomerWithProvider("apple", "appleSignInButton"));
 
     $("forgotPasswordLink").addEventListener("click", (event) => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
 
