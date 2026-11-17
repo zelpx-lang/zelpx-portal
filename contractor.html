@@ -517,6 +517,7 @@
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
   let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
+  let contractorProfileRealtimeChannel = null, contractorProfileRefreshTimer = null, contractorProfileRefreshRunning = false;
 
   function message(id, text, type) {
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
@@ -814,6 +815,7 @@
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
+    if (!isAdmin && currentContractor) startContractorProfileRealtime();
     if (!isAdmin && currentContractor) {
       try {
         await syncSignupContractorDocuments(user);
@@ -938,6 +940,34 @@
     if(requestError) throw requestError;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
     if(metadataError) console.warn("Could not clear one-time profession metadata:",metadataError.message);
+  }
+
+  function startContractorProfileRealtime() {
+    if (!db || !currentUser || isAdmin) return;
+    if (contractorProfileRealtimeChannel) db.removeChannel(contractorProfileRealtimeChannel);
+    contractorProfileRealtimeChannel = db.channel("zelpx-contractor-profile-" + currentUser.id)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: "id=eq." + currentUser.id }, scheduleContractorProfileRefresh)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "contractors", filter: "user_id=eq." + currentUser.id }, scheduleContractorProfileRefresh)
+      .subscribe((status, error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.warn("Contractor profile live refresh unavailable:", status, error || "");
+        }
+      });
+  }
+
+  function scheduleContractorProfileRefresh() {
+    if (contractorProfileRefreshTimer) clearTimeout(contractorProfileRefreshTimer);
+    contractorProfileRefreshTimer = setTimeout(async () => {
+      if (contractorProfileRefreshRunning || !currentUser || isAdmin) return;
+      contractorProfileRefreshRunning = true;
+      try {
+        await loadAccount();
+      } catch (error) {
+        console.warn("Could not refresh the approved contractor profile:", error);
+      } finally {
+        contractorProfileRefreshRunning = false;
+      }
+    }, 350);
   }
 
   async function loadAccount() {
@@ -2491,7 +2521,11 @@
       const { data: { session } } = await db.auth.getSession();
       if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
-        if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
+        if (!sessionNow) {
+          if (contractorProfileRealtimeChannel) { db.removeChannel(contractorProfileRealtimeChannel); contractorProfileRealtimeChannel = null; }
+          if (contractorProfileRefreshTimer) { clearTimeout(contractorProfileRefreshTimer); contractorProfileRefreshTimer = null; }
+          hide($("appView")); hide($("topUser")); show($("authView"));
+        }
       });
     } catch (e) { message("authMessage", e.message, "error"); }
   }
