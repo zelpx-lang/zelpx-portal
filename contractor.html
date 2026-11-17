@@ -2183,8 +2183,9 @@
           if(allowReview && r.status==="pending"){
             const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
             const actions=document.createElement("div");actions.className="actions";
-            for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
-              const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
+            actions.style.display="flex";actions.style.flexDirection="row";actions.style.flexWrap="nowrap";actions.style.gap="10px";
+            for(const [decision,label] of [["approved","Approved"],["rejected","Reject"]]){
+              const b=document.createElement("button");b.type="button";b.textContent=label;b.style.flex="1 1 0";b.style.minWidth="0";if(decision==="rejected")b.className="secondary";
               b.addEventListener("click",async()=>{
                 if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
                 b.disabled=true;
