@@ -298,13 +298,13 @@
     <h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
     <div id="authMessage" class="message hidden"></div>
     <div class="grid">
-      <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
+      <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com" required></div>
       <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
     </div>
     <div id="signupFields" class="grid hidden">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
       <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
-      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
+      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
       <div><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
@@ -766,7 +766,7 @@
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
     const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
     if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
-    if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
+    if (!email || !password || !fullName || !phone || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required fields: your name, phone, company name, company email, business street address, city, state, and a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
     const signupLicenseFile=$("signupLicenseDocument").files?.[0]||null;
