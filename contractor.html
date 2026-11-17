@@ -1656,13 +1656,9 @@
     const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id).order("purchased_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
     const purchases = data || [];
-    const closedStorageKey = "zelpx_closed_purchases_" + currentContractor.id;
-    let closedLeadIds = new Set();
-    try { closedLeadIds = new Set(JSON.parse(localStorage.getItem(closedStorageKey) || "[]")); } catch (_) {}
-    const visiblePurchases = purchases.filter(item => !closedLeadIds.has(item.lead_id));
-    $("purchaseCount").textContent = String(visiblePurchases.length); list.replaceChildren();
+    $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
     const unreadByLead = new Map();
-    const purchaseLeadIds = visiblePurchases.map(item => item.lead_id).filter(Boolean);
+    const purchaseLeadIds = purchases.map(item => item.lead_id).filter(Boolean);
     if (purchaseLeadIds.length) {
       const { data: conversations, error: conversationsError } = await db.from("lead_conversations").select("id,lead_id").in("lead_id", purchaseLeadIds);
       if (conversationsError) { console.warn("Unread chat status unavailable:", conversationsError.message); }
@@ -1684,9 +1680,9 @@
       purchasesTab.setAttribute("aria-label", totalUnreadPurchases > 0 ? "My purchases, " + totalUnreadPurchases + " unread customer messages" : "My purchases");
     };
     updatePurchasesTab();
-    if (!visiblePurchases.length) { list.textContent = purchases.length ? "No open purchased leads. Closed leads are hidden from this list." : "You have not purchased any leads yet."; return; }
+    if (!purchases.length) { list.textContent = "You have not purchased any leads yet."; return; }
 
-    for (const item of visiblePurchases) {
+    for (const item of purchases) {
       const card = document.createElement("article"); card.className = "purchase-row";
       card.dataset.leadId = item.lead_id;
       const summary = document.createElement("button"); summary.type = "button"; summary.className = "purchase-summary";
@@ -1725,17 +1721,14 @@
       closeLeadButton.type = "button";
       closeLeadButton.className = "secondary";
       closeLeadButton.textContent = "Close lead";
-      closeLeadButton.setAttribute("aria-label", "Close this purchased lead and hide it from My purchases");
+      closeLeadButton.setAttribute("aria-label", "Close the expanded purchased lead details");
       closeLeadButton.style.cssText = "display:block;width:auto;min-width:0;min-height:38px;margin:16px 0 2px auto;padding:8px 16px;border:1px solid #eaded4;border-radius:10px;background:#fff;color:#6f6258;font-size:13px;font-weight:700;box-shadow:none";
       closeLeadButton.addEventListener("click", () => {
-        if (!window.confirm("Close this lead? It will be hidden from My purchases. The purchase record and customer chat will not be deleted.")) return;
-        closedLeadIds.add(item.lead_id);
-        try { localStorage.setItem(closedStorageKey, JSON.stringify([...closedLeadIds])); }
-        catch (_) { return message("appMessage", "Could not save the closed lead on this device. Please check browser storage settings.", "error"); }
-        card.remove();
-        const remaining = list.querySelectorAll(".purchase-row").length;
-        $("purchaseCount").textContent = String(remaining);
-        if (!remaining) list.textContent = "No open purchased leads. Closed leads are hidden from this list.";
+        details.classList.add("hidden");
+        summary.setAttribute("aria-expanded", "false");
+        chevron.textContent = "＋";
+        chatPanel.classList.add("hidden");
+        chatButton.hidden = false;
       });
       details.append(closeLeadButton);
       card.append(details);
