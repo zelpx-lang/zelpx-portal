@@ -953,9 +953,7 @@
     await loadContractorServiceCategories();
     await loadProfessionQualifications();
     await loadContractorChangeRequests();
-    $("insuranceDocumentStatus").textContent = contractor?.insurance_document_path
-      ? "Insurance certificate on file · Review: " + String(contractor.insurance_review_status || "pending").replaceAll("_"," ") + ". Select a new file to replace it."
-      : "No insurance certificate uploaded yet.";
+
   }
   $("contractorAvatarFile").addEventListener("change", async (event) => {
     const file = event.target.files && event.target.files[0]; if (!file) return;
