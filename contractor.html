@@ -162,6 +162,35 @@
     .dashboard-mark span:nth-child(2) { height:21px; }
     .dashboard-mark span:nth-child(3) { height:16px; opacity:.75; }
     @media(max-width:380px) { .dashboard-mark { width:44px; height:44px; flex-basis:44px; border-radius:14px; padding:10px; } }
+    /* ===== compact contractor change request list ===== */
+    #contractorOwnChangesList { display:flex; flex-direction:column; gap:8px; }
+    #contractorOwnChangesList .lead {
+      display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+      gap:2px 10px; width:100%; min-width:0; margin:0; padding:11px 13px 10px 16px;
+      min-height:0; border-radius:14px; background:#fffdfa; box-shadow:none;
+    }
+    #contractorOwnChangesList .lead::before { display:none; }
+    #contractorOwnChangesList .lead h3 {
+      grid-column:1; grid-row:1; min-width:0; margin:0 0 2px;
+      font-size:14px; line-height:1.3; overflow-wrap:anywhere;
+    }
+    #contractorOwnChangesList .lead > p.muted {
+      grid-column:1; grid-row:2; margin:0; font-size:11px; line-height:1.3;
+      overflow-wrap:anywhere;
+    }
+    #contractorOwnChangesList .lead > button {
+      grid-column:2; grid-row:1 / span 2; position:static!important;
+      align-self:center; min-height:34px; padding:5px 8px!important;
+      font-size:12px!important; white-space:nowrap;
+    }
+    #contractorOwnChangesList .lead > section { grid-column:1/-1; }
+    @media(max-width:700px) {
+      #contractorOwnChangesList .lead { padding:10px 11px 10px 14px; }
+      #contractorOwnChangesList .lead h3 { font-size:13px; }
+      #contractorOwnChangesList .lead > p.muted { font-size:10px; }
+      #contractorOwnChangesList .lead > button { font-size:12px!important; }
+    }
+
     /* ===== compact leads v3 ===== */
     main { margin:18px auto; }
     .card { padding:18px; margin-bottom:12px; }
@@ -298,13 +327,13 @@
     <h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
     <div id="authMessage" class="message hidden"></div>
     <div class="grid">
-      <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
+      <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com" required></div>
       <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
     </div>
     <div id="signupFields" class="grid hidden">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
       <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
-      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number"></div>
+      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
       <div><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
@@ -330,17 +359,21 @@
         </div>
       </div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
-        <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
-        <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
+        <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+        <div><label for="licenseState">Issuing state</label><select id="licenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber">License number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
-        <div style="grid-column:1/-1"><label for="signupLicenseDocument">Upload license photo or PDF</label><input id="signupLicenseDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small class="muted">Private upload · JPG, PNG, WebP or PDF · Max 10 MB</small></div>
+        <h3 style="grid-column:1/-1;margin:8px 0 0">License in state 2 (optional)</h3>
+        <div><label for="licenseState2">Second issuing state</label><select id="licenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber2">Second license number</label><input id="licenseNumber2" autocomplete="off"></div>
+        <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
       </div>
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
         <h3 style="grid-column:1/-1;margin:0">Business insurance (Certificate of Insurance)</h3>
-        <p class="muted" style="grid-column:1/-1;margin:0">Independent contractors must provide current insurance information for ZELPX review. Employees do not need to upload a business insurance policy for themselves.</p>
-        <div><label for="signupInsurancePolicy">Insurance policy number</label><input id="signupInsurancePolicy" autocomplete="off"></div>
+        <p class="muted" style="grid-column:1/-1;margin:0">Independent contractors must provide current insurance policy information for ZELPX review. Employees do not need a business insurance policy for themselves.</p>
+        <div><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div><label for="signupInsuranceAgentPhone">Insurance agent phone number</label><input id="signupInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
         <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
-        <div style="grid-column:1/-1"><label for="signupInsuranceDocument">Upload insurance card / Certificate of Insurance photo or PDF</label><input id="signupInsuranceDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small class="muted">Private upload · JPG, PNG, WebP or PDF · Max 10 MB</small></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
@@ -408,16 +441,16 @@
         <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
         <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
         <div><label for="profileCompany">Company name</label><input id="profileCompany"></div>
-        <div><label for="profileCompanyEmail">Company contact email</label><input id="profileCompanyEmail" type="email"><small class="muted">This changes after administrator approval. Your ZELPX sign-in email remains separate and requires email verification to change.</small></div>
+        <div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
         <div><label for="profileServiceAddress">Business street address</label><input id="profileServiceAddress" autocomplete="street-address"></div>
         <p id="contractorAddressVerificationStatus" class="muted" style="grid-column:1/-1">Business address is checked when you save your company profile.</p>
         <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
         <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
         <div><label for="profileServiceState">State</label><select id="profileServiceState" autocomplete="address-level1"><option value="">Select state</option></select></div>
-        <div><label for="profileServiceRadius">Service radius</label><select id="profileServiceRadius"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Enter or update your ZIP code, wait for the lookup, then save.</small></div>
+        <div><label for="profileServiceRadius">Service radius</label><div style="display:flex;gap:10px;align-items:stretch"><select id="profileServiceRadius" style="flex:1;min-width:0"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><button id="saveServiceRadiusBtn" type="button" class="secondary" style="white-space:nowrap;flex:0 0 auto">Save radius</button></div><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Save the radius separately without resubmitting your company profile.</small><div id="serviceRadiusSaveStatus" class="message hidden" role="status" aria-live="polite"></div></div>
         <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
           <h3 style="margin:0 0 5px">Work types & license requirements</h3>
-
+          <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
             <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select></div>
@@ -426,22 +459,29 @@
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearProfileProfessionsBtn" type="button" style="background:#ff6a2b;color:#fff;min-height:44px;padding:10px 20px;font-size:13px">Clear selected services</button></div>
-          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
+          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
+          <p class="muted" style="font-size:12px;margin:8px 0 0">Important: ZELPX does not issue legal approvals. “Not required” applies only to the described scope and does not replace city permits, business registration, insurance, or individual trade certificates. Unverified states are never treated as license-free.</p>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
+          <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
           <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
-          <div><label for="profileLicenseState">License state</label><input id="profileLicenseState" maxlength="2"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
+          <h3 style="grid-column:1/-1;margin:8px 0 0">License in state 2 (optional)</h3>
+          <div><label for="profileLicenseState2">Second issuing state</label><select id="profileLicenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+          <div><label for="profileLicenseNumber2">Second license number</label><input id="profileLicenseNumber2"></div>
+          <div><label for="profileLicenseType2">Second license type</label><input id="profileLicenseType2"></div>
         </div>
-        <div style="grid-column:1/-1"><label for="licenseDocument">Contractor license photo or PDF</label><input id="licenseDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small id="licenseDocumentStatus" class="muted">No license document uploaded yet. JPG, PNG, WebP or PDF · Max 10 MB · Private administrator review.</small></div>
-        <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
+        <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
-          <p class="muted" style="margin:4px 0 10px">Upload your current Certificate of Insurance (COI). Your document is stored privately and can only be viewed by you and ZELPX administrators.</p>
+          <p class="muted" style="margin:0 0 10px;font-size:13px">Required for independent contractors. Employees do not need to provide their own business insurance.</p>
+          <div class="grid">
+            <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
+            <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
+          </div>
         </div>
-        <div><label for="profileInsurancePolicy">Policy number (optional)</label><input id="profileInsurancePolicy" autocomplete="off"></div>
-        <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
-        <div style="grid-column:1/-1"><label for="insuranceDocument">Insurance certificate (COI) photo or PDF</label><input id="insuranceDocument" type="file" accept=".pdf,image/jpeg,image/png,image/webp"><small id="insuranceDocumentStatus" class="muted">No insurance certificate uploaded yet. JPG, PNG, WebP or PDF · Max 10 MB · Private administrator review.</small></div>
       </div>
       <div class="actions"><button id="saveCompanyBtn" type="button" aria-busy="false">Save company details</button></div>
       <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
@@ -733,6 +773,7 @@
     if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.","error");
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
+    const licenseNumber2=$("licenseNumber2").value.trim(),licenseState2=$("licenseState2").value.trim().toUpperCase(),licenseType2=$("licenseType2").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
     // Unverified scopes may register without claiming they are license-free.
     // The acknowledgement below keeps the account pending; credential-required
@@ -765,25 +806,21 @@
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
     const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
     if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
-    if (!email || !password || !fullName || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required account and business location fields, including a valid 5-digit ZIP code.", "error");
+    if (!email || !password || !fullName || !phone || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required fields: your name, phone, company name, company email, business street address, city, state, and a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
-    if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
-    const signupLicenseFile=$("signupLicenseDocument").files?.[0]||null;
-    const signupInsuranceFile=$("signupInsuranceDocument").files?.[0]||null;
-    const insurancePolicyNumber=$("signupInsurancePolicy").value.trim();
+    if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter a complete first license: state, number, and type.", "error");
+    if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
+    if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
+    const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
+    const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    const allowedDocumentTypes=["application/pdf","image/jpeg","image/png","image/webp"];
-    if(hasLicense && !signupLicenseFile) return message("authMessage","Upload a photo or PDF of your license / registration before creating the account.","error");
-    if(signupRole==="independent" && (!insurancePolicyNumber || !insuranceExpiration || !signupInsuranceFile)) return message("authMessage","Independent contractors must enter the insurance policy number and expiration date, and upload a current Certificate of Insurance.","error");
-    for(const [file,label] of [[signupLicenseFile,"License"],[signupInsuranceFile,"Insurance"]]){
-      if(file && !allowedDocumentTypes.includes(file.type)) return message("authMessage",label+" file must be PDF, JPG, PNG or WebP.","error");
-      if(file && file.size>10*1024*1024) return message("authMessage",label+" file must be 10 MB or smaller.","error");
-    }
-    if(signupRole==="independent" && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Upload a current Certificate of Insurance.","error");
+    if(signupRole==="independent" && hasLicense && (!insuranceAgencyName || !insuranceAgentPhone || !insuranceExpiration)) return message("authMessage","Licensed independent contractors must enter the insurance agency name, agent phone number, and expiration date.","error");
+    if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, insurance_policy_number: signupRole==="independent" ? insurancePolicyNumber : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -848,44 +885,25 @@
   async function syncSignupContractorDocuments(user){
     const m=user?.user_metadata||{};
     if(!currentContractor)return;
-    let licensePath=currentContractor.license_document_path||null;
-    let insurancePath=currentContractor.insurance_document_path||null;
-    const licenseFile=$("signupLicenseDocument")?.files?.[0]||null;
-    const insuranceFile=$("signupInsuranceDocument")?.files?.[0]||null;
-    const uploadPrivate=async(bucket,file,kind)=>{
-      if(!file)return null;
-      if(!["application/pdf","image/jpeg","image/png","image/webp"].includes(file.type)||file.size>10*1024*1024)throw new Error(kind+" file must be PDF/JPG/PNG/WebP and 10 MB or smaller.");
-      const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-      const path=user.id+"/"+Date.now()+"-signup-"+kind.toLowerCase()+"-"+safe;
-      const {error}=await db.storage.from(bucket).upload(path,file,{upsert:false,contentType:file.type});
-      if(error)throw error;return path;
-    };
-    if(licenseFile)licensePath=await uploadPrivate("contractor-licenses",licenseFile,"License");
-    if(insuranceFile)insurancePath=await uploadPrivate("contractor-insurance",insuranceFile,"Insurance");
     const update={
       has_license:m.has_license===true,
       license_number:m.has_license===true?(m.license_number||null):null,
       license_state:m.has_license===true?(m.license_state||null):null,
       license_type:m.has_license===true?(m.license_type||null):null,
-      license_document_path:licensePath,
-      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
+      license_number_2:m.has_license===true?(m.license_number_2||null):null,
+      license_state_2:m.has_license===true?(m.license_state_2||null):null,
+      license_type_2:m.has_license===true?(m.license_type_2||null):null,
+      license_document_path:currentContractor.license_document_path||null,
+      insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
+      insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
-      insurance_document_path:insurancePath
+      insurance_document_path:currentContractor.insurance_document_path||null
     };
-    const needsLicenseFile=m.has_license===true;
-    const needsInsuranceFile=m.zelpx_signup_work_role==="independent";
-    const missingLicense=needsLicenseFile&&!licensePath, missingInsurance=needsInsuranceFile&&!insurancePath;
-    const {error}=await db.rpc("submit_contractor_change_request",{
-      p_type:"company_profile",
-      p_changes:update
-    });
+    const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
-    if(missingLicense||missingInsurance){
-      message("appMessage","Your registration details are awaiting administrator approval. Please upload the missing "+[missingLicense?"license document":null,missingInsurance?"insurance certificate":null].filter(Boolean).join(" and ")+" in My Company so ZELPX can review them.","error");
-      return;
-    }
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:null,license_state:null,license_type:null,insurance_policy_number:null,insurance_expiration_date:null,zelpx_signup_work_role:null}});
-    if(metadataError)console.warn("Could not clear one-time credential metadata:",metadataError.message);
+    currentContractor={...currentContractor,...update};
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_expiration_date:update.insurance_expiration_date}});
+    if(metadataError)throw metadataError;
   }
 
   async function syncSignupContractorServiceCategories(user){
@@ -893,50 +911,32 @@
     const ids=Array.isArray(metadata.zelpx_signup_service_category_ids)
       ? [...new Set(metadata.zelpx_signup_service_category_ids.filter(id=>typeof id==="string"))] : [];
     if(!currentContractor || !ids.length) return;
-    const {error:requestError}=await db.rpc("submit_contractor_change_request",{
-      p_type:"service_categories",
-      p_changes:{category_ids:ids}
-    });
-    if(requestError) throw requestError;
+    const {data:existing,error:readError}=await db.from("contractor_service_categories")
+      .select("category_id").eq("contractor_id",currentContractor.id);
+    if(readError) throw readError;
+    const existingIds=new Set((existing||[]).map(row=>row.category_id));
+    const missing=ids.filter(id=>!existingIds.has(id));
+    if(missing.length){
+      const {error:insertError}=await db.from("contractor_service_categories")
+        .insert(missing.map(category_id=>({contractor_id:currentContractor.id,category_id})));
+      if(insertError) throw insertError;
+    }
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_service_category_ids:null}});
     if(metadataError) console.warn("Could not clear one-time service category metadata:",metadataError.message);
   }
 
   async function syncSignupProfessionQualifications(user){
-    const metadata=user?.user_metadata||{};
-    const ids=Array.isArray(metadata.zelpx_signup_profession_ids)
-      ? [...new Set(metadata.zelpx_signup_profession_ids.filter(id=>typeof id==="string"))] : [];
-    const state=String(metadata.service_state||"").toUpperCase();
-    if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state)) return;
-    const role=metadata.zelpx_signup_work_role==="employee"?"employee":"independent";
-    const {data:pendingCompany,error:pendingCompanyError}=await db.from("contractor_change_requests")
-      .select("requested_changes").eq("user_id",currentUser.id).eq("request_type","company_profile")
-      .eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle();
-    if(pendingCompanyError) throw pendingCompanyError;
-    const companyDraft=pendingCompany?.requested_changes||{};
+    const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"):[];
+    const state=String(m.service_state||"").toUpperCase();if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
+    const {data:existing,error:ee}=await db.from("contractor_profession_qualifications").select("profession_id").eq("contractor_id",currentContractor.id).eq("state_code",state);if(ee)throw ee;
+    const have=new Set((existing||[]).map(x=>x.profession_id)),missing=ids.filter(id=>!have.has(id));
+    if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
+    const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
     const rules=await loadRoleEligibilityRules(state,role);
-    const rows=ids.map(profession_id=>{
-      const rule=rules.find(x=>x.profession_id===profession_id);
-      const status=rule?.requirement_status||"unverified";
-      const requires=(role==="independent"&&(status==="required"||status==="conditional"))||
-        (role==="employee"&&rule?.eligibility_status==="individual_trade_credential_required");
-      return {
-        profession_id,
-        license_required_at_registration:requires,
-        license_number:requires?(companyDraft.license_number||metadata.license_number||currentContractor.license_number||null):null,
-        license_type:requires?(companyDraft.license_type||metadata.license_type||currentContractor.license_type||null):null,
-        issuing_authority:requires?(rule?.licensing_authority||null):null,
-        license_document_path:requires?(companyDraft.license_document_path||currentContractor.license_document_path||null):null,
-        verification_status:requires?"not_submitted":status==="not_required"?"not_required":"pending"
-      };
-    });
-    const {error:requestError}=await db.rpc("submit_contractor_change_request",{
-      p_type:"profession_qualifications",
-      p_changes:{state_code:state,work_role:role,items:rows}
-    });
-    if(requestError) throw requestError;
+    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,license_document_path:req?(currentContractor.license_document_path||null):null};});
+    const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
-    if(metadataError) console.warn("Could not clear one-time profession metadata:",metadataError.message);
+    if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
   }
 
   async function loadAccount() {
@@ -946,7 +946,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_document_path,license_review_status,insurance_document_path,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_document_path,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_document_path,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
@@ -972,20 +972,20 @@
     const draftValue = (key, activeValue) =>
       Object.prototype.hasOwnProperty.call(draft, key) ? (draft[key] ?? "") : (activeValue ?? "");
 
-    $("profileFullName").value = draftValue("full_name", profile?.full_name);
-    $("profilePhone").value = draftValue("phone", profile?.phone);
-    $("contractorAvatarPreview").src = draftValue("avatar_url", profile?.avatar_url) || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-    $("profileCompany").value = draftValue("company_name", contractor?.company_name);
-    $("profileCompanyEmail").value = draftValue("email", contractor?.email);
-    $("profileServiceAddress").value = draftValue("service_address", contractor?.service_address);
-    $("profileServiceCity").value = draftValue("service_city", contractor?.service_city);
+    $("profileFullName").value = profile?.full_name || "";
+    $("profilePhone").value = profile?.phone || "";
+    $("contractorAvatarPreview").src = profile?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+    $("profileCompany").value = contractor?.company_name || "";
+    $("profileCompanyEmail").value = contractor?.email || "";
+    $("profileServiceAddress").value = contractor?.service_address || "";
+    $("profileServiceCity").value = contractor?.service_city || "";
     const { data: profileStates, error: profileStatesError } = await db.from("us_states").select("state_code,state_name").eq("is_active", true).order("state_name");
     if (profileStatesError) throw profileStatesError;
     const profileStateSelect = $("profileServiceState");
     profileStateSelect.replaceChildren(new Option("Select state", ""));
     (profileStates || []).forEach(s => profileStateSelect.add(new Option(s.state_name, s.state_code)));
-    profileStateSelect.value = draftValue("service_state", contractor?.service_state);
-    $("profileServiceZip").value = draftValue("service_zip_code", contractor?.service_zip_code);
+    profileStateSelect.value = contractor?.service_state || "";
+    $("profileServiceZip").value = contractor?.service_zip_code || "";
     $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
     $("profileLeadEmailNotifications").checked = contractor?.lead_email_notifications !== false;
     const draftHasLicense = draftValue("has_license", contractor?.has_license);
@@ -993,25 +993,24 @@
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
     $("profileLicenseState").value = draftValue("license_state", contractor?.license_state);
     $("profileLicenseType").value = draftValue("license_type", contractor?.license_type);
+    $("profileLicenseNumber2").value = draftValue("license_number_2", contractor?.license_number_2);
+    $("profileLicenseState2").value = draftValue("license_state_2", contractor?.license_state_2);
+    $("profileLicenseType2").value = draftValue("license_type_2", contractor?.license_type_2);
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
-    $("licenseDocumentStatus").textContent = draftValue("license_document_path", contractor?.license_document_path)
-      ? "License document on file · Review: " + String(contractor?.license_review_status || "pending").replaceAll("_"," ") + ". Select a new file to replace it."
-      : "No license document uploaded yet.";
-    $("profileInsurancePolicy").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
+    $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
+    $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
     const companySaveStatus = $("companySaveStatus");
     if (companySaveStatus) {
       companySaveStatus.textContent = pendingCompanyChanges
-        ? "Your submitted details are saved here for review. The previous approved profile stays active until the administrator approves these changes. Your service radius is independent and updates immediately."
+        ? "Your submitted details are saved and shown here. They are pending administrator review; approved details remain active until approval."
         : "";
       companySaveStatus.className = pendingCompanyChanges ? "message" : "message hidden";
     }
     await loadContractorServiceCategories();
     await loadProfessionQualifications();
     await loadContractorChangeRequests();
-    $("insuranceDocumentStatus").textContent = contractor?.insurance_document_path
-      ? "Insurance certificate on file · Review: " + String(contractor.insurance_review_status || "pending").replaceAll("_"," ") + ". Select a new file to replace it."
-      : "No insurance certificate uploaded yet.";
+
   }
   $("contractorAvatarFile").addEventListener("change", async (event) => {
     const file = event.target.files && event.target.files[0]; if (!file) return;
@@ -1026,13 +1025,11 @@
       const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
       if (uploadError) throw uploadError;
       const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
-      const { error: requestError } = await db.rpc("submit_contractor_change_request", {
-        p_type: "company_profile",
-        p_changes: { avatar_url: publicData.publicUrl }
-      });
-      if (requestError) throw requestError;
+      const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
+      if (saveError) throw saveError;
       $("contractorAvatarPreview").src = publicData.publicUrl;
-      status.textContent = "Photo submitted for administrator approval. Your current approved photo remains active until approval.";
+      if (currentProfile) currentProfile.avatar_url = publicData.publicUrl;
+      status.textContent = "Photo saved. It will appear in customers’ chat notifications.";
     } catch (error) { status.textContent = error.message || "Could not upload photo."; }
     finally { event.target.value = ""; }
   });
@@ -1078,6 +1075,8 @@
     selectedProfessionIds=new Set(pendingItems ? pendingItems.map(x=>x.profession_id).filter(Boolean) : activeIds);
     savedProfessionIds=new Set(activeIds);
     $("professionWorkRole").value=pendingItems ? (pending.work_role||"independent") : (saved[0]?.work_role||"independent");
+    updateProfileInsuranceVisibility();
+
     renderProfessionOptions();
     await refreshProfessionRules();
     if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after refresh. They become active after approval.","success");
@@ -1118,8 +1117,14 @@
     });
     if(!matches.length) root.textContent=licenseChoice==="yes"?"No verified licensed work types match this state and work status.":"No verified license-free work types match this state and work status.";
   }
+  function updateProfileInsuranceVisibility(){
+    const showInsurance=$("professionWorkRole").value==="independent" && $("profileHasLicense").value==="yes";
+    const insuranceSection=$("profileBusinessInsuranceSection");
+    if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
+  }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
+    updateProfileInsuranceVisibility();
     if(!state) return;
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     const licenseChoice=$("profileHasLicense").value;
@@ -1160,41 +1165,23 @@
       const state=$("professionState").value, role=$("professionWorkRole").value;
       const selected=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
       const rules=professionRuleRows;
-      const {data:pendingCompany,error:pendingCompanyError}=await db.from("contractor_change_requests")
-        .select("requested_changes").eq("user_id",currentUser.id).eq("request_type","company_profile")
-        .eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle();
-      if(pendingCompanyError) throw pendingCompanyError;
-      const companyDraft=pendingCompany?.requested_changes||{};
-      const {data:activeQualifications,error:qualificationReadError}=await db.from("contractor_profession_qualifications")
-        .select("profession_id,license_number,license_type,issuing_authority,license_expiration_date,license_document_path")
-        .eq("contractor_id",currentContractor.id).eq("state_code",state);
-      if(qualificationReadError) throw qualificationReadError;
-      const activeByProfession=new Map((activeQualifications||[]).map(q=>[q.profession_id,q]));
       const rows=selected.map(p=>{
         const rule=rules.find(r=>r.profession_id===p.id);
-        const active=activeByProfession.get(p.id)||{};
         const requires=rule?.requirement_status==="required"||(rule?.requirement_status==="conditional"&&role==="independent");
-        return {
-          profession_id:p.id,
+        return {contractor_id:currentContractor.id,profession_id:p.id,state_code:state,work_role:role,
           license_required_at_registration:requires,
-          license_number:requires?(companyDraft.license_number||active.license_number||currentContractor.license_number||null):null,
-          license_type:requires?(companyDraft.license_type||active.license_type||currentContractor.license_type||null):null,
-          issuing_authority:requires?(active.issuing_authority||rule?.licensing_authority||null):null,
-          license_expiration_date:requires?(companyDraft.license_expiration_date||active.license_expiration_date||null):null,
-          license_document_path:requires?(companyDraft.license_document_path||active.license_document_path||currentContractor.license_document_path||null):null,
-          verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"
-        };
+          verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
       });
       const {data:requestId,error:requestError}=await db.rpc("submit_contractor_change_request",{
         p_type:"profession_qualifications",
-        p_changes:{state_code:state,work_role:role,items:rows}
+        p_changes:{state_code:state,work_role:role,items:rows.map(({profession_id,license_required_at_registration,verification_status})=>({profession_id,license_required_at_registration,verification_status}))}
       });
       if(requestError) throw requestError;
       const summary=$("professionComplianceSummary");
       let saveStatus=$("professionSaveStatus");
       if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
       saveStatus.className="message success";
-      saveStatus.textContent="Your selected work types and license details were submitted for administrator review. Your previously approved work types remain active until approval.";
+      saveStatus.textContent="Your work types were submitted for administrator review. The descriptions remain visible below. They become active after approval.";
       $("saveProfessionQualificationsBtn").disabled=true;
     } catch(e) {
       const summary=$("professionComplianceSummary");
@@ -1409,48 +1396,42 @@
   let licenseEligibleLeadCategories = null;
   async function loadLicenseEligibleLeadCategories() {
     licenseEligibleLeadCategories = new Set();
-    if (isAdmin) return;
-    if (!currentContractor?.service_state || !currentContractor?.id) return;
-    const state = String(currentContractor.service_state).trim().toUpperCase();
-    if (!/^[A-Z]{2}$/.test(state)) return;
-    const [{data: maps, error: mapError}, {data: qualifications, error: qualificationError}] = await Promise.all([
+    if (isAdmin || !currentContractor?.id) return;
+    const states=[...new Set([currentContractor.service_state,currentContractor.license_state,currentContractor.license_state_2]
+      .map(value=>String(value||"").trim().toUpperCase()).filter(value=>/^[A-Z]{2}$/.test(value)))];
+    if(!states.length)return;
+    const [{data:maps,error:mapError},{data:categories,error:categoriesError}]=await Promise.all([
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state)
+      db.from("service_categories").select("id,name").eq("is_active",true)
     ]);
-    if (mapError) throw mapError;
-    if (qualificationError) throw qualificationError;
-    const professionIds = [...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
-    if (!professionIds.length) return;
-    // Lead purchases are for independent contractors only. Employee qualifications
-    // must never unlock direct customer-job purchases.
-    const {data: rules, error: rulesError} = await db.from("state_profession_eligibility")
-      .select("profession_id,worker_role,eligibility_status")
-      .eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds);
-    if (rulesError) throw rulesError;
-    const independentQualifications = new Map((qualifications||[])
-      .filter(q=>q.work_role==="independent")
-      .map(q=>[q.profession_id,q.verification_status]));
-    const independentRules = new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
-    const companyLicenseVerified = currentContractor.has_license === true &&
-      currentContractor.license_review_status === "verified" &&
-      String(currentContractor.license_state || "").trim().toUpperCase() === state;
-    (maps||[]).forEach(map=>{
-      if(map.mapping_status!=="mapped"||!map.profession_id)return;
-      const rule=independentRules.get(map.profession_id);
-      const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
-      const licenseFree=rule==="allowed_no_individual_license";
-      const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
-        ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
-      // Conditional, local-review and unverified work stays blocked until its
-      // state-specific requirements are explicitly resolved.
-      if(licenseFree || licensedAndVerified) licenseEligibleLeadCategories.add(map.category_id);
-    });
-    const {data: categories, error: categoriesError}=await db.from("service_categories").select("id,name").eq("is_active",true);
-    if(categoriesError) throw categoriesError;
-    // Populate the category catalog used to match saved contractor category IDs
-    // against lead names. Without this, every lead looks unselected in the UI.
-    availableServiceCategories = categories || [];
-    const eligibleNames=new Set(availableServiceCategories.filter(c=>licenseEligibleLeadCategories.has(c.id)).map(c=>c.name.toLowerCase()));
+    if(mapError)throw mapError;
+    if(categoriesError)throw categoriesError;
+    availableServiceCategories=categories||[];
+    const professionIds=[...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
+    if(!professionIds.length)return;
+    for(const state of states){
+      const [{data:qualifications,error:qualificationError},{data:rules,error:rulesError}]=await Promise.all([
+        db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state),
+        db.from("state_profession_eligibility").select("profession_id,worker_role,eligibility_status").eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds)
+      ]);
+      if(qualificationError)throw qualificationError;
+      if(rulesError)throw rulesError;
+      const independentQualifications=new Map((qualifications||[]).filter(q=>q.work_role==="independent").map(q=>[q.profession_id,q.verification_status]));
+      const independentRules=new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
+      const companyLicenseVerified=currentContractor.has_license===true &&
+        currentContractor.license_review_status==="verified" &&
+        [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
+      (maps||[]).forEach(map=>{
+        if(map.mapping_status!=="mapped"||!map.profession_id)return;
+        const rule=independentRules.get(map.profession_id);
+        const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
+        const licenseFree=rule==="allowed_no_individual_license";
+        const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
+          ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
+        if(licenseFree||licensedAndVerified)licenseEligibleLeadCategories.add(map.category_id);
+      });
+    }
+    const eligibleNames=new Set(availableServiceCategories.filter(item=>licenseEligibleLeadCategories.has(item.id)).map(item=>item.name.toLowerCase()));
     licenseEligibleLeadCategories=eligibleNames;
   }
 
@@ -1792,6 +1773,38 @@
     return result;
   }
 
+  async function saveServiceRadius() {
+    const button = $("saveServiceRadiusBtn");
+    const status = $("serviceRadiusSaveStatus");
+    const radius = Number($("profileServiceRadius").value);
+    if (!currentContractor || !currentUser) {
+      if (status) { status.textContent = "Contractor profile is not ready. Please sign in again."; status.className = "message error"; }
+      return;
+    }
+    if (![10,25,50,100,150,250].includes(radius)) {
+      if (status) { status.textContent = "Choose a valid service radius."; status.className = "message error"; }
+      return;
+    }
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = "Saving…";
+    try {
+      const { error } = await db.from("contractors")
+        .update({ service_radius_miles: radius })
+        .eq("id", currentContractor.id)
+        .eq("user_id", currentUser.id);
+      if (error) throw error;
+      currentContractor = { ...currentContractor, service_radius_miles: radius };
+      if (status) { status.textContent = "Service radius saved."; status.className = "message success"; }
+      button.textContent = "Saved ✓";
+    } catch (e) {
+      if (status) { status.textContent = "Could not save service radius: " + (e.message || "Unknown error"); status.className = "message error"; }
+      button.textContent = "Save radius";
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function saveCompany() {
     const saveButton = $("saveCompanyBtn");
     const saveStatus = $("companySaveStatus");
@@ -1801,46 +1814,31 @@
     saveButton.textContent = "Saving…";
     saveButton.setAttribute("aria-busy", "true");
     if (saveStatus) {
-      saveStatus.textContent = "Submitting profile changes for review and updating your service radius…";
+      saveStatus.textContent = "Saving your company details and documents…";
       saveStatus.className = "message";
     }
     clearMessage("appMessage");
     let saved = false;
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
+      const companyName = $("profileCompany").value.trim(), companyEmail = $("profileCompanyEmail").value.trim();
       const hasLicense = $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
+      const licenseNumber2=$("profileLicenseNumber2").value.trim(),licenseState2=$("profileLicenseState2").value.trim().toUpperCase(),licenseType2=$("profileLicenseType2").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
-      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Enter business street address, city, state, and a valid 5-digit ZIP code.");
+      if (!full_name || !phone || !companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) throw new Error("Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
+      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
-      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
+      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
+      if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) throw new Error("Complete all three fields for the second state license, or leave all three blank.");
+      if (hasLicense && licenseState2 && licenseState2===licenseState) throw new Error("Choose two different states for your licenses.");
       if (currentContractor) {
         await verifyContractorBusinessAddress();
         let license_document_path = currentContractor.license_document_path || null;
         let insurance_document_path = currentContractor.insurance_document_path || null;
-        const licenseFile = $("licenseDocument").files?.[0];
-        if (licenseFile) {
-          if (!["application/pdf","image/jpeg","image/png","image/webp"].includes(licenseFile.type)) throw new Error("License file must be a PDF, JPG, PNG or WebP image.");
-          if (licenseFile.size > 10 * 1024 * 1024) throw new Error("License document must be 10 MB or smaller.");
-          const safeName = licenseFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = currentUser.id + "/" + Date.now() + "-license-" + safeName;
-          const { error: uploadError } = await db.storage.from("contractor-licenses").upload(path, licenseFile, { upsert: false, contentType: licenseFile.type });
-          if (uploadError) throw uploadError;
-          license_document_path = path;
-        }
-        const insuranceFile = $("insuranceDocument").files?.[0];
-        if (insuranceFile) {
-          if (!["application/pdf","image/jpeg","image/png","image/webp"].includes(insuranceFile.type)) throw new Error("Insurance file must be a PDF, JPG, PNG or WebP image.");
-          if (insuranceFile.size > 10 * 1024 * 1024) throw new Error("Insurance certificate must be 10 MB or smaller.");
-          const safeName = insuranceFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = currentUser.id + "/" + Date.now() + "-insurance-" + safeName;
-          const { error: uploadError } = await db.storage.from("contractor-insurance").upload(path, insuranceFile, { upsert: false, contentType: insuranceFile.type });
-          if (uploadError) throw uploadError;
-          insurance_document_path = path;
-        }
         const changes = {
           full_name, phone,
-          company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim(),
+          company_name: companyName, email: companyEmail,
           service_address: $("profileServiceAddress").value.trim(), service_city: $("profileServiceCity").value.trim(),
           service_state: state, service_zip_code: zip, service_radius_miles: Number($("profileServiceRadius").value),
           lead_email_notifications: $("profileLeadEmailNotifications").checked,
@@ -1848,54 +1846,71 @@
           service_longitude: Number($("profileServiceZip").dataset.longitude) || currentContractor.service_longitude || null,
           has_license: hasLicense, license_number: hasLicense ? licenseNumber : null,
           license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null,
+          license_state_2: hasLicense&&licenseState2?licenseState2:null,
+          license_type_2: hasLicense&&licenseType2?licenseType2:null,
           license_document_path,
           insurance_document_path,
-          insurance_policy_number: $("profileInsurancePolicy").value.trim() || null,
+          insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
+          insurance_agent_phone: $("profileInsuranceAgentPhone").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
-        // The service radius and email-notification preference are the only
-        // contractor-editable settings applied immediately. All identity,
-        // company, address, license and insurance changes stay pending.
-        const approvedProfileChanges = {
-          full_name: changes.full_name,
-          phone: changes.phone,
-          company_name: changes.company_name,
-          email: changes.email,
-          service_address: changes.service_address,
-          service_city: changes.service_city,
-          service_state: changes.service_state,
-          service_zip_code: changes.service_zip_code,
-          service_latitude: changes.service_latitude,
-          service_longitude: changes.service_longitude,
-          has_license: changes.has_license,
-          license_number: changes.license_number,
-          license_state: changes.license_state,
-          license_type: changes.license_type,
-          license_document_path: changes.license_document_path,
-          insurance_document_path: changes.insurance_document_path,
-          insurance_policy_number: changes.insurance_policy_number,
-          insurance_expiration_date: changes.insurance_expiration_date,
+        // Save ordinary contact and location fields directly so they remain current
+        // after logout/login. License and insurance changes still require admin review.
+        const { error: profileUpdateError } = await db.from("profiles")
+          .update({ full_name, phone }).eq("id", currentUser.id);
+        if (profileUpdateError) throw profileUpdateError;
+        const activeProfileChanges = {
+          company_name: changes.company_name, email: changes.email,
+          service_address: changes.service_address, service_city: changes.service_city,
+          service_state: changes.service_state, service_zip_code: changes.service_zip_code,
+          service_radius_miles: changes.service_radius_miles,
+          service_latitude: changes.service_latitude, service_longitude: changes.service_longitude,
           lead_email_notifications: changes.lead_email_notifications
         };
-        const { error: requestError } = await db.rpc("submit_contractor_change_request", {
-          p_type: "company_profile",
-          p_changes: approvedProfileChanges
-        });
-        if (requestError) throw requestError;
-        const { error: selfServiceError } = await db.from("contractors")
-          .update({ service_radius_miles: changes.service_radius_miles })
-          .eq("id", currentContractor.id)
-          .eq("user_id", currentUser.id);
-        if (selfServiceError) throw selfServiceError;
-
-
-        currentContractor = {
-          ...currentContractor,
-          service_radius_miles: changes.service_radius_miles
+        const { error: contractorUpdateError } = await db.from("contractors")
+          .update(activeProfileChanges).eq("id", currentContractor.id).eq("user_id", currentUser.id);
+        if (contractorUpdateError) throw contractorUpdateError;
+        const complianceChanges = {
+          has_license: changes.has_license, license_number: changes.license_number,
+          license_state: changes.license_state, license_type: changes.license_type,
+          license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
+          license_document_path: changes.license_document_path,
+          insurance_document_path: changes.insurance_document_path,
+          insurance_agency_name: changes.insurance_agency_name,
+          insurance_agent_phone: changes.insurance_agent_phone,
+          insurance_expiration_date: changes.insurance_expiration_date
         };
+        const {error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:complianceChanges});
+        if(requestError) throw requestError;
+        currentContractor = { ...currentContractor, ...activeProfileChanges };
+        currentProfile = { ...currentProfile, full_name, phone };
+
+        // Submit selected professions from the same Save company details action.
+        if (selectedProfessionIds.size) {
+          await refreshProfessionRules();
+          const professionState = $("professionState").value;
+          const workRole = $("professionWorkRole").value;
+          const selected = professionCatalog.filter(p => selectedProfessionIds.has(p.id));
+          const items = selected.map(p => {
+            const rule = professionRuleRows.find(r => r.profession_id === p.id);
+            const requires = rule?.requirement_status === "required" ||
+              (rule?.requirement_status === "conditional" && workRole === "independent");
+            return {
+              profession_id: p.id,
+              license_required_at_registration: requires,
+              verification_status: requires ? "not_submitted" :
+                rule?.requirement_status === "not_required" ? "not_required" : "pending"
+            };
+          });
+          const { error: professionError } = await db.rpc("submit_contractor_change_request", {
+            p_type: "profession_qualifications",
+            p_changes: { state_code: professionState, work_role: workRole, items }
+          });
+          if (professionError) throw professionError;
+        }
       }
-      $("licenseDocument").value = ""; $("insuranceDocument").value = "";
-      const successText = "Submitted for administrator review. Your current profile, company, address, license and work types stay active until approval. Only your service radius is updated immediately; all other changes wait for administrator approval.";
+      const successText = "Saved successfully. Your name, phone, company and location details are now active. License, insurance and profession changes remain pending administrator review.";
       message("appMessage", successText, "success");
       if (saveStatus) { saveStatus.textContent = "✓ " + successText; saveStatus.className = "message success"; }
       saveButton.textContent = "Submitted ✓";
@@ -2185,11 +2200,14 @@
       const render=(list,allowReview)=>{
         if(!list)return;list.replaceChildren();
         if(!rows.length){list.textContent="No change requests yet.";return;}
+        if(!allowReview){list.style.display="flex";list.style.flexDirection="column";list.style.flexWrap="nowrap";list.style.gap="0";list.style.overflow="visible";list.style.paddingBottom="0";}
         rows.forEach(r=>{
           const card=document.createElement("article");card.className="lead";
           const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
-          const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
-          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString()+" · "+(company.email||profile.phone||"Contact not provided");card.append(meta);
+          const h=document.createElement("h3");
+          h.textContent=r.request_type==="profession_qualifications"?"Profession qualifications":r.request_type==="company_profile"?"Company profile":r.request_type==="service_categories"?"Service categories":r.request_type.replaceAll("_"," ").replace(/\\b\\w/g,ch=>ch.toUpperCase());
+          card.append(h);
+          const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});card.append(meta);
           const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
           const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
           if(r.request_type==="profession_qualifications"){
@@ -2206,16 +2224,51 @@
             Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
           }
           card.append(detail);
-          if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          let noteText=null;
+          if(r.admin_note){noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          if(!allowReview){
+            card.style.cssText+=";width:100%;max-width:none;min-width:0;box-sizing:border-box;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 12px;padding:13px 4px;min-height:0;background:transparent;border:0;border-bottom:1px solid #e9e3d9;border-radius:0;box-shadow:none";
+            h.style.cssText="grid-column:1;grid-row:1;margin:0;font-size:15px;line-height:1.3;font-weight:700;color:#292725";
+            meta.style.cssText="grid-column:1;grid-row:2;margin:0;font-size:12px;line-height:1.35;color:#827d75";
+            const status=document.createElement("span");
+            status.textContent=r.status==="approved"?"Approved":r.status==="pending"?"Pending":r.status==="rejected"?"Rejected":r.status.replaceAll("_"," ");
+            status.style.cssText="grid-column:2;grid-row:1;justify-self:end;align-self:center;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;background:"+(r.status==="approved"?"#e9f5ec":r.status==="pending"?"#fff3df":"#fcebea")+";color:"+(r.status==="approved"?"#287344":r.status==="pending"?"#946016":"#a33b35");
+            card.append(status);
+            const expand=document.createElement("button");expand.type="button";expand.className="secondary";expand.textContent="View details  ›";expand.setAttribute("aria-label","View change request details");expand.style.cssText="grid-column:1/-1;justify-self:start;position:static!important;width:auto;min-width:0;min-height:28px;height:auto;margin-top:4px;padding:2px 0;border:0;background:transparent;color:#d96532;font-size:12px;font-weight:700;box-shadow:none";
+            detail.hidden=true;if(noteText)noteText.hidden=true;
+            expand.addEventListener("click",()=>{
+              const page=document.createElement("section");
+              page.setAttribute("role","region");
+              page.setAttribute("aria-label","Change request details");
+              page.style.cssText="position:fixed;inset:0;z-index:9999;background:#f7f3eb;overflow-y:auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom));box-sizing:border-box";
+              const pageInner=document.createElement("div");
+              pageInner.style.cssText="max-width:760px;margin:0 auto;background:#fff;border:1px solid #e7e1d7;border-radius:20px;padding:18px;min-height:calc(100% - 36px);box-sizing:border-box";
+              const back=document.createElement("button");back.type="button";back.className="secondary";back.textContent="← Back to My company";back.style.cssText="width:100%;margin-bottom:18px";
+              back.addEventListener("click",()=>page.remove());
+              const pageTitle=document.createElement("h2");pageTitle.textContent=h.textContent;pageTitle.style.cssText="margin:8px 0 10px";
+              const pageMeta=document.createElement("p");pageMeta.className="muted";pageMeta.textContent=meta.textContent;
+              const pageStatus=document.createElement("p");pageStatus.style.cssText="font-weight:700;margin:12px 0";pageStatus.textContent="Status: "+r.status.toUpperCase();
+              const pageDetail=detail.cloneNode(true);pageDetail.hidden=false;pageDetail.style.cssText+=";margin-top:16px";
+              pageInner.append(back,pageTitle,pageMeta,pageStatus,pageDetail);
+              if(noteText){const pageNote=document.createElement("p");pageNote.textContent=noteText.textContent;pageNote.style.cssText="padding:14px;background:#fff7ed;border-radius:12px;overflow-wrap:anywhere";pageInner.append(pageNote);}
+              const closeBottom=document.createElement("button");closeBottom.type="button";closeBottom.className="secondary";closeBottom.textContent="Close";closeBottom.style.cssText="width:100%;margin-top:22px;margin-bottom:8px";
+              closeBottom.addEventListener("click",()=>page.remove());
+              pageInner.append(closeBottom);
+              page.append(pageInner);document.body.append(page);
+            });
+            card.insertBefore(expand,detail);
+          }
           if(allowReview && r.status==="pending"){
             const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
             const actions=document.createElement("div");actions.className="actions";
-            for(const [decision,label] of [["approved","Approve"],["rejected","Reject"]]){
-              const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";
+            actions.style.display="flex";actions.style.flexDirection="row";actions.style.flexWrap="nowrap";actions.style.gap="10px";
+            for(const [decision,label] of [["approved","Approved"],["rejected","Reject"]]){
+              const b=document.createElement("button");b.type="button";b.textContent=label;b.style.flex="1 1 0";b.style.minWidth="0";if(decision==="rejected")b.className="secondary";
               b.addEventListener("click",async()=>{
                 if(decision==="rejected"&&!note.value.trim()){note.focus();return message("contractorChangesMessage","Enter a reason before rejecting a request.","error");}
                 b.disabled=true;
-                try{const {error:e}=await db.rpc("review_contractor_change_request",{p_request_id:r.id,p_decision:decision,p_admin_note:note.value.trim()||null});if(e)throw e;
+                try{const {data:reviewData,error:e}=await db.rpc("admin_approve_contractor_change_request_with_cleanup",{p_request_id:r.id,p_decision:decision==="rejected"?"rejected":(r.request_type==="company_profile"?(r.requested_changes?.has_license===true?"approved_with_license":"approved_without_license"):(r.request_type==="profession_qualifications"&&(r.requested_changes?.items||[]).some(x=>x.license_required_at_registration===true)?"approved_with_license":"approved_without_license")),p_admin_note:note.value.trim()||null});if(e)throw e;
+                  if(decision==="approved"&&reviewData?.old_files?.length){const {error:cleanupError}=await db.functions.invoke("cleanup-contractor-documents",{body:{contractor_id:reviewData.contractor_id,user_id:reviewData.user_id,old_files:reviewData.old_files}});if(cleanupError)console.warn("Old document cleanup needs attention:",cleanupError.message);}
                   message("contractorChangesMessage","Request "+decision+".","success");await loadContractorChangeRequests();if(decision==="approved"){await loadAdminLeads();await loadAccount();await loadAdminContractorReviews();}
                 }catch(e){message("contractorChangesMessage","Could not review request: "+e.message,"error");b.disabled=false;}
               });actions.append(b);
@@ -2376,12 +2429,16 @@
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
+    function updateSignupInsuranceVisibility(){
+      const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
+      $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
+      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=showInsurance);
+    }
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
       const licenseLabel=document.querySelector('label[for="hasLicense"]');
       if(licenseLabel)licenseLabel.textContent=employee?"Do you personally hold the individual trade license / certificate required for your selected work?":"Do you have the required current license / registration / trade credential?";
-      $("signupInsuranceFields").classList.remove("hidden"); // Keep upload fields visible for every applicant.
-      ["signupInsurancePolicy","signupInsuranceExpiration","signupInsuranceDocument"].forEach(id=>$(id).required=!employee);
+      updateSignupInsuranceVisibility();
     });
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
@@ -2409,6 +2466,7 @@
     $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
+    $("saveServiceRadiusBtn").addEventListener("click", saveServiceRadius);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
     $("clearProfileProfessionsBtn").addEventListener("click",()=>{
       selectedProfessionIds.clear();
@@ -2435,22 +2493,24 @@
     $("profileHasLicense").addEventListener("change",async()=>{
       selectedProfessionIds.clear();
       $("profileLicenseFields").classList.toggle("hidden",$("profileHasLicense").value!=="yes");
+      updateProfileInsuranceVisibility();
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
     function updateSignupLicenseFields(){
       const showLicense=$("hasLicense").value==="yes";
       $("signupLicenseFields").classList.toggle("hidden",!showLicense);
-      ["licenseNumber","licenseState","licenseType","signupLicenseDocument"].forEach(id=>{
+      ["licenseNumber","licenseState","licenseType"].forEach(id=>{
         $(id).required=showLicense;
-        if(!showLicense && $(id).type!=="file") $(id).value="";
-        if(!showLicense && $(id).type==="file") $(id).value="";
+        if(!showLicense) $(id).value="";
       });
+      ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; if(!showLicense) $(id).value=""; });
     }
     $("hasLicense").addEventListener("change", () => {
       signupSelectedCategoryIds.clear();
       signupSelectedProfessionIds.clear();
       updateSignupLicenseFields();
+      updateSignupInsuranceVisibility();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
     });
 
