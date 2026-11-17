@@ -2217,10 +2217,10 @@
           let noteText=null;
           if(r.admin_note){noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
           if(!allowReview){
-            card.style.cssText+=";width:100%;max-width:none;min-width:0;box-sizing:border-box;position:relative;padding:22px 22px 18px;min-height:150px;background:#fffaf5;border:1px solid #e8e1d6;border-radius:22px;box-shadow:0 2px 8px rgba(30,25,18,.04)";
-            h.style.cssText="margin:0 112px 12px 0;font-size:clamp(18px,4.5vw,24px);line-height:1.25";
-            meta.style.cssText="margin:0 100px 42px 0;font-size:15px;line-height:1.5";
-            const expand=document.createElement("button");expand.type="button";expand.className="secondary";expand.textContent="Open +";expand.setAttribute("aria-label","Open change request details");expand.style.cssText="position:absolute;right:18px;bottom:16px;width:auto;min-width:0;height:auto;padding:6px 10px;border:0;background:transparent;color:#e56b3b;font-size:17px;font-weight:700;box-shadow:none";
+            card.style.cssText+=";width:100%;max-width:none;min-width:0;box-sizing:border-box;position:relative;padding:13px 15px 12px;min-height:94px;background:#fffaf5;border:1px solid #e8e1d6;border-radius:16px;box-shadow:0 1px 4px rgba(30,25,18,.035)";
+            h.style.cssText="margin:0 82px 6px 0;font-size:17px;line-height:1.25";
+            meta.style.cssText="margin:0 82px 22px 0;font-size:13px;line-height:1.35";
+            const expand=document.createElement("button");expand.type="button";expand.className="secondary";expand.textContent="Open +";expand.setAttribute("aria-label","Open change request details");expand.style.cssText="position:absolute;right:12px;bottom:9px;width:auto;min-width:0;height:auto;padding:3px 5px;border:0;background:transparent;color:#e56b3b;font-size:14px;font-weight:700;box-shadow:none";
             detail.hidden=true;if(noteText)noteText.hidden=true;
             expand.addEventListener("click",()=>{
               const page=document.createElement("section");
