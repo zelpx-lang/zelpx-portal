@@ -2183,10 +2183,19 @@
       if(professionsResult.error)throw professionsResult.error;if(categoriesResult.error)throw categoriesResult.error;
       const profiles=new Map((profilesResult.data||[]).map(x=>[x.id,x])), contractors=new Map((contractorsResult.data||[]).map(x=>[x.id,x]));
       const professionNames=new Map((professionsResult.data||[]).map(x=>[x.id,x.profession_name])), categoryNames=new Map((categoriesResult.data||[]).map(x=>[x.id,x.name]));
-      const render=(list,allowReview)=>{
+      // Contractor view: retain every pending request, but show only the newest
+      // approved request per request type. Admin view keeps the full audit trail.
+      const latestApprovedByType=new Map();
+      rows.forEach(r=>{
+        if(r.status!=="approved")return;
+        if(!latestApprovedByType.has(r.request_type))latestApprovedByType.set(r.request_type,r);
+      });
+      const ownRows=rows.filter(r=>r.status==="pending"||latestApprovedByType.get(r.request_type)?.id===r.id);
+
+      const render=(list,allowReview,visibleRows)=>{
         if(!list)return;list.replaceChildren();
-        if(!rows.length){list.textContent="No change requests yet.";return;}
-        rows.forEach(r=>{
+        if(!visibleRows.length){list.textContent="No change requests yet.";return;}
+        visibleRows.forEach(r=>{
           const card=document.createElement("article");card.className="lead";
           const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
           const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
@@ -2225,7 +2234,7 @@
           list.append(card);
         });
       };
-      render(adminList,isAdmin);render(ownList,false);
+      render(adminList,isAdmin,rows);render(ownList,false,ownRows);
     }catch(e){[adminList,ownList].filter(Boolean).forEach(x=>x.textContent="Could not load change requests: "+e.message);}
   }
 
