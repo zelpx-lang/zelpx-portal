@@ -1769,10 +1769,12 @@
     let saved = false;
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
+      const companyName = $("profileCompany").value.trim(), companyEmail = $("profileCompanyEmail").value.trim();
       const hasLicense = $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
-      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Enter business street address, city, state, and a valid 5-digit ZIP code.");
+      if (!full_name || !phone || !companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) throw new Error("Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
+      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       if (currentContractor) {
@@ -1801,7 +1803,7 @@
         }
         const changes = {
           full_name, phone,
-          company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim(),
+          company_name: companyName, email: companyEmail,
           service_address: $("profileServiceAddress").value.trim(), service_city: $("profileServiceCity").value.trim(),
           service_state: state, service_zip_code: zip, service_radius_miles: Number($("profileServiceRadius").value),
           lead_email_notifications: $("profileLeadEmailNotifications").checked,
