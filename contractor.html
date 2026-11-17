@@ -2198,15 +2198,13 @@
           const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
           const h=document.createElement("h3");h.textContent=(company.company_name||profile.full_name||"Contractor")+" · "+r.request_type.replaceAll("_"," ")+" · "+r.status.toUpperCase();card.append(h);
           const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleString()+" · "+(company.email||profile.phone||"Contact not provided");card.append(meta);
-          const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:10px;margin:10px 0";
-          const detailList=document.createElement("ul");detailList.style.cssText="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px";
-          detail.append(detailList);
-          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const item=document.createElement("li");item.style.cssText="display:flex;flex-direction:column;gap:3px;padding:10px 12px;background:#fff;border:1px solid #eee3d8;border-radius:9px;overflow-wrap:anywhere";const title=document.createElement("strong");title.textContent=label;const content=document.createElement("span");content.textContent=String(value);item.append(title,content);detailList.append(item);};
+          const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
+          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
           if(r.request_type==="profession_qualifications"){
             addDetail("State",changes.state_code);addDetail("Work arrangement",changes.work_role);
             (changes.items||[]).forEach((item,index)=>{
               const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
-              const heading=document.createElement("li");heading.style.cssText="list-style:none;padding:10px 12px;background:#f7e9dc;border-radius:9px;font-weight:700;overflow-wrap:anywhere";heading.textContent="Profession "+(index+1)+": "+name;detailList.append(heading);
+              const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
               addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
               addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);addDetail("Document",item.license_document_path);
             });
