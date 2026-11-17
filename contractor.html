@@ -785,8 +785,8 @@
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
     const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    if(signupRole==="independent" && (!insuranceAgencyName || !insuranceAgentPhone || !insuranceExpiration)) return message("authMessage","Independent contractors must enter the insurance agency name, agent phone number, and expiration date.","error");
-    if(signupRole==="independent" && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
+    if(signupRole==="independent" && hasLicense && (!insuranceAgencyName || !insuranceAgentPhone || !insuranceExpiration)) return message("authMessage","Licensed independent contractors must enter the insurance agency name, agent phone number, and expiration date.","error");
+    if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
@@ -1046,8 +1046,8 @@
     selectedProfessionIds=new Set(pendingItems ? pendingItems.map(x=>x.profession_id).filter(Boolean) : activeIds);
     savedProfessionIds=new Set(activeIds);
     $("professionWorkRole").value=pendingItems ? (pending.work_role||"independent") : (saved[0]?.work_role||"independent");
-    const insuranceSection=$("profileBusinessInsuranceSection");
-    if(insuranceSection) insuranceSection.classList.toggle("hidden",$("professionWorkRole").value!=="independent");
+    updateProfileInsuranceVisibility();
+
     renderProfessionOptions();
     await refreshProfessionRules();
     if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after refresh. They become active after approval.","success");
@@ -1088,10 +1088,14 @@
     });
     if(!matches.length) root.textContent=licenseChoice==="yes"?"No verified licensed work types match this state and work status.":"No verified license-free work types match this state and work status.";
   }
+  function updateProfileInsuranceVisibility(){
+    const showInsurance=$("professionWorkRole").value==="independent" && $("profileHasLicense").value==="yes";
+    const insuranceSection=$("profileBusinessInsuranceSection");
+    if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
+  }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
-    const insuranceSection=$("profileBusinessInsuranceSection");
-    if(insuranceSection) insuranceSection.classList.toggle("hidden",$("professionWorkRole").value!=="independent");
+    updateProfileInsuranceVisibility();
     if(!state) return;
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     const licenseChoice=$("profileHasLicense").value;
@@ -2390,12 +2394,16 @@
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
+    function updateSignupInsuranceVisibility(){
+      const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
+      $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
+      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=showInsurance);
+    }
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
       const licenseLabel=document.querySelector('label[for="hasLicense"]');
       if(licenseLabel)licenseLabel.textContent=employee?"Do you personally hold the individual trade license / certificate required for your selected work?":"Do you have the required current license / registration / trade credential?";
-      $("signupInsuranceFields").classList.remove("hidden"); // Keep upload fields visible for every applicant.
-      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=!employee);
+      updateSignupInsuranceVisibility();
     });
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
@@ -2450,6 +2458,7 @@
     $("profileHasLicense").addEventListener("change",async()=>{
       selectedProfessionIds.clear();
       $("profileLicenseFields").classList.toggle("hidden",$("profileHasLicense").value!=="yes");
+      updateProfileInsuranceVisibility();
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
@@ -2466,6 +2475,7 @@
       signupSelectedCategoryIds.clear();
       signupSelectedProfessionIds.clear();
       updateSignupLicenseFields();
+      updateSignupInsuranceVisibility();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
     });
 
