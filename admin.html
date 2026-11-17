@@ -414,7 +414,7 @@
         </section>
         <section class="lead">
           <h2>Contractor profile and license updates</h2>
-        <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject.</p>
+        <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject. Approved profile versions are retained in the permanent contractor history; reviewed requests cannot be deleted.</p>
         <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
         <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
@@ -987,7 +987,7 @@
       if (error) throw error;
       const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
       const { data: profiles, error: profileError } = userIds.length
-        ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
+        ? await db.from("profiles").select("id,full_name,phone,avatar_url").in("id", userIds)
         : { data: [], error: null };
       if (profileError) throw profileError;
       const profileMap = new Map((profiles || []).map(p => [p.id, p]));
@@ -1368,9 +1368,9 @@
           details.append(p);
         };
         const labels = {
-          full_name:"Contact name", phone:"Phone", company_name:"Company name", email:"Company email",
+          full_name:"Contact name", phone:"Phone", avatar_url:"Profile photo", company_name:"Company name", email:"Company email",
           service_address:"Business address", service_city:"City", service_state:"State", service_zip_code:"ZIP code",
-          service_radius_miles:"Service radius (miles)", has_license:"Has current license",
+          has_license:"Has current license",
           license_number:"License number", license_state:"License state", license_type:"License type",
           license_document_path:"License document path", insurance_policy_number:"Insurance policy number",
           insurance_expiration_date:"Insurance expiration date", insurance_document_path:"Insurance certificate path",
@@ -1483,21 +1483,9 @@
           card.append(actions);
         } else {
           const reviewed = document.createElement("p"); reviewed.className = "muted";
-          reviewed.textContent = "Reviewed: " + (request.reviewed_at ? new Date(request.reviewed_at).toLocaleString() : "Not recorded");
+          reviewed.textContent = "Reviewed: " + (request.reviewed_at ? new Date(request.reviewed_at).toLocaleString() : "Not recorded") +
+            " · Kept permanently in the contractor change history.";
           card.append(reviewed);
-          const remove = document.createElement("button"); remove.type = "button"; remove.className = "secondary"; remove.textContent = "Delete reviewed request";
-          remove.addEventListener("click", async () => {
-            if (!window.confirm("Delete this reviewed request from history? Contractor account, current profile, licenses, documents, leads, purchases and messages will remain.")) return;
-            remove.disabled = true; remove.textContent = "Deleting…";
-            try {
-              const { data, error } = await db.rpc("admin_delete_contractor_change_request", { p_request_id: request.id });
-              if (error) throw error;
-              if (data !== true) throw new Error("Request was not deleted.");
-              message("contractorChangesMessage", "Reviewed request deleted. Contractor data was kept.", "success");
-              await loadContractorChangeRequests();
-            } catch (e) { message("contractorChangesMessage", "Could not delete request: " + (e.message || "Unknown error"), "error"); remove.disabled = false; remove.textContent = "Delete reviewed request"; }
-          });
-          const actions = document.createElement("div"); actions.className = "actions"; actions.append(remove); card.append(actions);
         }
         requestsCards.push(card);
       });
