@@ -185,6 +185,12 @@ begin
   if p_type = 'company_profile' then
     -- Service radius is the only self-service field and is never accepted here.
     v_changes := v_changes - 'service_radius_miles';
+    -- contractors.company_name is NOT NULL; reject an empty replacement before
+    -- it reaches the admin queue so approval cannot fail halfway through.
+    if v_changes ? 'company_name'
+       and nullif(btrim(v_changes->>'company_name'), '') is null then
+      raise exception 'Company name is required and cannot be cleared';
+    end if;
     if exists (
       select 1 from jsonb_object_keys(v_changes) as keys(key)
       where key not in (
