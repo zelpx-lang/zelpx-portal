@@ -1442,23 +1442,13 @@
           note.setAttribute("aria-label", "Administrator review note");
           card.append(note);
           const actions = document.createElement("div"); actions.className = "actions";
-          actions.style.display = "flex";
-          actions.style.flexDirection = "row";
-          actions.style.flexWrap = "nowrap";
-          actions.style.gap = "10px";
-          const approvalDecision = request.request_type === "company_profile"
-            ? (changes.has_license === true ? "approved_with_license" : "approved_without_license")
-            : request.request_type === "profession_qualifications"
-              ? ((changes.items || []).some(item => item.license_required_at_registration === true) ? "approved_with_license" : "approved_without_license")
-              : "approved_without_license";
           for (const [decision,label] of [
-            [approvalDecision,"Approved"],
-            ["rejected","Reject"]
+            ["approved_with_license","Approve — With License"],
+            ["approved_without_license","Approve — Without License"],
+            ["rejected","Reject request"]
           ]) {
             const button = document.createElement("button"); button.type = "button";
             button.textContent = label;
-            button.style.flex = "1 1 0";
-            button.style.minWidth = "0";
             if (decision === "rejected") button.className = "secondary";
             button.addEventListener("click", async () => {
               if (decision === "rejected" && !note.value.trim()) {
@@ -1472,25 +1462,10 @@
               button.disabled = true;
               actions.querySelectorAll("button").forEach(x => x.disabled = true);
               try {
-                const { data: reviewData, error: reviewError } = await db.rpc("admin_approve_contractor_change_request_with_cleanup", {
+                const { error: reviewError } = await db.rpc("review_contractor_change_request", {
                   p_request_id: request.id, p_decision: decision, p_admin_note: note.value.trim() || null
                 });
                 if (reviewError) throw reviewError;
-                if (decision !== "rejected" && reviewData?.old_files?.length) {
-                  const { data: cleanupData, error: cleanupError } = await db.functions.invoke("cleanup-contractor-documents", {
-                    body: {
-                      contractor_id: reviewData.contractor_id,
-                      user_id: reviewData.user_id,
-                      old_files: reviewData.old_files
-                    }
-                  });
-                  if (cleanupError) {
-                    console.error("Old contractor documents could not be fully removed:", cleanupError);
-                    message("contractorChangesMessage", "Profile approved, but some old documents could not be deleted. Please retry cleanup: " + (cleanupError.message || "Unknown error"), "error");
-                  } else if (cleanupData?.error) {
-                    message("contractorChangesMessage", "Profile approved, but old document cleanup needs attention: " + cleanupData.error, "error");
-                  }
-                }
                 const resultLabel = decision === "rejected" ? "rejected" :
                   decision === "approved_with_license" ? "approved and routed to Contractors with a license" :
                   "approved and routed to Contractors without a license";
@@ -1509,7 +1484,7 @@
         } else {
           const reviewed = document.createElement("p"); reviewed.className = "muted";
           reviewed.textContent = "Reviewed: " + (request.reviewed_at ? new Date(request.reviewed_at).toLocaleString() : "Not recorded") +
-            " · Previous approved update records are automatically cleared when a new update is approved.";
+            " · Kept permanently in the contractor change history.";
           card.append(reviewed);
         }
         requestsCards.push(card);
