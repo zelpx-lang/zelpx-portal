@@ -2237,6 +2237,9 @@
               const pageDetail=detail.cloneNode(true);pageDetail.hidden=false;pageDetail.style.cssText+=";margin-top:16px";
               pageInner.append(back,pageTitle,pageMeta,pageStatus,pageDetail);
               if(noteText){const pageNote=document.createElement("p");pageNote.textContent=noteText.textContent;pageNote.style.cssText="padding:14px;background:#fff7ed;border-radius:12px;overflow-wrap:anywhere";pageInner.append(pageNote);}
+              const closeBottom=document.createElement("button");closeBottom.type="button";closeBottom.className="secondary";closeBottom.textContent="Close";closeBottom.style.cssText="width:100%;margin-top:22px;margin-bottom:8px";
+              closeBottom.addEventListener("click",()=>page.remove());
+              pageInner.append(closeBottom);
               page.append(pageInner);document.body.append(page);
             });
             card.insertBefore(expand,detail);
