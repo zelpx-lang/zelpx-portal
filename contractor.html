@@ -862,7 +862,8 @@
       license_state_2:m.has_license===true?(m.license_state_2||null):null,
       license_type_2:m.has_license===true?(m.license_type_2||null):null,
       license_document_path:currentContractor.license_document_path||null,
-      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
+      insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
+      insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
       insurance_document_path:currentContractor.insurance_document_path||null
     };
@@ -1379,7 +1380,7 @@
     const independentRules = new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
     const companyLicenseVerified = currentContractor.has_license === true &&
       currentContractor.license_review_status === "verified" &&
-      String(currentContractor.license_state || "").trim().toUpperCase() === state;
+      [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
     (maps||[]).forEach(map=>{
       if(map.mapping_status!=="mapped"||!map.profession_id)return;
       const rule=independentRules.get(map.profession_id);
