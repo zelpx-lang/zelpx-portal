@@ -987,7 +987,7 @@
     const used=new Set([ $("profileLicenseState").value, ...additionalStateLicenses.map(x=>x.state_code) ].filter(Boolean));
     [...select.options].forEach(o=>{if(used.has(o.value))o.disabled=true;});
     $("additionalLicenseNumber").value="";$("additionalLicenseType").value="";
-    $("additionalLicenseStateModalMessage").className="message hidden";
+    $("additionalLicenseModalMessage").className="message hidden";
     $("additionalLicenseStateModal").classList.remove("hidden");
   }
   $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
@@ -996,7 +996,7 @@
     const state_code=$("additionalLicenseState").value;
     const license_number=$("additionalLicenseNumber").value.trim();
     const license_type=$("additionalLicenseType").value.trim();
-    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseStateModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
+    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
     additionalStateLicenses.push({state_code,license_number,license_type,review_status:"pending"});
     renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
   });
