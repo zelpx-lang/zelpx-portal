@@ -910,6 +910,11 @@
     const state=String(metadata.service_state||"").toUpperCase();
     if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state)) return;
     const role=metadata.zelpx_signup_work_role==="employee"?"employee":"independent";
+    const {data:pendingCompany,error:pendingCompanyError}=await db.from("contractor_change_requests")
+      .select("requested_changes").eq("user_id",currentUser.id).eq("request_type","company_profile")
+      .eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle();
+    if(pendingCompanyError) throw pendingCompanyError;
+    const companyDraft=pendingCompany?.requested_changes||{};
     const rules=await loadRoleEligibilityRules(state,role);
     const rows=ids.map(profession_id=>{
       const rule=rules.find(x=>x.profession_id===profession_id);
@@ -919,10 +924,10 @@
       return {
         profession_id,
         license_required_at_registration:requires,
-        license_number:requires?(metadata.license_number||null):null,
-        license_type:requires?(metadata.license_type||null):null,
+        license_number:requires?(companyDraft.license_number||metadata.license_number||currentContractor.license_number||null):null,
+        license_type:requires?(companyDraft.license_type||metadata.license_type||currentContractor.license_type||null):null,
         issuing_authority:requires?(rule?.licensing_authority||null):null,
-        license_document_path:requires?(currentContractor.license_document_path||null):null,
+        license_document_path:requires?(companyDraft.license_document_path||currentContractor.license_document_path||null):null,
         verification_status:requires?"not_submitted":status==="not_required"?"not_required":"pending"
       };
     });
@@ -1156,6 +1161,11 @@
       const state=$("professionState").value, role=$("professionWorkRole").value;
       const selected=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
       const rules=professionRuleRows;
+      const {data:pendingCompany,error:pendingCompanyError}=await db.from("contractor_change_requests")
+        .select("requested_changes").eq("user_id",currentUser.id).eq("request_type","company_profile")
+        .eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(pendingCompanyError) throw pendingCompanyError;
+      const companyDraft=pendingCompany?.requested_changes||{};
       const {data:activeQualifications,error:qualificationReadError}=await db.from("contractor_profession_qualifications")
         .select("profession_id,license_number,license_type,issuing_authority,license_expiration_date,license_document_path")
         .eq("contractor_id",currentContractor.id).eq("state_code",state);
@@ -1168,17 +1178,17 @@
         return {
           profession_id:p.id,
           license_required_at_registration:requires,
-          license_number:requires?(active.license_number||currentContractor.license_number||null):null,
-          license_type:requires?(active.license_type||currentContractor.license_type||null):null,
+          license_number:requires?(companyDraft.license_number||active.license_number||currentContractor.license_number||null):null,
+          license_type:requires?(companyDraft.license_type||active.license_type||currentContractor.license_type||null):null,
           issuing_authority:requires?(active.issuing_authority||rule?.licensing_authority||null):null,
-          license_expiration_date:requires?(active.license_expiration_date||null):null,
-          license_document_path:requires?(active.license_document_path||currentContractor.license_document_path||null):null,
+          license_expiration_date:requires?(companyDraft.license_expiration_date||active.license_expiration_date||null):null,
+          license_document_path:requires?(companyDraft.license_document_path||active.license_document_path||currentContractor.license_document_path||null):null,
           verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"
         };
       });
       const {data:requestId,error:requestError}=await db.rpc("submit_contractor_change_request",{
         p_type:"profession_qualifications",
-        p_changes:{state_code:state,work_role:role,items:rows.map(({profession_id,license_required_at_registration,verification_status})=>({profession_id,license_required_at_registration,verification_status}))}
+        p_changes:{state_code:state,work_role:role,items:rows}
       });
       if(requestError) throw requestError;
       const summary=$("professionComplianceSummary");
