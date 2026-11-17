@@ -2220,7 +2220,23 @@
             card.style.cssText+=";flex:0 0 min(88%,520px);min-width:260px;max-width:520px;scroll-snap-align:start;box-sizing:border-box";
             const expand=document.createElement("button");expand.type="button";expand.className="secondary";expand.textContent="＋";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expand change request details");expand.style.cssText="width:44px;min-width:44px;height:44px;padding:0;border-radius:50%;font-size:24px;line-height:1;margin:4px 0 10px";
             detail.hidden=true;if(noteText)noteText.hidden=true;
-            expand.addEventListener("click",()=>{const opening=detail.hidden;detail.hidden=!opening;if(noteText)noteText.hidden=!opening;expand.textContent=opening?"−":"＋";expand.setAttribute("aria-expanded",String(opening));});
+            expand.addEventListener("click",()=>{
+              const page=document.createElement("section");
+              page.setAttribute("role","region");
+              page.setAttribute("aria-label","Change request details");
+              page.style.cssText="position:fixed;inset:0;z-index:9999;background:#f7f3eb;overflow-y:auto;padding:18px 16px calc(28px + env(safe-area-inset-bottom));box-sizing:border-box";
+              const pageInner=document.createElement("div");
+              pageInner.style.cssText="max-width:760px;margin:0 auto;background:#fff;border:1px solid #e7e1d7;border-radius:20px;padding:18px;min-height:calc(100% - 36px);box-sizing:border-box";
+              const back=document.createElement("button");back.type="button";back.className="secondary";back.textContent="← Back to My company";back.style.cssText="width:100%;margin-bottom:18px";
+              back.addEventListener("click",()=>page.remove());
+              const pageTitle=document.createElement("h2");pageTitle.textContent=h.textContent;pageTitle.style.cssText="margin:8px 0 10px";
+              const pageMeta=document.createElement("p");pageMeta.className="muted";pageMeta.textContent=meta.textContent;
+              const pageStatus=document.createElement("p");pageStatus.style.cssText="font-weight:700;margin:12px 0";pageStatus.textContent="Status: "+r.status.toUpperCase();
+              const pageDetail=detail.cloneNode(true);pageDetail.hidden=false;pageDetail.style.cssText+=";margin-top:16px";
+              pageInner.append(back,pageTitle,pageMeta,pageStatus,pageDetail);
+              if(noteText){const pageNote=document.createElement("p");pageNote.textContent=noteText.textContent;pageNote.style.cssText="padding:14px;background:#fff7ed;border-radius:12px;overflow-wrap:anywhere";pageInner.append(pageNote);}
+              page.append(pageInner);document.body.append(page);
+            });
             card.insertBefore(expand,detail);
           }
           if(allowReview && r.status==="pending"){
