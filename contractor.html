@@ -475,6 +475,24 @@
           <div><label for="profileLicenseNumber2">Second license number</label><input id="profileLicenseNumber2"></div>
           <div><label for="profileLicenseType2">Second license type</label><input id="profileLicenseType2"></div>
         </div>
+        <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
+          <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
+          <button id="addLicenseStateBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">＋ Add another state</button>
+          <small class="muted" style="display:block;margin-top:6px">Additional state licenses are submitted for administrator review before they can be used for licensed leads.</small>
+        </div>
+        <div id="additionalLicenseStateModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="additionalLicenseModalTitle" style="position:fixed;inset:0;z-index:10000;background:rgba(20,18,15,.55);display:flex;align-items:center;justify-content:center;padding:18px">
+          <div style="width:min(100%,430px);background:#fffdfa;border:1px solid #e8e1d6;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.22)">
+            <h3 id="additionalLicenseModalTitle" style="margin:0 0 14px">Add another state license</h3>
+            <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
+            <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
+            <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+              <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
+              <button id="saveAdditionalLicenseBtn" type="button">Add state</button>
+            </div>
+            <div id="additionalLicenseModalMessage" class="message hidden" role="status"></div>
+          </div>
+        </div>
         <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
           <p class="muted" style="margin:0 0 10px;font-size:13px">Required for independent contractors. Employees do not need to provide their own business insurance.</p>
@@ -941,6 +959,49 @@
     if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
   }
 
+  let additionalStateLicenses = [];
+  async function renderAdditionalStateLicenses(){
+    const list=$("additionalLicenseStatesList"); if(!list)return;
+    list.replaceChildren();
+    if(!additionalStateLicenses.length){list.textContent="No additional state licenses added.";return;}
+    for(const item of additionalStateLicenses){
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;margin:5px 0;border:1px solid var(--line);border-radius:10px;background:#fffdfa";
+      const label=document.createElement("span");
+      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review");
+      row.append(label);list.append(row);
+    }
+  }
+  async function loadAdditionalStateLicenses(pendingDraft){
+    if(!currentContractor)return;
+    const {data,error}=await db.from("contractor_state_licenses").select("state_code,license_number,license_type,review_status").eq("contractor_id",currentContractor.id).order("state_code");
+    if(error)throw error;
+    const map=new Map();
+    (data||[]).forEach(x=>map.set(x.state_code,{...x}));
+    (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{if(x.state_code)map.set(x.state_code,{...x,review_status:"pending"});});
+    additionalStateLicenses=[...map.values()];
+    renderAdditionalStateLicenses();
+  }
+  function openAdditionalLicenseModal(){
+    const select=$("additionalLicenseState"), source=$("profileLicenseState");
+    select.replaceChildren(new Option("Choose state",""));
+    [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
+    const used=new Set([ $("profileLicenseState").value, $("profileLicenseState2").value, ...additionalStateLicenses.map(x=>x.state_code) ].filter(Boolean));
+    [...select.options].forEach(o=>{if(used.has(o.value))o.disabled=true;});
+    $("additionalLicenseNumber").value="";$("additionalLicenseType").value="";
+    $("additionalLicenseStateModalMessage").className="message hidden";
+    $("additionalLicenseStateModal").classList.remove("hidden");
+  }
+  $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
+  $("cancelAdditionalLicenseBtn").addEventListener("click",()=>$("additionalLicenseStateModal").classList.add("hidden"));
+  $("saveAdditionalLicenseBtn").addEventListener("click",()=>{
+    const state_code=$("additionalLicenseState").value;
+    const license_number=$("additionalLicenseNumber").value.trim();
+    const license_type=$("additionalLicenseType").value.trim();
+    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseStateModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
+    additionalStateLicenses.push({state_code,license_number,license_type,review_status:"pending"});
+    renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
+  });
   async function loadAccount() {
     const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
@@ -998,6 +1059,7 @@
     $("profileLicenseNumber2").value = draftValue("license_number_2", contractor?.license_number_2);
     $("profileLicenseState2").value = draftValue("license_state_2", contractor?.license_state_2);
     $("profileLicenseType2").value = draftValue("license_type_2", contractor?.license_type_2);
+    await loadAdditionalStateLicenses(draft);
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
@@ -1913,6 +1975,7 @@
           has_license: changes.has_license, license_number: changes.license_number,
           license_state: changes.license_state, license_type: changes.license_type,
           license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
+          additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
           license_document_path: changes.license_document_path,
           insurance_document_path: changes.insurance_document_path,
           insurance_agency_name: changes.insurance_agency_name,
