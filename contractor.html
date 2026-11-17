@@ -458,6 +458,10 @@
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearProfileProfessionsBtn" type="button" style="background:#ff6a2b;color:#fff;min-height:44px;padding:10px 20px;font-size:13px">Clear selected services</button></div>
+          <div id="selectedProfileServicesPanel" style="margin-top:12px;padding:12px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2">
+            <strong style="display:block;font-size:14px;margin-bottom:8px">Selected services</strong>
+            <div id="selectedProfileServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">No services selected.</span></div>
+          </div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
@@ -1079,9 +1083,29 @@
     await refreshProfessionRules();
     if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after refresh. They become active after approval.","success");
   }
+  function renderSelectedProfileServices() {
+    const list=$("selectedProfileServicesList");
+    if(!list) return;
+    list.replaceChildren();
+    const chosen=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
+    if(!chosen.length){
+      const empty=document.createElement("span");
+      empty.className="muted"; empty.style.fontSize="13px";
+      empty.textContent="No services selected.";
+      list.append(empty);
+      return;
+    }
+    chosen.forEach(p=>{
+      const item=document.createElement("span");
+      item.textContent=p.profession_name;
+      item.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
+      list.append(item);
+    });
+  }
   function renderProfessionOptions() {
     const root=$("professionOptions"), query=($("professionSearch").value||"").trim().toLowerCase();
     root.replaceChildren();
+    renderSelectedProfileServices();
     // Keep the complete profession catalog selectable for every state and license
     // answer. Licensing eligibility is displayed separately and never hides a
     // profession from registration or profile updates.
