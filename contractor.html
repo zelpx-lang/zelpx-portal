@@ -2196,21 +2196,6 @@
               });actions.append(b);
             }card.append(actions);
           }
-          if(!allowReview && String(r.status||"").trim().toLowerCase()!=="pending"){
-            const actions=document.createElement("div");actions.className="actions";
-            const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Delete reviewed request";
-            remove.addEventListener("click",async()=>{
-              if(!window.confirm("Delete this rejected change request? This cannot be undone."))return;
-              remove.disabled=true;remove.textContent="Deleting…";
-              try{
-                const {data:deleted,error:deleteError}=await db.rpc("delete_own_reviewed_contractor_change_request",{p_request_id:r.id});
-                if(deleteError)throw deleteError;
-                if(deleted!==true)throw new Error("Only reviewed requests can be deleted. Refresh and try again.");
-                await loadContractorChangeRequests();
-              }catch(e){window.alert("Could not delete rejected request: "+(e.message||"Unknown error"));remove.disabled=false;remove.textContent="Delete reviewed request";}
-            });
-            actions.append(remove);card.append(actions);
-          }
           list.append(card);
         });
       };
