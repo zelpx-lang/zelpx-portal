@@ -1476,7 +1476,11 @@
   async function loadLicenseEligibleLeadCategories() {
     licenseEligibleLeadCategories = new Set();
     if (isAdmin || !currentContractor?.id) return;
-    const states=[...new Set([currentContractor.service_state,currentContractor.license_state,currentContractor.license_state_2]
+    const {data:additionalLicenses,error:additionalLicenseError}=await db.from("contractor_state_licenses")
+      .select("state_code,review_status").eq("contractor_id",currentContractor.id).eq("review_status","verified");
+    if(additionalLicenseError)throw additionalLicenseError;
+    const verifiedAdditionalStates=(additionalLicenses||[]).map(item=>item.state_code);
+    const states=[...new Set([currentContractor.service_state,currentContractor.license_state,currentContractor.license_state_2,...verifiedAdditionalStates]
       .map(value=>String(value||"").trim().toUpperCase()).filter(value=>/^[A-Z]{2}$/.test(value)))];
     if(!states.length)return;
     const [{data:maps,error:mapError},{data:categories,error:categoriesError}]=await Promise.all([
@@ -1497,9 +1501,13 @@
       if(rulesError)throw rulesError;
       const independentQualifications=new Map((qualifications||[]).filter(q=>q.work_role==="independent").map(q=>[q.profession_id,q.verification_status]));
       const independentRules=new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
-      const companyLicenseVerified=currentContractor.has_license===true &&
+      const legacyCompanyLicenseVerified=currentContractor.has_license===true &&
         currentContractor.license_review_status==="verified" &&
         [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
+      const additionalCompanyLicenseVerified=(additionalLicenses||[]).some(item=>
+        String(item.state_code||"").trim().toUpperCase()===state && item.review_status==="verified");
+      const companyLicenseVerified=currentContractor.has_license===true &&
+        (legacyCompanyLicenseVerified || additionalCompanyLicenseVerified);
       (maps||[]).forEach(map=>{
         if(map.mapping_status!=="mapped"||!map.profession_id)return;
         const rule=independentRules.get(map.profession_id);
