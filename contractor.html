@@ -450,7 +450,6 @@
         <div><label for="profileServiceRadius">Service radius</label><div style="display:flex;gap:10px;align-items:stretch"><select id="profileServiceRadius" style="flex:1;min-width:0"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><button id="saveServiceRadiusBtn" type="button" class="secondary" style="white-space:nowrap;flex:0 0 auto">Save radius</button></div><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Save the radius separately without resubmitting your company profile.</small><div id="serviceRadiusSaveStatus" class="message hidden" role="status" aria-live="polite"></div></div>
         <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
           <h3 style="margin:0 0 5px">Work types & license requirements</h3>
-          <p class="muted" style="margin:0 0 12px">Choose the work you want to do and whether you operate independently or work as an employee. Requirements are based on your selected state and official state sources. Some trades require individual credentials even when employed.</p>
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
             <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select></div>
@@ -460,7 +459,6 @@
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
           <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearProfileProfessionsBtn" type="button" style="background:#ff6a2b;color:#fff;min-height:44px;padding:10px 20px;font-size:13px">Clear selected services</button></div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite">Loading state requirements…</div>
-          <p class="muted" style="font-size:12px;margin:8px 0 0">Important: ZELPX does not issue legal approvals. “Not required” applies only to the described scope and does not replace city permits, business registration, insurance, or individual trade certificates. Unverified states are never treated as license-free.</p>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
