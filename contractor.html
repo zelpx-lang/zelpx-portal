@@ -330,9 +330,14 @@
         </div>
       </div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
-        <div><label for="licenseNumber">License / registration number</label><input id="licenseNumber" autocomplete="off"></div>
-        <div><label for="licenseState">Issuing state</label><input id="licenseState" maxlength="2" placeholder="e.g. WA"></div>
+        <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+        <div><label for="licenseState">Issuing state</label><select id="licenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber">License number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
+        <h3 style="grid-column:1/-1;margin:8px 0 0">License in state 2 (optional)</h3>
+        <div><label for="licenseState2">Second issuing state</label><select id="licenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber2">Second license number</label><input id="licenseNumber2" autocomplete="off"></div>
+        <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
       </div>
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
         <h3 style="grid-column:1/-1;margin:0">Business insurance (Certificate of Insurance)</h3>
@@ -430,9 +435,14 @@
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
+          <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
           <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
-          <div><label for="profileLicenseState">License state</label><input id="profileLicenseState" maxlength="2"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
+          <h3 style="grid-column:1/-1;margin:8px 0 0">License in state 2 (optional)</h3>
+          <div><label for="profileLicenseState2">Second issuing state</label><select id="profileLicenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+          <div><label for="profileLicenseNumber2">Second license number</label><input id="profileLicenseNumber2"></div>
+          <div><label for="profileLicenseType2">Second license type</label><input id="profileLicenseType2"></div>
         </div>
         <div style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
@@ -731,6 +741,7 @@
     if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.","error");
     const hasLicense = $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
+    const licenseNumber2=$("licenseNumber2").value.trim(),licenseState2=$("licenseState2").value.trim().toUpperCase(),licenseType2=$("licenseType2").value.trim();
     const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
     // Unverified scopes may register without claiming they are license-free.
     // The acknowledgement below keeps the account pending; credential-required
@@ -765,7 +776,9 @@
     if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
     if (!email || !password || !fullName || !phone || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required fields: your name, phone, company name, company email, business street address, city, state, and a valid 5-digit ZIP code.", "error");
     if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
-    if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter the license number, issuing state, and license type.", "error");
+    if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter a complete first license: state, number, and type.", "error");
+    if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
+    if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
     const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
@@ -774,7 +787,8 @@
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -844,6 +858,9 @@
       license_number:m.has_license===true?(m.license_number||null):null,
       license_state:m.has_license===true?(m.license_state||null):null,
       license_type:m.has_license===true?(m.license_type||null):null,
+      license_number_2:m.has_license===true?(m.license_number_2||null):null,
+      license_state_2:m.has_license===true?(m.license_state_2||null):null,
+      license_type_2:m.has_license===true?(m.license_type_2||null):null,
       license_document_path:currentContractor.license_document_path||null,
       insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
@@ -852,7 +869,7 @@
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
     currentContractor={...currentContractor,...update};
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
     if(metadataError)throw metadataError;
   }
 
@@ -943,6 +960,9 @@
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
     $("profileLicenseState").value = draftValue("license_state", contractor?.license_state);
     $("profileLicenseType").value = draftValue("license_type", contractor?.license_type);
+    $("profileLicenseNumber2").value = draftValue("license_number_2", contractor?.license_number_2);
+    $("profileLicenseState2").value = draftValue("license_state_2", contractor?.license_state_2);
+    $("profileLicenseType2").value = draftValue("license_type_2", contractor?.license_type_2);
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
@@ -1769,11 +1789,14 @@
       const companyName = $("profileCompany").value.trim(), companyEmail = $("profileCompanyEmail").value.trim();
       const hasLicense = $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
+      const licenseNumber2=$("profileLicenseNumber2").value.trim(),licenseState2=$("profileLicenseState2").value.trim().toUpperCase(),licenseType2=$("profileLicenseType2").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
       if (!full_name || !phone || !companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) throw new Error("Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
       if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
-      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
+      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
+      if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) throw new Error("Complete all three fields for the second state license, or leave all three blank.");
+      if (hasLicense && licenseState2 && licenseState2===licenseState) throw new Error("Choose two different states for your licenses.");
       if (currentContractor) {
         await verifyContractorBusinessAddress();
         let license_document_path = currentContractor.license_document_path || null;
@@ -1813,6 +1836,7 @@
         const complianceChanges = {
           has_license: changes.has_license, license_number: changes.license_number,
           license_state: changes.license_state, license_type: changes.license_type,
+          license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
           license_document_path: changes.license_document_path,
           insurance_document_path: changes.insurance_document_path,
           insurance_agency_name: changes.insurance_agency_name,
@@ -2431,6 +2455,7 @@
         $(id).required=showLicense;
         if(!showLicense) $(id).value="";
       });
+      ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; if(!showLicense) $(id).value=""; });
     }
     $("hasLicense").addEventListener("change", () => {
       signupSelectedCategoryIds.clear();
