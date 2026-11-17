@@ -2192,6 +2192,7 @@
       const render=(list,allowReview)=>{
         if(!list)return;list.replaceChildren();
         if(!rows.length){list.textContent="No change requests yet.";return;}
+        if(!allowReview){list.style.display="flex";list.style.flexDirection="row";list.style.flexWrap="nowrap";list.style.gap="12px";list.style.overflowX="auto";list.style.overflowY="hidden";list.style.paddingBottom="10px";list.style.scrollSnapType="x mandatory";}
         rows.forEach(r=>{
           const card=document.createElement("article");card.className="lead";
           const company=contractors.get(r.contractor_id)||{},profile=profiles.get(r.user_id)||{},changes=r.requested_changes||{};
@@ -2213,7 +2214,15 @@
             Object.entries(changes).forEach(([key,value])=>addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value));
           }
           card.append(detail);
-          if(r.admin_note){const noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          let noteText=null;
+          if(r.admin_note){noteText=document.createElement("p");noteText.textContent="Administrator note: "+r.admin_note;card.append(noteText);}
+          if(!allowReview){
+            card.style.cssText+=";flex:0 0 min(88%,520px);min-width:260px;max-width:520px;scroll-snap-align:start;box-sizing:border-box";
+            const expand=document.createElement("button");expand.type="button";expand.className="secondary";expand.textContent="＋";expand.setAttribute("aria-expanded","false");expand.setAttribute("aria-label","Expand change request details");expand.style.cssText="width:44px;min-width:44px;height:44px;padding:0;border-radius:50%;font-size:24px;line-height:1;margin:4px 0 10px";
+            detail.hidden=true;if(noteText)noteText.hidden=true;
+            expand.addEventListener("click",()=>{const opening=detail.hidden;detail.hidden=!opening;if(noteText)noteText.hidden=!opening;expand.textContent=opening?"−":"＋";expand.setAttribute("aria-expanded",String(opening));});
+            card.insertBefore(expand,detail);
+          }
           if(allowReview && r.status==="pending"){
             const note=document.createElement("textarea");note.placeholder="Required reason if rejecting; optional approval note";note.rows=2;card.append(note);
             const actions=document.createElement("div");actions.className="actions";
