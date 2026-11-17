@@ -1817,10 +1817,10 @@
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       if (currentContractor) {
         await verifyContractorBusinessAddress();
-        let license_document_path = currentContractor.license_document_path || null;
+        let license_document_path = hasLicense ? (currentContractor.license_document_path || null) : null;
         let insurance_document_path = currentContractor.insurance_document_path || null;
         const licenseFile = $("licenseDocument").files?.[0];
-        if (licenseFile) {
+        if (hasLicense && licenseFile) {
           if (!["application/pdf","image/jpeg","image/png","image/webp"].includes(licenseFile.type)) throw new Error("License file must be a PDF, JPG, PNG or WebP image.");
           if (licenseFile.size > 10 * 1024 * 1024) throw new Error("License document must be 10 MB or smaller.");
           const safeName = licenseFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
