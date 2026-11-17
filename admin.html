@@ -1442,13 +1442,23 @@
           note.setAttribute("aria-label", "Administrator review note");
           card.append(note);
           const actions = document.createElement("div"); actions.className = "actions";
+          actions.style.display = "flex";
+          actions.style.flexDirection = "row";
+          actions.style.flexWrap = "nowrap";
+          actions.style.gap = "10px";
+          const approvalDecision = request.request_type === "company_profile"
+            ? (changes.has_license === true ? "approved_with_license" : "approved_without_license")
+            : request.request_type === "profession_qualifications"
+              ? ((changes.items || []).some(item => item.license_required_at_registration === true) ? "approved_with_license" : "approved_without_license")
+              : "approved_without_license";
           for (const [decision,label] of [
-            ["approved_with_license","Approve — With License"],
-            ["approved_without_license","Approve — Without License"],
-            ["rejected","Reject request"]
+            [approvalDecision,"Approved"],
+            ["rejected","Reject"]
           ]) {
             const button = document.createElement("button"); button.type = "button";
             button.textContent = label;
+            button.style.flex = "1 1 0";
+            button.style.minWidth = "0";
             if (decision === "rejected") button.className = "secondary";
             button.addEventListener("click", async () => {
               if (decision === "rejected" && !note.value.trim()) {
