@@ -1997,6 +1997,22 @@
     }
 
     loadCustomerServiceCategories();
+
+    // Google OAuth can finish after the browser has returned to /customer.
+    // Listen for the Supabase SIGNED_IN event as well as the initial session
+    // check, so the dashboard is opened as soon as the OAuth session is ready.
+    let oauthSessionUserHandled = null;
+    db.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" || !session?.user?.id) return;
+      if (oauthSessionUserHandled === session.user.id) return;
+      oauthSessionUserHandled = session.user.id;
+      setTimeout(() => {
+        checkSession(session).catch((error) => {
+          showMessage("message", error.message || "Google sign-in completed, but the customer account could not be opened.", "error");
+        });
+      }, 0);
+    });
+
     (async () => {
       const notificationParams = new URLSearchParams(window.location.search);
       if (notificationParams.get("reauth") === "1") {
