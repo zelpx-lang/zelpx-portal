@@ -315,6 +315,15 @@
 .zelpx-chat-toast{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:99999;width:min( min(340px,calc(100vw - 28px)),340px);padding:13px 15px;border:1px solid #f2c5aa;border-left:4px solid #f36b2b;border-radius:14px;background:#fffefa;color:#29251f;box-shadow:0 12px 34px #21170f30;font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;animation:zelpxToastIn .22s ease-out;pointer-events:none}
 .zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 @keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
+
+    .social-auth { margin-top:18px; display:grid; gap:10px; }
+    .social-auth-divider { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; font-weight:700; }
+    .social-auth-divider::before,.social-auth-divider::after { content:""; height:1px; flex:1; background:var(--line); }
+    .social-auth-button { width:100%; min-height:48px; margin:0; display:flex; align-items:center; justify-content:center; gap:11px; border:1px solid #d9d4cc; border-radius:999px; background:#fff; color:#202124; box-shadow:none; font-size:14px; font-weight:700; }
+    .social-auth-button:hover:not(:disabled) { background:#fff8f3; border-color:#f0783c; color:#202124; box-shadow:none; }
+    .social-google-mark { font:800 21px/1 Arial,sans-serif; color:#4285f4; }
+    .social-facebook-mark { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#1877f2; color:#fff; font:700 17px/20px Arial,sans-serif; }
+    .social-auth-button:disabled { opacity:.6; cursor:wait; }
 </style>
 </head>
 <body>
@@ -381,6 +390,17 @@
       <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button>
       <a id="forgotPasswordLink" href="/contractor-forgot-password.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" type="button" class="hidden">Create account</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
+    </div>
+    <div id="contractorSocialAuth" class="social-auth" aria-label="Other sign-in options">
+      <div class="social-auth-divider"><span>Or continue with</span></div>
+      <button id="contractorGoogleSignInButton" class="social-auth-button" type="button">
+        <span class="social-google-mark" aria-hidden="true">G</span>
+        Continue with Google
+      </button>
+      <button id="contractorFacebookSignInButton" class="social-auth-button" type="button">
+        <span class="social-facebook-mark" aria-hidden="true">f</span>
+        Continue with Facebook
+      </button>
     </div>
     <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
   </section>
@@ -603,10 +623,38 @@
     enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
     enabled ? hide($("signupBtn")) : hide($("signupBtn"));
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
+    enabled ? hide($("contractorSocialAuth")) : show($("contractorSocialAuth"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
     if (enabled) loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error"));
   }
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
+
+  async function signInContractorWithProvider(provider, buttonId) {
+    try { if (!db || !db.auth || !db.functions) initClient(); }
+    catch (clientError) { return message("authMessage", clientError.message, "error"); }
+    const buttonIds = ["contractorGoogleSignInButton", "contractorFacebookSignInButton"];
+    const buttons = buttonIds.map(id => $(id));
+    buttons.forEach(button => { button.disabled = true; });
+    const button = $(buttonId);
+    button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
+    clearMessage("authMessage");
+    try {
+      const { error } = await db.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin + "/contractor",
+          ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
+        }
+      });
+      if (error) throw error;
+    } catch (error) {
+      message("authMessage", error.message || "Social sign-in could not be started. Please try again.", "error");
+      button.lastChild.textContent = provider === "google" ? " Continue with Google" : " Continue with Facebook";
+      buttons.forEach(item => { item.disabled = false; });
+    }
+  }
+  $("contractorGoogleSignInButton").addEventListener("click", () => signInContractorWithProvider("google", "contractorGoogleSignInButton"));
+  $("contractorFacebookSignInButton").addEventListener("click", () => signInContractorWithProvider("facebook", "contractorFacebookSignInButton"));
 
   async function signIn() {
     clearMessage("authMessage");
