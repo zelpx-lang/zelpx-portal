@@ -1057,7 +1057,12 @@
           return;
         }
 
-        // Customers and contractors may use the customer portal; their roles are not changed.
+        // Send contractor accounts to the contractor portal after OAuth or password sign-in.
+        if (profile?.role === "contractor") {
+          window.location.replace("/contractor");
+          return;
+        }
+
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
