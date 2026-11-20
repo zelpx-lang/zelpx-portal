@@ -987,7 +987,7 @@
         showMessage("profileMessage", "Please enter your full name.", "error");
         return;
       }
-      if (!phone || phone.replace(/\\D/g, "").length < 7) {
+      if (!phone || phone.replace(/\D/g, "").length < 7) {
         showMessage("profileMessage", "Please enter a valid phone number.", "error");
         return;
       }
@@ -1057,12 +1057,7 @@
           return;
         }
 
-        // Send contractor accounts to the contractor portal after OAuth or password sign-in.
-        if (profile?.role === "contractor") {
-          window.location.replace("/contractor");
-          return;
-        }
-
+        // Customers and contractors may use the customer portal; their roles are not changed.
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
@@ -1401,7 +1396,7 @@
     function collectServiceDetails() {
       return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
         input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
-      ).join("\\n");
+      ).join("\n");
     }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -1442,7 +1437,7 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: (requestedServices.length ? "SELECTED SERVICES\\n" + requestedServices.map(service => "- " + service).join("\\n") + "\\n\\n" : "") + "JOB DETAILS\\n" + collectServiceDetails() + ($("description").value.trim() ? "\\n\\nADDITIONAL CUSTOMER NOTES\\n" + $("description").value.trim() : ""),
+          description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails() + ($("description").value.trim() ? "\n\nADDITIONAL CUSTOMER NOTES\n" + $("description").value.trim() : ""),
           preferred_time: $("preferredTime").value || null
         };
 
@@ -1745,8 +1740,8 @@
           const description = document.createElement("p");
           description.className = "request-description";
           const descriptionLabel = document.createElement("span"); descriptionLabel.className = "request-label"; descriptionLabel.textContent = "Project details";
-          const descriptionText = String(request.description || "No additional details provided.").replace(/\\\\r\\\\n/g, "\\n").replace(/\\\\n/g, "\\n").replace(/\\\\r/g, "\\n");
-          description.append(descriptionLabel, document.createTextNode("\\n" + descriptionText));
+          const descriptionText = String(request.description || "No additional details provided.").replace(/\r\n/g, "\n").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n");
+          description.append(descriptionLabel, document.createTextNode("\n" + descriptionText));
 
           const date = document.createElement("p");
           date.textContent = "Order placed: " +
