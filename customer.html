@@ -802,7 +802,8 @@
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
-            redirectTo: window.location.origin + "/customer",
+            // Return to the exact customer URL so OAuth preserves the pending service, ZIP, and selected work.
+            redirectTo: window.location.origin + window.location.pathname + window.location.search + window.location.hash,
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
