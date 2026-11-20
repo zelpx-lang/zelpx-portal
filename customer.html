@@ -500,8 +500,7 @@
 .zelpx-chat-toast{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:99999;width:min( min(340px,calc(100vw - 28px)),340px);padding:13px 15px;border:1px solid #f2c5aa;border-left:4px solid #f36b2b;border-radius:14px;background:#fffefa;color:#29251f;box-shadow:0 12px 34px #21170f30;font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;animation:zelpxToastIn .22s ease-out;pointer-events:none}
 .zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 @keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
-
-#selectedServicesReview[hidden]{display:none!important}#selectedServicesReview ul{margin:10px 0 14px;padding-left:22px;display:grid;gap:6px}#selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:10px;font-weight:650}#confirmSelectedServices{width:18px;height:18px;accent-color:var(--orange);flex:0 0 auto;margin-top:2px}</style>
+</style>
 </head>
 
 <body>
@@ -633,25 +632,19 @@
             <option>Bathroom Remodeling</option><option>Kitchen Remodeling</option><option>Tile Installation</option><option>Flooring Installation</option><option>Carpet Installation</option><option>Drywall & Framing</option><option>Concrete & Foundation</option><option>Roofing</option><option>Gutters</option><option>Painting</option><option>Doors & Windows</option><option>Decks & Fences</option>
           </optgroup>
           <optgroup label="Home Systems">
-            <option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Water Heater</option><option>Appliance Installation</option><option>Appliance Maintenance</option><option>Carpentry</option><option>Garage Door</option><option>Insulation</option>
+            <option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Water Heater</option><option>Appliance Installation</option><option>Garage Door</option><option>Insulation</option>
           </optgroup>
           <optgroup label="Cleaning & Maintenance">
-            <option>House Cleaning</option><option>Office Cleaning</option><option>Basement Cleaning</option><option>Deep Cleaning</option><option>Move-in / Move-out Cleaning</option><option>Post-Construction Cleaning</option><option>Window Cleaning</option><option>Carpet & Upholstery Cleaning</option><option>Pressure Washing</option><option>Handyman</option><option>Junk Removal</option>
+            <option>House Cleaning</option><option>Office Cleaning</option><option>Deep Cleaning</option><option>Move-in / Move-out Cleaning</option><option>Post-Construction Cleaning</option><option>Window Cleaning</option><option>Carpet & Upholstery Cleaning</option><option>Pressure Washing</option><option>Handyman</option><option>Junk Removal</option>
           </optgroup>
           <optgroup label="Outdoor & Landscaping">
-            <option>Landscaping</option><option>Artificial Turf Installation</option><option>Lawn Care</option><option>Tree Service</option><option>Irrigation</option><option>Snow Removal</option><option>Pool Service</option>
+            <option>Landscaping</option><option>Lawn Care</option><option>Tree Service</option><option>Irrigation</option><option>Snow Removal</option><option>Pool Service</option>
           </optgroup>
           <optgroup label="Other Services"><option>Moving</option><option>Pest Control</option><option>Other</option></optgroup>
         </select>
         <div id="serviceDetails" class="request-card" aria-live="polite">
           <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
         </div>
-        <section id="selectedServicesReview" class="request-card" hidden aria-live="polite">
-          <strong>Review your selected work</strong>
-          <p class="subtitle">These are the exact services you selected on the sphere.</p>
-          <ul id="selectedServicesReviewList"></ul>
-          <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
-        </section>
 
         <label for="propertyAddress">Property Street Address</label>
         <input id="propertyAddress" type="text"
@@ -809,9 +802,7 @@
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
-            // Keep the selected service and ZIP through the Google/Facebook round trip.
-            // Supabase returns to this exact customer URL after authentication.
-            redirectTo: window.location.origin + window.location.pathname + window.location.search + window.location.hash,
+            redirectTo: window.location.origin + "/customer",
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
@@ -1337,15 +1328,6 @@
     const landingParams = new URLSearchParams(window.location.search);
     const landingService = landingParams.get("service");
     const landingZip = landingParams.get("zip");
-    const landingServices = (landingParams.get("services") || "").split("|").map(value => value.trim()).filter(Boolean);
-    const selectedServicesReview = $("selectedServicesReview");
-    if (landingServices.length) {
-      $("selectedServicesReviewList").replaceChildren(...landingServices.map(service => {
-        const item = document.createElement("li"); item.textContent = service; return item;
-      }));
-      selectedServicesReview.hidden = false;
-      $("confirmSelectedServices").required = true;
-    }
     if (landingService) {
       const serviceOption = [...$("serviceType").options].find(option =>
         option.value.toLowerCase() === landingService.toLowerCase() ||
@@ -1374,13 +1356,6 @@
       button.textContent = "Submitting...";
 
       try {
-        // Use the services captured when this page first loaded. The session
-        // restore flow may clean the URL after OAuth, but must not discard the
-        // exact services the customer selected on the sphere.
-        const requestedServices = landingServices.slice();
-        if (requestedServices.length && !$("confirmSelectedServices").checked) {
-          throw new Error("Please confirm the selected services before submitting your request.");
-        }
         const zipIsValid = $("serviceZip").dataset.verifiedZip === $("serviceZip").value.trim()
           ? true : await lookupCustomerZip();
         if (!zipIsValid) {
@@ -1406,7 +1381,7 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: (requestedServices.length ? "SELECTED SERVICES\\n" + requestedServices.map(service => "- " + service).join("\\n") + "\\n\\n" : "") + "JOB DETAILS\\n" + collectServiceDetails() + ($("description").value.trim() ? "\\n\\nADDITIONAL CUSTOMER NOTES\\n" + $("description").value.trim() : ""),
+          description: "JOB DETAILS\\n" + collectServiceDetails() + ($("description").value.trim() ? "\\n\\nADDITIONAL CUSTOMER NOTES\\n" + $("description").value.trim() : ""),
           preferred_time: $("preferredTime").value || null
         };
 
