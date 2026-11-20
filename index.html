@@ -55,6 +55,46 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 @media(max-width:850px){.hero-grid{grid-template-columns:1fr;gap:35px}.hero-art{min-height:370px}.navlinks{display:none}.hero{padding:55px 0}.section-head{align-items:flex-start;flex-direction:column}.pro-cta{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){.wrap{width:calc(100% - 30px)}header{height:68px}.logo{font-size:24px}.navright .outline{display:none}.hero{padding:42px 0}.hero-copy{font-size:16px}.searchgrid{grid-template-columns:1fr;gap:7px}.field{padding:7px 10px;border-bottom:1px solid var(--line)}.searchbox .btn{width:100%}.hero-art{min-height:330px;padding:20px}.art-card{left:24px;right:24px;top:125px}.art-shape{inset:75px 18px 20px}.steps{grid-template-columns:1fr}.block{padding:54px 0!important}.pro-cta{padding:28px 22px}.trustline{gap:10px 18px}.sc{font-size:12px;padding:6px 11px 6px 8px}}
  .selected-service-count{font-size:15px;color:var(--muted);font-weight:700;margin-top:2px}.selected-service-chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}.selected-services{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%}.selected-service-list{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.selected-service-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--orange);border-radius:999px;background:#fff8f1;color:var(--ink);font-size:14px}.selected-service-chip button{border:0;background:transparent;color:var(--orange);font-size:19px;line-height:1;cursor:pointer;padding:0 2px}.pick{flex-direction:column;margin-top:18px}.pick[hidden]{display:none}.service-field{position:relative}.home-suggestions{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:260px;overflow:auto;background:#fffefa;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px #31271922}.home-suggestions button{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;color:var(--ink);cursor:pointer}.home-suggestions button:hover,.home-suggestions button:focus{background:var(--soft)}</style>
+<script>
+/* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
+(() => {
+  let pending;
+  try { pending = JSON.parse(sessionStorage.getItem("zelpx.oauth.pending") || "null"); } catch (_) {}
+  if (!pending || !pending.at || Date.now() - pending.at > 10 * 60 * 1000) {
+    try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+    return;
+  }
+  document.documentElement.style.visibility = "hidden";
+  let finished = false;
+  const reveal = () => {
+    if (finished) return;
+    finished = true;
+    document.documentElement.style.visibility = "";
+  };
+  const timeout = setTimeout(reveal, 8000);
+  const sdk = document.createElement("script");
+  sdk.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  sdk.onload = async () => {
+    try {
+      const client = window.supabase.createClient(
+        "https://zsrnjkndgbchfxibxiyd.supabase.co",
+        "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb"
+      );
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session) { reveal(); return; }
+      const { data: profile, error } = await client.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+      if (error || !profile || !["customer", "contractor", "admin"].includes(profile.role)) { reveal(); return; }
+      clearTimeout(timeout);
+      finished = true;
+      sessionStorage.removeItem("zelpx.oauth.pending");
+      const destination = profile.role === "admin" ? "/admin" : profile.role === "contractor" ? "/contractor" : "/customer";
+      window.location.replace(destination);
+    } catch (_) { reveal(); }
+  };
+  sdk.onerror = reveal;
+  document.head.appendChild(sdk);
+})();
+</script>
 </head>
 <body>
 <header><div class="wrap nav"><a class="logo" href="/">ZELPX</a><nav class="navlinks"><a href="#services">Explore services</a><a href="#how">How it works</a><a href="/browse-jobs">Browse jobs</a><a href="/contractor">For professionals</a></nav><div class="navright"><a class="btn outline small" href="/browse-jobs">Browse jobs</a><a class="btn outline small" href="/customer">Log in</a></div><button class="burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menu"><i></i><i></i><i></i></button></div><nav class="menu" id="menu" hidden><a href="#services">Explore services</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="/browse-jobs">Browse jobs</a><a href="/contractor">For professionals</a><a href="/customer">Log in</a></nav></header>
