@@ -476,6 +476,13 @@
       html { scroll-behavior:auto; }
       *,*::before,*::after { transition-duration:.01ms!important; }
     }
+    .sphere-selected-services { margin:0 0 20px; padding:16px; border:1px solid var(--customer-orange); border-radius:18px; background:#fff8f1; }
+    .sphere-selected-services[hidden] { display:none !important; }
+    .sphere-selected-services > strong { display:block; margin-bottom:12px; color:var(--customer-ink); }
+    .sphere-selected-service-list { display:flex; flex-wrap:wrap; gap:9px; }
+    .sphere-selected-service-chip { display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:8px 13px; border:1px solid var(--customer-orange); border-radius:999px; background:#fffdfa; color:var(--customer-ink); font:600 14px/1.3 inherit; cursor:pointer; }
+    .sphere-selected-service-chip.active { background:var(--customer-orange); color:#fff; }
+    .sphere-selected-services > p { margin:10px 0 0; color:var(--customer-muted); font-size:13px; }
     .service-search-wrap { position:relative; }
     .service-suggestions { position:relative; margin-top:4px; max-height:230px; overflow-y:auto; border:1px solid #d5dce5; border-radius:8px; background:#fff; box-shadow:0 5px 15px rgba(0,0,0,.08); z-index:5; }
     .service-suggestion { display:block; width:100%; text-align:left; background:#fff; color:#18212f; border:0; border-bottom:1px solid #edf0f4; border-radius:0; padding:12px 14px; cursor:pointer; font:inherit; }
@@ -619,6 +626,11 @@
       </p>
 
       <form id="requestForm">
+        <section id="sphereSelectedServices" class="sphere-selected-services" hidden aria-label="Services selected on the homepage">
+          <strong>Selected services from ZELPX</strong>
+          <div id="sphereSelectedServiceList" class="sphere-selected-service-list"></div>
+          <p>Tap a service below to fill in the request. You do not need to search for it again.</p>
+        </section>
         <label for="serviceSearch">Find a service</label>
         <div class="service-search-wrap">
           <input id="serviceSearch" type="search" placeholder="Start typing a service, e.g. tile or painting..." autocomplete="off" aria-autocomplete="list" aria-controls="serviceSuggestions" aria-expanded="false">
@@ -1329,7 +1341,40 @@
     const landingParams = new URLSearchParams(window.location.search);
     const landingService = landingParams.get("service");
     const landingZip = landingParams.get("zip");
-    if (landingService) {
+    const sphereServices = [...new Set((landingParams.get("services") || "")
+      .split("|").map(name => name.trim()).filter(Boolean))];
+    const sphereServicePanel = $("sphereSelectedServices");
+    const sphereServiceList = $("sphereSelectedServiceList");
+    function chooseSphereService(serviceName) {
+      let option = [...$("serviceType").options].find(item =>
+        item.value.toLocaleLowerCase() === serviceName.toLocaleLowerCase()
+      );
+      if (!option) {
+        option = new Option(serviceName, serviceName);
+        $("serviceType").add(option);
+      }
+      $("serviceType").value = option.value;
+      $("serviceType").dispatchEvent(new Event("change"));
+      sphereServiceList.querySelectorAll("button").forEach(button => {
+        const active = button.dataset.service.toLocaleLowerCase() === serviceName.toLocaleLowerCase();
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+    }
+    if (sphereServices.length) {
+      sphereServicePanel.hidden = false;
+      sphereServices.forEach(serviceName => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "sphere-selected-service-chip";
+        chip.dataset.service = serviceName;
+        chip.textContent = serviceName;
+        chip.setAttribute("aria-pressed", "false");
+        chip.addEventListener("click", () => chooseSphereService(serviceName));
+        sphereServiceList.append(chip);
+      });
+      chooseSphereService(sphereServices[0]);
+    } else if (landingService) {
       const serviceOption = [...$("serviceType").options].find(option =>
         option.value.toLowerCase() === landingService.toLowerCase() ||
         option.textContent.toLowerCase() === landingService.toLowerCase()
