@@ -59,9 +59,15 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 /* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
 (() => {
   let pending;
-  try { pending = JSON.parse(sessionStorage.getItem("zelpx.oauth.pending") || "null"); } catch (_) {}
+  try {
+    pending = JSON.parse(
+      localStorage.getItem("zelpx.oauth.pending") ||
+      sessionStorage.getItem("zelpx.oauth.pending") || "null"
+    );
+  } catch (_) {}
   if (!pending || !pending.at || Date.now() - pending.at > 10 * 60 * 1000) {
     try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+    try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
     return;
   }
   // Keep the homepage visible while the OAuth fallback resolves; never show a blank screen.
@@ -87,6 +93,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       clearTimeout(timeout);
       finished = true;
       sessionStorage.removeItem("zelpx.oauth.pending");
+      localStorage.removeItem("zelpx.oauth.pending");
       const destination = profile.role === "admin" ? "/admin" : profile.role === "contractor" ? "/contractor" : "/customer";
       window.location.replace(destination);
     } catch (_) { reveal(); }
