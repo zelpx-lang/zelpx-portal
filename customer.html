@@ -19,6 +19,7 @@
   window.ZELPXRevealOAuthPage = () => {
     document.documentElement.classList.remove("zelpx-oauth-pending");
     try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+    try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
   };
   if (active) document.documentElement.classList.add("zelpx-oauth-pending");
   else if (pending) { try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {} }
