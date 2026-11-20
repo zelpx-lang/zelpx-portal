@@ -524,11 +524,9 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
 #selectedServicesReview[hidden]{display:none!important}
 #selectedServicesReviewList{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin:16px 0 22px}
-.selected-service-review-card{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:11px 16px;border:2px solid #e47b50;border-radius:999px;background:transparent;color:var(--customer-ink)}
-.selected-service-review-card strong{font-size:clamp(15px,3.8vw,19px);font-weight:500;line-height:1.35;color:inherit;overflow-wrap:anywhere}
-.selected-service-review-actions{display:flex;align-items:center;flex:0 0 auto}
-.selected-service-review-actions .remove-selected-service{display:inline-flex;align-items:center;justify-content:center;width:24px;min-width:24px;height:28px;min-height:28px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:#e47b50;box-shadow:none;font-size:24px;font-weight:500;line-height:1}
-.selected-service-review-actions .remove-selected-service:hover:not(:disabled){background:transparent;color:#bd4d25;box-shadow:none}
+#selectedServicesReviewList .selected-service-pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;max-width:100%;min-height:46px;margin:0;padding:10px 15px;border:2px solid #e47b50;border-radius:999px;background:transparent;color:var(--customer-ink);box-shadow:none;font-size:clamp(15px,3.8vw,19px);font-weight:500;line-height:1.35;text-align:left;white-space:normal;overflow-wrap:anywhere}
+#selectedServicesReviewList .selected-service-pill:hover:not(:disabled){background:#fff7f2;color:var(--customer-ink);box-shadow:none}
+#selectedServicesReviewList .selected-service-pill .remove-mark{flex:0 0 auto;color:#e47b50;font-size:23px;font-weight:500;line-height:1}
 #selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:12px;font-weight:750;line-height:1.5}
 #confirmSelectedServices{width:22px;height:22px;accent-color:var(--customer-orange);flex:0 0 auto;margin:3px 0 0}</style>
 </head>
@@ -1434,25 +1432,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       selectedServicesReviewList.replaceChildren();
       const services = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
       services.forEach((service, index) => {
-        const chip = document.createElement("div");
-        chip.className = "selected-service-review-card";
-        const name = document.createElement("strong");
+        const pill = document.createElement("button");
+        pill.type = "button";
+        pill.className = "selected-service-pill";
+        pill.setAttribute("aria-label", "Remove " + service);
+        const name = document.createElement("span");
         name.textContent = service;
-        const actions = document.createElement("div");
-        actions.className = "selected-service-review-actions";
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "remove-selected-service";
-        remove.textContent = "×";
-        remove.setAttribute("aria-label", "Remove " + service);
-        remove.addEventListener("click", () => {
+        const removeMark = document.createElement("span");
+        removeMark.className = "remove-mark";
+        removeMark.setAttribute("aria-hidden", "true");
+        removeMark.textContent = "×";
+        pill.append(name, removeMark);
+        pill.addEventListener("click", () => {
           sphereDraft.services.splice(index, 1);
           try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
           renderSelectedServicesReview();
         });
-        actions.append(remove);
-        chip.append(name, actions);
-        selectedServicesReviewList.appendChild(chip);
+        selectedServicesReviewList.appendChild(pill);
       });
       selectedServicesReview.hidden = services.length === 0;
     }
