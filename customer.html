@@ -488,6 +488,9 @@
     .sphere-selected-services-header strong { color:var(--customer-ink); font-size:17px; font-weight:800; }
     .sphere-selected-services-count { flex:0 0 auto; padding:5px 10px; border-radius:999px; background:#ffeadf; color:#b94717; font-size:12px; font-weight:800; }
     .sphere-selected-service-list { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:10px; }
+    .customer-extra-services { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:12px 0 18px; padding:14px; border:1px solid var(--customer-line); border-radius:15px; background:#faf7f2; }
+    .customer-extra-services > button { width:auto; min-height:40px; margin:0; padding:9px 15px; }
+    .customer-extra-services .service-search-hint { flex-basis:100%; margin:0; }
     .sphere-selected-service-chip {
       display:inline-flex; align-items:center; justify-content:center; gap:9px;
       max-width:100%; min-height:44px; padding:6px 9px 6px 15px;
@@ -685,6 +688,12 @@
           </optgroup>
           <optgroup label="Other Services"><option>Moving</option><option>Pest Control</option><option>Other</option></optgroup>
         </select>
+        <div class="customer-extra-services">
+          <button id="addCustomerServiceButton" type="button" class="secondary-button">Add another service</button>
+          <span id="customerExtraServicesCount" class="sphere-selected-services-count">0 of 5 additional services</span>
+          <div id="customerExtraServiceList" class="sphere-selected-service-list" aria-live="polite"></div>
+          <p class="service-search-hint">You can add up to 5 more services in your customer account, in addition to the 5 selected on the homepage.</p>
+        </div>
         <div id="serviceDetails" class="request-card" aria-live="polite">
           <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
         </div>
@@ -1487,10 +1496,64 @@
       $("serviceZip").value = landingZip;
       lookupCustomerZip();
     }
+    // Customers may add up to five extra services in the portal, separate from
+    // the five services they may have selected on the homepage sphere.
+    const customerExtraServices = [];
+    const extraServiceList = $("customerExtraServiceList");
+    const extraServiceCount = $("customerExtraServicesCount");
+    function renderCustomerExtraServices() {
+      extraServiceList.replaceChildren();
+      extraServiceCount.textContent = customerExtraServices.length + " of 5 additional services";
+      $("addCustomerServiceButton").disabled = customerExtraServices.length >= 5;
+      customerExtraServices.forEach(serviceName => {
+        const chip = document.createElement("div");
+        chip.className = "sphere-selected-service-chip";
+        const name = document.createElement("span");
+        name.className = "sphere-selected-service-name";
+        name.textContent = serviceName;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "sphere-selected-service-remove";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "Remove " + serviceName);
+        remove.addEventListener("click", () => {
+          const index = customerExtraServices.indexOf(serviceName);
+          if (index !== -1) customerExtraServices.splice(index, 1);
+          renderCustomerExtraServices();
+        });
+        chip.append(name, remove);
+        extraServiceList.append(chip);
+      });
+    }
+    $("addCustomerServiceButton").addEventListener("click", () => {
+      const selected = $("serviceType").value.trim();
+      if (!selected) {
+        showMessage("requestMessage", "Choose a service before adding it.", "error");
+        return;
+      }
+      const allNames = [...sphereServices, ...customerExtraServices].map(name => name.toLocaleLowerCase());
+      if (allNames.includes(selected.toLocaleLowerCase())) {
+        showMessage("requestMessage", "This service is already selected.", "error");
+        return;
+      }
+      if (customerExtraServices.length >= 5) {
+        showMessage("requestMessage", "You can add up to 5 additional services in your customer account.", "error");
+        return;
+      }
+      customerExtraServices.push(selected);
+      clearMessage("requestMessage");
+      renderCustomerExtraServices();
+    });
+    renderCustomerExtraServices();
+
     function collectServiceDetails() {
-      return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
+      const jobAnswers = [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
         input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
       ).join("\\n");
+      const additionalServices = customerExtraServices.length
+        ? "ADDITIONAL SERVICES REQUESTED\\n" + customerExtraServices.map(name => "- " + name).join("\\n")
+        : "";
+      return [jobAnswers, additionalServices].filter(Boolean).join("\\n\\n");
     }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
