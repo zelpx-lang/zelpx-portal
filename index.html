@@ -452,6 +452,11 @@ function draw(){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.si
 function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl=((t-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
 function chooseService(name,groupName){
+  // A visitor may select no more than five individual services from the sphere.
+  if(!selectedSphereServices.includes(name) && selectedSphereServices.length>=5){
+    window.alert("You can select up to 5 services. Remove one before choosing another.");
+    return;
+  }
   window.zelpxSphereHasUserSelection = true;
   window.selectedSphereGroup=groupName||window.selectedSphereGroup;
   serviceSound(name);if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
@@ -459,7 +464,7 @@ function chooseService(name,groupName){
   renderSelectedSphereServices();
   panel.hidden=false;
   const count=document.getElementById("selectedServiceCount");
-  if(count) count.textContent=selectedSphereServices.length+" selected";
+  if(count) count.textContent=selectedSphereServices.length+" of 5 selected";
 }
 function showMainSphere(){
   const names=Object.keys(serviceGroups);
