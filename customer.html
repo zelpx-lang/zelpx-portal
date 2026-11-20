@@ -807,17 +807,18 @@
       button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
       clearMessage("message");
       try {
+        sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "customer", at: Date.now() }));
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
-            // Keep the selected service and ZIP through the Google/Facebook round trip.
-            // Supabase returns to this exact customer URL after authentication.
+            // Preserve selected service and ZIP; the homepage fallback also routes by the verified profile role.
             redirectTo: window.location.origin + window.location.pathname + window.location.search + window.location.hash,
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
         if (error) throw error;
       } catch (error) {
+        sessionStorage.removeItem("zelpx.oauth.pending");
         showMessage("message", error.message || "Social sign-in could not be started. Please try again.", "error");
         button.lastChild.textContent = " " + (provider === "google" ? "Continue with Google" : "Continue with Facebook");
         buttons.forEach(item => { item.disabled = false; });
@@ -1035,6 +1036,7 @@
       }
 
       if (session) {
+        sessionStorage.removeItem("zelpx.oauth.pending");
         // Administrator accounts must use the dedicated admin portal only.
         let profile;
         try {
