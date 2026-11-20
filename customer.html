@@ -522,32 +522,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 .zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 @keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
 
-/* Customer dashboard button treatment: orange outlined pill style; behavior and layout stay unchanged. */
-#dashboardView button:not(.password-toggle) {
-  border:1.5px solid var(--customer-orange);
-  border-radius:999px;
-  background:#fff;
-  color:var(--customer-orange-dark);
-  box-shadow:none;
-}
-#dashboardView button:not(.password-toggle):hover:not(:disabled) {
-  background:#fff4ed;
-  color:var(--customer-orange-dark);
-  box-shadow:none;
-  transform:translateY(-1px);
-}
-#dashboardView .dashboard-menu-button.active {
-  background:var(--customer-orange);
-  border-color:var(--customer-orange);
-  color:#fff;
-  box-shadow:0 5px 14px #ff6a2b24;
-}
-#dashboardView .selected-service-pill {
-  border:1.5px solid #e47b50;
-  background:#fff;
-  color:var(--customer-ink);
-}
-#dashboardView .selected-service-pill .remove-mark { color:var(--customer-orange); }
 #selectedServicesReview[hidden]{display:none!important}
 #selectedServicesReviewList{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin:16px 0 22px}
 #selectedServicesReviewList .selected-service-pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;max-width:100%;min-height:46px;margin:0;padding:10px 15px;border:2px solid #e47b50;border-radius:999px;background:transparent;color:var(--customer-ink);box-shadow:none;font-size:clamp(15px,3.8vw,19px);font-weight:500;line-height:1.35;text-align:left;white-space:normal;overflow-wrap:anywhere}
