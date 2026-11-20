@@ -23,7 +23,28 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 .sphere-back:hover{background:#f36b38;border-color:#f36b38}
 .pick[hidden]{display:none}.pick{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:18px}
 .service-subpanel{margin:18px auto 0;padding:22px;background:#fffefa;border:1px solid var(--line);border-radius:22px;box-shadow:0 14px 35px #31271912}.service-subpanel[hidden]{display:none}.service-subhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.service-subhead h3{margin:0;font-size:20px}.service-subhead span{color:var(--muted);font-size:13px}.service-subgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.service-choice{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;text-align:left;font-weight:650;color:var(--ink);cursor:pointer;min-height:48px}.service-choice:hover,.service-choice:focus{border-color:var(--orange);background:var(--soft)}.service-choice:before{content:"＋";color:var(--orange);font-weight:900;margin-right:8px}@media(max-width:700px){.service-subgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.service-subpanel{padding:16px}}@media(max-width:420px){.service-subgrid{grid-template-columns:1fr}}
-.galaxy{position:relative;border-radius:28px;overflow:hidden;background:radial-gradient(ellipse at 22% 18%,#4a2285aa,transparent 55%),radial-gradient(ellipse at 80% 85%,#0d3f8caa,transparent 58%),radial-gradient(ellipse at 60% 30%,#7a1f5a55,transparent 50%),#060714;box-shadow:0 24px 60px #1a123344}.galaxy canvas{position:absolute;inset:0;width:100%;height:100%}.galaxy .sphere{z-index:1}.galaxy .sphere>p{color:#c9c5e0;padding:18px}
+/* ZELPX sphere — warm premium orbital treatment */
+.galaxy{position:relative;isolation:isolate;border:1px solid #6c493b;border-radius:30px;overflow:hidden;min-height:500px;background:radial-gradient(ellipse at 50% 48%,#743b2d 0%,#3b2424 34%,#1c1a1a 68%,#111312 100%);box-shadow:0 26px 70px #29160f35,inset 0 1px 0 #ffffff18}
+.galaxy:before,.galaxy:after{content:"";position:absolute;pointer-events:none;border:1px solid #f4a27625;border-radius:50%;z-index:0;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-18deg)}
+.galaxy:before{width:min(78%,680px);height:68%;box-shadow:0 0 34px #f36b3810,inset 0 0 34px #f36b3808}
+.galaxy:after{width:min(94%,820px);height:88%;border-color:#f7c5a014;transform:translate(-50%,-50%) rotate(24deg)}
+.galaxy canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.8}
+.galaxy .sphere{z-index:1;min-height:500px}
+.galaxy .sphere>p{color:#f2d7c8;padding:18px}
+.galaxy .sc{background:linear-gradient(145deg,#fffaf4f5,#f5e9ddf2);border:1px solid #f2c9ad;color:#2a211d;border-radius:15px;padding:9px 13px 9px 9px;box-shadow:0 7px 22px #08050455,0 1px 0 #ffffff inset;transition:background .2s,border-color .2s,box-shadow .2s}
+.galaxy .sc>span:first-child{background:#fbe1d2;color:#a74725}
+.galaxy .sc:hover,.galaxy .sc:focus-visible{background:#fff;border-color:#ff9a68;box-shadow:0 0 0 3px #f36b3844,0 10px 26px #08050466;outline:none}
+.galaxy .sc.sel{background:linear-gradient(135deg,#ff8b55,#e9572b);border-color:#ffc09e;color:#fff;box-shadow:0 0 0 4px #f36b3844,0 8px 26px #08050466}
+.galaxy .sc.sel>span:first-child{background:#ffffff30;color:#fff}
+.galaxy .sphere.detail-mode .sc{font-size:11px;padding:6px 8px 6px 6px;max-width:170px}
+.galaxy .sphere-back{right:16px;bottom:16px;background:#211a18ed;border-color:#f3a27b88;color:#ffe9dc;box-shadow:0 8px 24px #0008}
+.galaxy .sphere-back:hover{background:#f36b38;border-color:#ffc09e}
+.service-subpanel{border-color:#efd9ca;background:linear-gradient(145deg,#fffefa,#fff6ef);box-shadow:0 18px 42px #43271914}
+.service-subhead h3{color:#2b211d}
+.service-choice{border-color:#ead9cd;background:#fffdfa;transition:transform .16s,border-color .16s,box-shadow .16s}
+.service-choice:hover,.service-choice:focus{transform:translateY(-2px);border-color:#f36b38;background:#fff4ec;box-shadow:0 7px 18px #a84c2514;outline:none}
+@media(max-width:600px){.galaxy,.galaxy .sphere{min-height:440px}.galaxy{border-radius:22px}.galaxy:before{width:90%;height:66%}.galaxy:after{width:108%;height:84%}.galaxy .sc{font-size:11px;padding:6px 8px 6px 6px;gap:7px}.galaxy .sc>span:first-child{width:26px;height:26px;flex-basis:26px;font-size:14px}}
+@media(prefers-reduced-motion:no-preference){.galaxy:before{animation:zelpx-orbit 34s linear infinite}@keyframes zelpx-orbit{to{transform:translate(-50%,-50%) rotate(342deg)}}}
 .cmp{display:grid;grid-template-columns:1.1fr 1fr 1fr;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--white)}.cmp>div{padding:16px 18px;border-top:1px solid var(--line);font-size:15px}.cmp>.h{border-top:0;font-weight:800;background:#eeebe3}.cmp>.z{background:var(--soft);font-weight:700}.cmp>.l{color:var(--muted);font-weight:650}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:28px}.card h3{margin:0 0 14px;font-size:22px}.card ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;color:var(--muted)}.card li:before{content:"✓";color:var(--green);font-weight:900;margin-right:8px}
 .faq{max-width:820px}.faq details{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:10px}.faq summary{cursor:pointer;font-weight:750;list-style:none}.faq summary::-webkit-details-marker{display:none}.faq summary:after{content:"+";float:right;color:var(--orange);font-weight:900}.faq details[open] summary:after{content:"–"}.faq p{margin:10px 0 0;color:var(--muted)}
@@ -42,7 +63,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 <form class="searchbox" id="serviceSearch"><div class="searchgrid"><div class="field service-field"><label for="service">What do you need help with?</label><input id="service" type="search" placeholder="e.g. painting, плитка..." autocomplete="off" aria-autocomplete="list" aria-controls="homeServiceSuggestions" aria-expanded="false" required><div id="homeServiceSuggestions" class="home-suggestions" role="listbox" hidden></div></div><div class="field"><label for="zip">ZIP code</label><input id="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code" required></div><button class="btn" type="submit">Find a pro →</button></div></form>
 <div class="trustline"><span>Local service pros</span><span>Simple project requests</span><span>One place to manage it</span></div><div style="margin-top:22px"><a class="btn outline" href="/browse-jobs">Browse available jobs →</a><span style="display:block;margin-top:8px;color:var(--muted);font-size:12px">See current opportunities before creating an account.</span></div></div>
 <div class="hero-art"><div class="art-glow"></div><div class="art-top"><strong>THE ZELPX DIFFERENCE</strong><span>LOCAL • SIMPLE • CONNECTED</span></div><div class="art-shape"></div><div class="art-card"><small>YOUR NEXT PROJECT</small><h3>A better way to<br>get home projects done.</h3><p style="color:#77746c;margin:0">Tell us what you need. We'll help you take the next step.</p><div class="art-row"><div class="avatars"><span class="avatar">Z</span><span class="avatar">P</span><span class="avatar">+</span></div><strong>Built around your project</strong></div></div></div></div></section>
-<section class="block" id="services"><div class="wrap"><div class="section-head"><div><div class="kicker">Explore services</div><h2>Help for every corner<br>of your home.</h2></div><p>Choose a service to get started. Share a few details about your project and manage your request from your customer account.</p></div><div class="sphere-tools"><p class="sphint">Drag the globe to spin it, tap a service to select it.</p></div><div class="galaxy"><canvas id="galaxy" aria-hidden="true"></canvas><div class="sphere" id="sphere" role="group" aria-label="Services"><p>Loading available services…</p></div></div><div class="pick" id="pick" hidden aria-live="polite"><div class="selected-services"><strong>Selected services:</strong><div id="pickName" class="selected-service-list"></div><div id="selectedServiceCount" class="selected-service-count" aria-live="polite"></div></div><a class="btn" id="pgGo" href="#">Find a pro →</a></div><div class="service-subpanel" id="serviceSubpanel" hidden><div class="service-subhead"><div><h3 id="serviceGroupTitle">Choose a service</h3><span>Select the exact work you need</span></div><span>6 service groups</span></div><div class="service-subgrid" id="serviceChoices"></div></div></div></section>
+<section class="block" id="services"><div class="wrap"><div class="section-head"><div><div class="kicker">Explore services</div><h2>Help for every corner<br>of your home.</h2></div><p>Choose a service to get started. Share a few details about your project and manage your request from your customer account.</p></div><div class="sphere-tools"><p class="sphint">Drag the globe to spin it, tap a service to select it.</p></div><div class="galaxy"><canvas id="galaxy" aria-hidden="true"></canvas><div class="sphere" id="sphere" role="group" aria-label="Services"><p>Loading available services…</p></div></div><div class="pick" id="pick" hidden aria-live="polite"><div class="selected-services"><strong>Selected services:</strong><div id="pickName" class="selected-service-list"></div><div id="selectedServiceCount" class="selected-service-count" aria-live="polite"></div></div><a class="btn" id="pgGo" href="#">Find a pro →</a></div><div class="service-subpanel" id="serviceSubpanel" hidden><div class="service-subhead"><div><h3 id="serviceGroupTitle">Choose a service</h3><span>Select the exact work you need</span></div><span id="serviceGroupCount">13 professions</span></div><div class="service-subgrid" id="serviceChoices"></div></div></div></section>
 <section class="block" id="how" style="background:#fbf9f4"><div class="wrap"><div class="section-head"><div><div class="kicker">How ZELPX works</div><h2>Three simple steps<br>to get started.</h2></div><p>Keep your project details and conversations together, from your first request through the next steps.</p></div><div class="steps"><article class="step"><div class="stepnum">01 / TELL US</div><h3>Describe your project</h3><p>Choose a service, share the details and tell us where the work is needed.</p></article><article class="step"><div class="stepnum">02 / GET CONNECTED</div><h3>Connect with a pro</h3><p>Your request enters the ZELPX workflow so a suitable professional can follow up.</p></article><article class="step"><div class="stepnum">03 / MOVE FORWARD</div><h3>Manage it in one place</h3><p>Sign in to review requests, see updates and continue conversations.</p></article></div></div></section>
 <section class="block" id="why"><div class="wrap"><div class="section-head"><div><div class="kicker">Why ZELPX</div><h2>One request.<br>One pro.</h2></div><p>Many lead marketplaces sell the same request to several pros. We don’t.</p></div>
 <div class="cmp"><div class="h"></div><div class="h">Many lead sites</div><div class="h z">ZELPX</div>
@@ -360,24 +381,44 @@ function renderSelectedSphereServices(){
     chip.append(label,remove);names.append(chip);
   });
   pick.hidden=selectedSphereServices.length===0;
+  const selectedGroup=window.selectedSphereGroup || "Tile & Flooring";
+  let parentService = selectedGroup==="Tile & Flooring"
+    ? (selectedSphereServices.some(name => /floor|laminate|hardwood|parquet|vinyl|carpet|cork|rubber|subfloor/i.test(name)) ? "Flooring Installation" : "Tile Installation")
+    : selectedGroup==="Cabinets, Doors & Trim" ? "Doors & Windows"
+    : selectedGroup==="Heating & Air (HVAC)" ? "HVAC" : selectedGroup;
+  const zip=document.getElementById("zip").value.trim();
+  const draft={service:selectedSphereServices.length?parentService:"",zip:/^\d{5}$/.test(zip)?zip:"",services:[...selectedSphereServices]};
+  // Persist the sphere selection before navigating to the customer portal.
+  // This survives sign-in redirects and URL cleanup after authentication.
+  try {
+    if(draft.services.length) localStorage.setItem("zelpx.pendingSphereRequest.v1",JSON.stringify(draft));
+    else localStorage.removeItem("zelpx.pendingSphereRequest.v1");
+  } catch (_) {}
   if(selectedSphereServices.length){
-    const zip=document.getElementById("zip").value.trim();
     const query=new URLSearchParams();
-    const selectedGroup=window.selectedSphereGroup || "Tile & Flooring";
-    let parentService = selectedGroup==="Tile & Flooring"
-      ? (selectedSphereServices.some(name => /floor|laminate|hardwood|parquet|vinyl|carpet|cork|rubber|subfloor/i.test(name)) ? "Flooring Installation" : "Tile Installation")
-      : selectedGroup==="Cabinets, Doors & Trim" ? "Doors & Windows"
-      : selectedGroup==="Heating & Air (HVAC)" ? "HVAC" : selectedGroup;
     query.set("service",parentService);
     query.set("services",selectedSphereServices.join("|"));
-    if(/^\\d{5}$/.test(zip))query.set("zip",zip);
+    if(draft.zip)query.set("zip",draft.zip);
     pg.href="/customer?"+query.toString()+"#requestForm";
   }else pg.href="#";
 }
 function getAudio(){if(!soundEnabled)return null;try{const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return null;if(!audioContext)audioContext=new Ctx();if(audioContext.state==="suspended")audioContext.resume();return audioContext;}catch(_){return null;}}
 function tone(startHz,endHz,duration,volume,type="sine"){const ctx=getAudio();if(!ctx)return;const osc=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;osc.type=type;osc.frequency.setValueAtTime(startHz,now);osc.frequency.exponentialRampToValueAtTime(Math.max(1,endHz),now+duration);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);osc.connect(gain);gain.connect(ctx.destination);osc.start(now);osc.stop(now+duration+.02);}
 function spinSound(speed=0.012){
-  // Sphere rotation is intentionally silent.
+  // A very soft, throttled cosmic shimmer while the globe is moving.
+  const now=performance.now();
+  if(speed<.012 || now-lastSpinSound<420)return;
+  lastSpinSound=now;
+  const ctx=getAudio();if(!ctx)return;
+  const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+  const t=ctx.currentTime,level=Math.min(.018,.006+speed*.012);
+  osc.type="sine";osc.frequency.setValueAtTime(420+Math.min(360,speed*9000),t);
+  osc.frequency.exponentialRampToValueAtTime(260,t+.24);
+  filter.type="lowpass";filter.frequency.setValueAtTime(1500,t);
+  gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(level,t+.035);
+  gain.gain.exponentialRampToValueAtTime(.0001,t+.28);
+  osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+  osc.start(t);osc.stop(t+.3);
 }
 function serviceSound(serviceName){
   const ctx=getAudio();
@@ -443,8 +484,14 @@ function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
 function chooseService(name,groupName){
   window.selectedSphereGroup=groupName||window.selectedSphereGroup;
-  serviceSound(name);if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
-  if(!selectedSphereServices.includes(name))selectedSphereServices.push(name);
+  if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
+  if(!selectedSphereServices.includes(name)){
+    if(selectedSphereServices.length>=5){
+      alert("You can select up to 5 services from the sphere. Remove one before choosing another.");
+      return;
+    }
+    selectedSphereServices.push(name);
+  }
   renderSelectedSphereServices();
   panel.hidden=false;
   const count=document.getElementById("selectedServiceCount");
@@ -543,7 +590,7 @@ tick();
       const data = Array.isArray(payload.categories) ? payload.categories : [];
       if (!data.length) throw new Error(payload.error || "No active services");
       availableServices = uniqueServices([...data.map(item => item.name), ...FALLBACK, ...sphereSubservices]);
-      serviceInput.placeholder = "Search all 197+ home services…";
+      serviceInput.placeholder = "Search all home services…";
       renderCards(availableServices);
     } catch (error) {
       console.warn("Could not load homepage services:", error);
