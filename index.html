@@ -350,7 +350,11 @@ window.zelpxServiceGroups = serviceGroups;
 const selectedSphereServices=[];
 window.selectedSphereGroup="";
 function renderSelectedSphereServices(){
-  try { sessionStorage.setItem("zelpx_pending_sphere_services", JSON.stringify(selectedSphereServices)); } catch (_) {}
+  try {
+    const pending = JSON.stringify(selectedSphereServices);
+    sessionStorage.setItem("zelpx_pending_sphere_services", pending);
+    localStorage.setItem("zelpx_pending_sphere_services", pending);
+  } catch (_) {}
   const pick=document.getElementById("pick"), names=document.getElementById("pickName");
   names.replaceChildren();
   selectedSphereServices.forEach((service,index)=>{
