@@ -827,6 +827,9 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
       clearMessage("message");
       try {
+        if (landingServices.length || landingService || landingZip) {
+          sessionStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() }));
+        }
         sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "customer", at: Date.now() }));
         const { error } = await db.auth.signInWithOAuth({
           provider,
@@ -1092,6 +1095,9 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
         await loadRequests(session);
+        // Sphere selections are one-time onboarding context, not permanent login preferences.
+        try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+        try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
         // If the customer arrived from the public homepage with a selected service,
         // take them straight to that prefilled request form after login/registration.
         const pendingService = landingService || new URLSearchParams(window.location.search).get("service");
@@ -1370,14 +1376,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       services: (landingParams.get("services") || "").split("|").map(value => value.trim()).filter(Boolean)
     };
     let sphereDraft = null;
-    try { sphereDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null"); } catch (_) { sphereDraft = null; }
-    if (urlSphereDraft.service || urlSphereDraft.zip || urlSphereDraft.services.length) {
-      sphereDraft = {
-        service: urlSphereDraft.service || sphereDraft?.service || "",
-        zip: urlSphereDraft.zip || sphereDraft?.zip || "",
-        services: urlSphereDraft.services.length ? urlSphereDraft.services : (Array.isArray(sphereDraft?.services) ? sphereDraft.services : [])
-      };
+    const hasSphereUrlData = Boolean(urlSphereDraft.service || urlSphereDraft.zip || urlSphereDraft.services.length);
+    let sphereAuthPending = false;
+    try {
+      const pendingAuth = JSON.parse(sessionStorage.getItem("zelpx.sphere.auth.pending") || "null");
+      sphereAuthPending = Boolean(pendingAuth?.at && Date.now() - pendingAuth.at < 15 * 60 * 1000);
+    } catch (_) {}
+    if (hasSphereUrlData) {
+      // A URL from the sphere is an explicit, fresh selection.
+      sphereDraft = urlSphereDraft;
       try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
+    } else if (sphereAuthPending) {
+      // Use the temporary local draft only while returning from the OAuth flow.
+      try { sphereDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null"); } catch (_) {}
+    } else {
+      // A normal visit/login must never inherit an old sphere selection.
+      try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+      try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
     }
     if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [] };
     if (!Array.isArray(sphereDraft.services)) sphereDraft.services = [];
