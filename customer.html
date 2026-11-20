@@ -576,6 +576,11 @@
       </div>
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
+      <section id="sphereSelectedServices" class="sphere-selected-services" hidden aria-label="Services selected on the homepage">
+        <strong>Selected services:</strong>
+        <div id="sphereSelectedServiceList" class="sphere-selected-service-list"></div>
+      </section>
+
       <p id="accountEmail"></p>
       <nav class="dashboard-menu" aria-label="Customer dashboard menu">
         <button type="button" class="dashboard-menu-button" data-dashboard-page="profile">My Profile</button>
@@ -629,11 +634,6 @@
       </p>
 
       <form id="requestForm">
-        <section id="sphereSelectedServices" class="sphere-selected-services" hidden aria-label="Services selected on the homepage">
-          <strong>Selected services from ZELPX</strong>
-          <div id="sphereSelectedServiceList" class="sphere-selected-service-list"></div>
-          <p>Tap a service below to fill in the request. You do not need to search for it again.</p>
-        </section>
         <label for="serviceSearch">Find a service</label>
         <div class="service-search-wrap">
           <input id="serviceSearch" type="search" placeholder="Start typing a service, e.g. tile or painting..." autocomplete="off" aria-autocomplete="list" aria-controls="serviceSuggestions" aria-expanded="false">
@@ -1067,6 +1067,12 @@
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
+        // Re-render the exact homepage sphere selections after authentication reveals the dashboard.
+        if (typeof sphereServices !== "undefined" && sphereServices.length) {
+          sphereServicePanel.hidden = false;
+          renderSphereSelectedServices();
+          chooseSphereService(sphereServices[0]);
+        }
 
         try {
           await loadCustomerProfile(session.user);
