@@ -821,7 +821,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
     const db = window.supabase.createClient(
       SUPABASE_URL,
-      SUPABASE_KEY
+      SUPABASE_KEY,
+      { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true, flowType: "pkce" } }
     );
     window.zelpxDb = db;
 
@@ -1118,6 +1119,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
     });
 
+    let activeCustomerSessionId = null;
+    let customerSessionWork = Promise.resolve();
     async function checkSession(sessionOverride = undefined) {
       let session = sessionOverride;
       if (sessionOverride === undefined) {
@@ -1127,6 +1130,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
 
       if (session) {
+        if (activeCustomerSessionId === session.user.id && !$("dashboardView").classList.contains("hidden")) {
+          if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
+          return;
+        }
+        activeCustomerSessionId = session.user.id;
         sessionStorage.removeItem("zelpx.oauth.pending");
         // Administrator accounts must use the dedicated admin portal only.
         let profile;
@@ -1136,6 +1144,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           if (error) throw error;
           profile = data;
         } catch (profileError) {
+          activeCustomerSessionId = null;
           await db.auth.signOut();
           $("dashboardView").classList.add("hidden");
           $("authView").classList.remove("hidden");
@@ -2271,6 +2280,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         // Keep the built-in list available if the category service is offline.
       }
     }
+
+    // OAuth can finish after the initial page load on mobile browsers.
+    // Handle Supabase's SIGNED_IN event as well as the initial session check.
+    db.auth.onAuthStateChange((event, session) => {
+      if (session && ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
+        customerSessionWork = customerSessionWork
+          .then(() => Promise.resolve().then(() => checkSession(session)))
+          .catch((error) => {
+            showMessage("message", error.message || "Could not open your customer account. Please try again.", "error");
+            if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
+          });
+      } else if (event === "SIGNED_OUT") {
+        activeCustomerSessionId = null;
+        $("dashboardView").classList.add("hidden");
+        $("authView").classList.remove("hidden");
+      }
+    });
 
     loadCustomerServiceCategories();
     (async () => {
