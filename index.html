@@ -432,11 +432,15 @@ function serviceSound(serviceName){
 }
 // Play a short confirmation sound when the visitor presses "Find a pro".
 pg.addEventListener("click",e=>{
-  if(!pg.href || pg.getAttribute("href")==="#") return;
+  if(!selectedSphereServices.length) return;
   e.preventDefault();
+  // Rebuild the transfer URL at the exact moment of navigation so it always
+  // contains the complete current selection, not a stale previously-rendered href.
+  renderSelectedSphereServices();
+  const destination=pg.href;
+  if(!destination || destination.endsWith("#")) return;
   getAudio();
   tone(560,820,.13,.28,"sine");
-  const destination=pg.href;
   setTimeout(()=>{window.location.href=destination;},130);
 });
 function size(){W=box.clientWidth;R=Math.min(W*.34,200);}
