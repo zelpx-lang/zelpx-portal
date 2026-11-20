@@ -88,13 +88,21 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
       );
       const { data: { session }, error: sessionError } = await client.auth.getSession();
       if (sessionError || !session) { reveal(); return; }
-      const { data: profile, error } = await client.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
-      if (error || !profile || !["customer", "contractor", "admin"].includes(profile.role)) { reveal(); return; }
+
+      // Customer OAuth is initiated from the customer portal. New Google users may
+      // not have a profiles row yet, so do not strand them on the homepage.
+      let role = null;
+      try {
+        const { data: profile, error } = await client.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+        if (!error) role = profile?.role || null;
+      } catch (_) {}
+
       clearTimeout(timeout);
       finished = true;
       sessionStorage.removeItem("zelpx.oauth.pending");
       localStorage.removeItem("zelpx.oauth.pending");
-      const destination = profile.role === "admin" ? "/admin" : profile.role === "contractor" ? "/contractor" : "/customer";
+      const destination = role === "admin" ? "/admin" :
+        role === "contractor" && pending.portal !== "customer" ? "/contractor" : "/customer";
       window.location.replace(destination);
     } catch (_) { reveal(); }
   };
