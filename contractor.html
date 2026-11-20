@@ -641,6 +641,7 @@
     button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
     clearMessage("authMessage");
     try {
+      sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "contractor", at: Date.now() }));
       const { error } = await db.auth.signInWithOAuth({
         provider,
         options: {
@@ -650,6 +651,7 @@
       });
       if (error) throw error;
     } catch (error) {
+      sessionStorage.removeItem("zelpx.oauth.pending");
       message("authMessage", error.message || "Social sign-in could not be started. Please try again.", "error");
       button.lastChild.textContent = provider === "google" ? " Continue with Google" : " Continue with Facebook";
       buttons.forEach(item => { item.disabled = false; });
@@ -2695,7 +2697,11 @@
         history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
       }
       const { data: { session } } = await db.auth.getSession();
-      if (session) { await loadApp(); await handlePaymentReturn(); }
+      if (session) {
+        sessionStorage.removeItem("zelpx.oauth.pending");
+        await loadApp();
+        await handlePaymentReturn();
+      }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
