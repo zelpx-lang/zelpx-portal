@@ -28,65 +28,6 @@
 <style>
 html.zelpx-oauth-pending body::before{content:"";position:fixed;inset:0;z-index:99998;background:#f6f2ec}
 html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";white-space:pre;position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;color:#171816;font:800 18px/2 ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;background:radial-gradient(ellipse at 50% 45%,#ffe4d5 0,transparent 48%)}
-
-/* Compact selected-service cards: narrower and shorter, without changing selection behavior. */
-#selectedServicesReview ul{padding-inline:0!important}
-#selectedServicesReview .selected-work-row,
-#selectedServicesReview .removed-work-row{
-  width:94%;
-  justify-self:center;
-  grid-template-columns:minmax(0,1fr) auto;
-  grid-template-areas:"name action" "state action";
-  gap:4px 10px;
-  padding:11px 14px;
-  border-radius:15px;
-}
-#selectedServicesReview .selected-work-name{font-size:15.5px;line-height:1.3}
-#selectedServicesReview .selected-work-state{padding:4px 9px;font-size:11px;line-height:1.2}
-#selectedServicesReview .selected-work-action{min-height:36px;padding:7px 14px;font-size:13px}
-@media(max-width:480px){
-  #selectedServicesReview .selected-work-row,
-  #selectedServicesReview .removed-work-row{width:94%;padding:10px 12px;gap:4px 8px}
-  #selectedServicesReview .selected-work-name{font-size:15px}
-  #selectedServicesReview .selected-work-action{min-height:34px;padding:6px 12px}
-}
-
-/* Restore ZELPX orange customer actions and selected-service controls */
-#selectedServicesReview ul{list-style:none!important;padding:0!important;margin:16px 0 18px!important;display:grid!important;gap:12px!important}
-#selectedServicesReview .selected-work-row,#selectedServicesReview .removed-work-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name name" "state action";align-items:center;gap:12px;padding:16px;border:1.5px solid #f4c9b5;border-radius:17px;background:#fff0e8;list-style:none}
-#selectedServicesReview .selected-work-name{grid-area:name;font-size:17px;font-weight:750;color:var(--customer-ink);overflow-wrap:anywhere}
-#selectedServicesReview .selected-work-state{grid-area:state;justify-self:start;padding:7px 13px;border-radius:999px;background:var(--customer-orange);color:#fff;font-size:13px;font-weight:800}
-#selectedServicesReview .selected-work-action{grid-area:action;width:auto;min-height:42px;margin:0;padding:9px 18px;border:1.5px solid #edb99e;border-radius:999px;background:#fff;color:#a84319;box-shadow:none;font-size:14px;font-weight:800}
-#selectedServicesReview .selected-work-action:hover:not(:disabled){background:#ffe2d3;color:#913711;box-shadow:none;transform:translateY(-1px)}
-#selectedServicesReview .selected-work-action.undo{border-color:var(--customer-orange);background:var(--customer-orange);color:#fff}
-#selectedServicesReview .removed-work-heading{list-style:none;margin:8px 0 0;color:var(--customer-muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-#selectedServicesReview .removed-work-row{background:#faf7f2;border-color:var(--customer-line)}
-#selectedServicesReview .review-empty{list-style:none;color:var(--customer-muted);font-size:14px;padding:10px 0}
-#requestButton,#submitButton,#saveCustomerProfileButton,#requestProfileUpdateButton,.customer-chat-form button{background:var(--customer-orange)!important;color:#fff!important;box-shadow:0 6px 16px #ff6a2b33!important}
-#requestButton:hover:not(:disabled),#submitButton:hover:not(:disabled),#saveCustomerProfileButton:hover:not(:disabled),#requestProfileUpdateButton:hover:not(:disabled),.customer-chat-form button:hover:not(:disabled){background:var(--customer-orange-dark)!important}
-
-
-/* Selected services — compact orange outlined chips matching the sphere design */
-#selectedServicesReview.selected-services-panel{padding:24px 18px 26px!important;text-align:center}
-#selectedServicesReview .selected-services-title{margin:0 0 22px!important;font-size:clamp(22px,5vw,30px)!important;font-weight:800!important;color:#171717!important}
-#selectedServicesReview ul.selected-services-chips{display:flex!important;flex-direction:column!important;align-items:center!important;gap:12px!important;margin:0 auto 20px!important;padding:0!important;list-style:none!important}
-#selectedServicesReview .selected-service-chip{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:fit-content!important;max-width:100%!important;min-height:54px!important;padding:10px 18px 10px 22px!important;border:2px solid #e77a49!important;border-radius:999px!important;background:#fffaf4!important;color:#191919!important;list-style:none!important}
-#selectedServicesReview .selected-service-chip-name{font-size:clamp(15px,3.8vw,20px)!important;line-height:1.25!important;font-weight:500!important;overflow-wrap:anywhere!important;text-align:left!important}
-#selectedServicesReview .selected-service-chip-remove{flex:0 0 auto!important;min-width:28px!important;width:28px!important;height:30px!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#e47745!important;font-size:30px!important;line-height:1!important;font-weight:400!important;box-shadow:none!important}
-#selectedServicesReview .selected-service-chip-remove:hover{background:transparent!important;color:#bf4d22!important;box-shadow:none!important}
-#selectedServicesReview .selected-services-count{margin:24px 0 28px!important;color:#77766f!important;font-size:22px!important;font-weight:750!important}
-#selectedServicesReview .selected-services-find{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:58px!important;padding:0 34px!important;border:0!important;border-radius:999px!important;background:#f36a35!important;color:#fff!important;font-size:20px!important;font-weight:800!important;box-shadow:0 8px 20px #f36a3530!important}
-#selectedServicesReview .selected-services-find:hover{background:#e85a27!important}
-#selectedServicesReview .removed-work-heading{list-style:none!important;margin:12px 0 0!important;color:#777!important;font-size:13px!important;font-weight:800!important}
-#selectedServicesReview .removed-service-chip{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:fit-content!important;max-width:100%!important;padding:8px 14px!important;border:1px solid #d7cfc4!important;border-radius:999px!important;background:#f7f4ef!important;list-style:none!important}
-#selectedServicesReview .removed-service-chip-undo{min-height:30px!important;padding:4px 12px!important;border:1px solid #e77a49!important;border-radius:999px!important;background:#fff!important;color:#a84319!important;font-size:12px!important}
-@media(max-width:480px){
- #selectedServicesReview.selected-services-panel{padding:20px 12px 22px!important}
- #selectedServicesReview .selected-service-chip{min-height:48px!important;padding:8px 14px 8px 17px!important}
- #selectedServicesReview .selected-services-count{font-size:19px!important;margin:20px 0 24px!important}
- #selectedServicesReview .selected-services-find{min-height:52px!important;padding:0 28px!important;font-size:18px!important}
-}
-
 </style>
 
 
@@ -726,11 +667,10 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         <div id="serviceDetails" class="request-card" aria-live="polite">
           <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
         </div>
-        <section id="selectedServicesReview" class="request-card selected-services-panel" hidden aria-live="polite">
-          <h3 class="selected-services-title">Selected services:</h3>
-          <ul id="selectedServicesReviewList" class="selected-services-chips"></ul>
-          <div id="selectedServicesCount" class="selected-services-count"></div>
-          <button id="findProFromReview" class="selected-services-find" type="button">Find a pro →</button>
+        <section id="selectedServicesReview" class="request-card" hidden aria-live="polite">
+          <strong>Review your selected work</strong>
+          <p class="subtitle">These are the exact services you selected on the sphere.</p>
+          <ul id="selectedServicesReviewList"></ul>
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
         </section>
 
@@ -821,8 +761,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
     const db = window.supabase.createClient(
       SUPABASE_URL,
-      SUPABASE_KEY,
-      { auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true, flowType: "pkce" } }
+      SUPABASE_KEY
     );
     window.zelpxDb = db;
 
@@ -902,7 +841,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           options: {
             // Supabase may fall back to the configured Site URL (homepage); its OAuth
             // hand-off handler routes the authenticated customer back to this portal.
-            redirectTo: "https://app.zelpx.com/customer",
+            redirectTo: new URL("/", window.location.origin).toString(),
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
@@ -1119,8 +1058,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
     });
 
-    let activeCustomerSessionId = null;
-    let customerSessionWork = Promise.resolve();
     async function checkSession(sessionOverride = undefined) {
       let session = sessionOverride;
       if (sessionOverride === undefined) {
@@ -1130,11 +1067,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
 
       if (session) {
-        if (activeCustomerSessionId === session.user.id && !$("dashboardView").classList.contains("hidden")) {
-          if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
-          return;
-        }
-        activeCustomerSessionId = session.user.id;
         sessionStorage.removeItem("zelpx.oauth.pending");
         // Administrator accounts must use the dedicated admin portal only.
         let profile;
@@ -1144,7 +1076,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           if (error) throw error;
           profile = data;
         } catch (profileError) {
-          activeCustomerSessionId = null;
           await db.auth.signOut();
           $("dashboardView").classList.add("hidden");
           $("authView").classList.remove("hidden");
@@ -1490,120 +1421,17 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
     }
     const selectedServicesReview = $("selectedServicesReview");
-    const selectedServicesReviewList = $("selectedServicesReviewList");
-    if (!Array.isArray(sphereDraft.removedServices)) sphereDraft.removedServices = [];
-    function saveSphereDraft() {
-      try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
-    }
-    function renderSelectedServicesReview() {
-      const activeServices = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
-      const removedServices = Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [];
-      selectedServicesReviewList.replaceChildren();
-      activeServices.forEach((service, index) => {
-        const item = document.createElement("li");
-        item.className = "selected-service-chip";
-        const name = document.createElement("span");
-        name.className = "selected-service-chip-name";
-        name.textContent = service;
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "selected-service-chip-remove";
-        remove.textContent = "×";
-        remove.setAttribute("aria-label", "Remove " + service);
-        remove.addEventListener("click", () => {
-          const [removed] = sphereDraft.services.splice(index, 1);
-          if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
-          saveSphereDraft();
-          renderSelectedServicesReview();
-    const findProFromReview = $("findProFromReview");
-    if (findProFromReview) findProFromReview.addEventListener("click", () => {
-      const addressField = $("propertyAddress");
-      if (addressField) {
-        addressField.scrollIntoView({ behavior: "smooth", block: "center" });
-        window.setTimeout(() => addressField.focus({ preventScroll: true }), 350);
-      }
-    });
-
-        });
-        item.append(name, remove);
-        selectedServicesReviewList.appendChild(item);
-      });
-      if (removedServices.length) {
-        const heading = document.createElement("li");
-        heading.className = "removed-work-heading";
-        heading.textContent = "Removed services";
-        selectedServicesReviewList.appendChild(heading);
-        removedServices.forEach((service, index) => {
-          const item = document.createElement("li");
-          item.className = "removed-service-chip";
-          const name = document.createElement("span");
-          name.textContent = service;
-          const undo = document.createElement("button");
-          undo.type = "button";
-          undo.className = "removed-service-chip-undo";
-          undo.textContent = "Undo";
-          undo.setAttribute("aria-label", "Restore " + service);
-          undo.addEventListener("click", () => {
-            const [restored] = sphereDraft.removedServices.splice(index, 1);
-            if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
-            saveSphereDraft();
-            renderSelectedServicesReview();
-          });
-          item.append(name, undo);
-          selectedServicesReviewList.appendChild(item);
-        });
-      }
-      $("selectedServicesCount").textContent = activeServices.length + " selected";
-      selectedServicesReview.hidden = !activeServices.length && !removedServices.length;
+    if (landingServices.length) {
+      $("selectedServicesReviewList").replaceChildren(...landingServices.map(service => {
+        const item = document.createElement("li"); item.textContent = service; return item;
+      }));
+      selectedServicesReview.hidden = false;
+      // The sphere selection is already confirmed by the customer's choices; do not ask twice.
       $("confirmSelectedServices").checked = true;
       $("confirmSelectedServices").required = false;
       const confirmationLabel = $("confirmSelectedServices").closest("label");
       if (confirmationLabel) confirmationLabel.hidden = true;
     }
-    renderSelectedServicesReview();
-        });
-        item.append(name, remove);
-        selectedServicesReviewList.appendChild(item);
-      });
-      if (!activeServices.length && !removedServices.length) {
-        const empty = document.createElement("li");
-        empty.className = "review-empty";
-        empty.textContent = "No services selected. You can continue with the service form.";
-        selectedServicesReviewList.appendChild(empty);
-      }
-      if (removedServices.length) {
-        const heading = document.createElement("li");
-        heading.className = "removed-work-heading";
-        heading.textContent = "Removed services";
-        selectedServicesReviewList.appendChild(heading);
-        removedServices.forEach((service, index) => {
-          const item = document.createElement("li");
-          item.className = "removed-work-row";
-          const name = document.createElement("span");
-          name.className = "selected-work-name";
-          name.textContent = service;
-          const undo = document.createElement("button");
-          undo.type = "button";
-          undo.className = "selected-work-action undo";
-          undo.textContent = "Undo";
-          undo.setAttribute("aria-label", "Restore " + service);
-          undo.addEventListener("click", () => {
-            const [restored] = sphereDraft.removedServices.splice(index, 1);
-            if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
-            saveSphereDraft();
-            renderSelectedServicesReview();
-          });
-          item.append(name, undo);
-          selectedServicesReviewList.appendChild(item);
-        });
-      }
-      selectedServicesReview.hidden = !activeServices.length && !removedServices.length;
-      $("confirmSelectedServices").checked = true;
-      $("confirmSelectedServices").required = false;
-      const confirmationLabel = $("confirmSelectedServices").closest("label");
-      if (confirmationLabel) confirmationLabel.hidden = true;
-    }
-    renderSelectedServicesReview();
     if (landingService) {
       const serviceOption = [...$("serviceType").options].find(option =>
         option.value.toLowerCase() === landingService.toLowerCase() ||
@@ -2280,23 +2108,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         // Keep the built-in list available if the category service is offline.
       }
     }
-
-    // OAuth can finish after the initial page load on mobile browsers.
-    // Handle Supabase's SIGNED_IN event as well as the initial session check.
-    db.auth.onAuthStateChange((event, session) => {
-      if (session && ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
-        customerSessionWork = customerSessionWork
-          .then(() => Promise.resolve().then(() => checkSession(session)))
-          .catch((error) => {
-            showMessage("message", error.message || "Could not open your customer account. Please try again.", "error");
-            if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
-          });
-      } else if (event === "SIGNED_OUT") {
-        activeCustomerSessionId = null;
-        $("dashboardView").classList.add("hidden");
-        $("authView").classList.remove("hidden");
-      }
-    });
 
     loadCustomerServiceCategories();
     (async () => {
