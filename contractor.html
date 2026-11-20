@@ -665,7 +665,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       const { error } = await db.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin + "/contractor",
+          redirectTo: "https://app.zelpx.com/?oauth_portal=contractor",
           ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
         }
       });
