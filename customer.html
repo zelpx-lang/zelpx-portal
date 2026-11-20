@@ -828,20 +828,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       clearMessage("message");
       try {
         if (landingServices.length || landingService || landingZip) {
-          sessionStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() }));
+          // localStorage survives mobile OAuth hand-offs more reliably than sessionStorage.
+          localStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() }));
         }
         sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "customer", at: Date.now() }));
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
-            // Preserve selected service and ZIP; the homepage fallback also routes by the verified profile role.
-            redirectTo: window.location.origin + window.location.pathname + window.location.search + window.location.hash,
+            // Always return to the stable, allowlisted portal URL. The one-time sphere draft
+            // is restored from localStorage after Google redirects back.
+            redirectTo: new URL("/customer", window.location.origin).toString(),
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
         if (error) throw error;
       } catch (error) {
         sessionStorage.removeItem("zelpx.oauth.pending");
+        localStorage.removeItem("zelpx.sphere.auth.pending");
         showMessage("message", error.message || "Social sign-in could not be started. Please try again.", "error");
         button.lastChild.textContent = " " + (provider === "google" ? "Continue with Google" : "Continue with Facebook");
         buttons.forEach(item => { item.disabled = false; });
@@ -1097,6 +1100,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         await loadRequests(session);
         // Sphere selections are one-time onboarding context, not permanent login preferences.
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+        try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
         try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
         // If the customer arrived from the public homepage with a selected service,
         // take them straight to that prefilled request form after login/registration.
@@ -1379,7 +1383,10 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     const hasSphereUrlData = Boolean(urlSphereDraft.service || urlSphereDraft.zip || urlSphereDraft.services.length);
     let sphereAuthPending = false;
     try {
-      const pendingAuth = JSON.parse(sessionStorage.getItem("zelpx.sphere.auth.pending") || "null");
+      const pendingAuth = JSON.parse(
+        localStorage.getItem("zelpx.sphere.auth.pending") ||
+        sessionStorage.getItem("zelpx.sphere.auth.pending") || "null"
+      );
       sphereAuthPending = Boolean(pendingAuth?.at && Date.now() - pendingAuth.at < 15 * 60 * 1000);
     } catch (_) {}
     if (hasSphereUrlData) {
@@ -1392,6 +1399,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     } else {
       // A normal visit/login must never inherit an old sphere selection.
       try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+      try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
       try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
     }
     if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [] };
