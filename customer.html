@@ -476,16 +476,41 @@
       html { scroll-behavior:auto; }
       *,*::before,*::after { transition-duration:.01ms!important; }
     }
-    .sphere-selected-services { margin:0 0 22px; text-align:center; }
+    /* Selected homepage services: a dedicated dashboard panel, not a single-select form field. */
+    .sphere-selected-services {
+      display:block; margin:18px 0 22px; padding:20px;
+      text-align:left; border:1px solid #f2c4ad; border-radius:20px;
+      background:linear-gradient(135deg,#fff8f3 0%,#fffdfa 72%);
+      box-shadow:0 10px 26px -22px #9a3c1b88;
+    }
     .sphere-selected-services[hidden] { display:none !important; }
-    .sphere-selected-services > strong { display:block; margin:0 0 16px; color:var(--customer-ink); font-size:20px; font-weight:750; }
-    .sphere-selected-service-list { display:flex; flex-direction:column; align-items:center; gap:12px; }
-    .sphere-selected-service-chip { display:inline-flex; align-items:center; justify-content:center; gap:12px; max-width:100%; min-height:54px; padding:10px 18px 10px 22px; border:2px solid #e77a52; border-radius:999px; background:transparent; color:var(--customer-ink); font:500 17px/1.3 inherit; }
-    .sphere-selected-service-chip.active { background:#fff3ec; border-color:var(--customer-orange); }
-    .sphere-selected-service-chip button { display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; min-width:25px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; color:#df7654; box-shadow:none; font-size:25px; line-height:1; }
-    .sphere-selected-service-chip button:hover { background:#ffebe2; color:#c94f2c; box-shadow:none; }
-    .sphere-selected-services > p { margin:16px 0 0; color:var(--customer-muted); font-size:15px; font-weight:650; }
-    @media(max-width:600px) { .sphere-selected-service-chip { min-height:52px; padding:9px 15px 9px 18px; font-size:16px; } }
+    .sphere-selected-services-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; }
+    .sphere-selected-services-header strong { color:var(--customer-ink); font-size:17px; font-weight:800; }
+    .sphere-selected-services-count { flex:0 0 auto; padding:5px 10px; border-radius:999px; background:#ffeadf; color:#b94717; font-size:12px; font-weight:800; }
+    .sphere-selected-service-list { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:10px; }
+    .sphere-selected-service-chip {
+      display:inline-flex; align-items:center; justify-content:center; gap:9px;
+      max-width:100%; min-height:44px; padding:6px 9px 6px 15px;
+      border:1.5px solid #e77a52; border-radius:999px; background:#fff;
+      color:var(--customer-ink); box-shadow:0 3px 10px #8b351514;
+    }
+    .sphere-selected-service-chip.active { background:#fff0e7; border-color:var(--customer-orange); box-shadow:0 0 0 2px #ff6a2b20; }
+    .sphere-selected-service-chip button { width:auto; min-height:0; margin:0; padding:0; border:0; background:transparent; color:inherit; box-shadow:none; font:600 14px/1.25 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+    .sphere-selected-service-chip .sphere-selected-service-name { overflow-wrap:anywhere; text-align:left; }
+    .sphere-selected-service-chip .sphere-selected-service-remove {
+      display:inline-flex; align-items:center; justify-content:center; flex:0 0 25px;
+      width:25px; height:25px; min-height:25px; border-radius:50%;
+      background:#fff0e8; color:#c94f2c; font-size:20px; line-height:1;
+    }
+    .sphere-selected-service-chip button:hover { transform:none; background:#ffe2d3; color:#a83d18; box-shadow:none; }
+    .sphere-selected-services > p { margin:13px 0 0; color:var(--customer-muted); font-size:13px; font-weight:600; }
+    @media(max-width:600px) {
+      .sphere-selected-services { margin:14px 0 18px; padding:15px; border-radius:16px; }
+      .sphere-selected-services-header strong { font-size:15px; }
+      .sphere-selected-service-list { gap:8px; }
+      .sphere-selected-service-chip { min-height:40px; padding:5px 8px 5px 12px; }
+      .sphere-selected-service-chip button { font-size:13px; }
+    }
     .service-search-wrap { position:relative; }
     .service-suggestions { position:relative; margin-top:4px; max-height:230px; overflow-y:auto; border:1px solid #d5dce5; border-radius:8px; background:#fff; box-shadow:0 5px 15px rgba(0,0,0,.08); z-index:5; }
     .service-suggestion { display:block; width:100%; text-align:left; background:#fff; color:#18212f; border:0; border-bottom:1px solid #edf0f4; border-radius:0; padding:12px 14px; cursor:pointer; font:inherit; }
@@ -576,11 +601,6 @@
       </div>
       <p class="subtitle">Welcome to your ZELPX customer account.</p>
 
-      <section id="sphereSelectedServices" class="sphere-selected-services" hidden aria-label="Services selected on the homepage">
-        <strong>Selected services:</strong>
-        <div id="sphereSelectedServiceList" class="sphere-selected-service-list"></div>
-      </section>
-
       <p id="accountEmail"></p>
       <nav class="dashboard-menu" aria-label="Customer dashboard menu">
         <button type="button" class="dashboard-menu-button" data-dashboard-page="profile">My Profile</button>
@@ -590,6 +610,14 @@
       <div id="dashboardPage-home" class="dashboard-page">
         <h2>Welcome to ZELPX</h2>
         <p class="subtitle">Choose what you would like to do today.</p>
+        <section id="sphereSelectedServices" class="sphere-selected-services" hidden aria-label="Services selected on the homepage">
+          <div class="sphere-selected-services-header">
+            <strong>Your selected services</strong>
+            <span id="sphereSelectedServicesCount" class="sphere-selected-services-count"></span>
+          </div>
+          <div id="sphereSelectedServiceList" class="sphere-selected-service-list"></div>
+          <p>Tap a service to use it in your request, or remove it with ×.</p>
+        </section>
         <div class="dashboard-home-grid">
           <button type="button" class="dashboard-home-card" data-dashboard-page="profile">
             <span class="dashboard-home-icon">👤</span>
@@ -1401,6 +1429,9 @@
     }
     function renderSphereSelectedServices() {
       sphereServiceList.replaceChildren();
+      const countLabel = $("sphereSelectedServicesCount");
+      if (countLabel) countLabel.textContent = sphereServices.length + (sphereServices.length === 1 ? " service" : " services");
+      sphereServicePanel.hidden = sphereServices.length === 0;
       sphereServices.forEach(serviceName => {
         const chip = document.createElement("div");
         chip.className = "sphere-selected-service-chip";
