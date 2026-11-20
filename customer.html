@@ -1358,17 +1358,26 @@
       if (!Array.isArray(savedSphereServices)) savedSphereServices = [];
     } catch (_) { savedSphereServices = []; }
     const sphereServices = [...new Set(
-      (landingParams.get("services") ? landingParams.get("services").split("|") : savedSphereServices)
+      (landingParams.has("services")
+        ? (landingParams.get("services") || "").split("|")
+        : savedSphereServices)
         .map(name => String(name).trim()).filter(Boolean)
     )];
-    // Persist URL selections before the login flow or history cleanup can remove the query string.
-    if (sphereServices.length) {
-      const pending = JSON.stringify(sphereServices);
+    // Keep one authoritative pending selection through sign-in, page reloads and URL cleanup.
+    function persistSphereServices() {
       try {
-        localStorage.setItem("zelpx_pending_sphere_services", pending);
-        sessionStorage.setItem("zelpx_pending_sphere_services", pending);
+        if (sphereServices.length) {
+          const pending = JSON.stringify(sphereServices);
+          localStorage.setItem("zelpx_pending_sphere_services", pending);
+          sessionStorage.setItem("zelpx_pending_sphere_services", pending);
+        } else {
+          localStorage.removeItem("zelpx_pending_sphere_services");
+          sessionStorage.removeItem("zelpx_pending_sphere_services");
+        }
       } catch (_) {}
     }
+    // Persist URL selections before the login flow or history cleanup can remove the query string.
+    persistSphereServices();
     const sphereServicePanel = $("sphereSelectedServices");
     const sphereServiceList = $("sphereSelectedServiceList");
     function chooseSphereService(serviceName) {
@@ -1406,9 +1415,14 @@
           const wasActive = chip.classList.contains("active");
           const index = sphereServices.indexOf(serviceName);
           if (index !== -1) sphereServices.splice(index, 1);
+          persistSphereServices();
           renderSphereSelectedServices();
           if (wasActive && sphereServices.length) chooseSphereService(sphereServices[0]);
-          if (!sphereServices.length) sphereServicePanel.hidden = true;
+          if (!sphereServices.length) {
+            sphereServicePanel.hidden = true;
+            $("serviceType").value = "";
+            $("serviceType").dispatchEvent(new Event("change"));
+          }
         });
         chip.append(selectButton, removeButton);
         sphereServiceList.append(chip);
