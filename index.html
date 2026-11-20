@@ -130,6 +130,32 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
  .hero-promo-cta{min-height:clamp(42px,9vw,54px)!important;font-size:clamp(15px,4vw,18px)!important;padding:0 18px!important}
 }
 
+
+/* Critical mobile hero image visibility + approved reference proportions */
+.hero-promo{position:relative!important;isolation:isolate!important;overflow:hidden!important;aspect-ratio:1.42/1!important;min-height:0!important;height:auto!important;border-radius:32px!important}
+.hero-promo:before,.hero-promo:after{z-index:0!important;pointer-events:none!important}
+.hero-promo-photo{position:absolute!important;z-index:1!important;right:0!important;top:0!important;bottom:0!important;width:57%!important;height:100%!important;clip-path:ellipse(93% 88% at 100% 50%)!important;border-radius:0!important;overflow:hidden!important;opacity:1!important}
+.hero-promo-photo img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important}
+.hero-promo-copy{position:relative!important;z-index:2!important;width:64%!important;padding:8.8% 0 7% 4.8%!important;background:transparent!important}
+@media(max-width:760px){
+ .hero{padding:18px 0 38px!important}
+ .hero-promo{aspect-ratio:.94/1!important;min-height:0!important;height:auto!important;border-radius:28px!important}
+ .hero-promo-photo{z-index:1!important;width:57%!important;right:0!important;top:0!important;bottom:0!important;height:100%!important;clip-path:ellipse(93% 88% at 100% 50%)!important;border-radius:0!important}
+ .hero-promo-copy{z-index:2!important;width:65%!important;padding:9% 0 7% 4.8%!important}
+ .hero-promo-kicker:before{height:clamp(42px,8.5vw,58px)!important}
+ .hero-promo-tagline{margin:4px 0 9% 16px!important;white-space:nowrap!important}
+ .hero-promo h1{font-size:clamp(29px,7.8vw,56px)!important;line-height:1.02!important;max-width:100%!important}
+ .hero-promo-description{font-size:clamp(14px,3.25vw,22px)!important;line-height:1.35!important;max-width:96%!important;margin-bottom:6%!important}
+ .hero-promo-cta{min-height:clamp(44px,9.5vw,68px)!important;font-size:clamp(16px,4vw,25px)!important;padding:0 clamp(18px,4vw,34px)!important}
+}
+@media(max-width:420px){
+ .hero-promo-copy{width:65%!important;padding:9.5% 0 7% 4.8%!important}
+ .hero-promo-tagline{font-size:clamp(10px,2.1vw,13px)!important;margin-bottom:8%!important}
+ .hero-promo h1{font-size:clamp(28px,7.8vw,36px)!important;line-height:1.03!important}
+ .hero-promo-description{font-size:clamp(13px,3.2vw,16px)!important;line-height:1.35!important}
+ .hero-promo-cta{min-height:clamp(42px,9vw,54px)!important;font-size:clamp(15px,4vw,18px)!important;padding:0 18px!important}
+}
+
 </style>
 <script>
 /* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
