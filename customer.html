@@ -1344,8 +1344,15 @@
     const landingParams = new URLSearchParams(window.location.search);
     const landingService = landingParams.get("service");
     const landingZip = landingParams.get("zip");
-    const sphereServices = [...new Set((landingParams.get("services") || "")
-      .split("|").map(name => name.trim()).filter(Boolean))];
+    let savedSphereServices = [];
+    try {
+      savedSphereServices = JSON.parse(sessionStorage.getItem("zelpx_pending_sphere_services") || "[]");
+      if (!Array.isArray(savedSphereServices)) savedSphereServices = [];
+    } catch (_) { savedSphereServices = []; }
+    const sphereServices = [...new Set(
+      (landingParams.get("services") ? landingParams.get("services").split("|") : savedSphereServices)
+        .map(name => String(name).trim()).filter(Boolean)
+    )];
     const sphereServicePanel = $("sphereSelectedServices");
     const sphereServiceList = $("sphereSelectedServiceList");
     function chooseSphereService(serviceName) {
