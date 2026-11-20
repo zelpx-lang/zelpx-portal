@@ -1465,12 +1465,11 @@
       if (lead.status === "available") {
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = selectedNames.has(leadCategoryName);
-        const licenseEligible = licenseEligibleLeadCategories?.has(leadCategoryName) === true;
-        const canBuy = !isAdmin && serviceSelected && licenseEligible;
-        if (!isAdmin && !canBuy) {
+        const canBuy = !isAdmin && serviceSelected;
+        if (!isAdmin && !serviceSelected) {
           const eligibility = document.createElement("span");
           eligibility.className = "pill";
-          eligibility.textContent = !serviceSelected ? "Select this service in your profile" : "License eligibility review required";
+          eligibility.textContent = "Select this service in your profile";
           badges.append(eligibility);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
