@@ -65,6 +65,28 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 #requestButton,#submitButton,#saveCustomerProfileButton,#requestProfileUpdateButton,.customer-chat-form button{background:var(--customer-orange)!important;color:#fff!important;box-shadow:0 6px 16px #ff6a2b33!important}
 #requestButton:hover:not(:disabled),#submitButton:hover:not(:disabled),#saveCustomerProfileButton:hover:not(:disabled),#requestProfileUpdateButton:hover:not(:disabled),.customer-chat-form button:hover:not(:disabled){background:var(--customer-orange-dark)!important}
 
+
+/* Selected services — compact orange outlined chips matching the sphere design */
+#selectedServicesReview.selected-services-panel{padding:24px 18px 26px!important;text-align:center}
+#selectedServicesReview .selected-services-title{margin:0 0 22px!important;font-size:clamp(22px,5vw,30px)!important;font-weight:800!important;color:#171717!important}
+#selectedServicesReview ul.selected-services-chips{display:flex!important;flex-direction:column!important;align-items:center!important;gap:12px!important;margin:0 auto 20px!important;padding:0!important;list-style:none!important}
+#selectedServicesReview .selected-service-chip{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:fit-content!important;max-width:100%!important;min-height:54px!important;padding:10px 18px 10px 22px!important;border:2px solid #e77a49!important;border-radius:999px!important;background:#fffaf4!important;color:#191919!important;list-style:none!important}
+#selectedServicesReview .selected-service-chip-name{font-size:clamp(15px,3.8vw,20px)!important;line-height:1.25!important;font-weight:500!important;overflow-wrap:anywhere!important;text-align:left!important}
+#selectedServicesReview .selected-service-chip-remove{flex:0 0 auto!important;min-width:28px!important;width:28px!important;height:30px!important;padding:0!important;border:0!important;border-radius:50%!important;background:transparent!important;color:#e47745!important;font-size:30px!important;line-height:1!important;font-weight:400!important;box-shadow:none!important}
+#selectedServicesReview .selected-service-chip-remove:hover{background:transparent!important;color:#bf4d22!important;box-shadow:none!important}
+#selectedServicesReview .selected-services-count{margin:24px 0 28px!important;color:#77766f!important;font-size:22px!important;font-weight:750!important}
+#selectedServicesReview .selected-services-find{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:58px!important;padding:0 34px!important;border:0!important;border-radius:999px!important;background:#f36a35!important;color:#fff!important;font-size:20px!important;font-weight:800!important;box-shadow:0 8px 20px #f36a3530!important}
+#selectedServicesReview .selected-services-find:hover{background:#e85a27!important}
+#selectedServicesReview .removed-work-heading{list-style:none!important;margin:12px 0 0!important;color:#777!important;font-size:13px!important;font-weight:800!important}
+#selectedServicesReview .removed-service-chip{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:fit-content!important;max-width:100%!important;padding:8px 14px!important;border:1px solid #d7cfc4!important;border-radius:999px!important;background:#f7f4ef!important;list-style:none!important}
+#selectedServicesReview .removed-service-chip-undo{min-height:30px!important;padding:4px 12px!important;border:1px solid #e77a49!important;border-radius:999px!important;background:#fff!important;color:#a84319!important;font-size:12px!important}
+@media(max-width:480px){
+ #selectedServicesReview.selected-services-panel{padding:20px 12px 22px!important}
+ #selectedServicesReview .selected-service-chip{min-height:48px!important;padding:8px 14px 8px 17px!important}
+ #selectedServicesReview .selected-services-count{font-size:19px!important;margin:20px 0 24px!important}
+ #selectedServicesReview .selected-services-find{min-height:52px!important;padding:0 28px!important;font-size:18px!important}
+}
+
 </style>
 
 
@@ -704,10 +726,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         <div id="serviceDetails" class="request-card" aria-live="polite">
           <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
         </div>
-        <section id="selectedServicesReview" class="request-card" hidden aria-live="polite">
-          <strong>Review your selected work</strong>
-          <p class="subtitle">These are the exact services you selected on the sphere.</p>
-          <ul id="selectedServicesReviewList"></ul>
+        <section id="selectedServicesReview" class="request-card selected-services-panel" hidden aria-live="polite">
+          <h3 class="selected-services-title">Selected services:</h3>
+          <ul id="selectedServicesReviewList" class="selected-services-chips"></ul>
+          <div id="selectedServicesCount" class="selected-services-count"></div>
+          <button id="findProFromReview" class="selected-services-find" type="button">Find a pro →</button>
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
         </section>
 
@@ -1469,20 +1492,66 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       selectedServicesReviewList.replaceChildren();
       activeServices.forEach((service, index) => {
         const item = document.createElement("li");
-        item.className = "selected-work-row";
+        item.className = "selected-service-chip";
         const name = document.createElement("span");
-        name.className = "selected-work-name";
+        name.className = "selected-service-chip-name";
         name.textContent = service;
         const remove = document.createElement("button");
         remove.type = "button";
-        remove.className = "selected-work-action";
-        remove.textContent = "Remove";
+        remove.className = "selected-service-chip-remove";
+        remove.textContent = "×";
         remove.setAttribute("aria-label", "Remove " + service);
         remove.addEventListener("click", () => {
           const [removed] = sphereDraft.services.splice(index, 1);
           if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
           saveSphereDraft();
           renderSelectedServicesReview();
+    const findProFromReview = $("findProFromReview");
+    if (findProFromReview) findProFromReview.addEventListener("click", () => {
+      const addressField = $("propertyAddress");
+      if (addressField) {
+        addressField.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => addressField.focus({ preventScroll: true }), 350);
+      }
+    });
+
+        });
+        item.append(name, remove);
+        selectedServicesReviewList.appendChild(item);
+      });
+      if (removedServices.length) {
+        const heading = document.createElement("li");
+        heading.className = "removed-work-heading";
+        heading.textContent = "Removed services";
+        selectedServicesReviewList.appendChild(heading);
+        removedServices.forEach((service, index) => {
+          const item = document.createElement("li");
+          item.className = "removed-service-chip";
+          const name = document.createElement("span");
+          name.textContent = service;
+          const undo = document.createElement("button");
+          undo.type = "button";
+          undo.className = "removed-service-chip-undo";
+          undo.textContent = "Undo";
+          undo.setAttribute("aria-label", "Restore " + service);
+          undo.addEventListener("click", () => {
+            const [restored] = sphereDraft.removedServices.splice(index, 1);
+            if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
+            saveSphereDraft();
+            renderSelectedServicesReview();
+          });
+          item.append(name, undo);
+          selectedServicesReviewList.appendChild(item);
+        });
+      }
+      $("selectedServicesCount").textContent = activeServices.length + " selected";
+      selectedServicesReview.hidden = !activeServices.length && !removedServices.length;
+      $("confirmSelectedServices").checked = true;
+      $("confirmSelectedServices").required = false;
+      const confirmationLabel = $("confirmSelectedServices").closest("label");
+      if (confirmationLabel) confirmationLabel.hidden = true;
+    }
+    renderSelectedServicesReview();
         });
         item.append(name, remove);
         selectedServicesReviewList.appendChild(item);
