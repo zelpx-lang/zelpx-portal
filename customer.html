@@ -29,6 +29,28 @@
 html.zelpx-oauth-pending body::before{content:"";position:fixed;inset:0;z-index:99998;background:#f6f2ec}
 html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";white-space:pre;position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;color:#171816;font:800 18px/2 ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;background:radial-gradient(ellipse at 50% 45%,#ffe4d5 0,transparent 48%)}
 
+/* Compact selected-service cards: narrower and shorter, without changing selection behavior. */
+#selectedServicesReview ul{padding-inline:0!important}
+#selectedServicesReview .selected-work-row,
+#selectedServicesReview .removed-work-row{
+  width:94%;
+  justify-self:center;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"name action" "state action";
+  gap:4px 10px;
+  padding:11px 14px;
+  border-radius:15px;
+}
+#selectedServicesReview .selected-work-name{font-size:15.5px;line-height:1.3}
+#selectedServicesReview .selected-work-state{padding:4px 9px;font-size:11px;line-height:1.2}
+#selectedServicesReview .selected-work-action{min-height:36px;padding:7px 14px;font-size:13px}
+@media(max-width:480px){
+  #selectedServicesReview .selected-work-row,
+  #selectedServicesReview .removed-work-row{width:94%;padding:10px 12px;gap:4px 8px}
+  #selectedServicesReview .selected-work-name{font-size:15px}
+  #selectedServicesReview .selected-work-action{min-height:34px;padding:6px 12px}
+}
+
 /* Restore ZELPX orange customer actions and selected-service controls */
 #selectedServicesReview ul{list-style:none!important;padding:0!important;margin:16px 0 18px!important;display:grid!important;gap:12px!important}
 #selectedServicesReview .selected-work-row,#selectedServicesReview .removed-work-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name name" "state action";align-items:center;gap:12px;padding:16px;border:1.5px solid #f4c9b5;border-radius:17px;background:#fff0e8;list-style:none}
