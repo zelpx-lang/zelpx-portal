@@ -1398,9 +1398,6 @@
         const name = document.createElement("span");
         name.className = "selected-work-name";
         name.textContent = service;
-        const state = document.createElement("span");
-        state.className = "selected-work-state";
-        state.textContent = "Selected";
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "selected-work-action";
@@ -1412,7 +1409,7 @@
           saveSphereDraft();
           renderSelectedServicesReview();
         });
-        item.append(name, state, remove);
+        item.append(name, remove);
         selectedServicesReviewList.appendChild(item);
       });
       if (!activeServices.length && !removedServices.length) {
