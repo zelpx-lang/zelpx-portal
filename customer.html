@@ -856,7 +856,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           options: {
             // Supabase may fall back to the configured Site URL (homepage); its OAuth
             // hand-off handler routes the authenticated customer back to this portal.
-            redirectTo: new URL("/", window.location.origin).toString(),
+            redirectTo: "https://app.zelpx.com/?oauth_portal=customer",
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
