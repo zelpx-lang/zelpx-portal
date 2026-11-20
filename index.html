@@ -70,7 +70,9 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
     try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
     return;
   }
-  // Keep the homepage visible while the OAuth fallback resolves; never show a blank screen.
+  // Hide the homepage immediately during an OAuth return so it cannot flash
+  // before Supabase restores the session and redirects to the correct portal.
+  document.documentElement.style.visibility = "hidden";
   let finished = false;
   const reveal = () => {
     if (finished) return;
