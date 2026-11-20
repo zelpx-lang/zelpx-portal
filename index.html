@@ -195,8 +195,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 .hero-promo{position:relative!important;isolation:isolate!important;overflow:hidden!important;aspect-ratio:1.42/1!important;min-height:0!important;height:auto!important;border-radius:32px!important;background:#fff7ee!important;box-shadow:0 18px 46px #35271918!important}
 .hero-promo:before{z-index:0!important;left:-7%!important;bottom:-16%!important;width:47%!important;height:29%!important;pointer-events:none!important}
 .hero-promo:after{z-index:0!important;right:25%!important;top:-27%!important;width:38%!important;height:67%!important;pointer-events:none!important}
-.hero-promo-photo{display:block!important;position:absolute!important;z-index:1!important;right:0!important;top:0!important;bottom:0!important;width:48%!important;height:100%!important;overflow:hidden!important;opacity:1!important;visibility:visible!important;clip-path:ellipse(100% 88% at 100% 50%)!important;border-radius:0!important;pointer-events:none!important}
-.hero-promo-photo img{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:58% center!important;opacity:1!important;visibility:visible!important;transform:none!important;backface-visibility:visible!important}
+.hero-promo-photo{display:block!important;position:absolute!important;z-index:1!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important;opacity:1!important;visibility:visible!important;clip-path:none!important;border-radius:0!important;pointer-events:none!important}
+.hero-promo-photo img{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important;opacity:1!important;visibility:visible!important;transform:none!important;backface-visibility:visible!important}
 .hero-promo-copy{position:relative!important;z-index:2!important;width:65%!important;padding:9% 0 7% 4.8%!important;background:linear-gradient(90deg,#fff7ee 0%,#fff7ee 78%,#fff7ee00 100%)!important}
 .hero-promo-kicker{font-size:clamp(12px,2.1vw,16px)!important;color:#171717!important;letter-spacing:.035em!important}
 .hero-promo-kicker:before{height:58px!important;background:#f36b38!important}
@@ -207,7 +207,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 @media(max-width:760px){
  .hero{padding:18px 0 38px!important}
  .hero-promo{aspect-ratio:.94/1!important;min-height:0!important;height:auto!important;border-radius:28px!important}
- .hero-promo-photo{width:48%!important;clip-path:ellipse(100% 88% at 100% 50%)!important}
+ .hero-promo-photo{width:100%!important;clip-path:none!important}
  .hero-promo-copy{width:67%!important;padding:9% 0 7% 4.8%!important}
  .hero-promo-kicker{font-size:clamp(11px,2.1vw,15px)!important;gap:10px!important}
  .hero-promo-kicker:before{height:clamp(42px,8.5vw,58px)!important}
@@ -219,7 +219,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 }
 @media(max-width:420px){
  .hero-promo{aspect-ratio:.94/1!important;border-radius:26px!important}
- .hero-promo-photo{width:48%!important;object-position:58% center!important}
+ .hero-promo-photo{width:100%!important;clip-path:none!important}
+ .hero-promo-photo img{object-fit:fill!important}
  .hero-promo-copy{width:68%!important;padding:9.5% 0 7% 4.8%!important}
  .hero-promo-kicker{font-size:11px!important;gap:9px!important}
  .hero-promo-kicker:before{height:46px!important}
@@ -295,7 +296,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 <section class="hero"><div class="wrap hero-grid">
 
 <div class="hero-promo">
-<div class="hero-promo-photo"><img src="/images/zelpx-home-hero.webp" alt="Contemporary Pacific Northwest home and warm modern kitchen"></div>
+<div class="hero-promo-photo"><img src="/images/zelpx-home-hero.jpg" alt="Contemporary Pacific Northwest home and warm modern kitchen"></div>
 <div class="hero-promo-copy">
 <div class="hero-promo-kicker">THE ZELPX DIFFERENCE</div>
 <div class="hero-promo-tagline">LOCAL <b>•</b> SIMPLE <b>•</b> CONNECTED</div>
