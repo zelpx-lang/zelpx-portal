@@ -73,6 +73,26 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 @media(max-width:850px){.hero{padding:20px 0 38px}}
 @media(max-width:560px){.hero{padding:20px 0 38px}.hero-promo-description{font-size:18px;max-width:360px;margin-bottom:30px}}
 @media(max-width:420px){.hero-promo-description{font-size:16px;max-width:300px;margin-bottom:26px}}
+/* Mobile hero polish: keep copy clear and avoid Android clipped-image artifacts */
+.hero-promo-photo{z-index:0;clip-path:none!important;border-radius:48% 0 0 48% / 42% 0 0 42%;overflow:hidden}
+.hero-promo-photo img{object-fit:cover;object-position:58% center;transform:translateZ(0);backface-visibility:hidden}
+.hero-promo-copy{z-index:2;background:linear-gradient(90deg,#fff8efff 0%,#fff8effa 76%,#fff8ef00 100%)}
+@media(max-width:760px){
+ .hero-promo-photo{width:47%;border-radius:52% 0 0 52% / 44% 0 0 44%}
+ .hero-promo-copy{width:64%;padding:56px 0 38px 26px}
+ .hero-promo h1{max-width:300px;font-size:clamp(37px,7vw,49px)}
+ .hero-promo-description{max-width:270px;font-size:17px}
+ .hero-promo-cta{min-height:58px;font-size:19px;padding:0 24px}
+}
+@media(max-width:420px){
+ .hero-promo{height:650px;min-height:650px}
+ .hero-promo-photo{width:45%;opacity:1;top:0;bottom:0}
+ .hero-promo-copy{width:67%;padding:48px 0 30px 22px}
+ .hero-promo-tagline{margin-bottom:46px;font-size:12px}
+ .hero-promo h1{font-size:37px;max-width:260px}
+ .hero-promo-description{font-size:16px;line-height:1.35;max-width:250px;margin-bottom:25px}
+ .hero-promo-cta{min-height:55px;font-size:18px;padding:0 20px}
+}
 </style>
 <script>
 /* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
