@@ -501,7 +501,22 @@
 .zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 @keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
 
-#selectedServicesReview[hidden]{display:none!important}#selectedServicesReview ul{margin:10px 0 14px;padding-left:22px;display:grid;gap:6px}#selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:10px;font-weight:650}#confirmSelectedServices{width:18px;height:18px;accent-color:var(--orange);flex:0 0 auto;margin-top:2px}</style>
+#selectedServicesReview[hidden]{display:none!important}#selectedServicesReview ul{margin:10px 0 14px;padding-left:22px;display:grid;gap:6px}#selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:10px;font-weight:650}#confirmSelectedServices{width:18px;height:18px;accent-color:var(--orange);flex:0 0 auto;margin-top:2px}
+/* Restore ZELPX orange customer actions and selected-service controls */
+#selectedServicesReview ul{list-style:none!important;padding:0!important;margin:16px 0 18px!important;display:grid!important;gap:12px!important}
+#selectedServicesReview .selected-work-row,#selectedServicesReview .removed-work-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name name" "state action";align-items:center;gap:12px;padding:16px;border:1.5px solid #f4c9b5;border-radius:17px;background:#fff0e8;list-style:none}
+#selectedServicesReview .selected-work-name{grid-area:name;font-size:17px;font-weight:750;color:var(--customer-ink);overflow-wrap:anywhere}
+#selectedServicesReview .selected-work-state{grid-area:state;justify-self:start;padding:7px 13px;border-radius:999px;background:var(--customer-orange);color:#fff;font-size:13px;font-weight:800}
+#selectedServicesReview .selected-work-action{grid-area:action;width:auto;min-height:42px;margin:0;padding:9px 18px;border:1.5px solid #edb99e;border-radius:999px;background:#fff;color:#a84319;box-shadow:none;font-size:14px;font-weight:800}
+#selectedServicesReview .selected-work-action:hover:not(:disabled){background:#ffe2d3;color:#913711;box-shadow:none;transform:translateY(-1px)}
+#selectedServicesReview .selected-work-action.undo{border-color:var(--customer-orange);background:var(--customer-orange);color:#fff}
+#selectedServicesReview .removed-work-heading{list-style:none;margin:8px 0 0;color:var(--customer-muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+#selectedServicesReview .removed-work-row{background:#faf7f2;border-color:var(--customer-line)}
+#selectedServicesReview .review-empty{list-style:none;color:var(--customer-muted);font-size:14px;padding:10px 0}
+#requestButton,#submitButton,#saveCustomerProfileButton,#requestProfileUpdateButton,.customer-chat-form button{background:var(--customer-orange)!important;color:#fff!important;box-shadow:0 6px 16px #ff6a2b33!important}
+#requestButton:hover:not(:disabled),#submitButton:hover:not(:disabled),#saveCustomerProfileButton:hover:not(:disabled),#requestProfileUpdateButton:hover:not(:disabled),.customer-chat-form button:hover:not(:disabled){background:var(--customer-orange-dark)!important}
+
+</style>
 </head>
 
 <body>
@@ -1368,17 +1383,77 @@
       }
     }
     const selectedServicesReview = $("selectedServicesReview");
-    if (landingServices.length) {
-      $("selectedServicesReviewList").replaceChildren(...landingServices.map(service => {
-        const item = document.createElement("li"); item.textContent = service; return item;
-      }));
-      selectedServicesReview.hidden = false;
-      // The sphere selection is already confirmed by the customer's choices; do not ask twice.
+    const selectedServicesReviewList = $("selectedServicesReviewList");
+    if (!Array.isArray(sphereDraft.removedServices)) sphereDraft.removedServices = [];
+    function saveSphereDraft() {
+      try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
+    }
+    function renderSelectedServicesReview() {
+      const activeServices = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
+      const removedServices = Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [];
+      selectedServicesReviewList.replaceChildren();
+      activeServices.forEach((service, index) => {
+        const item = document.createElement("li");
+        item.className = "selected-work-row";
+        const name = document.createElement("span");
+        name.className = "selected-work-name";
+        name.textContent = service;
+        const state = document.createElement("span");
+        state.className = "selected-work-state";
+        state.textContent = "Selected";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "selected-work-action";
+        remove.textContent = "Remove";
+        remove.setAttribute("aria-label", "Remove " + service);
+        remove.addEventListener("click", () => {
+          const [removed] = sphereDraft.services.splice(index, 1);
+          if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
+          saveSphereDraft();
+          renderSelectedServicesReview();
+        });
+        item.append(name, state, remove);
+        selectedServicesReviewList.appendChild(item);
+      });
+      if (!activeServices.length && !removedServices.length) {
+        const empty = document.createElement("li");
+        empty.className = "review-empty";
+        empty.textContent = "No services selected. You can continue with the service form.";
+        selectedServicesReviewList.appendChild(empty);
+      }
+      if (removedServices.length) {
+        const heading = document.createElement("li");
+        heading.className = "removed-work-heading";
+        heading.textContent = "Removed services";
+        selectedServicesReviewList.appendChild(heading);
+        removedServices.forEach((service, index) => {
+          const item = document.createElement("li");
+          item.className = "removed-work-row";
+          const name = document.createElement("span");
+          name.className = "selected-work-name";
+          name.textContent = service;
+          const undo = document.createElement("button");
+          undo.type = "button";
+          undo.className = "selected-work-action undo";
+          undo.textContent = "Undo";
+          undo.setAttribute("aria-label", "Restore " + service);
+          undo.addEventListener("click", () => {
+            const [restored] = sphereDraft.removedServices.splice(index, 1);
+            if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
+            saveSphereDraft();
+            renderSelectedServicesReview();
+          });
+          item.append(name, undo);
+          selectedServicesReviewList.appendChild(item);
+        });
+      }
+      selectedServicesReview.hidden = !activeServices.length && !removedServices.length;
       $("confirmSelectedServices").checked = true;
       $("confirmSelectedServices").required = false;
       const confirmationLabel = $("confirmSelectedServices").closest("label");
       if (confirmationLabel) confirmationLabel.hidden = true;
     }
+    renderSelectedServicesReview();
     if (landingService) {
       const serviceOption = [...$("serviceType").options].find(option =>
         option.value.toLowerCase() === landingService.toLowerCase() ||
