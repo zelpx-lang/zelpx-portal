@@ -1352,13 +1352,23 @@
     const landingZip = landingParams.get("zip");
     let savedSphereServices = [];
     try {
-      savedSphereServices = JSON.parse(sessionStorage.getItem("zelpx_pending_sphere_services") || "[]");
+      const saved = localStorage.getItem("zelpx_pending_sphere_services")
+        || sessionStorage.getItem("zelpx_pending_sphere_services") || "[]";
+      savedSphereServices = JSON.parse(saved);
       if (!Array.isArray(savedSphereServices)) savedSphereServices = [];
     } catch (_) { savedSphereServices = []; }
     const sphereServices = [...new Set(
       (landingParams.get("services") ? landingParams.get("services").split("|") : savedSphereServices)
         .map(name => String(name).trim()).filter(Boolean)
     )];
+    // Persist URL selections before the login flow or history cleanup can remove the query string.
+    if (sphereServices.length) {
+      const pending = JSON.stringify(sphereServices);
+      try {
+        localStorage.setItem("zelpx_pending_sphere_services", pending);
+        sessionStorage.setItem("zelpx_pending_sphere_services", pending);
+      } catch (_) {}
+    }
     const sphereServicePanel = $("sphereSelectedServices");
     const sphereServiceList = $("sphereSelectedServiceList");
     function chooseSphereService(serviceName) {
@@ -2070,6 +2080,9 @@
         } else {
           renderServiceDetails();
         }
+        // Category loading replaces the select options; re-apply the sphere choice afterwards
+        // so the selected detailed service is not lost in this async race.
+        if (sphereServices.length) chooseSphereService(sphereServices[0]);
       } catch (error) {
         console.warn("Could not load service categories:", error);
         // Keep the built-in list available if the category service is offline.
