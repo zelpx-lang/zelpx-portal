@@ -350,6 +350,7 @@ window.zelpxServiceGroups = serviceGroups;
 const selectedSphereServices=[];
 window.selectedSphereGroup="";
 function renderSelectedSphereServices(){
+  try { sessionStorage.setItem("zelpx_pending_sphere_services", JSON.stringify(selectedSphereServices)); } catch (_) {}
   const pick=document.getElementById("pick"), names=document.getElementById("pickName");
   names.replaceChildren();
   selectedSphereServices.forEach((service,index)=>{
