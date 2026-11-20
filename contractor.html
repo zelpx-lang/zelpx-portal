@@ -10,6 +10,21 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ZELPX">
   <title>ZELPX Contractor Portal</title>
+<script>
+/* Keep the portal visually covered until the OAuth session and dashboard are ready. */
+(() => {
+  try {
+    const pending = JSON.parse(sessionStorage.getItem("zelpx.oauth.pending") || "null");
+    if (pending && pending.at && Date.now() - pending.at < 10 * 60 * 1000) {
+      document.documentElement.classList.add("zelpx-oauth-pending");
+    } else if (pending) {
+      sessionStorage.removeItem("zelpx.oauth.pending");
+    }
+  } catch (_) {}
+})();
+</script>
+<style>html.zelpx-oauth-pending body{visibility:hidden!important}</style>
+
   <meta name="description" content="ZELPX contractor lead marketplace">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -2701,11 +2716,17 @@
         sessionStorage.removeItem("zelpx.oauth.pending");
         await loadApp();
         await handlePaymentReturn();
+      } else {
+        sessionStorage.removeItem("zelpx.oauth.pending");
       }
+      if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) { message("authMessage", e.message, "error"); }
+    } catch (e) {
+      message("authMessage", e.message, "error");
+      if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
+    }
   }
   start();
 })();
