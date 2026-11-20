@@ -1357,12 +1357,16 @@
       savedSphereServices = JSON.parse(saved);
       if (!Array.isArray(savedSphereServices)) savedSphereServices = [];
     } catch (_) { savedSphereServices = []; }
-    const sphereServices = [...new Set(
-      (landingParams.has("services")
-        ? (landingParams.get("services") || "").split("|")
-        : savedSphereServices)
-        .map(name => String(name).trim()).filter(Boolean)
-    )];
+    // Merge both transfer channels. The URL may be shortened or altered by an
+    // intermediate login/OAuth redirect, while browser storage retains the full
+    // selection made on the homepage. De-duplicate without losing distinct services.
+    const urlSphereServices = (landingParams.get("services") || "").split("|");
+    const sphereServices = [...new Map(
+      [...urlSphereServices, ...savedSphereServices]
+        .map(name => String(name || "").trim())
+        .filter(Boolean)
+        .map(name => [name.toLocaleLowerCase(), name])
+    ).values()];
     // Keep one authoritative pending selection through sign-in, page reloads and URL cleanup.
     function persistSphereServices() {
       try {
