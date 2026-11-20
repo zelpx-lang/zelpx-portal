@@ -831,19 +831,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           // localStorage survives mobile OAuth hand-offs more reliably than sessionStorage.
           localStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() }));
         }
-        sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "customer", at: Date.now() }));
+        const oauthMarker = JSON.stringify({ portal: "customer", at: Date.now() });
+        // Persist in localStorage as well: mobile Google OAuth may return in a new browser context.
+        localStorage.setItem("zelpx.oauth.pending", oauthMarker);
+        sessionStorage.setItem("zelpx.oauth.pending", oauthMarker);
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
-            // Always return to the stable, allowlisted portal URL. The one-time sphere draft
-            // is restored from localStorage after Google redirects back.
-            redirectTo: new URL("/customer", window.location.origin).toString(),
+            // Supabase may fall back to the configured Site URL (homepage); its OAuth
+            // hand-off handler routes the authenticated customer back to this portal.
+            redirectTo: new URL("/", window.location.origin).toString(),
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
         if (error) throw error;
       } catch (error) {
         sessionStorage.removeItem("zelpx.oauth.pending");
+        localStorage.removeItem("zelpx.oauth.pending");
         localStorage.removeItem("zelpx.sphere.auth.pending");
         showMessage("message", error.message || "Social sign-in could not be started. Please try again.", "error");
         button.lastChild.textContent = " " + (provider === "google" ? "Continue with Google" : "Continue with Facebook");
