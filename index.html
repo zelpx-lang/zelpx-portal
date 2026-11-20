@@ -540,12 +540,36 @@ function draw(){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.si
     st.opacity=.18+.82*d*d;st.zIndex=Math.round(d*100);st.pointerEvents=z2>-.2?"auto":"none";}}
 function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl=((t-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
+function showServiceLimitNotice(){
+  const ctx=getAudio();
+  if(ctx){
+    const now=ctx.currentTime;
+    [0,.19].forEach((offset,index)=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain(),start=now+offset;
+      osc.type="triangle";osc.frequency.setValueAtTime(index?660:880,start);
+      gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075,start+.012);
+      gain.gain.exponentialRampToValueAtTime(.0001,start+.13);
+      osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+.15);
+    });
+  }
+  if(navigator.vibrate)navigator.vibrate([70,45,70]);
+  let notice=document.getElementById("sphereLimitNotice");
+  if(!notice){
+    notice=document.createElement("div");notice.id="sphereLimitNotice";notice.setAttribute("role","status");notice.setAttribute("aria-live","polite");
+    notice.style.cssText="position:fixed;z-index:3000;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:14px 19px;border:1px solid #f3a27b;border-radius:15px;background:#211a18;color:#fff4ec;box-shadow:0 12px 34px #0005;text-align:center;font:700 14px/1.45 ui-sans-serif,system-ui,sans-serif;";
+    document.body.append(notice);
+  }
+  notice.textContent="You’ve reached the 5-service limit. Remove a service to add another.";
+  notice.hidden=false;
+  clearTimeout(window.zelpxSphereLimitTimer);
+  window.zelpxSphereLimitTimer=setTimeout(()=>{notice.hidden=true;},3200);
+}
 function chooseService(name,groupName){
   window.selectedSphereGroup=groupName||window.selectedSphereGroup;
   if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
   if(!selectedSphereServices.includes(name)){
     if(selectedSphereServices.length>=5){
-      alert("You can select up to 5 services from the sphere. Remove one before choosing another.");
+      showServiceLimitNotice();
       return;
     }
     selectedSphereServices.push(name);
