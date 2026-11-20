@@ -102,7 +102,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 .hero-promo:before{left:-7%!important;bottom:-16%!important;width:47%!important;height:29%!important;background:linear-gradient(135deg,#ff9b25,#f36b12)!important;border-radius:55% 55% 0 0!important;transform:rotate(8deg)!important}
 .hero-promo:after{right:25%!important;top:-27%!important;width:38%!important;height:67%!important;background:#ffe2cd!important;opacity:.65!important}
 .hero-promo-photo{z-index:0!important;right:0!important;top:0!important;bottom:0!important;width:42%!important;height:100%!important;clip-path:none!important;border-radius:0 32px 32px 0!important;overflow:hidden!important;opacity:1!important}
-.hero-promo-photo img{width:100%!important;height:100%!important;object-fit:fill!important;object-position:center!important;display:block!important;transform:none!important;backface-visibility:visible!important}
+.hero-promo-photo img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;display:block!important;transform:none!important;backface-visibility:visible!important}
 .hero-promo-copy{position:relative!important;z-index:2!important;width:68%!important;padding:9.2% 0 7.5% 4.8%!important;background:transparent!important}
 .hero-promo-kicker{font-size:clamp(11px,2.2vw,16px)!important;gap:13px!important;color:#171717!important}
 .hero-promo-kicker:before{width:6px!important;height:58px!important;background:#f36b38!important;flex-basis:6px!important}
@@ -196,7 +196,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 .hero-promo:before{z-index:0!important;left:-7%!important;bottom:-16%!important;width:47%!important;height:29%!important;pointer-events:none!important}
 .hero-promo:after{z-index:0!important;right:25%!important;top:-27%!important;width:38%!important;height:67%!important;pointer-events:none!important}
 .hero-promo-photo{display:block!important;position:absolute!important;z-index:1!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important;opacity:1!important;visibility:visible!important;clip-path:none!important;border-radius:0!important;pointer-events:none!important}
-.hero-promo-photo img{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important;opacity:1!important;visibility:visible!important;transform:none!important;backface-visibility:visible!important}
+.hero-promo-photo img{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center center!important;image-rendering:auto!important;-webkit-backface-visibility:hidden!important;backface-visibility:hidden!important;transform:translateZ(0)!important;opacity:1!important;visibility:visible!important}
 .hero-promo-copy{position:relative!important;z-index:2!important;width:65%!important;padding:9% 0 7% 4.8%!important;background:linear-gradient(90deg,#fff7ee 0%,#fff7ee 78%,#fff7ee00 100%)!important}
 .hero-promo-kicker{font-size:clamp(12px,2.1vw,16px)!important;color:#171717!important;letter-spacing:.035em!important}
 .hero-promo-kicker:before{height:58px!important;background:#f36b38!important}
@@ -220,7 +220,7 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 @media(max-width:420px){
  .hero-promo{aspect-ratio:.94/1!important;border-radius:26px!important}
  .hero-promo-photo{width:100%!important;clip-path:none!important}
- .hero-promo-photo img{object-fit:fill!important}
+ .hero-promo-photo img{object-fit:cover!important}
  .hero-promo-copy{width:68%!important;padding:9.5% 0 7% 4.8%!important}
  .hero-promo-kicker{font-size:11px!important;gap:9px!important}
  .hero-promo-kicker:before{height:46px!important}
