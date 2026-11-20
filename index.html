@@ -348,7 +348,7 @@ const serviceGroups={
 };
 window.zelpxServiceGroups = serviceGroups;
 const selectedSphereServices=[];
-let sphereHasUserSelection = false;
+window.zelpxSphereHasUserSelection = false;
 window.selectedSphereGroup="";
 function renderSelectedSphereServices(){
   try {
@@ -452,7 +452,7 @@ function draw(){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.si
 function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl=((t-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
 function chooseService(name,groupName){
-  sphereHasUserSelection = true;
+  window.zelpxSphereHasUserSelection = true;
   window.selectedSphereGroup=groupName||window.selectedSphereGroup;
   serviceSound(name);if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
   if(!selectedSphereServices.includes(name))selectedSphereServices.push(name);
@@ -469,7 +469,7 @@ function showMainSphere(){
   renderSelectedSphereServices();
 }
 function select(it){
-  sphereHasUserSelection = true;
+  window.zelpxSphereHasUserSelection = true;
   sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   const group=serviceGroups[it.name];
   if(group){
@@ -539,7 +539,7 @@ tick();
   }
   const SPHERE_SERVICES = FALLBACK;
   function renderCards(names) {
-    if (!window.buildSphere || sphereHasUserSelection) return;
+    if (!window.buildSphere || window.zelpxSphereHasUserSelection) return;
     // Do not rebuild the interactive sphere after the visitor starts choosing;
     // the async catalog response must not interrupt a multi-service selection.
     window.buildSphere(SPHERE_SERVICES, serviceIcon);
