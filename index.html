@@ -101,7 +101,8 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 
       clearTimeout(timeout);
       finished = true;
-      sessionStorage.removeItem("zelpx.oauth.pending");
+      // Keep the same-tab marker until customer.html finishes restoring the
+      // session and loading the dashboard. It controls the customer-page cover.
       localStorage.removeItem("zelpx.oauth.pending");
       const destination = role === "admin" ? "/admin" :
         role === "contractor" && pending.portal !== "customer" ? "/contractor" : "/customer";
