@@ -524,6 +524,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
 #selectedServicesReview[hidden]{display:none!important}
 #selectedServicesReviewList{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin:16px 0 22px}
+#removedServicesRestore[hidden]{display:none!important}
+#removedServicesRestore{margin:4px 0 18px;padding-top:14px;border-top:1px solid var(--customer-line)}
+#removedServicesRestore .removed-services-title{display:block;margin-bottom:10px;color:var(--customer-muted);font-size:13px;font-weight:700}
+#removedServicesRestoreList{display:flex;flex-wrap:wrap;gap:8px}
+#removedServicesRestoreList .restore-service-button{width:auto;min-height:36px;margin:0;padding:7px 12px;border:1px solid #e47b50;border-radius:999px;background:#fff7f2;color:#a94318;box-shadow:none;font-size:13px}
+#removedServicesRestoreList .restore-service-button:hover:not(:disabled){background:#ffeadf;color:#8f3513;box-shadow:none}
 #selectedServicesReviewList .selected-service-pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;max-width:100%;min-height:46px;margin:0;padding:10px 15px;border:2px solid #e47b50;border-radius:999px;background:transparent;color:var(--customer-ink);box-shadow:none;font-size:clamp(15px,3.8vw,19px);font-weight:500;line-height:1.35;text-align:left;white-space:normal;overflow-wrap:anywhere}
 #selectedServicesReviewList .selected-service-pill:hover:not(:disabled){background:#fff7f2;color:var(--customer-ink);box-shadow:none}
 #selectedServicesReviewList .selected-service-pill .remove-mark{flex:0 0 auto;color:#e47b50;font-size:23px;font-weight:500;line-height:1}
@@ -677,6 +683,10 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           <strong>Review your selected work</strong>
           <p class="subtitle">These are the exact services you selected on the sphere.</p>
           <div id="selectedServicesReviewList" aria-live="polite"></div>
+          <div id="removedServicesRestore" hidden aria-live="polite">
+            <strong class="removed-services-title">Removed services</strong>
+            <div id="removedServicesRestoreList"></div>
+          </div>
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
         </section>
 
@@ -1413,8 +1423,9 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
       try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
     }
-    if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [] };
+    if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [], removedServices: [] };
     if (!Array.isArray(sphereDraft.services)) sphereDraft.services = [];
+    if (!Array.isArray(sphereDraft.removedServices)) sphereDraft.removedServices = [];
     const landingService = sphereDraft.service || "";
     const landingZip = sphereDraft.zip || "";
     const landingServices = sphereDraft.services;
@@ -1422,15 +1433,22 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       const params = new URLSearchParams(window.location.search);
       const services = (params.get("services") || "").split("|").map(value => value.trim()).filter(Boolean);
       if (params.get("service") || params.get("zip") || services.length) {
-        sphereDraft = { service: params.get("service") || landingService, zip: params.get("zip") || landingZip, services: services.length ? services : landingServices };
+        sphereDraft = { service: params.get("service") || landingService, zip: params.get("zip") || landingZip, services: services.length ? services : landingServices, removedServices: Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [] };
         try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
       }
     }
     const selectedServicesReview = $("selectedServicesReview");
     const selectedServicesReviewList = $("selectedServicesReviewList");
+    const removedServicesRestore = $("removedServicesRestore");
+    const removedServicesRestoreList = $("removedServicesRestoreList");
+    function saveSphereDraft() {
+      try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
+    }
     function renderSelectedServicesReview() {
       selectedServicesReviewList.replaceChildren();
+      removedServicesRestoreList.replaceChildren();
       const services = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
+      const removedServices = Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [];
       services.forEach((service, index) => {
         const pill = document.createElement("button");
         pill.type = "button";
@@ -1444,13 +1462,29 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         removeMark.textContent = "×";
         pill.append(name, removeMark);
         pill.addEventListener("click", () => {
-          sphereDraft.services.splice(index, 1);
-          try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
+          const [removed] = sphereDraft.services.splice(index, 1);
+          if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
+          saveSphereDraft();
           renderSelectedServicesReview();
         });
         selectedServicesReviewList.appendChild(pill);
       });
-      selectedServicesReview.hidden = services.length === 0;
+      removedServices.forEach((service, index) => {
+        const restore = document.createElement("button");
+        restore.type = "button";
+        restore.className = "restore-service-button";
+        restore.textContent = "↶ " + service;
+        restore.setAttribute("aria-label", "Restore " + service);
+        restore.addEventListener("click", () => {
+          const [restored] = sphereDraft.removedServices.splice(index, 1);
+          if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
+          saveSphereDraft();
+          renderSelectedServicesReview();
+        });
+        removedServicesRestoreList.appendChild(restore);
+      });
+      removedServicesRestore.hidden = removedServices.length === 0;
+      selectedServicesReview.hidden = services.length === 0 && removedServices.length === 0;
     }
     if (landingServices.length) {
       renderSelectedServicesReview();
