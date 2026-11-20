@@ -543,28 +543,12 @@ function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl
 function showServiceLimitNotice(){
   const ctx=getAudio();
   if(ctx){
-    // Retro PC error cue inspired by the Windows XP era: two short,
-    // descending, slightly buzzy notes. Synthesized locally; no audio file.
-    const now=ctx.currentTime;
-    const notes=[
-      {at:0,freq:392,end:311,duration:.19,level:.12},
-      {at:.205,freq:311,end:233.08,duration:.27,level:.13}
-    ];
-    notes.forEach(note=>{
-      const start=now+note.at,osc=ctx.createOscillator(),gain=ctx.createGain();
-      const filter=ctx.createBiquadFilter();
-      osc.type="square";
-      osc.frequency.setValueAtTime(note.freq,start);
-      osc.frequency.exponentialRampToValueAtTime(note.end,start+note.duration);
-      filter.type="lowpass";filter.frequency.setValueAtTime(1050,start);
-      filter.Q.setValueAtTime(.7,start);
-      gain.gain.setValueAtTime(.0001,start);
-      gain.gain.exponentialRampToValueAtTime(note.level,start+.009);
-      gain.gain.setValueAtTime(note.level*.82,start+note.duration*.55);
-      gain.gain.exponentialRampToValueAtTime(.0001,start+note.duration);
-      osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
-      osc.start(start);osc.stop(start+note.duration+.015);
-    });
+    // Play the original Windows XP Error WAV. Keep this cue limited to the
+    // attempt to select a sixth service; normal service sounds are unchanged.
+    const audio=window.zelpxLimitErrorAudio||(window.zelpxLimitErrorAudio=new Audio("https://mls.ovh/soundboard/xp_sounds/Windows%20XP%20Error.wav"));
+    audio.volume=.78;
+    audio.currentTime=0;
+    audio.play().catch(()=>{});
   }
   if(navigator.vibrate)navigator.vibrate([70,45,70]);
   let notice=document.getElementById("sphereLimitNotice");
