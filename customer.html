@@ -1378,19 +1378,25 @@
     const landingParams = new URLSearchParams(window.location.search);
     const landingService = landingParams.get("service");
     const landingZip = landingParams.get("zip");
-    let savedSphereServices = [];
-    try {
-      const saved = localStorage.getItem("zelpx_pending_sphere_services")
-        || sessionStorage.getItem("zelpx_pending_sphere_services") || "[]";
-      savedSphereServices = JSON.parse(saved);
-      if (!Array.isArray(savedSphereServices)) savedSphereServices = [];
-    } catch (_) { savedSphereServices = []; }
-    // Merge both transfer channels. The URL may be shortened or altered by an
-    // intermediate login/OAuth redirect, while browser storage retains the full
-    // selection made on the homepage. De-duplicate without losing distinct services.
-    const urlSphereServices = (landingParams.get("services") || "").split("|");
+    // Read each storage independently. An empty "[]" in localStorage must
+    // never hide a populated sessionStorage value (or vice versa).
+    function readPendingSphereServices(storage) {
+      try {
+        const raw = storage.getItem("zelpx_pending_sphere_services");
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+        if (typeof parsed === "string") return parsed.split("|");
+      } catch (_) {}
+      return [];
+    }
+    const localSphereServices = readPendingSphereServices(localStorage);
+    const sessionSphereServices = readPendingSphereServices(sessionStorage);
+    // The URL remains a third independent transfer channel through sign-in/OAuth.
+    const urlSphereServices = (landingParams.getAll("services") || [])
+      .flatMap(value => String(value || "").split("|"));
     const sphereServices = [...new Map(
-      [...urlSphereServices, ...savedSphereServices]
+      [...urlSphereServices, ...localSphereServices, ...sessionSphereServices]
         .map(name => String(name || "").trim())
         .filter(Boolean)
         .map(name => [name.toLocaleLowerCase(), name])
