@@ -585,8 +585,14 @@ function showMainSphere(){
   renderSelectedSphereServices();
 }
 function select(it){
-  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   const group=serviceGroups[it.name];
+  // Check the five-service cap before playing the normal selection sound.
+  // A sixth leaf selection should play only the Windows XP error cue.
+  if(!group&&!selectedSphereServices.includes(it.name)&&selectedSphereServices.length>=5){
+    showServiceLimitNotice();
+    return;
+  }
+  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   if(group){
     window.selectedSphereGroup=it.name;
     panel.hidden=true;document.getElementById("serviceSubpanel").hidden=true;
