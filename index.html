@@ -93,6 +93,41 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
  .hero-promo-description{font-size:16px;line-height:1.35;max-width:250px;margin-bottom:25px}
  .hero-promo-cta{min-height:55px;font-size:18px;padding:0 20px}
 }
+
+/* Approved ZELPX hero reference — final responsive geometry */
+.hero{padding:26px 0 54px!important;background:#fbf7f0!important}
+.hero-promo{height:auto!important;min-height:0!important;aspect-ratio:.94/1;border-radius:32px!important;background:#fff7ee!important;box-shadow:0 18px 46px #35271918!important}
+.hero-promo:before{left:-7%!important;bottom:-16%!important;width:47%!important;height:29%!important;background:linear-gradient(135deg,#ff9b25,#f36b12)!important;border-radius:55% 55% 0 0!important;transform:rotate(8deg)!important}
+.hero-promo:after{right:25%!important;top:-27%!important;width:38%!important;height:67%!important;background:#ffe2cd!important;opacity:.65!important}
+.hero-promo-photo{z-index:0!important;right:0!important;top:0!important;bottom:0!important;width:42%!important;height:100%!important;clip-path:none!important;border-radius:0 32px 32px 0!important;overflow:hidden!important;opacity:1!important}
+.hero-promo-photo img{width:100%!important;height:100%!important;object-fit:fill!important;object-position:center!important;display:block!important;transform:none!important;backface-visibility:visible!important}
+.hero-promo-copy{position:relative!important;z-index:2!important;width:68%!important;padding:9.2% 0 7.5% 4.8%!important;background:transparent!important}
+.hero-promo-kicker{font-size:clamp(11px,2.2vw,16px)!important;gap:13px!important;color:#171717!important}
+.hero-promo-kicker:before{width:6px!important;height:58px!important;background:#f36b38!important;flex-basis:6px!important}
+.hero-promo-tagline{font-size:clamp(11px,2.15vw,16px)!important;margin:4px 0 9% 20px!important;color:#45413d!important;white-space:nowrap!important}
+.hero-promo h1{font-size:clamp(29px,7.8vw,58px)!important;line-height:1.02!important;letter-spacing:-.055em!important;max-width:100%!important;margin:0 0 4.2%!important;color:#080808!important}
+.hero-promo-description{font-size:clamp(14px,3.25vw,23px)!important;line-height:1.35!important;color:#514e49!important;max-width:95%!important;margin:0 0 6%!important}
+.hero-promo-cta{min-height:clamp(46px,9.5vw,78px)!important;padding:0 clamp(20px,4.5vw,42px)!important;font-size:clamp(16px,4vw,28px)!important;font-weight:850!important;border-radius:999px!important;background:linear-gradient(100deg,#ff7a16,#f15a0a)!important;box-shadow:0 10px 22px #f36b3830!important;white-space:nowrap!important}
+@media(max-width:760px){
+ .hero{padding:18px 0 38px!important}
+ .hero-promo{aspect-ratio:.94/1!important;border-radius:28px!important}
+ .hero-promo-photo{width:42%!important;border-radius:0 28px 28px 0!important}
+ .hero-promo-copy{width:68%!important;padding:9.4% 0 7% 4.8%!important}
+ .hero-promo-kicker:before{height:clamp(42px,8.5vw,58px)!important}
+ .hero-promo-tagline{margin:4px 0 9% 16px!important}
+ .hero-promo h1{font-size:clamp(29px,7.8vw,56px)!important;max-width:100%!important}
+ .hero-promo-description{font-size:clamp(14px,3.25vw,22px)!important;max-width:96%!important;margin-bottom:6%!important}
+ .hero-promo-cta{min-height:clamp(44px,9.5vw,68px)!important;font-size:clamp(16px,4vw,25px)!important;padding:0 clamp(18px,4vw,34px)!important}
+}
+@media(max-width:420px){
+ .hero-promo{aspect-ratio:.94/1!important;min-height:0!important;height:auto!important}
+ .hero-promo-copy{width:68%!important;padding:9.5% 0 7% 4.8%!important}
+ .hero-promo-tagline{font-size:clamp(10px,2.1vw,13px)!important;margin-bottom:8%!important}
+ .hero-promo h1{font-size:clamp(28px,7.8vw,36px)!important;line-height:1.03!important}
+ .hero-promo-description{font-size:clamp(13px,3.2vw,16px)!important;line-height:1.35!important}
+ .hero-promo-cta{min-height:clamp(42px,9vw,54px)!important;font-size:clamp(15px,4vw,18px)!important;padding:0 18px!important}
+}
+
 </style>
 <script>
 /* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
