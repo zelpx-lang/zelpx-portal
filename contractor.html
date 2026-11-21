@@ -1512,8 +1512,8 @@
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || lead.service_category === category;
-      const serviceMatch = isAdmin || isLeadServiceSelected(lead);
-      const licenseMatch = isAdmin || (lead.status !== "available") || isLeadLicenseEligible(lead);
+      const serviceMatch = isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
+      const licenseMatch = isAdmin || lead.previewOnly || (lead.status !== "available") || isLeadLicenseEligible(lead);
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && serviceMatch && licenseMatch && (!query || haystack.includes(query));
     });
@@ -1546,7 +1546,7 @@
       if (lead.status === "available") { const privacy = document.createElement("span"); privacy.className = "pill"; privacy.textContent = "Contact details protected"; badges.append(privacy); }
       const descTitle = document.createElement("h3"); descTitle.className = "lead-details-label"; descTitle.textContent = "Work details";
       const descriptionParts = splitLeadDescription(lead.description);
-      const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = descriptionParts.work || "No work details provided.";
+      const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = lead.previewOnly ? "Sign in with an approved contractor account to view full project details." : (descriptionParts.work || "No work details provided.");
       const ownsPurchase = purchasedLeadIds.has(lead.id);
       if (ownsPurchase && descriptionParts.notes) {
         const notesTitle = document.createElement("h3"); notesTitle.className = "lead-details-label"; notesTitle.textContent = "Additional customer notes";
@@ -1559,15 +1559,15 @@
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = selectedNames.has(leadCategoryName);
         const licenseEligible = isLeadLicenseEligible(lead);
-        const canBuy = !isAdmin && serviceSelected && licenseEligible;
+        const canBuy = !lead.previewOnly && !isAdmin && serviceSelected && licenseEligible;
         if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
           eligibility.className = "pill";
-          eligibility.textContent = !serviceSelected ? "Select this service in your profile" : "License eligibility review required";
+          eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : (!serviceSelected ? "Select this service in your profile" : "License eligibility review required");
           badges.append(eligibility);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
-        buyButton.textContent = canBuy ? "View & Buy Lead" : "Not eligible to purchase";
+        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? "View & Buy Lead" : "Not eligible to purchase");
         buyButton.disabled = !canBuy;
         if (canBuy) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         footer.append(buyButton);
@@ -1708,23 +1708,39 @@
 
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    let publicPreviewOnly = false;
+    if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
+      // Safe public fallback: never request private descriptions or contact data
+      // when the current API role cannot read the protected leads table.
+      const preview = await db.from("public_available_leads")
+        .select("id,service_category,service_state,zip_code,urgency,price_cents,created_at")
+        .order("created_at", { ascending: false }).limit(100);
+      if (preview.error) {
+        list.textContent = "Could not load public lead previews: " + preview.error.message;
+        $("leadResultsCount").textContent = "Unable to load leads";
+        return;
+      }
+      data = (preview.data || []).map(lead => ({ ...lead, status: "available", description: "", previewOnly: true }));
+      publicPreviewOnly = true;
+      error = null;
+    }
     if (error) { list.textContent = "Could not load leads: " + error.message; $("leadResultsCount").textContent = "Unable to load leads"; return; }
     cachedLeads = data || [];
     purchasedLeadIds = new Set();
-    if (currentContractor?.id && cachedLeads.length) {
+    if (!publicPreviewOnly && currentContractor?.id && cachedLeads.length) {
       const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
         .select("lead_id").eq("contractor_id", currentContractor.id)
         .in("lead_id", cachedLeads.map(lead => lead.id));
       if (purchasesError) console.warn("Could not load purchased lead access:", purchasesError.message);
       else purchasedLeadIds = new Set((purchases || []).map(row => row.lead_id));
     }
-    try { await loadLicenseEligibleLeadCategories(); }
+    try { if (!publicPreviewOnly) await loadLicenseEligibleLeadCategories(); }
     catch (eligibilityError) {
       console.error("Could not verify profession eligibility:", eligibilityError);
       licenseEligibleLeadCategories = new Map();
     }
-    const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || (isLeadServiceSelected(lead) && isLeadLicenseEligible(lead))));
+    const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || lead.previewOnly || (isLeadServiceSelected(lead) && isLeadLicenseEligible(lead))));
     $("availableCount").textContent = String(available.length);
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
