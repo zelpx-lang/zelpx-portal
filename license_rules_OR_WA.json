@@ -1,0 +1,4422 @@
+{
+  "updated": "2026-11-20",
+  "note": "license: required | not_required | conditional. Key is state + id. verified=false means inferred, confirm with the state regulator.",
+  "states": {
+    "OR": {
+      "name": "Oregon",
+      "regulator": "CCB (Construction Contractors Board)",
+      "type": "license",
+      "lookup": "ccb.state.or.us/search",
+      "phone": "503-378-4621"
+    },
+    "WA": {
+      "name": "Washington",
+      "regulator": "L&I (Labor & Industries)",
+      "type": "registration",
+      "lookup": "lni.wa.gov (Verify a Contractor)",
+      "phone": "1-800-647-0982"
+    }
+  },
+  "categories": [
+    {
+      "state": "OR",
+      "id": "accessibility_modifications",
+      "name_en": "Accessibility modifications",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "adu_construction",
+      "name_en": "ADU construction",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "agricultural_drainage",
+      "name_en": "Agricultural drainage",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "agricultural_trenching",
+      "name_en": "Agricultural trenching",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "air_conditioning_installation",
+      "name_en": "Air conditioning installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "appliance_cleaning",
+      "name_en": "Appliance cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "appliance_removal",
+      "name_en": "Appliance removal",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "architecture",
+      "name_en": "Architecture",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "artificial_turf_installation",
+      "name_en": "Artificial turf installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "attic_conversion",
+      "name_en": "Attic conversion",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "backflow_testing",
+      "name_en": "Backflow testing",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "backsplash_installation",
+      "name_en": "Backsplash installation",
+      "parent": "tile_stone",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "basement_finishing",
+      "name_en": "Basement finishing",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "basement_remodeling",
+      "name_en": "Basement remodeling",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "bathroom_remodeling",
+      "name_en": "Bathroom remodeling",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "boiler_installation",
+      "name_en": "Boiler installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "brick_and_block_work",
+      "name_en": "Brick and block work",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "cabinet_installation",
+      "name_en": "Cabinet installation",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "cabinet_painting",
+      "name_en": "Cabinet painting",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "carpet_cleaning",
+      "name_en": "Carpet cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "carpet_installation",
+      "name_en": "Carpet installation",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "ceiling_fan_installation",
+      "name_en": "Ceiling fan installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "chimney_inspection",
+      "name_en": "Chimney inspection",
+      "parent": "chimney_inspection",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "chimney_repair",
+      "name_en": "Chimney repair",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "chimney_sweeping",
+      "name_en": "Chimney sweeping",
+      "parent": "chimney_inspection",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "closet_organizing",
+      "name_en": "Closet organizing",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "concrete_pumping",
+      "name_en": "Concrete pumping",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "concrete_resurfacing",
+      "name_en": "Concrete resurfacing",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "concrete_slab_and_patio",
+      "name_en": "Concrete slab and patio",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "countertop_installation",
+      "name_en": "Countertop installation",
+      "parent": "tile_stone",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "crane_operation",
+      "name_en": "Crane operation",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "curtain_and_blind_hanging",
+      "name_en": "Curtain and blind hanging",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "custom_shelving_and_built_ins",
+      "name_en": "Custom shelving and built-ins",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "deck_building",
+      "name_en": "Deck building",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "deck_cleaning",
+      "name_en": "Deck cleaning",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "deck_repair",
+      "name_en": "Deck repair",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "deck_staining_and_sealing",
+      "name_en": "Deck staining and sealing",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "deep_cleaning",
+      "name_en": "Deep cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "demolition",
+      "name_en": "Demolition",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "door_installation",
+      "name_en": "Door installation",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "drain_cleaning",
+      "name_en": "Drain cleaning",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "drainage_and_french_drains",
+      "name_en": "Drainage and French drains",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "driveway_cleaning",
+      "name_en": "Driveway cleaning",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "driveway_installation",
+      "name_en": "Driveway installation",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "dryer_vent_installation",
+      "name_en": "Dryer vent installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "drywall_finishing_and_texture",
+      "name_en": "Drywall finishing and texture",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "drywall_installation",
+      "name_en": "Drywall installation",
+      "parent": "drywall_insulation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "drywall_repair",
+      "name_en": "Drywall repair",
+      "parent": "drywall_insulation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "ductwork_installation",
+      "name_en": "Ductwork installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "electrical_wiring",
+      "name_en": "Electrical wiring",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "elevator_installation",
+      "name_en": "Elevator installation",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "engineering",
+      "name_en": "Engineering",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "entry_door_installation",
+      "name_en": "Entry door installation",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "ev_charger_installation",
+      "name_en": "EV charger installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "excavation_and_grading",
+      "name_en": "Excavation and grading",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "exterior_painting",
+      "name_en": "Exterior painting",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "exterior_trim_and_cladding",
+      "name_en": "Exterior trim and cladding",
+      "parent": "siding",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fascia_and_soffit_repair",
+      "name_en": "Fascia and soffit repair",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "faucet_and_fixture_installation",
+      "name_en": "Faucet and fixture installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fence_installation",
+      "name_en": "Fence installation",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fence_repair",
+      "name_en": "Fence repair",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fiber_cement_siding",
+      "name_en": "Fiber cement siding",
+      "parent": "siding",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "finish_carpentry",
+      "name_en": "Finish carpentry",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fire_damage_restoration",
+      "name_en": "Fire damage restoration",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fireplace_and_wood_stove_installation",
+      "name_en": "Fireplace and wood stove installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "fireplace_installation",
+      "name_en": "Fireplace installation",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "flat_roof_installation",
+      "name_en": "Flat roof installation",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "floor_refinishing",
+      "name_en": "Floor refinishing",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "flower_bed_maintenance",
+      "name_en": "Flower bed maintenance",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "foundation_repair",
+      "name_en": "Foundation repair",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "framing",
+      "name_en": "Framing",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "furnace_installation",
+      "name_en": "Furnace installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "furnace_repair",
+      "name_en": "Furnace repair",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "furniture_assembly",
+      "name_en": "Furniture assembly",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "furniture_moving",
+      "name_en": "Furniture moving",
+      "parent": "moving_help",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "furniture_removal",
+      "name_en": "Furniture removal",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "furniture_repair",
+      "name_en": "Furniture repair",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "furniture_restoration",
+      "name_en": "Furniture restoration",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "garage_cleaning",
+      "name_en": "Garage cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "garage_construction",
+      "name_en": "Garage construction",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "garage_door_installation",
+      "name_en": "Garage door installation",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "garbage_disposal_installation",
+      "name_en": "Garbage disposal installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "garden_bed_installation",
+      "name_en": "Garden bed installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "garden_maintenance",
+      "name_en": "Garden maintenance",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "gas_line_installation",
+      "name_en": "Gas line installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "gate_installation",
+      "name_en": "Gate installation",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "generator_installation",
+      "name_en": "Generator installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "grave_marker_installation",
+      "name_en": "Grave marker installation",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "grout_repair",
+      "name_en": "Grout repair",
+      "parent": "tile_stone",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "gutter_cleaning",
+      "name_en": "Gutter cleaning",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "gutter_installation",
+      "name_en": "Gutter installation",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "handyman_small_jobs_under_1_000_no_advertising",
+      "name_en": "Handyman small jobs (under $1,000, no advertising)",
+      "parent": "handyman_small",
+      "license": "conditional",
+      "authority": "CCB",
+      "verified": true,
+      "notes": "Exempt only if under $1,000 per project, casual/minor, no advertising or business cards"
+    },
+    {
+      "state": "OR",
+      "id": "hardwood_flooring_installation",
+      "name_en": "Hardwood flooring installation",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "heat_pump_installation",
+      "name_en": "Heat pump installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "hedge_trimming",
+      "name_en": "Hedge trimming",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "home_additions",
+      "name_en": "Home additions",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "home_inspection",
+      "name_en": "Home inspection",
+      "parent": "chimney_inspection",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "house_cleaning",
+      "name_en": "House cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "insulation_installation",
+      "name_en": "Insulation installation",
+      "parent": "drywall_insulation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "interior_painting",
+      "name_en": "Interior painting",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "junk_removal",
+      "name_en": "Junk removal",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "kitchen_remodeling",
+      "name_en": "Kitchen remodeling",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "laminate_and_vinyl_flooring",
+      "name_en": "Laminate and vinyl flooring",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "land_clearing",
+      "name_en": "Land clearing",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "landscape_grading",
+      "name_en": "Landscape grading",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "lawn_installation",
+      "name_en": "Lawn installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "lawn_mowing",
+      "name_en": "Lawn mowing",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "lead_paint_abatement",
+      "name_en": "Lead paint abatement",
+      "parent": "lead_paint",
+      "license": "required",
+      "authority": "CCB + LBPR",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "lead_safe_renovation",
+      "name_en": "Lead-safe renovation",
+      "parent": "lead_paint",
+      "license": "required",
+      "authority": "CCB + LBPR",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "leaf_removal",
+      "name_en": "Leaf removal",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "light_bulb_and_filter_changes",
+      "name_en": "Light bulb and filter changes",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "lighting_installation",
+      "name_en": "Lighting installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "livestock_fencing",
+      "name_en": "Livestock fencing",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "loading_and_unloading",
+      "name_en": "Loading and unloading",
+      "parent": "moving_help",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "local_moving_help",
+      "name_en": "Local moving help",
+      "parent": "moving_help",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "low_voltage_wiring",
+      "name_en": "Low-voltage wiring",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "metal_roofing",
+      "name_en": "Metal roofing",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "mini_split_installation",
+      "name_en": "Mini-split installation",
+      "parent": "hvac",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "mold_remediation",
+      "name_en": "Mold remediation",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "move_out_cleaning",
+      "name_en": "Move-out cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "mulch_spreading",
+      "name_en": "Mulch spreading",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "murals",
+      "name_en": "Murals",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "natural_stone_installation",
+      "name_en": "Natural stone installation",
+      "parent": "tile_stone",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "new_home_construction",
+      "name_en": "New home construction",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "office_cleaning",
+      "name_en": "Office cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "outdoor_lighting_installation",
+      "name_en": "Outdoor lighting installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "outlet_and_switch_installation",
+      "name_en": "Outlet and switch installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "packing_services",
+      "name_en": "Packing services",
+      "parent": "moving_help",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "panel_upgrades",
+      "name_en": "Panel upgrades",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "paving_and_asphalt",
+      "name_en": "Paving and asphalt",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "pergola_and_gazebo_building",
+      "name_en": "Pergola and gazebo building",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "pesticide_application",
+      "name_en": "Pesticide application",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "piano_moving",
+      "name_en": "Piano moving",
+      "parent": "moving_help",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "picture_and_mirror_hanging",
+      "name_en": "Picture and mirror hanging",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "pipe_repair_and_replacement",
+      "name_en": "Pipe repair and replacement",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "plastering",
+      "name_en": "Plastering",
+      "parent": "drywall_insulation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "porch_building",
+      "name_en": "Porch building",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "post_construction_cleanup",
+      "name_en": "Post-construction cleanup",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "pressure_washing",
+      "name_en": "Pressure washing",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "railings_and_balusters",
+      "name_en": "Railings and balusters",
+      "parent": "decks_fences",
+      "license": "required",
+      "authority": "CCB or LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "residential_locksmith_services",
+      "name_en": "Residential locksmith services",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "retaining_walls",
+      "name_en": "Retaining walls",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "roof_flashing_and_sealing",
+      "name_en": "Roof flashing and sealing",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "roof_leak_repair",
+      "name_en": "Roof leak repair",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "roof_moss_cleaning",
+      "name_en": "Roof moss cleaning",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "roof_repair",
+      "name_en": "Roof repair",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "roof_replacement",
+      "name_en": "Roof replacement",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "room_addition",
+      "name_en": "Room addition",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sculptures",
+      "name_en": "Sculptures",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "septic_excavation",
+      "name_en": "Septic excavation",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "septic_installation",
+      "name_en": "Septic installation",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sewer_line_repair",
+      "name_en": "Sewer line repair",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "shed_building",
+      "name_en": "Shed building",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "shingle_installation",
+      "name_en": "Shingle installation",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "shower_and_tub_tile",
+      "name_en": "Shower and tub tile",
+      "parent": "tile_stone",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "shrub_trimming",
+      "name_en": "Shrub trimming",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sidewalk_and_walkway",
+      "name_en": "Sidewalk and walkway",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "siding_wash",
+      "name_en": "Siding wash",
+      "parent": "exterior_cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sign_painting_up_to_60_sq_ft",
+      "name_en": "Sign painting (up to 60 sq ft)",
+      "parent": "specialty_exempt",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "skylight_installation",
+      "name_en": "Skylight installation",
+      "parent": "roofing",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sliding_door_installation",
+      "name_en": "Sliding door installation",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "smart_home_wiring",
+      "name_en": "Smart home wiring",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "snow_removal",
+      "name_en": "Snow removal",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "sod_installation",
+      "name_en": "Sod installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "soil_amendment",
+      "name_en": "Soil amendment",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "solar_panel_installation",
+      "name_en": "Solar panel installation",
+      "parent": "electrical",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "soundproofing",
+      "name_en": "Soundproofing",
+      "parent": "drywall_insulation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "sprinkler_repair",
+      "name_en": "Sprinkler repair",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sprinkler_system_installation",
+      "name_en": "Sprinkler system installation",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "stair_repair_and_installation",
+      "name_en": "Stair repair and installation",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "stone_veneer",
+      "name_en": "Stone veneer",
+      "parent": "concrete_masonry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "storm_door_installation",
+      "name_en": "Storm door installation",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "stucco_repair",
+      "name_en": "Stucco repair",
+      "parent": "siding",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "stump_grinding",
+      "name_en": "Stump grinding",
+      "parent": "tree_work",
+      "license": "required",
+      "authority": "LCB or CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "subfloor_repair",
+      "name_en": "Subfloor repair",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "sump_pump_installation",
+      "name_en": "Sump pump installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "tile_flooring",
+      "name_en": "Tile flooring",
+      "parent": "flooring",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "toilet_installation",
+      "name_en": "Toilet installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "trash_hauling",
+      "name_en": "Trash hauling",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "tree_and_shrub_planting",
+      "name_en": "Tree and shrub planting",
+      "parent": "landscape_construction",
+      "license": "required",
+      "authority": "LCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "tree_removal",
+      "name_en": "Tree removal",
+      "parent": "tree_work",
+      "license": "required",
+      "authority": "LCB or CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "trenching",
+      "name_en": "Trenching",
+      "parent": "excavation",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "trim_and_molding_installation",
+      "name_en": "Trim and molding installation",
+      "parent": "carpentry",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "tv_mounting",
+      "name_en": "TV mounting",
+      "parent": "furniture_small",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "upholstery_cleaning",
+      "name_en": "Upholstery cleaning",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "vinyl_siding_installation",
+      "name_en": "Vinyl siding installation",
+      "parent": "siding",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "wallpaper_installation",
+      "name_en": "Wallpaper installation",
+      "parent": "painting",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "water_damage_restoration",
+      "name_en": "Water damage restoration",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "water_heater_installation",
+      "name_en": "Water heater installation",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "water_line_replacement",
+      "name_en": "Water line replacement",
+      "parent": "plumbing",
+      "license": "required",
+      "authority": "BCD",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "waterproofing_and_basement_sealing",
+      "name_en": "Waterproofing and basement sealing",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "weeding",
+      "name_en": "Weeding",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "well_drilling",
+      "name_en": "Well drilling",
+      "parent": "other_licensed",
+      "license": "required",
+      "authority": "Other",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "whole_home_remodeling",
+      "name_en": "Whole-home remodeling",
+      "parent": "remodeling",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "window_installation",
+      "name_en": "Window installation",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "window_replacement",
+      "name_en": "Window replacement",
+      "parent": "windows_doors",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "window_washing",
+      "name_en": "Window washing",
+      "parent": "cleaning",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "OR",
+      "id": "wood_siding_repair",
+      "name_en": "Wood siding repair",
+      "parent": "siding",
+      "license": "required",
+      "authority": "CCB",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "yard_cleanup",
+      "name_en": "Yard cleanup",
+      "parent": "yard_maintenance",
+      "license": "not_required",
+      "authority": null,
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "OR",
+      "id": "yard_waste_removal",
+      "name_en": "Yard waste removal",
+      "parent": "hauling",
+      "license": "not_required",
+      "authority": null,
+      "verified": false,
+      "notes": "Inferred from general rule - confirm with CCB (503-378-4621)"
+    },
+    {
+      "state": "WA",
+      "id": "accessibility_modifications",
+      "name_en": "Accessibility modifications",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "adu_construction",
+      "name_en": "ADU construction",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "agricultural_irrigation_and_farm_work",
+      "name_en": "Agricultural irrigation and farm work",
+      "parent": "Statutory exemptions",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "RCW 18.27.090 and WAC 296-200A-016."
+    },
+    {
+      "state": "WA",
+      "id": "air_conditioning_installation",
+      "name_en": "Air conditioning installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "appliance_cleaning",
+      "name_en": "Appliance cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "appliance_installation",
+      "name_en": "Appliance installation",
+      "parent": "Appliances, equipment",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Dishwashers, water heaters and garbage disposals need plumber/electrical certification."
+    },
+    {
+      "state": "WA",
+      "id": "appliance_removal",
+      "name_en": "Appliance removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "architecture",
+      "name_en": "Architecture",
+      "parent": "Other licenses",
+      "license": "required",
+      "authority": "Other state agencies",
+      "verified": false,
+      "notes": "Not checked in detail. Confirm with the issuing agency."
+    },
+    {
+      "state": "WA",
+      "id": "artificial_turf_installation",
+      "name_en": "Artificial turf installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "asbestos_removal",
+      "name_en": "Asbestos removal",
+      "parent": "Asbestos and lead",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Asbestos certification (ch. 296-65 WAC) also required."
+    },
+    {
+      "state": "WA",
+      "id": "asphalt_paving",
+      "name_en": "Asphalt paving",
+      "parent": "Paving/striping/seal coating",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "awning_installation",
+      "name_en": "Awning installation",
+      "parent": "Awnings, canopies, patio covers and exterior screens",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "backsplash_installation",
+      "name_en": "Backsplash installation",
+      "parent": "Tile, ceramic, mosaic and stone",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "basement_finishing",
+      "name_en": "Basement finishing",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "bathroom_remodeling",
+      "name_en": "Bathroom remodeling",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "bathtub_refinishing_and_repair",
+      "name_en": "Bathtub refinishing and repair",
+      "parent": "Swimming pools, spas and hot tubs",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "bird_exclusion",
+      "name_en": "Bird exclusion",
+      "parent": "Structural pest control",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Exclusion work (screens, caulking). Pesticide application needs a separate license (WSDA)."
+    },
+    {
+      "state": "WA",
+      "id": "blinds_and_shutters_installation",
+      "name_en": "Blinds and shutters installation",
+      "parent": "Window coverings",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "boiler_installation",
+      "name_en": "Boiler installation",
+      "parent": "Boiler, steam fitting, process piping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also need plumber/electrical certification."
+    },
+    {
+      "state": "WA",
+      "id": "boiler_repair",
+      "name_en": "Boiler repair",
+      "parent": "Boiler, steam fitting, process piping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also need plumber/electrical certification."
+    },
+    {
+      "state": "WA",
+      "id": "brick_and_block_work",
+      "name_en": "Brick and block work",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "cabinet_installation",
+      "name_en": "Cabinet installation",
+      "parent": "Cabinets, millwork and finish carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "cabinet_painting",
+      "name_en": "Cabinet painting",
+      "parent": "Painting and wall covering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Commissioned artwork and murals are exempt."
+    },
+    {
+      "state": "WA",
+      "id": "carpet_cleaning",
+      "name_en": "Carpet cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "carpet_installation",
+      "name_en": "Carpet installation",
+      "parent": "Floor covering and counter tops",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "ceiling_fan_installation",
+      "name_en": "Ceiling fan installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "central_vacuum_installation",
+      "name_en": "Central vacuum installation",
+      "parent": "Central vacuum systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "chimney_repair",
+      "name_en": "Chimney repair",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "chimney_sweeping",
+      "name_en": "Chimney sweeping",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "closet_organizing_no_installation",
+      "name_en": "Closet organizing (no installation)",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "closet_systems_installation",
+      "name_en": "Closet systems installation",
+      "parent": "Closets",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "commercial_refrigeration_installation",
+      "name_en": "Commercial refrigeration installation",
+      "parent": "Commercial/industrial refrigeration",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "commissioned_murals_and_artwork",
+      "name_en": "Commissioned murals and artwork",
+      "parent": "Statutory exemptions",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "RCW 18.27.090 and WAC 296-200A-016."
+    },
+    {
+      "state": "WA",
+      "id": "concrete_pumping_or_material_delivery_only",
+      "name_en": "Concrete pumping or material delivery only",
+      "parent": "Statutory exemptions",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "RCW 18.27.090 and WAC 296-200A-016."
+    },
+    {
+      "state": "WA",
+      "id": "concrete_resurfacing",
+      "name_en": "Concrete resurfacing",
+      "parent": "Concrete",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Concrete pumping or delivery only does not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "concrete_slab_and_patio",
+      "name_en": "Concrete slab and patio",
+      "parent": "Concrete",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Concrete pumping or delivery only does not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "core_drilling",
+      "name_en": "Core drilling",
+      "parent": "Drilling, blasting and soil sampling",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Explosives work requires separate licensing (ch. 70.74 RCW)."
+    },
+    {
+      "state": "WA",
+      "id": "countertop_installation",
+      "name_en": "Countertop installation",
+      "parent": "Floor covering and counter tops",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "curtain_and_blind_hanging_hanging_only",
+      "name_en": "Curtain and blind hanging (hanging only)",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "curtain_rod_and_drapery_installation",
+      "name_en": "Curtain rod and drapery installation",
+      "parent": "Window coverings",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "custom_shelving_and_built_ins",
+      "name_en": "Custom shelving and built-ins",
+      "parent": "Cabinets, millwork and finish carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "deck_building",
+      "name_en": "Deck building",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "deck_pressure_washing",
+      "name_en": "Deck pressure washing",
+      "parent": "Pressure washing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Differs from Oregon: registration required in Washington."
+    },
+    {
+      "state": "WA",
+      "id": "deck_repair",
+      "name_en": "Deck repair",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "deck_staining_and_sealing",
+      "name_en": "Deck staining and sealing",
+      "parent": "Painting and wall covering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Commissioned artwork and murals are exempt."
+    },
+    {
+      "state": "WA",
+      "id": "deep_cleaning",
+      "name_en": "Deep cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "demolition",
+      "name_en": "Demolition",
+      "parent": "Demolitions and salvage",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "door_installation",
+      "name_en": "Door installation",
+      "parent": "Doors, gates and activating devices",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "drain_cleaning",
+      "name_en": "Drain cleaning",
+      "parent": "Drain cleaning and snaking",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "No pipe or fixture replacement under this specialty."
+    },
+    {
+      "state": "WA",
+      "id": "drainage_and_french_drains",
+      "name_en": "Drainage and French drains",
+      "parent": "Sanitation systems and/or side sewers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "driveway_installation",
+      "name_en": "Driveway installation",
+      "parent": "Concrete",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Concrete pumping or delivery only does not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "driveway_pressure_washing",
+      "name_en": "Driveway pressure washing",
+      "parent": "Pressure washing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Differs from Oregon: registration required in Washington."
+    },
+    {
+      "state": "WA",
+      "id": "dryer_vent_installation",
+      "name_en": "Dryer vent installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "drywall_finishing_and_texture",
+      "name_en": "Drywall finishing and texture",
+      "parent": "Drywall",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "drywall_installation",
+      "name_en": "Drywall installation",
+      "parent": "Drywall",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "drywall_repair",
+      "name_en": "Drywall repair",
+      "parent": "Drywall",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "ductwork_installation",
+      "name_en": "Ductwork installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "electrical_wiring",
+      "name_en": "Electrical wiring",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "elevator_installation",
+      "name_en": "Elevator installation",
+      "parent": "Elevator",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require elevator licensing (ch. 70.78 RCW)."
+    },
+    {
+      "state": "WA",
+      "id": "engineering",
+      "name_en": "Engineering",
+      "parent": "Other licenses",
+      "license": "required",
+      "authority": "Other state agencies",
+      "verified": false,
+      "notes": "Not checked in detail. Confirm with the issuing agency."
+    },
+    {
+      "state": "WA",
+      "id": "entry_door_installation",
+      "name_en": "Entry door installation",
+      "parent": "Doors, gates and activating devices",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "ev_charger_installation",
+      "name_en": "EV charger installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "excavation",
+      "name_en": "Excavation",
+      "parent": "Excavation, grading and land clearing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "exterior_painting",
+      "name_en": "Exterior painting",
+      "parent": "Painting and wall covering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Commissioned artwork and murals are exempt."
+    },
+    {
+      "state": "WA",
+      "id": "exterior_staircase_building",
+      "name_en": "Exterior staircase building",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "faucet_and_fixture_installation",
+      "name_en": "Faucet and fixture installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "fence_installation",
+      "name_en": "Fence installation",
+      "parent": "Fencing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "fence_repair",
+      "name_en": "Fence repair",
+      "parent": "Fencing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "fiber_cement_siding",
+      "name_en": "Fiber cement siding",
+      "parent": "Siding",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "finish_carpentry",
+      "name_en": "Finish carpentry",
+      "parent": "Cabinets, millwork and finish carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "fire_damage_restoration",
+      "name_en": "Fire damage restoration",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "fire_sprinkler_installation",
+      "name_en": "Fire sprinkler installation",
+      "parent": "Fire protection",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require fire-protection licensing."
+    },
+    {
+      "state": "WA",
+      "id": "fireplace_installation",
+      "name_en": "Fireplace installation",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "fireproofing_application",
+      "name_en": "Fireproofing application",
+      "parent": "Fireproofing and coating",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "flat_roof_installation",
+      "name_en": "Flat roof installation",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "floor_refinishing",
+      "name_en": "Floor refinishing",
+      "parent": "Floor covering and counter tops",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "flower_bed_maintenance",
+      "name_en": "Flower bed maintenance",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "foundation_repair",
+      "name_en": "Foundation repair",
+      "parent": "Concrete",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Concrete pumping or delivery only does not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "framing",
+      "name_en": "Framing",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "fuel_tank_installation_and_removal",
+      "name_en": "Fuel tank installation and removal",
+      "parent": "Tanks and tank removal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "furnace_installation",
+      "name_en": "Furnace installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "furnace_repair",
+      "name_en": "Furnace repair",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "furniture_assembly",
+      "name_en": "Furniture assembly",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "furniture_moving",
+      "name_en": "Furniture moving",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "furniture_removal",
+      "name_en": "Furniture removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "furniture_repair",
+      "name_en": "Furniture repair",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "furniture_restoration",
+      "name_en": "Furniture restoration",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "garage_cleaning",
+      "name_en": "Garage cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "garage_construction",
+      "name_en": "Garage construction",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "garage_door_installation",
+      "name_en": "Garage door installation",
+      "parent": "Overhead/garage doors",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "garage_door_repair",
+      "name_en": "Garage door repair",
+      "parent": "Overhead/garage doors",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "garbage_disposal_installation",
+      "name_en": "Garbage disposal installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "garden_bed_installation",
+      "name_en": "Garden bed installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "garden_maintenance",
+      "name_en": "Garden maintenance",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "garden_walls",
+      "name_en": "Garden walls",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "gas_line_installation",
+      "name_en": "Gas line installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "gas_stove_and_insert_installation",
+      "name_en": "Gas stove and insert installation",
+      "parent": "Wood/pellet and gas stove",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "L&I permit also required."
+    },
+    {
+      "state": "WA",
+      "id": "gate_installation",
+      "name_en": "Gate installation",
+      "parent": "Fencing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "gate_opener_installation",
+      "name_en": "Gate opener installation",
+      "parent": "Doors, gates and activating devices",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "generator_installation",
+      "name_en": "Generator installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "grout_repair",
+      "name_en": "Grout repair",
+      "parent": "Tile, ceramic, mosaic and stone",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "gutter_cleaning",
+      "name_en": "Gutter cleaning",
+      "parent": "No registration needed",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "Gutter cleaning, pruning, lawn care and window washing are named by L&I as not requiring registration."
+    },
+    {
+      "state": "WA",
+      "id": "gutter_installation",
+      "name_en": "Gutter installation",
+      "parent": "Gutters and downspouts",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Gutter installation and repair. Gutter cleaning alone is exempt."
+    },
+    {
+      "state": "WA",
+      "id": "gutter_repair",
+      "name_en": "Gutter repair",
+      "parent": "Gutters and downspouts",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Gutter installation and repair. Gutter cleaning alone is exempt."
+    },
+    {
+      "state": "WA",
+      "id": "handyman_small_jobs",
+      "name_en": "Handyman small jobs",
+      "parent": "Handyman",
+      "license": "conditional",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Individual only, no employees, existing residential maintenance and repair, under $2,000 total, no permit work. Registration required if advertising."
+    },
+    {
+      "state": "WA",
+      "id": "hardwood_flooring_installation",
+      "name_en": "Hardwood flooring installation",
+      "parent": "Floor covering and counter tops",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "heat_pump_installation",
+      "name_en": "Heat pump installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "home_inspection",
+      "name_en": "Home inspection",
+      "parent": "Other licenses",
+      "license": "required",
+      "authority": "Other state agencies",
+      "verified": false,
+      "notes": "Not checked in detail. Confirm with the issuing agency."
+    },
+    {
+      "state": "WA",
+      "id": "hot_tub_installation",
+      "name_en": "Hot tub installation",
+      "parent": "Swimming pools, spas and hot tubs",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "house_cleaning",
+      "name_en": "House cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "house_moving",
+      "name_en": "House moving",
+      "parent": "House moving",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "house_raising_and_underpinning",
+      "name_en": "House raising and underpinning",
+      "parent": "Demolitions and salvage",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "industrial_machine_installation",
+      "name_en": "Industrial machine installation",
+      "parent": "Industrial equipment/machines",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "insulation_installation",
+      "name_en": "Insulation installation",
+      "parent": "Insulation and acoustical",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "interior_painting",
+      "name_en": "Interior painting",
+      "parent": "Painting and wall covering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Commissioned artwork and murals are exempt."
+    },
+    {
+      "state": "WA",
+      "id": "junk_removal",
+      "name_en": "Junk removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "kitchen_remodeling",
+      "name_en": "Kitchen remodeling",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "laminate_and_vinyl_flooring",
+      "name_en": "Laminate and vinyl flooring",
+      "parent": "Floor covering and counter tops",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "land_clearing",
+      "name_en": "Land clearing",
+      "parent": "Excavation, grading and land clearing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "landscape_grading",
+      "name_en": "Landscape grading",
+      "parent": "Excavation, grading and land clearing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "landscape_installation",
+      "name_en": "Landscape installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "lawn_installation",
+      "name_en": "Lawn installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "lawn_mowing",
+      "name_en": "Lawn mowing",
+      "parent": "No registration needed",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "Gutter cleaning, pruning, lawn care and window washing are named by L&I as not requiring registration."
+    },
+    {
+      "state": "WA",
+      "id": "lead_paint_abatement",
+      "name_en": "Lead paint abatement",
+      "parent": "Asbestos and lead",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Asbestos certification (ch. 296-65 WAC) also required."
+    },
+    {
+      "state": "WA",
+      "id": "leaf_removal",
+      "name_en": "Leaf removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "light_bulb_and_filter_changes",
+      "name_en": "Light bulb and filter changes",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "lighting_installation",
+      "name_en": "Lighting installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "loading_and_unloading",
+      "name_en": "Loading and unloading",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "local_moving_help",
+      "name_en": "Local moving help",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "lock_installation",
+      "name_en": "Lock installation",
+      "parent": "Locks, security alarms and warning systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license."
+    },
+    {
+      "state": "WA",
+      "id": "locker_and_lab_furniture_installation",
+      "name_en": "Locker and lab furniture installation",
+      "parent": "Institutional equipment, stationary furniture, lab tables, lockers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "metal_roofing",
+      "name_en": "Metal roofing",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "mini_split_installation",
+      "name_en": "Mini-split installation",
+      "parent": "HVAC/R",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license or plumber certification."
+    },
+    {
+      "state": "WA",
+      "id": "mirror_installation",
+      "name_en": "Mirror installation",
+      "parent": "Glass and glazing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "mobile_home_set_up",
+      "name_en": "Mobile home set up",
+      "parent": "Manufactured/mobile home set up",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "mold_remediation",
+      "name_en": "Mold remediation",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "move_out_cleaning",
+      "name_en": "Move-out cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "mulch_spreading",
+      "name_en": "Mulch spreading",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "natural_stone_installation",
+      "name_en": "Natural stone installation",
+      "parent": "Tile, ceramic, mosaic and stone",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "new_home_construction",
+      "name_en": "New home construction",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "office_cleaning",
+      "name_en": "Office cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "ornamental_metal_and_railings",
+      "name_en": "Ornamental metal and railings",
+      "parent": "Welding and ornamental metal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "outdoor_lighting_installation",
+      "name_en": "Outdoor lighting installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "outlet_and_switch_installation",
+      "name_en": "Outlet and switch installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "packing_services",
+      "name_en": "Packing services",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "panel_upgrades",
+      "name_en": "Panel upgrades",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "parking_lot_striping",
+      "name_en": "Parking lot striping",
+      "parent": "Paving/striping/seal coating",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "patio_cover_installation",
+      "name_en": "Patio cover installation",
+      "parent": "Awnings, canopies, patio covers and exterior screens",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "pellet_stove_installation",
+      "name_en": "Pellet stove installation",
+      "parent": "Wood/pellet and gas stove",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "L&I permit also required."
+    },
+    {
+      "state": "WA",
+      "id": "pergola_and_gazebo_building",
+      "name_en": "Pergola and gazebo building",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "pest_exclusion_work",
+      "name_en": "Pest exclusion work",
+      "parent": "Structural pest control",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Exclusion work (screens, caulking). Pesticide application needs a separate license (WSDA)."
+    },
+    {
+      "state": "WA",
+      "id": "pesticide_application",
+      "name_en": "Pesticide application",
+      "parent": "Other licenses",
+      "license": "required",
+      "authority": "Other state agencies",
+      "verified": false,
+      "notes": "Not checked in detail. Confirm with the issuing agency."
+    },
+    {
+      "state": "WA",
+      "id": "piano_moving",
+      "name_en": "Piano moving",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "picture_and_mirror_hanging",
+      "name_en": "Picture and mirror hanging",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "pipe_repair_and_replacement",
+      "name_en": "Pipe repair and replacement",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "plastering",
+      "name_en": "Plastering",
+      "parent": "Lathing and plastering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "pond_and_water_feature_installation",
+      "name_en": "Pond and water feature installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "post_construction_cleanup",
+      "name_en": "Post-construction cleanup",
+      "parent": "Construction clean-up",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Janitorial and final cleaning do not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "pressure_washing",
+      "name_en": "Pressure washing",
+      "parent": "Pressure washing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Differs from Oregon: registration required in Washington."
+    },
+    {
+      "state": "WA",
+      "id": "pruning_and_hedge_trimming",
+      "name_en": "Pruning and hedge trimming",
+      "parent": "No registration needed",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "Gutter cleaning, pruning, lawn care and window washing are named by L&I as not requiring registration."
+    },
+    {
+      "state": "WA",
+      "id": "railing_installation",
+      "name_en": "Railing installation",
+      "parent": "Fencing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "restaurant_hood_fire_systems",
+      "name_en": "Restaurant hood fire systems",
+      "parent": "Fire protection",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require fire-protection licensing."
+    },
+    {
+      "state": "WA",
+      "id": "retaining_walls",
+      "name_en": "Retaining walls",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "roof_flashing_and_sealing",
+      "name_en": "Roof flashing and sealing",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "roof_leak_repair",
+      "name_en": "Roof leak repair",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "roof_moss_removal",
+      "name_en": "Roof moss removal",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "roof_repair",
+      "name_en": "Roof repair",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "roof_replacement",
+      "name_en": "Roof replacement",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "room_addition",
+      "name_en": "Room addition",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "safe_installation",
+      "name_en": "Safe installation",
+      "parent": "Locks, security alarms and warning systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license."
+    },
+    {
+      "state": "WA",
+      "id": "sandblasting",
+      "name_en": "Sandblasting",
+      "parent": "Sandblasting",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "scaffolding_erection",
+      "name_en": "Scaffolding erection",
+      "parent": "Scaffolding and safety railings",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "seal_coating",
+      "name_en": "Seal coating",
+      "parent": "Paving/striping/seal coating",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "security_alarm_installation",
+      "name_en": "Security alarm installation",
+      "parent": "Locks, security alarms and warning systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license."
+    },
+    {
+      "state": "WA",
+      "id": "septic_tank_installation",
+      "name_en": "Septic tank installation",
+      "parent": "Sanitation systems and/or side sewers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "service_station_equipment_installation",
+      "name_en": "Service station equipment installation",
+      "parent": "Service station equipment and maintenance",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sewer_camera_inspection",
+      "name_en": "Sewer camera inspection",
+      "parent": "Drain cleaning and snaking",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "No pipe or fixture replacement under this specialty."
+    },
+    {
+      "state": "WA",
+      "id": "sewer_line_repair",
+      "name_en": "Sewer line repair",
+      "parent": "Sanitation systems and/or side sewers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "shed_building",
+      "name_en": "Shed building",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sheet_metal_work",
+      "name_en": "Sheet metal work",
+      "parent": "Metal fabrication/sheet metal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "shingle_installation",
+      "name_en": "Shingle installation",
+      "parent": "Roofing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "shower_and_tub_tile",
+      "name_en": "Shower and tub tile",
+      "parent": "Tile, ceramic, mosaic and stone",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "shower_glass_installation",
+      "name_en": "Shower glass installation",
+      "parent": "Glass and glazing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "side_sewer_installation",
+      "name_en": "Side sewer installation",
+      "parent": "Sanitation systems and/or side sewers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sidewalk_and_walkway",
+      "name_en": "Sidewalk and walkway",
+      "parent": "Concrete",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Concrete pumping or delivery only does not require registration."
+    },
+    {
+      "state": "WA",
+      "id": "siding_installation",
+      "name_en": "Siding installation",
+      "parent": "Siding",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "siding_pressure_washing",
+      "name_en": "Siding pressure washing",
+      "parent": "Pressure washing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Differs from Oregon: registration required in Washington."
+    },
+    {
+      "state": "WA",
+      "id": "sign_fabrication_and_installation",
+      "name_en": "Sign fabrication and installation",
+      "parent": "Signs",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "May also require electrical license."
+    },
+    {
+      "state": "WA",
+      "id": "skylight_installation",
+      "name_en": "Skylight installation",
+      "parent": "Glass and glazing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sliding_door_installation",
+      "name_en": "Sliding door installation",
+      "parent": "Doors, gates and activating devices",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "small_jobs_under_500_no_advertising",
+      "name_en": "Small jobs under $500 (no advertising)",
+      "parent": "Statutory exemptions",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "RCW 18.27.090 and WAC 296-200A-016."
+    },
+    {
+      "state": "WA",
+      "id": "smart_home_wiring",
+      "name_en": "Smart home wiring",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "snow_removal",
+      "name_en": "Snow removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "sod_installation",
+      "name_en": "Sod installation",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "soil_sampling",
+      "name_en": "Soil sampling",
+      "parent": "Drilling, blasting and soil sampling",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Explosives work requires separate licensing (ch. 70.74 RCW)."
+    },
+    {
+      "state": "WA",
+      "id": "solar_panel_installation",
+      "name_en": "Solar panel installation",
+      "parent": "Electrical",
+      "license": "required",
+      "authority": "L&I electrical license (ch. 19.28 RCW)",
+      "verified": true,
+      "notes": "Certified electricians are exempt from contractor registration only within their certification."
+    },
+    {
+      "state": "WA",
+      "id": "soundproofing",
+      "name_en": "Soundproofing",
+      "parent": "Insulation and acoustical",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sprinkler_repair",
+      "name_en": "Sprinkler repair",
+      "parent": "Irrigation sprinkler systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sprinkler_system_installation",
+      "name_en": "Sprinkler system installation",
+      "parent": "Irrigation sprinkler systems",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "stone_veneer",
+      "name_en": "Stone veneer",
+      "parent": "Masonry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Includes chimney cleaning and repair."
+    },
+    {
+      "state": "WA",
+      "id": "storm_door_installation",
+      "name_en": "Storm door installation",
+      "parent": "Doors, gates and activating devices",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "storm_drain_installation",
+      "name_en": "Storm drain installation",
+      "parent": "Sanitation systems and/or side sewers",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "structural_steel_erection",
+      "name_en": "Structural steel erection",
+      "parent": "Steel erectors",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "stucco_repair",
+      "name_en": "Stucco repair",
+      "parent": "Lathing and plastering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "stump_removal",
+      "name_en": "Stump removal",
+      "parent": "Tree removal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "subfloor_repair",
+      "name_en": "Subfloor repair",
+      "parent": "Framing and rough carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "sump_pump_installation",
+      "name_en": "Sump pump installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "suspended_ceiling_installation",
+      "name_en": "Suspended ceiling installation",
+      "parent": "Suspended ceilings and acoustical tile",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "swimming_pool_construction",
+      "name_en": "Swimming pool construction",
+      "parent": "Swimming pools, spas and hot tubs",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "telecommunications_cabling",
+      "name_en": "Telecommunications cabling",
+      "parent": "Utilities and telecommunications",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "tile_flooring",
+      "name_en": "Tile flooring",
+      "parent": "Tile, ceramic, mosaic and stone",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "toilet_installation",
+      "name_en": "Toilet installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "trash_hauling",
+      "name_en": "Trash hauling",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "tree_and_shrub_planting",
+      "name_en": "Tree and shrub planting",
+      "parent": "Landscaping",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Mowing and pruning only are exempt. Installing garden features requires registration."
+    },
+    {
+      "state": "WA",
+      "id": "tree_removal",
+      "name_en": "Tree removal",
+      "parent": "Tree removal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "trenching",
+      "name_en": "Trenching",
+      "parent": "Excavation, grading and land clearing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "trim_and_molding_installation",
+      "name_en": "Trim and molding installation",
+      "parent": "Cabinets, millwork and finish carpentry",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "tv_mounting",
+      "name_en": "TV mounting",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "upholstery_cleaning",
+      "name_en": "Upholstery cleaning",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "utility_trenching_and_boring",
+      "name_en": "Utility trenching and boring",
+      "parent": "Utilities and telecommunications",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "vinyl_siding_installation",
+      "name_en": "Vinyl siding installation",
+      "parent": "Siding",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "wallpaper_installation",
+      "name_en": "Wallpaper installation",
+      "parent": "Painting and wall covering",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Commissioned artwork and murals are exempt."
+    },
+    {
+      "state": "WA",
+      "id": "water_damage_restoration",
+      "name_en": "Water damage restoration",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "water_heater_installation",
+      "name_en": "Water heater installation",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "water_line_replacement",
+      "name_en": "Water line replacement",
+      "parent": "Plumbing",
+      "license": "required",
+      "authority": "L&I plumber certification (ch. 18.106 RCW)",
+      "verified": true,
+      "notes": "Plumber certification required for work within a building."
+    },
+    {
+      "state": "WA",
+      "id": "water_softener_installation",
+      "name_en": "Water softener installation",
+      "parent": "Water conditioning equipment",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "water_well_drilling",
+      "name_en": "Water well drilling",
+      "parent": "Well drilling",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "Also licensed under state well-driller rules (not checked)."
+    },
+    {
+      "state": "WA",
+      "id": "waterproofing_and_basement_sealing",
+      "name_en": "Waterproofing and basement sealing",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "weeding",
+      "name_en": "Weeding",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "welding",
+      "name_en": "Welding",
+      "parent": "Welding and ornamental metal",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "whole_home_remodeling",
+      "name_en": "Whole-home remodeling",
+      "parent": "General contractor",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "General contractors register separately from specialty contractors."
+    },
+    {
+      "state": "WA",
+      "id": "window_film_installation",
+      "name_en": "Window film installation",
+      "parent": "Window coverings",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "window_installation",
+      "name_en": "Window installation",
+      "parent": "Glass and glazing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "window_replacement",
+      "name_en": "Window replacement",
+      "parent": "Glass and glazing",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "window_washing",
+      "name_en": "Window washing",
+      "parent": "No registration needed",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "Gutter cleaning, pruning, lawn care and window washing are named by L&I as not requiring registration."
+    },
+    {
+      "state": "WA",
+      "id": "wood_siding_repair",
+      "name_en": "Wood siding repair",
+      "parent": "Siding",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": ""
+    },
+    {
+      "state": "WA",
+      "id": "wood_stove_installation",
+      "name_en": "Wood stove installation",
+      "parent": "Wood/pellet and gas stove",
+      "license": "required",
+      "authority": "L&I contractor registration",
+      "verified": true,
+      "notes": "L&I permit also required."
+    },
+    {
+      "state": "WA",
+      "id": "work_on_your_own_property",
+      "name_en": "Work on your own property",
+      "parent": "Statutory exemptions",
+      "license": "not_required",
+      "authority": "-",
+      "verified": true,
+      "notes": "RCW 18.27.090 and WAC 296-200A-016."
+    },
+    {
+      "state": "WA",
+      "id": "yard_cleanup",
+      "name_en": "Yard cleanup",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    },
+    {
+      "state": "WA",
+      "id": "yard_waste_removal",
+      "name_en": "Yard waste removal",
+      "parent": "No registration needed (inferred)",
+      "license": "not_required",
+      "authority": "-",
+      "verified": false,
+      "notes": "Not named in law. Treated as non-construction services. Confirm with L&I (1-800-647-0982)."
+    }
+  ]
+}
