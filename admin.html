@@ -1408,6 +1408,9 @@
               addChange(label, current[key], changes[key]);
             }
           });
+          if (!Object.prototype.hasOwnProperty.call(changes,"license_expiration_date")) {
+            addChange("License expiration date", current.license_expiration_date, "Not submitted — contractor must enter the expiration date");
+          }
         } else if (request.request_type === "service_categories") {
           const before = (currentCategoryIds.get(request.contractor_id) || []).map(id => categoryNames.get(id) || "Unknown category");
           const after = (changes.category_ids || []).map(id => categoryNames.get(id) || "Unknown category");
