@@ -972,36 +972,32 @@
   }
 
   async function syncSignupContractorServiceCategories(user){
+    // Signup categories must not become active before an administrator approves
+    // the profession selection. Categories are rebuilt from approved professions.
     const metadata=user?.user_metadata||{};
-    const ids=Array.isArray(metadata.zelpx_signup_service_category_ids)
-      ? [...new Set(metadata.zelpx_signup_service_category_ids.filter(id=>typeof id==="string"))] : [];
-    if(!currentContractor || !ids.length) return;
-    const {data:existing,error:readError}=await db.from("contractor_service_categories")
-      .select("category_id").eq("contractor_id",currentContractor.id);
-    if(readError) throw readError;
-    const existingIds=new Set((existing||[]).map(row=>row.category_id));
-    const missing=ids.filter(id=>!existingIds.has(id));
-    if(missing.length){
-      const {error:insertError}=await db.from("contractor_service_categories")
-        .insert(missing.map(category_id=>({contractor_id:currentContractor.id,category_id})));
-      if(insertError) throw insertError;
-    }
-    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_service_category_ids:null}});
-    if(metadataError) console.warn("Could not clear one-time service category metadata:",metadataError.message);
+    if(!Array.isArray(metadata.zelpx_signup_service_category_ids)||!metadata.zelpx_signup_service_category_ids.length)return;
+    const {error}=await db.auth.updateUser({data:{zelpx_signup_service_category_ids:null}});
+    if(error)throw error;
   }
 
   async function syncSignupProfessionQualifications(user){
-    const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"):[];
-    const state=String(m.service_state||"").toUpperCase();if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
-    const {data:existing,error:ee}=await db.from("contractor_profession_qualifications").select("profession_id").eq("contractor_id",currentContractor.id).eq("state_code",state);if(ee)throw ee;
-    const have=new Set((existing||[]).map(x=>x.profession_id)),missing=ids.filter(id=>!have.has(id));
-    if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
+    const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?[...new Set(m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"))]:[];
+    const state=String(m.service_state||"").toUpperCase();
+    if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
     const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
     const rules=await loadRoleEligibilityRules(state,role);
-    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,};});
-    const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
+    const items=ids.map(profession_id=>{
+      const rule=rules.find(x=>x.profession_id===profession_id);
+      const requires=role==="independent"&&(rule?.requirement_status==="required"||rule?.requirement_status==="conditional");
+      return {profession_id,license_required_at_registration:requires,verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
+    });
+    const {error}=await db.rpc("submit_contractor_change_request",{
+      p_type:"profession_qualifications",
+      p_changes:{state_code:state,work_role:role,items}
+    });
+    if(error)throw error;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
-    if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
+    if(metadataError)console.warn("Could not clear one-time signup profession metadata:",metadataError.message);
   }
 
   let additionalStateLicenses = [];
