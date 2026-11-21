@@ -1535,58 +1535,57 @@
     licenseEligibleLeadCategories = new Map();
     if (isAdmin || !currentContractor?.id) return;
 
-    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError},{data:licenses,error:licensesError}] = await Promise.all([
+    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError}] = await Promise.all([
       db.from("contractor_profession_qualifications")
-        .select("profession_id,state_code").eq("contractor_id",currentContractor.id),
+        .select("profession_id,state_code,verification_status,license_number,license_type,license_expiration_date")
+        .eq("contractor_id",currentContractor.id),
       db.from("service_categories").select("id,name").eq("is_active",true),
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
-      db.from("contractor_state_licenses").select("state_code,review_status").eq("contractor_id",currentContractor.id)
+      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level")
     ]);
-    if(qualificationError)throw qualificationError;
-    if(categoriesError)throw categoriesError;
-    if(mapError)throw mapError;
-    if(rulesError)throw rulesError;
-    if(licensesError)throw licensesError;
-    availableServiceCategories=categories||[];
+    if (qualificationError) throw qualificationError;
+    if (categoriesError) throw categoriesError;
+    if (mapError) throw mapError;
+    if (rulesError) throw rulesError;
+    availableServiceCategories = categories || [];
 
-    const verifiedStates=new Set((licenses||[])
-      .filter(x=>String(x.review_status||"").toLowerCase()==="verified")
-      .map(x=>String(x.state_code||"").toUpperCase()));
-    if(currentContractor.has_license===true && String(currentContractor.license_review_status||"").toLowerCase()==="verified" && currentContractor.license_state){
-      verifiedStates.add(String(currentContractor.license_state).toUpperCase());
-    }
-
-    for(const state of ["OR","WA"]){
-      const professionIds=new Set((qualifications||[])
-        .filter(q=>String(q.state_code||"").toUpperCase()===state)
-        .map(q=>q.profession_id).filter(Boolean));
-      const mapped=(maps||[]).filter(m=>professionIds.has(m.profession_id));
-      const selectedCategoryIds=new Set(mapped.map(m=>m.category_id));
-      const selectedNames=new Set(availableServiceCategories
-        .filter(item=>selectedCategoryIds.has(item.id)).map(item=>item.name.toLowerCase()));
+    for (const state of ["OR","WA"]) {
+      const stateQualifications = new Map((qualifications || [])
+        .filter(q => String(q.state_code || "").toUpperCase() === state)
+        .map(q => [q.profession_id,q]));
+      const professionIds = new Set(stateQualifications.keys());
+      const mapped = (maps || []).filter(m => professionIds.has(m.profession_id));
+      const selectedCategoryIds = new Set(mapped.map(m => m.category_id));
+      const selectedNames = new Set(availableServiceCategories
+        .filter(item => selectedCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
       selectedLeadCategoriesByState.set(state,selectedNames);
 
-      const licenseRequiredAllowed=verifiedStates.has(state);
-      const noLicenseProfessionIds=new Set((rules||[])
-        .filter(rule=>String(rule.state_code||"").toUpperCase()===state
-          && String(rule.jurisdiction_level||"").toLowerCase()==="state"
-          && String(rule.requirement_status||"").toLowerCase()==="not_required")
-        .map(rule=>rule.profession_id));
-      // Without a verified license, every selected profession mapped to this
-      // service category must be explicitly classified as not_required.
-      // A single license-required, conditional, or unverified mapping blocks it.
-      const mappedByCategory=new Map();
-      mapped.forEach(m=>{
-        if(!mappedByCategory.has(m.category_id))mappedByCategory.set(m.category_id,new Set());
+      const stateRules = new Map((rules || [])
+        .filter(rule => String(rule.state_code || "").toUpperCase() === state
+          && String(rule.jurisdiction_level || "").toLowerCase() === "state")
+        .map(rule => [rule.profession_id,String(rule.requirement_status || "").toLowerCase()]));
+      const mappedByCategory = new Map();
+      mapped.forEach(m => {
+        if (!mappedByCategory.has(m.category_id)) mappedByCategory.set(m.category_id,new Set());
         mappedByCategory.get(m.category_id).add(m.profession_id);
       });
-      const eligibleIds=new Set([...mappedByCategory.entries()]
-        .filter(([categoryId,professionSet])=>licenseRequiredAllowed
-          || (professionSet.size>0 && [...professionSet].every(id=>noLicenseProfessionIds.has(id))))
-        .map(([categoryId])=>categoryId));
+      const eligibleIds = new Set([...mappedByCategory.entries()]
+        .filter(([categoryId,professionSet]) => professionSet.size > 0 && [...professionSet].every(id => {
+          const q = stateQualifications.get(id);
+          const status = stateRules.get(id);
+          const review = String(q?.verification_status || "").toLowerCase();
+          if (status === "not_required") return review === "not_required" || review === "verified";
+          if (status === "required" || status === "conditional") {
+            const expiry = q?.license_expiration_date;
+            const notExpired = !expiry || new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
+            return review === "verified" && Boolean(String(q?.license_number || "").trim())
+              && Boolean(String(q?.license_type || "").trim()) && notExpired;
+          }
+          return false;
+        }))
+        .map(([categoryId]) => categoryId));
       licenseEligibleLeadCategories.set(state,new Set(availableServiceCategories
-        .filter(item=>eligibleIds.has(item.id)).map(item=>item.name.toLowerCase())));
+        .filter(item => eligibleIds.has(item.id)).map(item => item.name.toLowerCase())));
     }
   }
 
