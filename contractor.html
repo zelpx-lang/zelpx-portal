@@ -1239,7 +1239,8 @@
       save.addEventListener("click",async()=>{
         try{
           if(!number.value.trim()||!kind.value.trim())throw new Error("Enter the license number and type.");
-          const selectedFile=file.files?.[0];let path=q.license_document_path||null;
+          const selectedFile=file.files?.[0];const oldPath=q.license_document_path||null;let path=oldPath;
+          let uploadedNewPath=null;
           if(selectedFile){
             const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
             if(!allowed.includes(selectedFile.type))throw new Error("Choose a PDF, JPG, PNG or WebP file.");
@@ -1250,6 +1251,7 @@
             path=currentUser.id+"/profession-"+q.profession_id+"-"+Date.now()+"."+ext;
             const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,selectedFile,{upsert:false,contentType:selectedFile.type,cacheControl:"3600"});
             if(uploadError)throw uploadError;
+            uploadedNewPath=path;
           }
           if(!path)throw new Error("Upload the profession-specific license or credential document.");
           save.disabled=true;save.textContent="Submitting…";
@@ -1258,7 +1260,13 @@
             p_issuing_authority:authority.value.trim()||null,p_license_expiration_date:expiry.value||null,
             p_license_document_path:path
           });
-          if(updateError)throw updateError;
+          if(updateError){
+            if(uploadedNewPath) await db.storage.from("contractor-licenses").remove([uploadedNewPath]).catch(()=>{});
+            throw updateError;
+          }
+          if(oldPath&&uploadedNewPath&&oldPath!==uploadedNewPath){
+            await db.storage.from("contractor-licenses").remove([oldPath]).catch(cleanupError=>console.warn("Old credential file cleanup failed:",cleanupError));
+          }
           message("specialtiesMessage","Credential submitted. It remains unavailable for lead purchases until an administrator verifies it.","success");
           await loadProfessionQualifications();
         }catch(e){message("specialtiesMessage","Could not submit credential: "+e.message,"error");save.disabled=false;save.textContent="Save credential and submit for review";}
