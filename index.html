@@ -170,24 +170,14 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 (()=>{
 const box=document.getElementById("sphere"),panel=document.getElementById("pick"),pn=document.getElementById("pickName"),pg=document.getElementById("pgGo");
 const limitNotice=document.getElementById("serviceLimitNotice"),limitOk=document.getElementById("serviceLimitOk"),limitClose=document.getElementById("serviceLimitClose");
+const serviceLimitAudio=new Audio("https://remotion.media/windows-xp-error.wav");
+serviceLimitAudio.preload="auto";
 function playServiceLimitSound(){
   try{
-    const AudioCtx=window.AudioContext||window.webkitAudioContext;
-    if(!AudioCtx)return;
-    const ctx=new AudioCtx();
-    const now=ctx.currentTime;
-    const notes=[{f:660,t:0,d:.11},{f:440,t:.105,d:.16}];
-    notes.forEach(note=>{
-      const osc=ctx.createOscillator(),gain=ctx.createGain();
-      osc.type="triangle";
-      osc.frequency.setValueAtTime(note.f,now+note.t);
-      gain.gain.setValueAtTime(.0001,now+note.t);
-      gain.gain.exponentialRampToValueAtTime(.13,now+note.t+.012);
-      gain.gain.exponentialRampToValueAtTime(.0001,now+note.t+note.d);
-      osc.connect(gain);gain.connect(ctx.destination);
-      osc.start(now+note.t);osc.stop(now+note.t+note.d+.02);
-    });
-    setTimeout(()=>ctx.close().catch(()=>{}),500);
+    serviceLimitAudio.pause();
+    serviceLimitAudio.currentTime=0;
+    const playback=serviceLimitAudio.play();
+    if(playback&&typeof playback.catch==="function")playback.catch(()=>{});
   }catch(_){}
 }
 function showServiceLimitNotice(){playServiceLimitSound();limitNotice.hidden=false;limitOk.focus();}
