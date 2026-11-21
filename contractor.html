@@ -379,8 +379,9 @@
         <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
       </div>
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
-        <h3 style="grid-column:1/-1;margin:0">Business insurance (Certificate of Insurance)</h3>
-        <p class="muted" style="grid-column:1/-1;margin:0">Independent contractors must provide current insurance policy information for ZELPX review. Employees do not need a business insurance policy for themselves.</p>
+        <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
+        <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
+        <div><label for="signupHasInsuranceCertificate">Insurance certificate</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
         <div><label for="signupInsuranceAgentPhone">Insurance agent phone number</label><input id="signupInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
         <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
@@ -512,8 +513,9 @@
         </div>
         <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
-          <p class="muted" style="margin:0 0 10px;font-size:13px">Required for independent contractors. Employees do not need to provide their own business insurance.</p>
+          <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
           <div class="grid">
+            <div><label for="profileHasInsuranceCertificate">Insurance certificate</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
             <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
             <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
             <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
@@ -876,6 +878,7 @@
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter a complete first license: state, number, and type.", "error");
     if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
     if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
+    const hasInsuranceCertificate=$("signupHasInsuranceCertificate").value==="yes";
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
     const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
@@ -885,7 +888,7 @@
     setBusy($("signupBtn"), true, "Creating account…");
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -961,7 +964,7 @@
       insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
       insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
-      insurance_document_path:currentContractor.insurance_document_path||null
+      has_insurance_certificate:currentContractor.has_insurance_certificate===true
     };
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
@@ -1056,7 +1059,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_document_path,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
@@ -1111,6 +1114,7 @@
     }
     await loadAdditionalStateLicenses(draft, contractor);
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
+    $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
@@ -2009,6 +2013,7 @@
           license_state_2: currentContractor.license_state_2 || null,
           license_type_2: currentContractor.license_type_2 || null,
           insurance_document_path,
+          has_insurance_certificate: $("profileHasInsuranceCertificate").value === "yes",
           insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
           insurance_agent_phone: $("profileInsuranceAgentPhone").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
@@ -2034,7 +2039,7 @@
           license_state: changes.license_state, license_type: changes.license_type,
           license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
-          insurance_document_path: changes.insurance_document_path,
+          has_insurance_certificate: changes.has_insurance_certificate,
           insurance_agency_name: changes.insurance_agency_name,
           insurance_agent_phone: changes.insurance_agent_phone,
           insurance_expiration_date: changes.insurance_expiration_date
