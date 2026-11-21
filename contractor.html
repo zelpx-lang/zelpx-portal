@@ -1726,7 +1726,13 @@
               && Boolean(String(q?.license_type || "").trim())
               && Boolean(String(q?.license_document_path || "").trim()) && notExpired;
             if (status === "required") {
-              return individualCredentialVerified && companyLicenseVerified;
+              // Required scope: employees need their individual credential;
+              // independent contractors need both the individual credential
+              // and the verified company/state license.
+              const role = String(q?.work_role || "").toLowerCase();
+              if (role === "employee") return individualCredentialVerified;
+              if (role === "independent") return individualCredentialVerified && companyLicenseVerified;
+              return false;
             }
             if (!companyLicenseVerified || review !== "verified") return false;
             return q?.work_role === "employee" || individualCredentialVerified;
