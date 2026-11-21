@@ -384,9 +384,9 @@
         <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
         <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
         <div><label for="signupHasInsuranceCertificate">Insurance certificate</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
-        <div><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
-        <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
+        <div class="hidden"><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div id="signupInsurancePolicyWrap" class="hidden"><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
+        <div class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
@@ -527,9 +527,9 @@
           <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
           <div class="grid">
             <div><label for="profileHasInsuranceCertificate">Insurance certificate</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
-            <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
-            <div><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
-            <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
+            <div class="hidden"><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div id="profileInsurancePolicyWrap" class="hidden"><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
+            <div class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
           </div>
         </div>
       </div>
@@ -1127,6 +1127,7 @@
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
     $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
+    $("profileInsurancePolicyWrap").classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
@@ -2938,6 +2939,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     function updateSignupInsuranceVisibility(){
       const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
+      $("signupInsurancePolicyWrap").classList.toggle("hidden",!showInsurance || $("signupHasInsuranceCertificate").value!=="yes");
       $("signupInsurancePolicyNumber").required=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
     }
     $("signupWorkRole").addEventListener("change",()=>{
