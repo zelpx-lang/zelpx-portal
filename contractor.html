@@ -1032,7 +1032,7 @@
     const primaryExpiry=$("profileCompanyLicenseExpiry");
     if(primaryExpiry)primaryExpiry.value=primary?.expiration_date||"";
     const primaryFile=$("profileCompanyLicenseFile");
-    if(primaryFile)primaryFile.dataset.existingPath=primary?.document_path||"";
+    if(primaryFile){primaryFile.dataset.existingPath=primary?.document_path||"";primaryFile.dataset.existingState=primary?.state_code||"";}
     renderAdditionalStateLicenses();
   }
   function openAdditionalLicenseModal(){
@@ -2178,7 +2178,7 @@
         if(hasLicense){
           await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
             document_file:$("profileCompanyLicenseFile").files?.[0]||null,
-            document_path:$("profileCompanyLicenseFile").dataset.existingPath||null,
+            document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
             expiration_date:$("profileCompanyLicenseExpiry").value||null});
         }
         for(const license of additionalStateLicenses){
