@@ -501,7 +501,7 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
           <h2>Company State License Verification</h2>
-          <p>Review each submitted state license separately (Oregon and Washington). Open the uploaded document and confirm the active license in the official state registry before verifying it.</p>
+          <p>Review each submitted state license separately (Oregon and Washington). Verify the license number and current status in the official state registry. A document upload is not required.</p>
           <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
           <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
@@ -2093,35 +2093,6 @@
           card.append(p);
         });
 
-        if (license.document_path) {
-          const documentRow = document.createElement("p");
-          const documentLink = document.createElement("a");
-          documentLink.href = "#";
-          documentLink.textContent = "Open uploaded " + license.state_code + " company license document";
-          documentLink.addEventListener("click", async event => {
-            event.preventDefault();
-            documentLink.textContent = "Opening document…";
-            try {
-              const { data: signed, error: signedError } = await db.storage
-                .from("contractor-licenses")
-                .createSignedUrl(license.document_path, 3600);
-              if (signedError) throw signedError;
-              if (!signed?.signedUrl) throw new Error("A secure document link could not be created.");
-              window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-              documentLink.textContent = "Open uploaded " + license.state_code + " company license document";
-            } catch (e) {
-              documentLink.textContent = "Could not open document: " + (e.message || "Unknown error");
-            }
-          });
-          documentRow.append(documentLink);
-          card.append(documentRow);
-        } else {
-          const missingDocument = document.createElement("p");
-          missingDocument.className = "message error";
-          missingDocument.textContent = "No company license document uploaded. Verification is blocked until the document is provided.";
-          card.append(missingDocument);
-        }
-
         const adminNote = document.createElement("textarea");
         adminNote.rows = 2;
         adminNote.placeholder = "Required administrator note: registry checked and license status confirmed";
@@ -2131,7 +2102,7 @@
         const verify = document.createElement("button");
         verify.type = "button";
         verify.textContent = "Verify " + license.state_code + " License";
-        verify.disabled = !license.document_path || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
+        verify.disabled = !license.license_number || !license.license_type || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
         verify.addEventListener("click", async () => {
           if (!adminNote.value.trim()) {
             adminNote.focus();
