@@ -1671,10 +1671,11 @@
           const stateLicense = (stateLicenses || []).find(item =>
             String(item.state_code || "").trim().toUpperCase() === state);
           const companyLicenseVerified = stateLicense?.review_status === "verified"
-            && (!stateLicense.expiration_date || new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString()));
+            && Boolean(stateLicense.expiration_date)
+            && new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString());
           if (status === "required" || status === "conditional") {
             const expiry = q?.license_expiration_date;
-            const notExpired = !expiry || new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
+            const notExpired = Boolean(expiry) && new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
             const individualCredentialVerified = review === "verified"
               && Boolean(String(q?.license_number || "").trim())
               && Boolean(String(q?.license_type || "").trim())
