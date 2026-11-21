@@ -1315,11 +1315,16 @@
     renderSelectedProfileServices();
     // Filter visible choices without deleting or clearing previously selected services.
     const licenseChoice=$("profileHasLicense")?.value||"";
-    const role=$("professionWorkRole")?.value||"independent";
+    // This profile selector is for independent contractors/businesses only.
+    // "No" is a strict allow-list: show a profession only when the selected
+    // state's verified rule explicitly says not_required. Missing, conditional,
+    // required, local_only and unverified rules are never treated as license-free.
+    const ruleByProfession=new Map(professionRuleRows.map(r=>[
+      r.profession_id,String(r.requirement_status||"").trim().toLowerCase()
+    ]));
     const matches=professionCatalog.filter(p=>{
-      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
-      const status=rule?.requirement_status||"unverified";
-      const eligible=role==="employee" || licenseChoice==="yes" ||
+      const status=ruleByProfession.get(p.id)||"unverified";
+      const eligible=licenseChoice==="yes" ||
         (licenseChoice==="no" && status==="not_required");
       // New selections must map to a customer-facing service category.
       // Preserve previously selected legacy IDs so the contractor can remove them safely.
@@ -1327,7 +1332,7 @@
       return (mapped || selectedProfessionIds.has(p.id)) && eligible &&
         (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
     });
-    if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;}
+    if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;}
     const statusLabels={
       allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
       individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
@@ -1388,10 +1393,9 @@
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     updateProfileInsuranceVisibility();
     const licenseChoice=$("profileHasLicense").value;
-    const role=$("professionWorkRole").value;
     const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
     if(licenseLabel) licenseLabel.textContent="Do you have the required current license / registration / trade credential?";
-    $("professionLicenseFilter").classList.toggle("hidden",role==="employee");
+    $("professionLicenseFilter").classList.remove("hidden");
     // Do not silently discard a contractor's selected professions when the
     // current state has a required, conditional, local-only, or unverified rule.
     // Keep the selection visible and save its qualification as pending; the
