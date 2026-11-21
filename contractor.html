@@ -1028,6 +1028,11 @@
     }
     (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{if(x.state_code)map.set(x.state_code,{...x,review_status:"pending"});});
     additionalStateLicenses=[...map.values()];
+    const primary=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(contractor?.license_state||"").toUpperCase());
+    const primaryExpiry=$("profileCompanyLicenseExpiry");
+    if(primaryExpiry)primaryExpiry.value=primary?.expiration_date||"";
+    const primaryFile=$("profileCompanyLicenseFile");
+    if(primaryFile)primaryFile.dataset.existingPath=primary?.document_path||"";
     renderAdditionalStateLicenses();
   }
   function openAdditionalLicenseModal(){
@@ -2146,8 +2151,12 @@
         if (contractorUpdateError) throw contractorUpdateError;
         // Submit each company license as its own state-scoped record.
         const uploadCompanyStateLicense = async (license) => {
-          const file=license.document_file;
-          let path=license.document_path||null;
+          const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(license.state_code||"").toUpperCase());
+          const file=license.document_file||null;
+          const unchanged=existing&&existing.license_number===license.license_number&&existing.license_type===license.license_type
+            &&(existing.expiration_date||null)===(license.expiration_date||null)&&!file;
+          if(unchanged&&existing.document_path)return;
+          let path=license.document_path||existing?.document_path||null;
           if(file){
             const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
             if(!allowed.includes(file.type)||file.size>10*1024*1024)throw new Error("Company license documents must be PDF, JPG, PNG or WebP and no larger than 10 MB.");
@@ -2162,11 +2171,15 @@
             p_license_type:license.license_type,p_document_path:path,p_expiration_date:license.expiration_date||null
           });
           if(error)throw error;
+          const savedRecord={state_code:license.state_code,license_number:license.license_number,license_type:license.license_type,
+            document_path:path,expiration_date:license.expiration_date||null,review_status:"pending"};
+          additionalStateLicenses=[...additionalStateLicenses.filter(x=>x.state_code!==license.state_code),savedRecord];
         };
         if(hasLicense){
           await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
             document_file:$("profileCompanyLicenseFile").files?.[0]||null,
-            document_path:null,expiration_date:$("profileCompanyLicenseExpiry").value||null});
+            document_path:$("profileCompanyLicenseFile").dataset.existingPath||null,
+            expiration_date:$("profileCompanyLicenseExpiry").value||null});
         }
         for(const license of additionalStateLicenses){
           await uploadCompanyStateLicense(license);
