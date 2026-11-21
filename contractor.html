@@ -992,7 +992,7 @@
     const rules=await loadRoleEligibilityRules(state,role);
     const items=ids.map(profession_id=>{
       const rule=rules.find(x=>x.profession_id===profession_id);
-      const requires=role==="independent"&&(rule?.requirement_status==="required"||rule?.requirement_status==="conditional");
+      const requires=rule?.requirement_status==="required"||rule?.requirement_status==="conditional";
       return {profession_id,license_required_at_registration:requires,verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
     });
     const {error}=await db.rpc("submit_contractor_change_request",{
@@ -1389,7 +1389,7 @@
       const rules=professionRuleRows;
       const rows=selected.map(p=>{
         const rule=rules.find(r=>r.profession_id===p.id);
-        const requires=rule?.requirement_status==="required"||(rule?.requirement_status==="conditional"&&role==="independent");
+        const requires=rule?.requirement_status==="required"||rule?.requirement_status==="conditional";
         return {contractor_id:currentContractor.id,profession_id:p.id,state_code:state,work_role:role,
           license_required_at_registration:requires,
           verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
