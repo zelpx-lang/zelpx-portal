@@ -485,6 +485,7 @@
             <div id="selectedProfileServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">No services selected.</span></div>
           </div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
+          <div id="professionCredentialUploads" style="grid-column:1/-1;margin-top:12px"></div>
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
@@ -1196,7 +1197,62 @@
 
     renderProfessionOptions();
     await refreshProfessionRules();
-    if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after refresh. They become active after approval.","success");
+    if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after approval. They become active after approval.","success");
+    await renderProfessionCredentialUploads();
+  }
+  async function renderProfessionCredentialUploads(){
+    const root=$("professionCredentialUploads"); if(!root||!currentContractor)return;
+    root.replaceChildren();
+    const state=$("professionState").value;
+    const {data:rows,error}=await db.from("contractor_profession_qualifications")
+      .select("id,profession_id,work_role,verification_status,license_number,license_type,issuing_authority,license_expiration_date,license_document_path")
+      .eq("contractor_id",currentContractor.id).eq("state_code",state);
+    if(error)throw error;
+    const selected=(rows||[]).filter(q=>selectedProfessionIds.has(q.profession_id));
+    const heading=document.createElement("h4");heading.textContent="Profession-specific license documents";root.append(heading);
+    const intro=document.createElement("p");intro.className="muted";intro.textContent="After your selected professions are approved, upload the matching license or trade credential here. Each profession is reviewed separately. Files are private and limited to PDF, JPG, PNG or WebP (10 MB max).";root.append(intro);
+    if(!selected.length){const note=document.createElement("p");note.className="muted";note.textContent="Approved profession selections will appear here for credential submission.";root.append(note);return;}
+    for(const q of selected){
+      const profession=professionCatalog.find(x=>x.id===q.profession_id);
+      const card=document.createElement("section");card.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff";
+      const title=document.createElement("h4");title.textContent=(profession?.profession_name||"Profession")+" · "+(q.verification_status||"pending").replaceAll("_"," ");card.append(title);
+      const fields=document.createElement("div");fields.className="grid";
+      const makeField=(labelText,type,value)=>{const wrap=document.createElement("div"),label=document.createElement("label"),input=document.createElement("input");label.textContent=labelText;input.type=type;input.value=value||"";wrap.append(label,input);fields.append(wrap);return input;};
+      const number=makeField("Profession license / credential number","text",q.license_number);
+      const kind=makeField("License / credential type","text",q.license_type);
+      const authority=makeField("Issuing authority","text",q.issuing_authority);
+      const expiry=makeField("Expiration date (if applicable)","date",q.license_expiration_date);
+      card.append(fields);
+      const fileLabel=document.createElement("label");fileLabel.textContent="Upload profession-specific document";
+      const file=document.createElement("input");file.type="file";file.accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp";fileLabel.append(file);card.append(fileLabel);
+      const current=document.createElement("p");current.className="muted";current.textContent=q.license_document_path?"Document uploaded · "+q.license_document_path.split("/").pop():"No document uploaded";card.append(current);
+      const save=document.createElement("button");save.type="button";save.textContent="Save credential and submit for review";
+      save.addEventListener("click",async()=>{
+        try{
+          if(!number.value.trim()||!kind.value.trim())throw new Error("Enter the license number and type.");
+          const selectedFile=file.files?.[0];let path=q.license_document_path||null;
+          if(selectedFile){
+            const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
+            if(!allowed.includes(selectedFile.type))throw new Error("Choose a PDF, JPG, PNG or WebP file.");
+            if(selectedFile.size>10*1024*1024)throw new Error("File must be 10 MB or smaller.");
+            const ext=selectedFile.name.split(".").pop().toLowerCase();
+            path=currentUser.id+"/profession-"+q.profession_id+"-"+Date.now()+"."+ext;
+            const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,selectedFile,{upsert:false,contentType:selectedFile.type,cacheControl:"3600"});
+            if(uploadError)throw uploadError;
+          }
+          if(!path)throw new Error("Upload the profession-specific license or credential document.");
+          save.disabled=true;save.textContent="Submitting…";
+          const {error:updateError}=await db.from("contractor_profession_qualifications").update({
+            license_number:number.value.trim(),license_type:kind.value.trim(),issuing_authority:authority.value.trim()||null,
+            license_expiration_date:expiry.value||null,license_document_path:path,verification_status:"pending",verified_at:null,admin_notes:null,updated_at:new Date().toISOString()
+          }).eq("id",q.id).eq("contractor_id",currentContractor.id);
+          if(updateError)throw updateError;
+          message("specialtiesMessage","Credential submitted. It remains unavailable for lead purchases until an administrator verifies it.","success");
+          await loadProfessionQualifications();
+        }catch(e){message("specialtiesMessage","Could not submit credential: "+e.message,"error");save.disabled=false;save.textContent="Save credential and submit for review";}
+      });
+      card.append(save);root.append(card);
+    }
   }
   function renderSelectedProfileServices() {
     const list=$("selectedProfileServicesList");
