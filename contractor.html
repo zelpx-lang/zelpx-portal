@@ -464,8 +464,8 @@
       <div class="grid">
         <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
         <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
-        <div><label for="profileCompany">Company name</label><input id="profileCompany"></div>
-        <div><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
+        <div id="profileCompanyNameField"><label for="profileCompany">Company name</label><input id="profileCompany"></div>
+        <div id="profileCompanyEmailField"><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
         <div><label for="profileServiceAddress">Business street address</label><input id="profileServiceAddress" autocomplete="street-address"></div>
         <p id="contractorAddressVerificationStatus" class="muted" style="grid-column:1/-1">Business address is checked when you save your company profile.</p>
         <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
@@ -1355,6 +1355,11 @@
   function updateProfileInsuranceVisibility(){
     const role=$("professionWorkRole").value||"independent";
     const employee=role==="employee";
+    const companyNameField=$("profileCompanyNameField"),companyEmailField=$("profileCompanyEmailField");
+    if(companyNameField)companyNameField.classList.toggle("hidden",employee);
+    if(companyEmailField)companyEmailField.classList.toggle("hidden",employee);
+    const addressLabel=document.querySelector('label[for="profileServiceAddress"]');
+    if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
     const showInsurance=!employee && $("profileHasLicense").value==="yes";
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
