@@ -1423,8 +1423,10 @@
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || lead.service_category === category;
+      const licenseMatch = isAdmin || (lead.status !== "available") ||
+        licenseEligibleLeadCategories?.has(String(lead.service_category||"").toLowerCase()) === true;
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return statusMatch && categoryMatch && (!query || haystack.includes(query));
+      return statusMatch && categoryMatch && licenseMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
@@ -1531,6 +1533,31 @@
   async function loadLicenseEligibleLeadCategories() {
     licenseEligibleLeadCategories = new Set();
     if (isAdmin || !currentContractor?.id) return;
+    // Contractors without a company license may only see categories tied to
+    // their saved, admin-approved no-license qualifications. Do not depend on
+    // state_profession_eligibility here: the legacy rules table may be empty.
+    if(currentContractor.has_license!==true){
+      const state=String(currentContractor.service_state||"").trim().toUpperCase();
+      if(!/^[A-Z]{2}$/.test(state))return;
+      const {data:qualifications,error:qualificationError}=await db.from("contractor_profession_qualifications")
+        .select("profession_id,license_required_at_registration,verification_status,work_role")
+        .eq("contractor_id",currentContractor.id).eq("state_code",state)
+        .eq("license_required_at_registration",false).in("verification_status",["not_required","verified"]);
+      if(qualificationError)throw qualificationError;
+      const eligibleProfessionIds=[...new Set((qualifications||[]).map(q=>q.profession_id).filter(Boolean))];
+      if(!eligibleProfessionIds.length)return;
+      const {data:maps,error:mapError}=await db.from("service_category_profession_map")
+        .select("category_id,profession_id,mapping_status").eq("mapping_status","mapped").in("profession_id",eligibleProfessionIds);
+      if(mapError)throw mapError;
+      const {data:categories,error:categoriesError}=await db.from("service_categories")
+        .select("id,name").eq("is_active",true);
+      if(categoriesError)throw categoriesError;
+      availableServiceCategories=categories||[];
+      const eligibleIds=new Set((maps||[]).map(m=>m.category_id));
+      licenseEligibleLeadCategories=new Set(availableServiceCategories
+        .filter(item=>eligibleIds.has(item.id)).map(item=>item.name.toLowerCase()));
+      return;
+    }
     const {data:additionalLicenses,error:additionalLicenseError}=await db.from("contractor_state_licenses")
       .select("state_code,review_status").eq("contractor_id",currentContractor.id).eq("review_status","verified");
     if(additionalLicenseError)throw additionalLicenseError;
