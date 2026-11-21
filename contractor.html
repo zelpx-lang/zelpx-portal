@@ -1118,6 +1118,12 @@
       companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
     }
     await loadAdditionalStateLicenses(draft, contractor);
+    const activeWorkState=String($("professionState").value||contractor?.service_state||"").toUpperCase();
+    const activeStateLicense=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===activeWorkState);
+    if(companyLicenseStatus){
+      const review=activeStateLicense?.review_status||"not submitted";
+      companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified");
+    }
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
@@ -2308,6 +2314,9 @@
           const savedRecord={state_code:license.state_code,license_number:license.license_number,license_type:license.license_type,
             document_path:path,expiration_date:license.expiration_date||null,review_status:"pending"};
           additionalStateLicenses=[...additionalStateLicenses.filter(x=>x.state_code!==license.state_code),savedRecord];
+          if(String(license.state_code).toUpperCase()===String($("professionState").value).toUpperCase()&&$("profileCompanyLicenseReviewStatus")){
+            $("profileCompanyLicenseReviewStatus").textContent="Submitted — pending administrator verification. Licensed status appears only after approval.";
+          }
         };
         if(!isEmployee && hasLicense){
           await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
