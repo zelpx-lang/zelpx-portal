@@ -1476,7 +1476,9 @@
                 const resultLabel = decision === "rejected" ? "rejected" :
                   decision === "approved_with_license" ? "approved and routed to Contractors with a license" :
                   "approved and routed to Contractors without a license";
-                message("contractorChangesMessage","Contractor update request " + resultLabel + ".","success");
+                const licenseVerified = reviewData?.license_verification?.success === true;
+                const licenseStatusText = licenseVerified ? " Company license was also verified successfully." : "";
+                message("contractorChangesMessage","Contractor update request " + resultLabel + "." + licenseStatusText,"success");
                 await loadContractorChangeRequests();
                 await loadPendingContractors();
                 await loadUnlicensedContractors();
