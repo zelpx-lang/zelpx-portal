@@ -1358,6 +1358,10 @@
     const addressLabel=document.querySelector('label[for="profileServiceAddress"]');
     if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
     const showInsurance=!employee && $("profileHasLicense").value==="yes";
+    const insurancePolicyWrap=$("profileInsurancePolicyWrap");
+    if(insurancePolicyWrap)insurancePolicyWrap.classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
+    const insurancePolicy=$("profileInsurancePolicyNumber");
+    if(insurancePolicy)insurancePolicy.required=showInsurance && $("profileHasInsuranceCertificate").value==="yes";
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
     const companyLicenseFields=$("profileLicenseFields");
@@ -2942,6 +2946,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       $("signupInsurancePolicyWrap").classList.toggle("hidden",!showInsurance || $("signupHasInsuranceCertificate").value!=="yes");
       $("signupInsurancePolicyNumber").required=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
     }
+    $("signupHasInsuranceCertificate").addEventListener("change",updateSignupInsuranceVisibility);
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
       const licenseLabel=document.querySelector('label[for="hasLicense"]');
@@ -3019,6 +3024,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
         message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error");
       }
     });
+    $("profileHasInsuranceCertificate").addEventListener("change",updateProfileInsuranceVisibility);
     $("profileHasLicense").addEventListener("change",async()=>{
       // Preserve saved selections; only filter the visible profession choices.
       $("profileLicenseFields").classList.toggle("hidden",$("profileHasLicense").value!=="yes");
