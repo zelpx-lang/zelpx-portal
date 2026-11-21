@@ -341,9 +341,9 @@
     </div>
     <div id="signupFields" class="grid hidden">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
-      <div><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
+      <div id="signupCompanyNameField"><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
       <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
-      <div><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
+      <div id="signupStreetAddressField"><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
@@ -830,10 +830,11 @@
   }
   async function signUp() {
     clearMessage("authMessage");
-    const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
-    const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
-    if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.","error");
+    const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
     const signupRole=$("signupWorkRole").value;
+    const companyName = signupRole==="employee" ? fullName : $("companyName").value.trim();
+    const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
+    if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.");
     const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const licenseNumber2=$("licenseNumber2").value.trim(),licenseState2=$("licenseState2").value.trim().toUpperCase(),licenseType2=$("licenseType2").value.trim();
@@ -869,7 +870,7 @@
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
     const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
     if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
-    if (!email || !password || !fullName || !phone || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required fields: your name, phone, company name, company email, business street address, city, state, and a valid 5-digit ZIP code.", "error");
+    if (!email || !password || !fullName || !phone || (signupRole==="independent"&&(!companyName||!serviceAddress)) || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", signupRole==="employee" ? "Complete your name, phone, city, state where you want to work, and a valid 5-digit ZIP code." : "Complete your name, phone, company name, business street address, city, state, and a valid 5-digit ZIP code.", "error");
     if (signupRole==="independent"&&!$("hasLicense").value) return message("authMessage", "Please select whether your business has a current license or registration.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter a complete first license: state, number, and type.", "error");
     if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
@@ -883,7 +884,7 @@
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
@@ -2931,6 +2932,11 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     });
     function updateSignupLicenseFields(){
       const employee=$("signupWorkRole").value==="employee";
+      $("signupCompanyNameField").classList.toggle("hidden",employee);
+      $("companyName").required=!employee;
+      const addressLabel=document.querySelector('label[for="serviceAddress"]');
+      if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
+      $("serviceAddress").required=!employee;
       $("signupLicenseChoice").classList.toggle("hidden",employee);
       $("hasLicense").required=!employee;
       const showLicense=!employee&&$("hasLicense").value==="yes";
@@ -2942,6 +2948,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       });
       ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; });
     }
+    updateSignupLicenseFields();
     $("hasLicense").addEventListener("change", () => {
       // Preserve selections when switching the license filter.
       updateSignupLicenseFields();
