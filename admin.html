@@ -428,7 +428,7 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section id="newContractorRegistrationsSection" class="lead">
           <h2>New contractor registrations</h2>
-          <p>Review new contractor applications and approve with a license, approve without a license, or reject.</p>
+          <p>Review every new registration here. Approving an account with a license only grants restricted access to work that does not require a license; the company license must still be verified separately in License Verification. Approving without a license keeps licensed work blocked.</p>
           <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
           <div id="pendingContractorsMessage" class="message hidden"></div>
           <div id="pendingContractorsList"><p class="muted">Loading new contractor registrations…</p></div>
@@ -1156,9 +1156,9 @@
             if (reviewError) throw reviewError;
             if (data?.error) throw new Error(data.error);
             const statusText = choice === "approve"
-              ? "Registration approved. Contractor moved to License Verification."
+              ? "Account approved with restricted access. Company license is still pending in License Verification."
               : choice === "approve_without_license"
-                ? "Registration approved. Contractor moved to Contractors without a license."
+                ? "Account approved without a license. Licensed work remains blocked."
                 : "Registration rejected. Contractor remains blocked.";
             const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
             message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
@@ -1171,12 +1171,12 @@
         };
         const approve = document.createElement("button");
         approve.type = "button";
-        approve.textContent = "Approve";
+        approve.textContent = "Approve account — license review pending";
         approve.addEventListener("click", () => submitContractorDecision("approve", approve));
         const approveWithoutLicense = document.createElement("button");
         approveWithoutLicense.type = "button";
         approveWithoutLicense.className = "secondary";
-        approveWithoutLicense.textContent = "Approve without license";
+        approveWithoutLicense.textContent = "Approve account — no license";
         approveWithoutLicense.addEventListener("click", () => submitContractorDecision("approve_without_license", approveWithoutLicense));
         const reject = document.createElement("button");
         reject.type = "button";
