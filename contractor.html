@@ -388,7 +388,7 @@
         <div id="signupInsuranceAgencyWrap" class="hidden"><label for="signupInsuranceAgency">Insurance company name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
         <div id="signupInsurancePhoneWrap" class="hidden"><label for="signupInsurancePhone">Insurance company phone number</label><input id="signupInsurancePhone" type="tel" autocomplete="tel"></div>
         <div id="signupInsurancePolicyWrap" class="hidden"><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
-        <div class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
+        <div id="signupInsuranceExpirationWrap" class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
@@ -532,7 +532,7 @@
             <div id="profileInsuranceAgencyWrap" class="hidden"><label for="profileInsuranceAgency">Insurance company name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
             <div id="profileInsurancePhoneWrap" class="hidden"><label for="profileInsurancePhone">Insurance company phone number</label><input id="profileInsurancePhone" type="tel" autocomplete="tel"></div>
             <div id="profileInsurancePolicyWrap" class="hidden"><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
-            <div class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
+            <div id="profileInsuranceExpirationWrap" class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
           </div>
         </div>
       </div>
@@ -888,8 +888,8 @@
     const insuranceAgentPhone=$("signupInsurancePhone").value.trim();
     const insurancePolicyNumber=$("signupInsurancePolicyNumber").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceAgencyName || !insuranceAgentPhone || !insurancePolicyNumber)) return message("authMessage","Enter the insurance company name, company phone number, and policy number.","error");
-    if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
+    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceAgencyName || !insuranceAgentPhone || !insurancePolicyNumber)) return message("authMessage","Enter the insurance company name, company phone number, policy number, and expiration date.","error");
+    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceExpiration || new Date(insuranceExpiration+"T23:59:59")<new Date())) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
@@ -1366,8 +1366,8 @@
     if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
     const showInsurance=!employee;
     const yes=showInsurance && $("profileHasInsuranceCertificate").value==="yes";
-    ["profileInsuranceAgencyWrap","profileInsurancePhoneWrap","profileInsurancePolicyWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
-    ["profileInsuranceAgency","profileInsurancePhone","profileInsurancePolicyNumber"].forEach(id=>$(id).required=yes);
+    ["profileInsuranceAgencyWrap","profileInsurancePhoneWrap","profileInsurancePolicyWrap","profileInsuranceExpirationWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
+    ["profileInsuranceAgency","profileInsurancePhone","profileInsurancePolicyNumber","profileInsuranceExpiration"].forEach(id=>$(id).required=yes);
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
     const companyLicenseFields=$("profileLicenseFields");
@@ -2952,8 +2952,8 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       const showInsurance=$("signupWorkRole").value==="independent";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
       const yes=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
-      ["signupInsuranceAgencyWrap","signupInsurancePhoneWrap","signupInsurancePolicyWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
-      ["signupInsuranceAgency","signupInsurancePhone","signupInsurancePolicyNumber"].forEach(id=>$(id).required=yes);
+      ["signupInsuranceAgencyWrap","signupInsurancePhoneWrap","signupInsurancePolicyWrap","signupInsuranceExpirationWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
+      ["signupInsuranceAgency","signupInsurancePhone","signupInsurancePolicyNumber","signupInsuranceExpiration"].forEach(id=>$(id).required=yes);
     }
     $("signupHasInsuranceCertificate").addEventListener("change",updateSignupInsuranceVisibility);
     $("signupWorkRole").addEventListener("change",()=>{
