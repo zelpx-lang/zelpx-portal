@@ -1219,12 +1219,20 @@
       const contractors = new Map((contractorsResult.data || []).map(x => [x.id, x]));
       const professionIds = [...new Set(requests.flatMap(r => (r.requested_changes?.items || []).map(item => item.profession_id).filter(Boolean)))];
       const categoryIds = [...new Set(requests.flatMap(r => r.requested_changes?.category_ids || []))];
-      const [currentCategoriesResult, currentQualificationsResult] = await Promise.all([
+      const [currentCategoriesResult, currentQualificationsResult, stateLicensesResult] = await Promise.all([
         contractorIds.length ? db.from("contractor_service_categories").select("contractor_id,category_id").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null}),
-        contractorIds.length ? db.from("contractor_profession_qualifications").select("contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null})
+        contractorIds.length ? db.from("contractor_profession_qualifications").select("contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null}),
+        contractorIds.length ? db.from("contractor_state_licenses").select("contractor_id,state_code,license_number,license_type,expiration_date,review_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null})
       ]);
       if (currentCategoriesResult.error) throw currentCategoriesResult.error;
       if (currentQualificationsResult.error) throw currentQualificationsResult.error;
+      if (stateLicensesResult.error) throw stateLicensesResult.error;
+      const stateLicenseRows = new Map();
+      (stateLicensesResult.data || []).forEach(row => {
+        const key = row.contractor_id + "|" + String(row.state_code || "").toUpperCase();
+        const existing = stateLicenseRows.get(key);
+        if (!existing || (row.expiration_date && !existing.expiration_date)) stateLicenseRows.set(key,row);
+      });
       const currentCategoryIds = new Map();
       (currentCategoriesResult.data || []).forEach(row => {
         if (!currentCategoryIds.has(row.contractor_id)) currentCategoryIds.set(row.contractor_id, []);
@@ -1396,7 +1404,7 @@
             service_radius_miles: company.service_radius_miles, has_license: company.has_license,
             license_number: company.license_number, license_state: company.license_state,
             license_type: company.license_type,
-            license_expiration_date: company.license_expiration_date,
+            license_expiration_date: company.license_expiration_date || stateLicenseRows.get(company.id + "|" + String(company.license_state || "").toUpperCase())?.expiration_date || null,
             insurance_agency_name: company.insurance_agency_name, insurance_agent_phone: company.insurance_agent_phone,
             insurance_policy_number: company.insurance_policy_number,
             insurance_expiration_date: company.insurance_expiration_date,
@@ -1409,7 +1417,9 @@
             }
           });
           if (!Object.prototype.hasOwnProperty.call(changes,"license_expiration_date")) {
-            addChange("License expiration date", current.license_expiration_date, "Not submitted — contractor must enter the expiration date");
+            const stateLicense = stateLicenseRows.get(company.id + "|" + String(changes.license_state || company.license_state || "").toUpperCase());
+            const submittedExpiry = stateLicense?.expiration_date || null;
+            addChange("License expiration date", company.license_expiration_date || "Not set", submittedExpiry || "Not submitted — contractor must enter the expiration date");
           }
         } else if (request.request_type === "service_categories") {
           const before = (currentCategoryIds.get(request.contractor_id) || []).map(id => categoryNames.get(id) || "Unknown category");
