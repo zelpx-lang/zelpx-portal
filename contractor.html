@@ -1667,7 +1667,7 @@
           const q = stateQualifications.get(id);
           const status = stateRules.get(id);
           const review = String(q?.verification_status || "").toLowerCase();
-          if (status === "not_required") return review === "not_required" || review === "verified";
+          if (status === "not_required") return review === "not_required";
           const stateLicense = (stateLicenses || []).find(item =>
             String(item.state_code || "").trim().toUpperCase() === state);
           const companyLicenseVerified = stateLicense?.review_status === "verified"
