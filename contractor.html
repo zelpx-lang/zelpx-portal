@@ -1173,6 +1173,7 @@
   let professionCatalog = [], selectedProfessionIds = new Set(), savedProfessionIds = new Set();
   let professionRuleRows = [];
   let professionVerificationById = new Map();
+  let mappedProfessionIds = new Set();
   async function loadProfessionQualifications() {
     const stateSelect = $("professionState");
     if (!currentContractor) { $("professionComplianceSummary").textContent = "A contractor profile is required before saving work types."; return; }
@@ -1184,13 +1185,16 @@
     }
     const currentState = (currentContractor?.service_state || "OR").toUpperCase();
     if ([...stateSelect.options].some(o=>o.value===currentState)) stateSelect.value=currentState;
-    const [professionsResult, qualificationsResult, pendingResult] = await Promise.all([
+    const [professionsResult, qualificationsResult, pendingResult, professionMapsResult] = await Promise.all([
       db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
       db.from("contractor_profession_qualifications").select("profession_id,state_code,work_role,verification_status,license_number,license_type").eq("contractor_id",currentContractor.id).eq("state_code",stateSelect.value),
-      db.from("contractor_change_requests").select("requested_changes,created_at,status,admin_note").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").filter("requested_changes->>state_code","eq",stateSelect.value).order("created_at",{ascending:false}).limit(1).maybeSingle()
+      db.from("contractor_change_requests").select("requested_changes,created_at,status,admin_note").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").filter("requested_changes->>state_code","eq",stateSelect.value).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+      db.from("service_category_profession_map").select("profession_id").eq("mapping_status","mapped")
     ]);
     if(professionsResult.error) throw professionsResult.error;
     if(qualificationsResult.error) throw qualificationsResult.error;
+    if(professionMapsResult.error) throw professionMapsResult.error;
+    mappedProfessionIds=new Set((professionMapsResult.data||[]).map(x=>x.profession_id));
     if(pendingResult.error) console.warn("Could not load pending profession selections:",pendingResult.error.message);
     professionCatalog=professionsResult.data||[];
     const saved=qualificationsResult.data||[];
@@ -1322,7 +1326,11 @@
       const status=rule?.requirement_status||"unverified";
       const eligible=licenseChoice==="yes" ||
         (licenseChoice==="no" && (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required"));
-      return eligible && (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
+      // New selections must map to a customer-facing service category.
+      // Preserve previously selected legacy IDs so the contractor can remove them safely.
+      const mapped=mappedProfessionIds.has(p.id);
+      return (mapped || selectedProfessionIds.has(p.id)) && eligible &&
+        (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
     });
     if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your personal license status to see work types for your role.";return;}
     const statusLabels={
@@ -1340,6 +1348,11 @@
       cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
       cb.addEventListener("change",()=>{if(cb.checked)selectedProfessionIds.add(p.id);else selectedProfessionIds.delete(p.id);refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));});
       const name=document.createElement("span"); name.textContent=p.profession_name; name.style.flex="1";
+      if(!mappedProfessionIds.has(p.id)){
+        name.textContent+=" · legacy — not linked to a customer service";
+        name.style.color="#9a5b32";
+        label.title="This old selection is not connected to a customer-facing service category. Uncheck it to remove it; it cannot be selected again until mapped.";
+      }
       label.append(cb,name); root.append(label);
     });
     if(!matches.length) root.textContent="No professions found.";
