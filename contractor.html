@@ -1618,7 +1618,7 @@
       fallback.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;categorySelect.append(option);});
       console.warn("Full service catalog filter could not load:",catalogError.message);
     }else{
-      (catalog||[]).filter(item=>isAdmin || [...selectedLeadCategoriesByState.values()].some(names=>names.has(item.name.toLowerCase()))).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
+      (catalog||[]).filter(item=>isAdmin || [...licenseEligibleLeadCategories.values()].some(names=>names.has(item.name.toLowerCase()))).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
     }
     if ([...categorySelect.options].some(option => option.value === selectedCategory)) categorySelect.value = selectedCategory;
     renderLeads();
