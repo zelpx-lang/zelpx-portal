@@ -579,15 +579,17 @@ function draw(){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.si
 function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl=((t-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
 function chooseService(name,groupName){
-  window.selectedSphereGroup=groupName||window.selectedSphereGroup;
-  if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
-  if(!selectedSphereServices.includes(name)){
-    if(selectedSphereServices.length>=5){
-       showServiceLimitNotice();
-       return;
-     }
-    selectedSphereServices.push(name);
+  const alreadySelected=selectedSphereServices.includes(name);
+  // The sixth service is a hard limit: play only the Windows XP error,
+  // not the normal service-button sound or vibration.
+  if(!alreadySelected && selectedSphereServices.length>=5){
+    showServiceLimitNotice();
+    return;
   }
+  window.selectedSphereGroup=groupName||window.selectedSphereGroup;
+  if(window.galaxyTint)window.galaxyTint(groupName||name);
+  if(navigator.vibrate)navigator.vibrate(12);
+  if(!alreadySelected)selectedSphereServices.push(name);
   renderSelectedSphereServices();
   panel.hidden=false;
   const count=document.getElementById("selectedServiceCount");
@@ -601,8 +603,13 @@ function showMainSphere(){
   renderSelectedSphereServices();
 }
 function select(it){
-  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   const group=serviceGroups[it.name];
+  // On an attempted sixth selection, skip all ordinary click feedback.
+  if(!group && !selectedSphereServices.includes(it.name) && selectedSphereServices.length>=5){
+    chooseService(it.name,it.groupName||"Home services");
+    return;
+  }
+  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
   if(group){
     window.selectedSphereGroup=it.name;
     panel.hidden=true;document.getElementById("serviceSubpanel").hidden=true;
