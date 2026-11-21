@@ -1019,7 +1019,7 @@
   }
   async function loadAdditionalStateLicenses(pendingDraft, contractor){
     if(!currentContractor)return;
-    const {data,error}=await db.from("contractor_state_licenses").select("state_code,license_number,license_type,review_status").eq("contractor_id",currentContractor.id).order("state_code");
+    const {data,error}=await db.from("contractor_state_licenses").select("state_code,license_number,license_type,review_status,document_path,expiration_date").eq("contractor_id",currentContractor.id).order("state_code");
     if(error)throw error;
     const map=new Map();
     (data||[]).forEach(x=>map.set(x.state_code,{...x}));
@@ -2440,8 +2440,8 @@
       const {data:cs,error}=await db.from("contractors").select("id,user_id,company_name,email,verification_status,service_state,has_license,license_number,license_state,license_type,license_document_path,license_review_status,license_review_notes,license_reviewed_at,insurance_review_status,insurance_policy_number,insurance_expiration_date").order("created_at",{ascending:false}).limit(1000);if(error)throw error;
       root.replaceChildren();if(!cs?.length){root.textContent="No contractors found.";return;}
       const ids=cs.map(c=>c.id),uids=cs.map(c=>c.user_id).filter(Boolean);
-      const [cr,qr,pr]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids)]);
-      if(cr.error)throw cr.error;if(qr.error)throw qr.error;if(pr.error)throw pr.error;
+      const [cr,qr,pr,sl]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids),db.from("contractor_state_licenses").select("id,contractor_id,state_code,license_number,license_type,document_path,review_status,review_notes,expiration_date").in("contractor_id",ids)]);
+      if(cr.error)throw cr.error;if(qr.error)throw qr.error;if(pr.error)throw pr.error;if(sl.error)throw sl.error;
       const qids=[...new Set((qr.data||[]).map(q=>q.profession_id))];const rr=qids.length?await db.from("zelpx_professions").select("id,profession_name").in("id",qids):{data:[],error:null};if(rr.error)throw rr.error;
       const ruleResult=qids.length?await db.from("state_profession_rules").select("profession_id,state_code,requirement_status").in("profession_id",qids).eq("jurisdiction_level","state"):{data:[],error:null};if(ruleResult.error)throw ruleResult.error;
       const names=new Map((rr.data||[]).map(p=>[p.id,p.profession_name])),profiles=new Map((pr.data||[]).map(p=>[p.id,p]));
@@ -2470,6 +2470,39 @@
           lic.append(b);
         }
         card.append(lic);
+        const stateLicenses=(sl.data||[]).filter(x=>x.contractor_id===c.id);
+        if(stateLicenses.length){
+          const stateSection=document.createElement("section");stateSection.style.cssText="padding:12px;border:1px solid var(--line);border-radius:12px;margin:10px 0";
+          const stateHeading=document.createElement("h4");stateHeading.textContent="Company licenses by state";stateSection.append(stateHeading);
+          for(const license of stateLicenses){
+            const item=document.createElement("div");item.style.cssText="padding:10px 0;border-top:1px solid var(--line)";
+            line(item,"State",license.state_code);line(item,"License",license.license_number+" · "+license.license_type);
+            line(item,"Document",license.document_path?"Uploaded":"Missing");
+            line(item,"Expiration",license.expiration_date||"Not provided");line(item,"Review status",license.review_status);
+            if(license.review_notes)line(item,"Review notes",license.review_notes);
+            if(license.document_path){
+              const open=document.createElement("button");open.type="button";open.className="secondary";open.textContent="Open "+license.state_code+" license document";
+              open.onclick=async()=>{open.disabled=true;try{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(license.document_path,300);if(error)throw error;if(!data?.signedUrl)throw new Error("Could not create secure document link.");window.open(data.signedUrl,"_blank","noopener,noreferrer");}catch(e){message("adminContractorReviewMessage","Could not open company license: "+e.message,"error");}finally{open.disabled=false;}};
+              item.append(open);
+            }
+            if(license.review_status!=="verified"){
+              const note=document.createElement("textarea");note.rows=2;note.placeholder="Required: state registry lookup, license status and expiration checked…";item.append(note);
+              const verify=document.createElement("button");verify.textContent="Verify "+license.state_code+" license";
+              verify.disabled=!license.document_path;
+              verify.onclick=async()=>{
+                if(!note.value.trim())return message("adminContractorReviewMessage","Enter notes for this state license.","error");
+                if(!window.confirm("Confirm this document and license have been checked for "+license.state_code+"?"))return;
+                verify.disabled=true;
+                const {error}=await db.rpc("zelpx_admin_verify_company_state_license",{p_contractor_id:c.id,p_state_code:license.state_code,p_admin_notes:note.value.trim()});
+                if(error){verify.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}
+                message("adminContractorReviewMessage",license.state_code+" company license verified.","success");loadAdminContractorReviews();
+              };
+              item.append(verify);
+            }
+            stateSection.append(item);
+          }
+          card.append(stateSection);
+        }
         line(card,"Insurance",(c.insurance_review_status||"not submitted")+" · policy "+(c.insurance_policy_number||"not provided")+" · expires "+(c.insurance_expiration_date||"not provided"));
         const qs=(qr.data||[]).filter(q=>q.contractor_id===c.id);const qh=document.createElement("h4");qh.textContent="Selected professions / credentials";card.append(qh);if(!qs.length)line(card,"Professions","None selected");
         for(const q of qs){const box=document.createElement("section");box.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0";const title=document.createElement("h4");title.textContent=names.get(q.profession_id)||"Profession";box.append(title);
