@@ -385,7 +385,7 @@
         <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
         <div><label for="signupHasInsuranceCertificate">Insurance certificate</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
-        <div><label for="signupInsuranceAgentPhone">Insurance agent phone number</label><input id="signupInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
+        <div><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
         <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
       </div>
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
@@ -500,7 +500,7 @@
           <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
           <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
-          <div style="grid-column:1/-1"><label for="profileCompanyLicenseFile">Company license document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="profileCompanyLicenseFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></div>
+          <div style="grid-column:1/-1"><label for="profileCompanyLicenseFile">Company license document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="profileCompanyLicenseFile" type="hidden"></div>
           <div><label for="profileCompanyLicenseExpiry">Expiration date (if applicable)</label><input id="profileCompanyLicenseExpiry" type="date"></div>
         <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
           <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
@@ -513,7 +513,7 @@
             <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
             <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
             <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
-            <label for="additionalLicenseFile" style="display:block;margin-top:12px">License document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="additionalLicenseFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+            <label for="additionalLicenseFile" style="display:block;margin-top:12px">License document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="additionalLicenseFile" type="hidden">
             <label for="additionalLicenseExpiry" style="display:block;margin-top:12px">Expiration date (if applicable)</label><input id="additionalLicenseExpiry" type="date">
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
               <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
@@ -528,7 +528,7 @@
           <div class="grid">
             <div><label for="profileHasInsuranceCertificate">Insurance certificate</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
             <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
-            <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
+            <div><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
             <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
           </div>
         </div>
@@ -889,7 +889,7 @@
     setBusy($("signupBtn"), true, "Creating account…");
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -963,14 +963,14 @@
       license_state_2:m.has_license===true?(m.license_state_2||null):null,
       license_type_2:m.has_license===true?(m.license_type_2||null):null,
       insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
-      insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
+      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
       has_insurance_certificate:currentContractor.has_insurance_certificate===true
     };
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
     currentContractor={...currentContractor,...update};
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_expiration_date:update.insurance_expiration_date}});
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
     if(metadataError)throw metadataError;
   }
 
@@ -1127,7 +1127,7 @@
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
-    $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
+    $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
     const companySaveStatus = $("companySaveStatus");
     if (companySaveStatus) {
@@ -1239,7 +1239,7 @@
       return status==="required"||(status==="conditional"&&role==="independent");
     });
     const heading=document.createElement("h4");heading.textContent="Profession-specific license documents";root.append(heading);
-    const intro=document.createElement("p");intro.className="muted";intro.textContent="Only professions that require an individual credential for your state and work role appear here. Files are private and limited to PDF, JPG, PNG or WebP (10 MB max).";root.append(intro);
+    const intro=document.createElement("p");intro.className="muted";intro.textContent="Enter the credential number and expiration date. An administrator will verify it; no document upload is needed.";root.append(intro);
     if(!selected.length){const note=document.createElement("p");note.className="muted";note.textContent="Approved profession selections will appear here for credential submission.";root.append(note);return;}
     if(!credentialRequired.length){const note=document.createElement("p");note.className="muted";note.textContent="No individual profession license upload is required for your currently selected work types and role under the state-level rules.";root.append(note);return;}
     for(const q of credentialRequired){
@@ -1253,43 +1253,22 @@
       const authority=makeField("Issuing authority","text",q.issuing_authority);
       const expiry=makeField("Expiration date","date",q.license_expiration_date); expiry.required=true;
       card.append(fields);
-      const fileLabel=document.createElement("label");fileLabel.textContent="Upload profession-specific document";
-      const file=document.createElement("input");file.type="file";file.accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp";fileLabel.append(file);card.append(fileLabel);
-      const current=document.createElement("p");current.className="muted";current.textContent=q.license_document_path?"Document uploaded · "+q.license_document_path.split("/").pop():"No document uploaded";card.append(current);
+      
       const save=document.createElement("button");save.type="button";save.textContent="Save credential and submit for review";
       save.addEventListener("click",async()=>{
         try{
           if(!number.value.trim()||!kind.value.trim())throw new Error("Enter the license number and type.");
           if(!expiry.value)throw new Error("Enter the current license expiration date.");
           if(new Date(expiry.value+"T00:00:00")<new Date(new Date().toDateString()))throw new Error("The credential expiration date must be today or later.");
-          const selectedFile=file.files?.[0];const oldPath=q.license_document_path||null;let path=oldPath;
-          let uploadedNewPath=null;
-          if(selectedFile){
-            const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
-            if(!allowed.includes(selectedFile.type))throw new Error("Choose a PDF, JPG, PNG or WebP file.");
-            if(selectedFile.size>10*1024*1024)throw new Error("File must be 10 MB or smaller.");
-            const extMap={"application/pdf":"pdf","image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
-            const ext=extMap[selectedFile.type];
-            if(!ext)throw new Error("Unsupported document type.");
-            path=currentUser.id+"/profession-"+q.profession_id+"-"+Date.now()+"."+ext;
-            const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,selectedFile,{upsert:false,contentType:selectedFile.type,cacheControl:"3600"});
-            if(uploadError)throw uploadError;
-            uploadedNewPath=path;
-          }
-          if(!path)throw new Error("Upload the profession-specific license or credential document.");
+          
+          // License number and expiration are reviewed by an administrator; no file is required.
           save.disabled=true;save.textContent="Submitting…";
           const {error:updateError}=await db.rpc("zelpx_submit_profession_credential",{
             p_qualification_id:q.id,p_license_number:number.value.trim(),p_license_type:kind.value.trim(),
             p_issuing_authority:authority.value.trim()||null,p_license_expiration_date:expiry.value||null,
-            p_license_document_path:path
+            p_license_document_path:null
           });
-          if(updateError){
-            if(uploadedNewPath) await db.storage.from("contractor-licenses").remove([uploadedNewPath]).catch(()=>{});
-            throw updateError;
-          }
-          if(oldPath&&uploadedNewPath&&oldPath!==uploadedNewPath){
-            await db.storage.from("contractor-licenses").remove([oldPath]).catch(cleanupError=>console.warn("Old credential file cleanup failed:",cleanupError));
-          }
+          if(updateError) throw updateError;
           message("specialtiesMessage","Credential submitted. It remains unavailable for lead purchases until an administrator verifies it.","success");
           await loadProfessionQualifications();
         }catch(e){message("specialtiesMessage","Could not submit credential: "+e.message,"error");save.disabled=false;save.textContent="Save credential and submit for review";}
@@ -1401,9 +1380,7 @@
       const field=$(id); if(field) field.required=licenseFieldsVisible;
     });
     const licenseDocument=$("profileCompanyLicenseFile");
-    if(licenseDocument){
-      licenseDocument.required=licenseFieldsVisible&&!(licenseDocument.dataset.existingPath&&licenseDocument.dataset.existingState===$("profileLicenseState").value);
-    }
+    if(licenseDocument) licenseDocument.required=false;
     const ackWrap=$("profileNoLicenseAckWrap");
     if(ackWrap)ackWrap.classList.toggle("hidden",licenseChoice!=="no"||employee);
   }
@@ -2270,7 +2247,7 @@
           license_type_2: currentContractor.license_type_2 || null,
           has_insurance_certificate: $("profileHasInsuranceCertificate").value === "yes",
           insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
-          insurance_agent_phone: $("profileInsuranceAgentPhone").value.trim() || null,
+          insurance_policy_number: $("profileInsurancePolicyNumber").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
         // Save ordinary contact and location fields directly so they remain current
@@ -2305,14 +2282,14 @@
             const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,file,{upsert:false,contentType:file.type,cacheControl:"3600"});
             if(uploadError)throw uploadError;
           }
-          if(!path)throw new Error("Upload the company license document for "+license.state_code+".");
+          // License number is verified by an administrator; no document upload is collected.
           const {error}=await db.rpc("zelpx_submit_company_state_license",{
             p_state_code:license.state_code,p_license_number:license.license_number,
-            p_license_type:license.license_type,p_document_path:path,p_expiration_date:license.expiration_date||null
+            p_license_type:license.license_type,p_document_path:null,p_expiration_date:license.expiration_date||null
           });
           if(error)throw error;
           const savedRecord={state_code:license.state_code,license_number:license.license_number,license_type:license.license_type,
-            document_path:path,expiration_date:license.expiration_date||null,review_status:"pending"};
+            document_path:null,expiration_date:license.expiration_date||null,review_status:"pending"};
           additionalStateLicenses=[...additionalStateLicenses.filter(x=>x.state_code!==license.state_code),savedRecord];
           if(String(license.state_code).toUpperCase()===String($("professionState").value).toUpperCase()&&$("profileCompanyLicenseReviewStatus")){
             $("profileCompanyLicenseReviewStatus").textContent="Submitted — pending administrator verification. Licensed status appears only after approval.";
@@ -2344,7 +2321,7 @@
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
           has_insurance_certificate: changes.has_insurance_certificate,
           insurance_agency_name: changes.insurance_agency_name,
-          insurance_agent_phone: changes.insurance_agent_phone,
+          insurance_policy_number: changes.insurance_policy_number,
           insurance_expiration_date: changes.insurance_expiration_date
         };
         if(!isEmployee){
