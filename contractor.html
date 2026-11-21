@@ -384,7 +384,8 @@
         <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
         <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
         <div><label for="signupHasInsuranceCertificate">Do you have business insurance?</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div class="hidden"><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div id="signupInsuranceAgencyWrap" class="hidden"><label for="signupInsuranceAgency">Insurance company name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div id="signupInsurancePhoneWrap" class="hidden"><label for="signupInsurancePhone">Insurance company phone number</label><input id="signupInsurancePhone" type="tel" autocomplete="tel"></div>
         <div id="signupInsurancePolicyWrap" class="hidden"><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
         <div class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
       </div>
@@ -527,7 +528,8 @@
           <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
           <div class="grid">
             <div><label for="profileHasInsuranceCertificate">Do you have business insurance?</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
-            <div class="hidden"><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div id="profileInsuranceAgencyWrap" class="hidden"><label for="profileInsuranceAgency">Insurance company name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div id="profileInsurancePhoneWrap" class="hidden"><label for="profileInsurancePhone">Insurance company phone number</label><input id="profileInsurancePhone" type="tel" autocomplete="tel"></div>
             <div id="profileInsurancePolicyWrap" class="hidden"><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
             <div class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
           </div>
@@ -881,15 +883,16 @@
     if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
     const hasInsuranceCertificate=$("signupHasInsuranceCertificate").value==="yes";
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
+    const insuranceAgentPhone=$("signupInsurancePhone").value.trim();
     const insurancePolicyNumber=$("signupInsurancePolicyNumber").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    if(signupRole==="independent" && $("signupHasInsuranceCertificate").value==="yes" && !insurancePolicyNumber) return message("authMessage","Enter your insurance policy number.","error");
+    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceAgencyName || !insuranceAgentPhone || !insurancePolicyNumber)) return message("authMessage","Enter the insurance company name, company phone number, and policy number.","error");
     if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -963,6 +966,7 @@
       license_state_2:m.has_license===true?(m.license_state_2||null):null,
       license_type_2:m.has_license===true?(m.license_type_2||null):null,
       insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
+      insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
       has_insurance_certificate:currentContractor.has_insurance_certificate===true
@@ -970,7 +974,7 @@
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
     currentContractor={...currentContractor,...update};
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
     if(metadataError)throw metadataError;
   }
 
@@ -1129,6 +1133,7 @@
     $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsurancePolicyWrap").classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
+    $("profileInsurancePhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
     $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
     const companySaveStatus = $("companySaveStatus");
@@ -1358,10 +1363,9 @@
     const addressLabel=document.querySelector('label[for="profileServiceAddress"]');
     if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
     const showInsurance=!employee;
-    const insurancePolicyWrap=$("profileInsurancePolicyWrap");
-    if(insurancePolicyWrap)insurancePolicyWrap.classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
-    const insurancePolicy=$("profileInsurancePolicyNumber");
-    if(insurancePolicy)insurancePolicy.required=showInsurance && $("profileHasInsuranceCertificate").value==="yes";
+    const yes=showInsurance && $("profileHasInsuranceCertificate").value==="yes";
+    ["profileInsuranceAgencyWrap","profileInsurancePhoneWrap","profileInsurancePolicyWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
+    ["profileInsuranceAgency","profileInsurancePhone","profileInsurancePolicyNumber"].forEach(id=>$(id).required=yes);
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
     const companyLicenseFields=$("profileLicenseFields");
@@ -2252,7 +2256,8 @@
           license_state_2: currentContractor.license_state_2 || null,
           license_type_2: currentContractor.license_type_2 || null,
           has_insurance_certificate: $("profileHasInsuranceCertificate").value === "yes",
-          insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
+          insurance_agency_name: $("profileHasInsuranceCertificate").value==="yes" ? $("profileInsuranceAgency").value.trim() || null : null,
+          insurance_agent_phone: $("profileHasInsuranceCertificate").value==="yes" ? $("profileInsurancePhone").value.trim() || null : null,
           insurance_policy_number: $("profileInsurancePolicyNumber").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
@@ -2327,6 +2332,7 @@
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
           has_insurance_certificate: changes.has_insurance_certificate,
           insurance_agency_name: changes.insurance_agency_name,
+          insurance_agent_phone: changes.insurance_agent_phone,
           insurance_policy_number: changes.insurance_policy_number,
           insurance_expiration_date: changes.insurance_expiration_date
         };
@@ -2943,8 +2949,9 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     function updateSignupInsuranceVisibility(){
       const showInsurance=$("signupWorkRole").value==="independent";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
-      $("signupInsurancePolicyWrap").classList.toggle("hidden",!showInsurance || $("signupHasInsuranceCertificate").value!=="yes");
-      $("signupInsurancePolicyNumber").required=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
+      const yes=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
+      ["signupInsuranceAgencyWrap","signupInsurancePhoneWrap","signupInsurancePolicyWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
+      ["signupInsuranceAgency","signupInsurancePhone","signupInsurancePolicyNumber"].forEach(id=>$(id).required=yes);
     }
     $("signupHasInsuranceCertificate").addEventListener("change",updateSignupInsuranceVisibility);
     $("signupWorkRole").addEventListener("change",()=>{
