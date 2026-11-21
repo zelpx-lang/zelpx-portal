@@ -1423,8 +1423,7 @@
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || lead.service_category === category;
-      const licenseMatch = isAdmin || (lead.status !== "available") ||
-        licenseEligibleLeadCategories?.has(String(lead.service_category||"").toLowerCase()) === true;
+      const licenseMatch = isAdmin || (lead.status !== "available") || isLeadLicenseEligible(lead);
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && licenseMatch && (!query || haystack.includes(query));
     });
@@ -1469,7 +1468,7 @@
       if (lead.status === "available") {
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = selectedNames.has(leadCategoryName);
-        const licenseEligible = licenseEligibleLeadCategories?.has(leadCategoryName) === true;
+        const licenseEligible = isLeadLicenseEligible(lead);
         const canBuy = !isAdmin && serviceSelected && licenseEligible;
         if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
@@ -1531,48 +1530,54 @@
 
   let licenseEligibleLeadCategories = null;
   async function loadLicenseEligibleLeadCategories() {
-    licenseEligibleLeadCategories = new Set();
+    licenseEligibleLeadCategories = new Map();
     if (isAdmin || !currentContractor?.id) return;
-    const state=String(currentContractor.service_state||"").trim().toUpperCase();
-    if(!["OR","WA"].includes(state))return;
 
-    // These are narrow, state-specific examples expressly identified by the
-    // state agencies as registration/license exemptions. Do not infer that
-    // other cleaning, landscaping, repair, or construction work is exempt.
+    // Eligibility is determined by the state where EACH lead is located,
+    // not by the contractor's business address. A contractor with a license
+    // can view selected categories; an unlicensed contractor is limited to
+    // narrow exemptions recognized by that lead's state.
     const statutoryExemptions={
-      OR:["Gutter Cleaning","Pressure Washing","Pressure Washing for Driveways","Yard Cleanup","Landscaping Cleanup","Property Cleanup"],
+      OR:["Gutter Cleaning","Pressure Washing","Pressure Washing for Driveways","Yard Cleanup"],
       WA:["Gutter Cleaning","Lawn Care and Mowing","Full Service Lawn Care","Window Cleaning"]
     };
-    const allowedNames=new Set(statutoryExemptions[state].map(name=>name.toLowerCase()));
-
     const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError}] = await Promise.all([
       db.from("contractor_profession_qualifications")
-        .select("profession_id,license_required_at_registration,verification_status,work_role")
-        .eq("contractor_id",currentContractor.id).eq("state_code",state),
+        .select("profession_id,state_code,license_required_at_registration,verification_status")
+        .eq("contractor_id",currentContractor.id),
       db.from("service_categories").select("id,name").eq("is_active",true)
     ]);
     if(qualificationError)throw qualificationError;
     if(categoriesError)throw categoriesError;
     availableServiceCategories=categories||[];
 
-    // A contractor must have the matching selected profession approved by
-    // admin as not requiring a license; a company YES/NO answer alone is not
-    // sufficient. For exempt activities without a profession mapping, require
-    // an explicitly approved no-license qualification before granting access.
+    // Keep a state-specific set so an OR qualification can never unlock a WA lead.
     const approvedNoLicense=(qualifications||[]).filter(q=>
       q.license_required_at_registration===false &&
-      ["not_required","verified"].includes(q.verification_status)
+      ["not_required","verified"].includes(String(q.verification_status||"").toLowerCase())
     );
-    const approvedProfessionIds=new Set(approvedNoLicense.map(q=>q.profession_id).filter(Boolean));
     const {data:maps,error:mapError}=await db.from("service_category_profession_map")
       .select("category_id,profession_id,mapping_status").eq("mapping_status","mapped");
     if(mapError)throw mapError;
-    const approvedCategoryIds=new Set((maps||[])
-      .filter(m=>approvedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
 
-    licenseEligibleLeadCategories=new Set(availableServiceCategories
-      .filter(item=>allowedNames.has(item.name.toLowerCase()) && approvedCategoryIds.has(item.id))
-      .map(item=>item.name.toLowerCase()));
+    for(const state of ["OR","WA"]){
+      const allowedNames=new Set(statutoryExemptions[state].map(name=>name.toLowerCase()));
+      const approvedProfessionIds=new Set(approvedNoLicense
+        .filter(q=>String(q.state_code||"").toUpperCase()===state)
+        .map(q=>q.profession_id).filter(Boolean));
+      const approvedCategoryIds=new Set((maps||[])
+        .filter(m=>approvedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
+      licenseEligibleLeadCategories.set(state,new Set(availableServiceCategories
+        .filter(item=>allowedNames.has(item.name.toLowerCase()) && approvedCategoryIds.has(item.id))
+        .map(item=>item.name.toLowerCase())));
+    }
+  }
+
+  function isLeadLicenseEligible(lead) {
+    if(isAdmin || currentContractor?.has_license===true) return true;
+    const state=String(lead?.service_state||"").trim().toUpperCase();
+    if(!["OR","WA"].includes(state)) return false;
+    return licenseEligibleLeadCategories?.get(state)?.has(String(lead?.service_category||"").toLowerCase())===true;
   }
 
   async function loadLeads() {
