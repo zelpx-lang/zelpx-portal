@@ -1527,17 +1527,23 @@
     if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
     serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},() => {
-        if (isAdmin && currentUser && !serviceRequestsEditing) loadServiceRequests();
+        // Never replace the Incoming leads list while an administrator is reading it.
+        // A new request is announced; the administrator chooses when to refresh.
+        if (!isAdmin || !currentUser) return;
+        const page = $("adminIncomingLeadsPage");
+        if (page && !page.classList.contains("hidden")) {
+          message("serviceRequestsMessage",
+            "A new customer request has arrived. Select “Refresh incoming leads” when you are ready to load it.",
+            "success");
+        }
       })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
           console.warn("Service request realtime unavailable:",status,error || "");
       });
-    serviceRequestsPoll = setInterval(() => {
-      if (!isAdmin || !currentUser) return;
-      const page = $("adminIncomingLeadsPage");
-      if (page && !page.classList.contains("hidden") && !serviceRequestsEditing) loadServiceRequests();
-    }, 10000);
+    // Incoming leads are refreshed manually to keep the administrator's
+    // current reading position and open request details stable.
+    serviceRequestsPoll = null;
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
