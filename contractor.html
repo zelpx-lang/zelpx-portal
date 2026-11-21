@@ -725,9 +725,8 @@
     const root=$("signupProfessionOptions");root.replaceChildren();
     if(!signupServiceCatalog.length){root.textContent="No service categories are currently available. Please refresh and try again.";return;}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
-    // The full active customer service catalog is visible in every state.
-    // Licensing answers and state rules change the qualification label, never
-    // whether a service category is displayed.
+    // Filter the visible choices by work role and the user's personal credential.
+    // Keep the full catalog in the database; this only changes the registration list.
     const licenseChoice=$("hasLicense")?.value||"";
     const role=$("signupWorkRole")?.value||"independent";
     const visibleCategories=signupServiceCatalog.filter(category=>{
@@ -736,9 +735,9 @@
         ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
         : null;
       const status=rule?.requirement_status||"unverified";
-      // The full service catalog stays visible for both YES and NO license answers.
-      // License requirements are displayed separately; admin review is unchanged.
-      return !searchTerm || category.name.toLowerCase().includes(searchTerm);
+      const eligible=licenseChoice!=="no" ||
+        (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required");
+      return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
     });
     if(!visibleCategories.length){root.textContent="No service categories found.";return;}
     const groups=new Map();
@@ -1314,14 +1313,16 @@
     const root=$("professionOptions"), query=($("professionSearch").value||"").trim().toLowerCase();
     root.replaceChildren();
     renderSelectedProfileServices();
-    // Keep the complete profession catalog selectable for every state and license
-    // answer. Licensing eligibility is displayed separately and never hides a
-    // profession from registration or profile updates.
+    // Filter visible choices without deleting or clearing previously selected services.
     const licenseChoice=$("profileHasLicense")?.value||"";
-    // Keep every active profession visible; license status never hides catalog items.
-    const matches=professionCatalog.filter(p=>
-      (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query)
-    );
+    const role=$("professionWorkRole")?.value||"independent";
+    const matches=professionCatalog.filter(p=>{
+      const rule=professionRuleRows.find(r=>r.profession_id===p.id);
+      const status=rule?.requirement_status||"unverified";
+      const eligible=licenseChoice!=="no" ||
+        (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required");
+      return eligible && (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
+    });
     const statusLabels={
       allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
       individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
@@ -2901,7 +2902,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       }
     });
     $("profileHasLicense").addEventListener("change",async()=>{
-      selectedProfessionIds.clear();
+      // Preserve saved selections; only filter the visible profession choices.
       $("profileLicenseFields").classList.toggle("hidden",$("profileHasLicense").value!=="yes");
       updateProfileInsuranceVisibility();
       try { await refreshProfessionRules(); }
@@ -2917,8 +2918,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; if(!showLicense) $(id).value=""; });
     }
     $("hasLicense").addEventListener("change", () => {
-      signupSelectedCategoryIds.clear();
-      signupSelectedProfessionIds.clear();
+      // Preserve selections when switching the license filter.
       updateSignupLicenseFields();
       updateSignupInsuranceVisibility();
       refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
