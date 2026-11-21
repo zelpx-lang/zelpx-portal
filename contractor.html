@@ -3065,6 +3065,31 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     buildLicenseDetailsPanel("signupLicenseChoice","signupLicenseFields","signupLicensePanel","Business license");
     buildLicenseDetailsPanel("professionLicenseFilter","profileLicenseFields","profileLicensePanel","Business license");
 
+    function makeLicensePopup(choiceId, fieldsId, popupId, title){
+      const choice=$(choiceId), fields=$(fieldsId), panel=$(popupId.replace("Popup","Panel"));
+      if(!choice||!fields||$(popupId)) return;
+      const overlay=document.createElement("div");
+      overlay.id=popupId;
+      overlay.className="hidden";
+      overlay.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px";
+      const dialog=document.createElement("div");
+      dialog.setAttribute("role","dialog"); dialog.setAttribute("aria-modal","true"); dialog.setAttribute("aria-label",title);
+      dialog.style.cssText="width:min(620px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.28)";
+      const head=document.createElement("div"); head.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px";
+      const h=document.createElement("h3"); h.textContent=title; h.style.margin="0";
+      const close=document.createElement("button"); close.type="button"; close.textContent="Done"; close.style.cssText="width:auto;padding:8px 16px;background:#f0783c;color:white";
+      head.append(h,close); dialog.append(head,fields); overlay.append(dialog); document.body.append(overlay);
+      const open=()=>{overlay.classList.remove("hidden");overlay.style.display="flex";};
+      const shut=()=>{overlay.classList.add("hidden");overlay.style.display="none";};
+      close.addEventListener("click",shut);
+      overlay.addEventListener("click",e=>{if(e.target===overlay)shut();});
+      choice.addEventListener("change",()=>{if(choice.value==="yes")open();else shut();});
+      if(choice.value==="yes")open();
+      return {open,shut};
+    }
+    const signupLicensePopup=makeLicensePopup("hasLicense","signupLicenseFields","signupLicensePopup","Enter business license details");
+    const profileLicensePopup=makeLicensePopup("profileHasLicense","profileLicenseFields","profileLicensePopup","Enter business license details");
+
     function updateSignupLicenseFields(){
       const employee=$("signupWorkRole").value==="employee";
       $("signupCompanyNameField").classList.toggle("hidden",employee);
