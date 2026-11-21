@@ -932,7 +932,7 @@
         await syncSignupContractorServiceCategories(user);
         await syncSignupProfessionQualifications(user);
       } catch (documentError) {
-        message("appMessage", "Your account is open, but a license or insurance document could not be saved: " + (documentError.message || "Please try again from My Company."), "error");
+        message("appMessage", "Your account is open, but your license or insurance details could not be synchronized: " + (documentError.message || "Please try again from My Company."), "error");
       }
     }
     if (IS_ADMIN_PORTAL && !isAdmin) {
@@ -2245,7 +2245,7 @@
     saveButton.textContent = "Saving…";
     saveButton.setAttribute("aria-busy", "true");
     if (saveStatus) {
-      saveStatus.textContent = "Saving your company details and documents…";
+      saveStatus.textContent = "Saving your company details and license/insurance information…";
       saveStatus.className = "message";
     }
     clearMessage("appMessage");
