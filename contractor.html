@@ -1355,6 +1355,7 @@
   function updateProfileInsuranceVisibility(){
     const role=$("professionWorkRole").value||"independent";
     const employee=role==="employee";
+    const employeeNeedsEmployerLicense=employee && professionCatalog.some(p=>selectedProfessionIds.has(p.id)&&professionRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
     const companyNameField=$("profileCompanyNameField"),companyEmailField=$("profileCompanyEmailField");
     if(companyNameField)companyNameField.classList.toggle("hidden",employee);
     if(companyEmailField)companyEmailField.classList.toggle("hidden",employee);
@@ -1364,7 +1365,19 @@
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
     const companyLicenseFields=$("profileLicenseFields");
-    if(companyLicenseFields) companyLicenseFields.classList.toggle("hidden",employee || $("profileHasLicense").value!=="yes");
+    if(companyLicenseFields) companyLicenseFields.classList.toggle("hidden",!(employeeNeedsEmployerLicense || (!employee && $("profileHasLicense").value==="yes")));
+    const licenseHeading=companyLicenseFields?.querySelector("h3");
+    if(licenseHeading)licenseHeading.textContent=employeeNeedsEmployerLicense?"Employer license / registration for conditional work":"License in state 1";
+    const licenseStatus=$("profileCompanyLicenseReviewStatus");
+    if(licenseStatus)licenseStatus.textContent=employeeNeedsEmployerLicense?"A verified employer license is required for this conditional work scope.":"Company license review status: loading…";
+    const licenseNumberLabel=document.querySelector('label[for="profileLicenseNumber"]');
+    if(licenseNumberLabel)licenseNumberLabel.textContent=employeeNeedsEmployerLicense?"Employer license number":"License number";
+    const licenseTypeLabel=document.querySelector('label[for="profileLicenseType"]');
+    if(licenseTypeLabel)licenseTypeLabel.textContent=employeeNeedsEmployerLicense?"Employer license type":"License type";
+    const licenseFileLabel=document.querySelector('label[for="profileCompanyLicenseFile"]');
+    if(licenseFileLabel)licenseFileLabel.textContent=employeeNeedsEmployerLicense?"Employer license document (PDF, JPG, PNG or WebP, max 10 MB)":"Company license document (PDF, JPG, PNG or WebP, max 10 MB)";
+    const additionalStates=$("additionalLicenseStatesWrap");
+    if(additionalStates)additionalStates.classList.toggle("hidden",employee);
     const licenseFilter=$("professionLicenseFilter");
     if(licenseFilter) licenseFilter.classList.toggle("hidden",employee);
   }
@@ -1373,6 +1386,7 @@
     updateProfileInsuranceVisibility();
     if(!state) return;
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
+    updateProfileInsuranceVisibility();
     const licenseChoice=$("profileHasLicense").value;
     const role=$("professionWorkRole").value;
     const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
@@ -2158,13 +2172,17 @@
       const companyName = isEmployee ? full_name : $("profileCompany").value.trim();
       const companyEmail = isEmployee ? (currentUser?.email || "") : $("profileCompanyEmail").value.trim();
       const serviceAddress = $("profileServiceAddress").value.trim();
+      const employeeNeedsEmployerLicense = isEmployee && professionCatalog.some(p=>selectedProfessionIds.has(p.id)&&professionRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
       const hasLicense = !isEmployee && $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
+      const licenseExpiry = $("profileCompanyLicenseExpiry").value || "";
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
       if (!full_name || !phone || (!isEmployee && (!companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)))) throw new Error(isEmployee ? "Complete your name and phone number." : "Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
       if ((!isEmployee && !serviceAddress) || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error(isEmployee ? "Complete your city, state, and valid 5-digit ZIP code." : "Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!isEmployee && !$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
+      if(employeeNeedsEmployerLicense && (!licenseNumber||!licenseState||!licenseType||!licenseExpiry)) throw new Error("Enter the employer license state, number, type, and current expiration date for this conditional work.");
+      if(employeeNeedsEmployerLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The employer license state must match the state selected for this work.");
       if (currentContractor) {
         if (!isEmployee) await verifyContractorBusinessAddress();
         const changes = {
@@ -2231,7 +2249,14 @@
           await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
             document_file:$("profileCompanyLicenseFile").files?.[0]||null,
             document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
-            expiration_date:$("profileCompanyLicenseExpiry").value||null});
+            expiration_date:licenseExpiry||null});
+        }
+        if(employeeNeedsEmployerLicense){
+          await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
+            document_file:$("profileCompanyLicenseFile").files?.[0]||null,
+            document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
+            expiration_date:licenseExpiry});
+          if($("profileCompanyLicenseReviewStatus"))$("profileCompanyLicenseReviewStatus").textContent="Employer license submitted. Work remains pending until an administrator verifies this document.";
         }
         if(!isEmployee){
           for(const license of additionalStateLicenses){
