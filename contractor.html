@@ -1680,7 +1680,7 @@
               && Boolean(String(q?.license_type || "").trim())
               && Boolean(String(q?.license_document_path || "").trim()) && notExpired;
             if (status === "required") {
-              return individualCredentialVerified && (q?.work_role === "employee" || companyLicenseVerified);
+              return individualCredentialVerified && companyLicenseVerified;
             }
             if (!companyLicenseVerified || review !== "verified") return false;
             return q?.work_role === "employee" || individualCredentialVerified;
