@@ -1189,7 +1189,7 @@
     const pendingItems= latestChanges && ["pending","rejected"].includes(latestRequest.status) && String(latestChanges.state_code||"").toUpperCase()===String(stateSelect.value||"").toUpperCase() && Array.isArray(latestChanges.items) ? latestChanges.items : null;
     selectedProfessionIds=new Set(pendingItems ? pendingItems.map(x=>x.profession_id).filter(Boolean) : activeIds);
     savedProfessionIds=new Set(activeIds);
-    $("professionWorkRole").value=pendingItems ? (pending.work_role||"independent") : (saved[0]?.work_role||"independent");
+    $("professionWorkRole").value=pendingItems ? (latestChanges.work_role||"independent") : (saved[0]?.work_role||"independent");
     updateProfileInsuranceVisibility();
 
     renderProfessionOptions();
