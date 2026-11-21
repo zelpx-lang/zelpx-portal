@@ -1664,9 +1664,14 @@
     const explicitlySelectedCategoryIds = new Set((selectedServices || []).map(row => row.category_id));
     availableServiceCategories = categories || [];
 
-    for (const state of ["OR","WA"]) {
+    // Evaluate every US state represented in the contractor's saved qualifications.
+    // Do not hardcode OR/WA: the catalog and licensing rules are state-scoped.
+    const qualificationStates = [...new Set((qualifications || [])
+      .map(q => String(q.state_code || "").trim().toUpperCase())
+      .filter(state => /^[A-Z]{2}$/.test(state)))];
+    for (const state of qualificationStates) {
       const stateQualifications = new Map((qualifications || [])
-        .filter(q => String(q.state_code || "").toUpperCase() === state)
+        .filter(q => String(q.state_code || "").trim().toUpperCase() === state)
         .map(q => [q.profession_id,q]));
       const professionIds = new Set(stateQualifications.keys());
       const mapped = (maps || []).filter(m => professionIds.has(m.profession_id));
