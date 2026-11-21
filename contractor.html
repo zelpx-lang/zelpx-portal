@@ -1175,7 +1175,7 @@
     const [professionsResult, qualificationsResult, pendingResult] = await Promise.all([
       db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
       db.from("contractor_profession_qualifications").select("profession_id,state_code,work_role,verification_status,license_number,license_type").eq("contractor_id",currentContractor.id).eq("state_code",stateSelect.value),
-      db.from("contractor_change_requests").select("requested_changes,created_at,status,admin_note").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").order("created_at",{ascending:false}).limit(1).maybeSingle()
+      db.from("contractor_change_requests").select("requested_changes,created_at,status,admin_note").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").filter("requested_changes->>state_code","eq",stateSelect.value).order("created_at",{ascending:false}).limit(1).maybeSingle()
     ]);
     if(professionsResult.error) throw professionsResult.error;
     if(qualificationsResult.error) throw qualificationsResult.error;
@@ -2755,14 +2755,26 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     });
     $("professionState").addEventListener("change",async()=>{
       try {
-        const {data,error}=await db.from("contractor_profession_qualifications").select("profession_id,work_role")
-          .eq("contractor_id",currentContractor.id).eq("state_code",$("professionState").value);
+        const state=$("professionState").value;
+        const [{data,error},{data:request,error:requestError}]=await Promise.all([
+          db.from("contractor_profession_qualifications").select("profession_id,work_role")
+            .eq("contractor_id",currentContractor.id).eq("state_code",state),
+          db.from("contractor_change_requests").select("requested_changes,status")
+            .eq("user_id",currentUser.id).eq("request_type","profession_qualifications")
+            .filter("requested_changes->>state_code","eq",state)
+            .in("status",["pending","rejected"]).order("created_at",{ascending:false}).limit(1).maybeSingle()
+        ]);
         if(error) throw error;
-        selectedProfessionIds=new Set((data||[]).map(x=>x.profession_id));
-        savedProfessionIds=new Set(selectedProfessionIds);
-        $("professionWorkRole").value=data?.[0]?.work_role||"independent";
+        if(requestError) throw requestError;
+        const savedIds=(data||[]).map(x=>x.profession_id);
+        const pending=request?.requested_changes;
+        const pendingIds=pending&&Array.isArray(pending.items)?pending.items.map(x=>x.profession_id).filter(Boolean):null;
+        selectedProfessionIds=new Set(pendingIds||savedIds);
+        savedProfessionIds=new Set(savedIds);
+        $("professionWorkRole").value=pending?.work_role||data?.[0]?.work_role||"independent";
         renderProfessionOptions();
         await refreshProfessionRules();
+        if(pending) message("professionComplianceSummary",request.status==="rejected"?"This state's previous work-type request was rejected. Edit and resubmit it.":"This state's work-type request is awaiting administrator review.","success");
         await renderProfessionCredentialUploads();
       } catch(e) { message("professionComplianceSummary","Could not load saved work types: "+e.message,"error"); }
     });
