@@ -3043,6 +3043,28 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     });
     $("profileLicenseState").addEventListener("change",updateProfileInsuranceVisibility);
     $("profileCompanyLicenseFile").addEventListener("change",updateProfileInsuranceVisibility);
+    // Keep the license Yes/No choice and all credential fields together in one expandable panel, matching Business Insurance.
+    function buildLicenseDetailsPanel(choiceId, fieldsId, panelId, title){
+      const choice=$(choiceId), fields=$(fieldsId);
+      if(!choice||!fields||$(panelId)) return;
+      const panel=document.createElement("section");
+      panel.id=panelId;
+      panel.style.cssText="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--card, #fff)";
+      const heading=document.createElement("h3");
+      heading.textContent=title;
+      heading.style.cssText="margin:0 0 10px";
+      panel.append(heading);
+      choice.parentNode.insertBefore(panel,choice);
+      panel.append(choice,fields);
+      fields.style.marginTop="10px";
+      fields.style.padding="12px";
+      fields.style.border="1px solid var(--line)";
+      fields.style.borderRadius="10px";
+      fields.style.background="var(--surface, #fffaf5)";
+    }
+    buildLicenseDetailsPanel("signupLicenseChoice","signupLicenseFields","signupLicensePanel","Business license");
+    buildLicenseDetailsPanel("professionLicenseFilter","profileLicenseFields","profileLicensePanel","Business license");
+
     function updateSignupLicenseFields(){
       const employee=$("signupWorkRole").value==="employee";
       $("signupCompanyNameField").classList.toggle("hidden",employee);
