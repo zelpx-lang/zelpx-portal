@@ -476,8 +476,12 @@
           <h3 style="margin:0 0 5px">Work types & license requirements</h3>
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
-            <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option></select></div>
-            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes — show all work types</option><option value="no">No — show work types allowed without your personal trade license</option></select></div>
+            <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor</option></select></div>
+            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="" disabled selected>Select Yes or No</option><option value="yes">Yes — show all work types</option><option value="no">No — show jobs that don't need a license</option></select>
+              <div id="profileNoLicenseAckWrap" class="hidden" style="margin-top:9px;padding:10px 12px;border:1px solid #f3b18f;border-radius:10px;background:#fff8f2">
+                <label style="display:flex;align-items:flex-start;gap:9px;margin:0;font-size:13px;font-weight:600;line-height:1.4"><input id="profileNoLicenseAck" type="checkbox" style="width:18px;min-height:18px;height:18px;margin:1px 0 0;flex:0 0 18px;accent-color:#ff6a2b">I confirm I will only accept jobs that don't require a license in my state.</label>
+              </div>
+            </div>
           </div>
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
@@ -1385,6 +1389,17 @@
     if(additionalStates)additionalStates.classList.toggle("hidden",employee);
     const licenseFilter=$("professionLicenseFilter");
     if(licenseFilter) licenseFilter.classList.toggle("hidden",employee);
+    const licenseChoice=$("profileHasLicense")?.value||"";
+    const licenseFieldsVisible=!employee&&licenseChoice==="yes";
+    ["profileLicenseNumber","profileLicenseState","profileLicenseType"].forEach(id=>{
+      const field=$(id); if(field) field.required=licenseFieldsVisible;
+    });
+    const licenseDocument=$("profileCompanyLicenseFile");
+    if(licenseDocument){
+      licenseDocument.required=licenseFieldsVisible&&!(licenseDocument.dataset.existingPath&&licenseDocument.dataset.existingState===$("profileLicenseState").value);
+    }
+    const ackWrap=$("profileNoLicenseAckWrap");
+    if(ackWrap)ackWrap.classList.toggle("hidden",licenseChoice!=="no"||employee);
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
@@ -1394,8 +1409,10 @@
     updateProfileInsuranceVisibility();
     const licenseChoice=$("profileHasLicense").value;
     const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
-    if(licenseLabel) licenseLabel.textContent="Do you have the required current license / registration / trade credential?";
+    if(licenseLabel) licenseLabel.textContent="Do you have a current license or registration?";
     $("professionLicenseFilter").classList.remove("hidden");
+    $("profileNoLicenseAckWrap").classList.toggle("hidden",licenseChoice!=="no");
+    if(licenseChoice!=="no") $("profileNoLicenseAck").checked=false;
     // Do not silently discard a contractor's selected professions when the
     // current state has a required, conditional, local-only, or unverified rule.
     // Keep the selection visible and save its qualification as pending; the
@@ -2224,7 +2241,10 @@
       if (!full_name || !phone || (!isEmployee && (!companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)))) throw new Error(isEmployee ? "Complete your name and phone number." : "Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
       if ((!isEmployee && !serviceAddress) || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error(isEmployee ? "Complete your city, state, and valid 5-digit ZIP code." : "Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!isEmployee && !$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
+      if (!isEmployee && $("profileHasLicense").value==="no" && !$("profileNoLicenseAck").checked) throw new Error("Confirm that you will only accept jobs that do not require a license in your state.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
+      if (hasLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The company license issuing state must match the state selected for your work.");
+      if (hasLicense && !$("profileCompanyLicenseFile").files?.[0] && !($("profileCompanyLicenseFile").dataset.existingPath && $("profileCompanyLicenseFile").dataset.existingState===licenseState)) throw new Error("Upload your current license or contractor registration document.");
       if(employeeNeedsEmployerLicense && (!licenseNumber||!licenseState||!licenseType||!licenseExpiry)) throw new Error("Enter the employer license state, number, type, and current expiration date for this conditional work.");
       if(employeeNeedsEmployerLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The employer license state must match the state selected for this work.");
       if (currentContractor) {
@@ -3017,6 +3037,8 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       try { await refreshProfessionRules(); }
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
+    $("profileLicenseState").addEventListener("change",updateProfileInsuranceVisibility);
+    $("profileCompanyLicenseFile").addEventListener("change",updateProfileInsuranceVisibility);
     function updateSignupLicenseFields(){
       const employee=$("signupWorkRole").value==="employee";
       $("signupCompanyNameField").classList.toggle("hidden",employee);
