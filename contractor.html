@@ -383,7 +383,7 @@
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
         <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
         <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
-        <div><label for="signupHasInsuranceCertificate">Insurance certificate</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div><label for="signupHasInsuranceCertificate">Do you have business insurance?</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="hidden"><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
         <div id="signupInsurancePolicyWrap" class="hidden"><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
         <div class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
@@ -513,7 +513,7 @@
             <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
             <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
             <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
-            <label for="additionalLicenseFile" style="display:block;margin-top:12px">License document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="additionalLicenseFile" type="hidden">
+            <input id="additionalLicenseFile" type="hidden" aria-hidden="true">
             <label for="additionalLicenseExpiry" style="display:block;margin-top:12px">Expiration date (if applicable)</label><input id="additionalLicenseExpiry" type="date">
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
               <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
@@ -526,7 +526,7 @@
           <h3>Business insurance</h3>
           <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
           <div class="grid">
-            <div><label for="profileHasInsuranceCertificate">Insurance certificate</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
+            <div><label for="profileHasInsuranceCertificate">Do you have business insurance?</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
             <div class="hidden"><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
             <div id="profileInsurancePolicyWrap" class="hidden"><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
             <div class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
@@ -1357,7 +1357,7 @@
     if(companyEmailField)companyEmailField.classList.toggle("hidden",employee);
     const addressLabel=document.querySelector('label[for="profileServiceAddress"]');
     if(addressLabel)addressLabel.textContent=employee?"Street address (optional)":"Business street address";
-    const showInsurance=!employee && $("profileHasLicense").value==="yes";
+    const showInsurance=!employee;
     const insurancePolicyWrap=$("profileInsurancePolicyWrap");
     if(insurancePolicyWrap)insurancePolicyWrap.classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
     const insurancePolicy=$("profileInsurancePolicyNumber");
@@ -2941,7 +2941,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     function updateSignupInsuranceVisibility(){
-      const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
+      const showInsurance=$("signupWorkRole").value==="independent";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
       $("signupInsurancePolicyWrap").classList.toggle("hidden",!showInsurance || $("signupHasInsuranceCertificate").value!=="yes");
       $("signupInsurancePolicyNumber").required=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
