@@ -2881,9 +2881,15 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       } catch(e) { message("professionComplianceSummary","Could not load saved work types: "+e.message,"error"); }
     });
     $("professionWorkRole").addEventListener("change",async()=>{
-      selectedProfessionIds.clear();
-      try { await refreshProfessionRules(); }
-      catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
+      // Changing Employee / Independent must retain the contractor's selected
+      // professions; the new role is submitted for admin review and the
+      // database resets licensed-profession verification on role changes.
+      try {
+        await refreshProfessionRules();
+        await renderProfessionCredentialUploads();
+      } catch(e) {
+        message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error");
+      }
     });
     $("profileHasLicense").addEventListener("change",async()=>{
       selectedProfessionIds.clear();
