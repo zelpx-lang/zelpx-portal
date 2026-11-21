@@ -712,7 +712,18 @@
   }
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    let { data, error } = await db.from("leads").select("id,service_category,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    let publicPreviewOnly = false;
+    if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
+      // Do not widen base-table permissions; fall back to the safe public view.
+      const preview = await db.from("public_available_leads")
+        .select("id,service_category,zip_code,urgency,price_cents,created_at")
+        .order("created_at", { ascending: false }).limit(100);
+      if (preview.error) { list.textContent = "Could not load public lead previews: " + preview.error.message; return; }
+      data = (preview.data || []).map(lead => ({ ...lead, status: "available", description: "", previewOnly: true }));
+      publicPreviewOnly = true;
+      error = null;
+    }
     if (error) { list.textContent = "Could not load leads: " + error.message; return; }
     const leads = data || [], available = leads.filter(lead => lead.status === "available");
     $("availableCount").textContent = String(available.length); list.replaceChildren();
@@ -725,11 +736,12 @@
       left.append(title, meta); const price = document.createElement("div"); price.className = "price"; price.textContent = money(lead.price_cents); head.append(left, price); card.append(head);
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; card.append(status);
       const descTitle = document.createElement("h3"); descTitle.textContent = "Work Details"; descTitle.style.marginTop = "14px"; card.append(descTitle);
-      const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.description || "No work details provided."; card.append(desc);
+      const desc = document.createElement("p"); desc.style.whiteSpace = "pre-wrap"; desc.textContent = lead.previewOnly ? "Public preview only. Full project details are protected." : (lead.description || "No work details provided."); card.append(desc);
       if (lead.status === "available") {
         const note = document.createElement("span"); note.className = "pill"; note.textContent = "Contact details hidden"; card.append(note);
-        const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = "Buy Lead"; buyButton.style.marginTop = "14px";
-        buyButton.addEventListener("click", () => buyLead(lead, buyButton)); card.append(buyButton);
+        const buyButton = document.createElement("button"); buyButton.type = "button"; buyButton.textContent = publicPreviewOnly ? "Sign in to view details" : "Buy Lead"; buyButton.style.marginTop = "14px";
+        buyButton.disabled = publicPreviewOnly;
+        if (!publicPreviewOnly) buyButton.addEventListener("click", () => buyLead(lead, buyButton)); card.append(buyButton);
       } else { const note = document.createElement("p"); note.className = "muted"; note.textContent = "This lead has already been purchased. Contact details are private."; card.append(note); }
       list.append(card);
     });
@@ -1535,7 +1547,16 @@
                 await loadPendingContractors();
                 await loadUnlicensedContractors();
               } catch (e) {
-                message("contractorChangesMessage","Could not review request: " + (e.message || "Unknown error"),"error");
+                const rawError = e.message || "Unknown error";
+                let friendlyError = rawError;
+                if (/Address must be verified/i.test(rawError)) {
+                  friendlyError = "Cannot approve this profile update yet: the contractor's changed service address must be verified first. Ask the contractor to verify the street address, city, state and ZIP code, then resubmit.";
+                } else if (/verified company license for this work state/i.test(rawError)) {
+                  friendlyError = "Cannot approve these selected professions yet: a current company license for this state must be submitted and verified first. Licensed work remains blocked until then.";
+                } else if (/A license number and issuing state are required/i.test(rawError)) {
+                  friendlyError = "Company license verification cannot continue: the contractor profile is missing a license number or issuing state. Ask the contractor to submit complete license details.";
+                }
+                message("contractorChangesMessage","Could not review request: " + friendlyError,"error");
                 actions.querySelectorAll("button").forEach(x => x.disabled = false);
               }
             });
