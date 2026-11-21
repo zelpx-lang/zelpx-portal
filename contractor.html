@@ -2387,7 +2387,9 @@
       const [cr,qr,pr]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids)]);
       if(cr.error)throw cr.error;if(qr.error)throw qr.error;if(pr.error)throw pr.error;
       const qids=[...new Set((qr.data||[]).map(q=>q.profession_id))];const rr=qids.length?await db.from("zelpx_professions").select("id,profession_name").in("id",qids):{data:[],error:null};if(rr.error)throw rr.error;
+      const ruleResult=qids.length?await db.from("state_profession_rules").select("profession_id,state_code,requirement_status").in("profession_id",qids).eq("jurisdiction_level","state"):{data:[],error:null};if(ruleResult.error)throw ruleResult.error;
       const names=new Map((rr.data||[]).map(p=>[p.id,p.profession_name])),profiles=new Map((pr.data||[]).map(p=>[p.id,p]));
+      const ruleByKey=new Map((ruleResult.data||[]).map(r=>[r.profession_id+":"+String(r.state_code||"").toUpperCase(),String(r.requirement_status||"").toLowerCase()]));
       const line=(el,k,v)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=k+": ";p.append(b,document.createTextNode(v==null||v===""?"Not provided":String(v)));el.append(p);};
       for(const c of cs){
         const card=document.createElement("article");card.className="lead";const prof=profiles.get(c.user_id)||{};card.dataset.searchText=[c.company_name,prof.full_name,c.email,prof.phone,c.service_state].filter(Boolean).join(" ").toLocaleLowerCase();const h=document.createElement("h3");h.textContent=c.company_name||prof.full_name||"Contractor";card.append(h);
@@ -2421,11 +2423,21 @@
             doc.onclick=async()=>{doc.disabled=true;try{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(q.license_document_path,300);if(error)throw error;if(!data?.signedUrl)throw new Error("Could not create a secure document link.");window.open(data.signedUrl,"_blank","noopener,noreferrer");}catch(e){message("adminContractorReviewMessage","Could not open license document: "+e.message,"error");}finally{doc.disabled=false;}};
             box.append(doc);
           }
+          const professionRule=ruleByKey.get(q.profession_id+":"+String(q.state_code||"").toUpperCase())||"unverified";
+          const employeeConditional=q.work_role==="employee"&&professionRule==="conditional";
           if(q.verification_status==="not_required"){
             line(box,"Credential review","No individual credential approval needed for this state rule.");
           }else if(q.verification_status!=="verified"&&q.license_required_at_registration){
-            const note=document.createElement("textarea");note.rows=2;note.placeholder="Required: record the license lookup, document details, status and expiration checked";box.append(note);
-            const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(!q.license_number||!q.license_type||!q.license_document_path)return message("adminContractorReviewMessage","Missing profession-specific number, type or uploaded document.","error");if(!note.value.trim())return message("adminContractorReviewMessage","Enter verification notes before approval.","error");if(!window.confirm("Confirm you checked this profession-specific credential and its status with the relevant licensing authority?"))return;b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()});if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(note,b);
+            if(employeeConditional) line(box,"Approval path","Conditional employee scope: verify the employer company license for this state. An individual trade document is not requested by this workflow.");
+            const note=document.createElement("textarea");note.rows=2;note.placeholder=employeeConditional?"Required: record the verified employer license, state registry lookup and the employee's supervised work scope":"Required: record the license lookup, document details, status and expiration checked";box.append(note);
+            const b=document.createElement("button");b.textContent=employeeConditional?"Approve conditional employee scope":"Approve this profession";b.onclick=async()=>{
+              if(!employeeConditional&&(!q.license_number||!q.license_type||!q.license_document_path))return message("adminContractorReviewMessage","Missing profession-specific number, type or uploaded document.","error");
+              if(!note.value.trim())return message("adminContractorReviewMessage","Enter verification notes before approval.","error");
+              if(!window.confirm(employeeConditional?"Confirm the employer license is verified for this state and this employee's scope is covered?":"Confirm you checked this profession-specific credential and its status with the relevant licensing authority?"))return;
+              b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()});
+              if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}
+              message("adminContractorReviewMessage","Profession approval recorded.","success");loadAdminContractorReviews();
+            };box.append(note,b);
           }card.append(box);
         }root.append(card);
       }
