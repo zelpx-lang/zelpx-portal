@@ -1127,6 +1127,7 @@
           ["Current approval status", contractor.verification_status || "Unknown"],
           ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
+          ["License expiration date", contractor.has_license ? (contractor.license_expiration_date || "Not provided — request correction before license verification") : "Not applicable"],
           ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
         ];
         details.forEach(([label, value]) => {
