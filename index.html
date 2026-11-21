@@ -150,7 +150,7 @@ const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
 let items=[],rx=-.25,ry=0,vx=0,vy=0,tgt=null,drag=null,idle=0,vis=true,W=0,R=0,sel=null;
 let soundEnabled=true,audioContext=null,lastSpinSound=0;
 const serviceGroups={
-  "Tile Installation":{"icon":"🧱","services":[
+  "Tile & Flooring":{"icon":"🧱","services":[
     "Tile floor installation",
     "Tile wall installation",
     "Bathroom tile installation",
@@ -170,8 +170,7 @@ const serviceGroups={
     "Tile repair and replacement",
     "Cracked tile repair",
     "Grout and regrouting",
-    "Grout sealing"]},
-  "Flooring Installation":{"icon":"🪵","services":[
+    "Grout sealing",
     "Laminate flooring installation",
     "Laminate floor repair",
     "Hardwood flooring installation",
@@ -197,6 +196,7 @@ const serviceGroups={
     "Floor underlayment installation",
     "Floor soundproofing",
     "Transition strip installation",
+    "Baseboard installation",
     "Commercial flooring installation",
     "Cork flooring installation",
     "Rubber flooring installation"]},
@@ -439,8 +439,10 @@ function renderSelectedSphereServices(){
     chip.append(label,remove);names.append(chip);
   });
   pick.hidden=selectedSphereServices.length===0;
-  const selectedGroup=window.selectedSphereGroup || "Tile Installation";
-  let parentService = selectedGroup==="Cabinets, Doors & Trim" ? "Doors & Windows"
+  const selectedGroup=window.selectedSphereGroup || "Tile & Flooring";
+  let parentService = selectedGroup==="Tile & Flooring"
+    ? (selectedSphereServices.some(name => /floor|laminate|hardwood|parquet|vinyl|carpet|cork|rubber|subfloor/i.test(name)) ? "Flooring Installation" : "Tile Installation")
+    : selectedGroup==="Cabinets, Doors & Trim" ? "Doors & Windows"
     : selectedGroup==="Heating & Air (HVAC)" ? "HVAC" : selectedGroup;
   const zip=document.getElementById("zip").value.trim();
   const draft={service:selectedSphereServices.length?parentService:"",zip:/^\d{5}$/.test(zip)?zip:"",services:[...selectedSphereServices]};
@@ -538,34 +540,12 @@ function draw(){const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.si
     st.opacity=.18+.82*d*d;st.zIndex=Math.round(d*100);st.pointerEvents=z2>-.2?"auto":"none";}}
 function rotateTo(it){const z1=Math.hypot(it.x,it.z),t=Math.atan2(-it.x,it.z),dl=((t-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
   tgt={ry:ry+dl,rx:Math.atan2(it.y,z1)};if(reduce){ry=tgt.ry;rx=tgt.rx;tgt=null;draw();}}
-function showServiceLimitNotice(){
-  const ctx=getAudio();
-  if(ctx){
-    // Play the original Windows XP Error WAV. Keep this cue limited to the
-    // attempt to select a sixth service; normal service sounds are unchanged.
-    const audio=window.zelpxLimitErrorAudio||(window.zelpxLimitErrorAudio=new Audio("https://mls.ovh/soundboard/xp_sounds/Windows%20XP%20Error.wav"));
-    audio.volume=.78;
-    audio.currentTime=0;
-    audio.play().catch(()=>{});
-  }
-  if(navigator.vibrate)navigator.vibrate([70,45,70]);
-  let notice=document.getElementById("sphereLimitNotice");
-  if(!notice){
-    notice=document.createElement("div");notice.id="sphereLimitNotice";notice.setAttribute("role","status");notice.setAttribute("aria-live","polite");
-    notice.style.cssText="position:fixed;z-index:3000;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:14px 19px;border:1px solid #f3a27b;border-radius:15px;background:#211a18;color:#fff4ec;box-shadow:0 12px 34px #0005;text-align:center;font:700 14px/1.45 ui-sans-serif,system-ui,sans-serif;";
-    document.body.append(notice);
-  }
-  notice.textContent="You’ve reached the 5-service limit. Remove a service to add another.";
-  notice.hidden=false;
-  clearTimeout(window.zelpxSphereLimitTimer);
-  window.zelpxSphereLimitTimer=setTimeout(()=>{notice.hidden=true;},3200);
-}
 function chooseService(name,groupName){
   window.selectedSphereGroup=groupName||window.selectedSphereGroup;
   if(window.galaxyTint)window.galaxyTint(groupName||name);if(navigator.vibrate)navigator.vibrate(12);
   if(!selectedSphereServices.includes(name)){
     if(selectedSphereServices.length>=5){
-      showServiceLimitNotice();
+      alert("You can select up to 5 services from the sphere. Remove one before choosing another.");
       return;
     }
     selectedSphereServices.push(name);
@@ -583,14 +563,8 @@ function showMainSphere(){
   renderSelectedSphereServices();
 }
 function select(it){
-  const group=serviceGroups[it.name];
-  // Check the five-service cap before playing the normal selection sound.
-  // A sixth leaf selection should play only the Windows XP error cue.
-  if(!group&&!selectedSphereServices.includes(it.name)&&selectedSphereServices.length>=5){
-    showServiceLimitNotice();
-    return;
-  }
   sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
+  const group=serviceGroups[it.name];
   if(group){
     window.selectedSphereGroup=it.name;
     panel.hidden=true;document.getElementById("serviceSubpanel").hidden=true;
@@ -621,34 +595,20 @@ window.buildSphere=function(names,icon){
     el.firstChild.textContent=icon(name);el.lastChild.textContent=name;box.append(el);
     const it={name,el,x:Math.cos(t)*r,y,z:Math.sin(t)*r};el.addEventListener("focus",()=>rotateTo(it));return it;});
   draw();};
-box.addEventListener("pointerdown",e=>{
-  if(!e.isPrimary||(e.pointerType==="mouse"&&e.button!==0))return;
-  e.preventDefault();getAudio();
-  drag={pointerId:e.pointerId,x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false,card:e.target.closest(".sc")};
-  try{box.setPointerCapture(e.pointerId);}catch(_){}
-  tgt=null;vx=vy=0;idle=0;
-});
-box.addEventListener("pointermove",e=>{
-  if(!drag||e.pointerId!==drag.pointerId)return;
-  e.preventDefault();
+box.addEventListener("pointerdown",e=>{getAudio();drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false,card:e.target.closest(".sc")};tgt=null;vx=vy=0;idle=0;});
+addEventListener("pointermove",e=>{if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>6){drag.moved=true;box.classList.add("grab");}
-  if(drag.moved){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;vy=dx*.008;vx=-dy*.008;ry+=vy;rx+=vx;}
-  drag.x=e.clientX;drag.y=e.clientY;
-});
-function finishSpherePointer(e){
-  if(!drag||(e&&e.pointerId!==drag.pointerId))return;
-  const d=drag;drag=null;box.classList.remove("grab");idle=0;
-  if(!d.moved&&d.card){const it=items[+d.card.dataset.i];if(it)select(it);}
-}
-box.addEventListener("pointerup",finishSpherePointer);
-box.addEventListener("pointercancel",finishSpherePointer);
-box.addEventListener("lostpointercapture",finishSpherePointer);
+  if(drag.moved){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;vy=dx*.008;vx=-dy*.008;spinSound(Math.hypot(vx,vy));ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));}
+  drag.x=e.clientX;drag.y=e.clientY;});
+addEventListener("pointerup",()=>{if(!drag)return;const d=drag;drag=null;box.classList.remove("grab");idle=0;
+  if(!d.moved&&d.card){const it=items[+d.card.dataset.i];if(it)select(it);}});
+addEventListener("pointercancel",()=>{drag=null;box.classList.remove("grab");});
 box.addEventListener("click",e=>{if(e.detail===0){const c=e.target.closest(".sc");if(c&&items[+c.dataset.i])select(items[+c.dataset.i]);}});
 addEventListener("resize",()=>{size();draw();});
 new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(box);
 function tick(){if(vis){
   if(tgt){ry+=(tgt.ry-ry)*.12;rx+=(tgt.rx-rx)*.12;if(Math.abs(tgt.ry-ry)+Math.abs(tgt.rx-rx)<.002)tgt=null;}
-  else if(!drag){ry+=vy;rx+=vx;if(Math.hypot(vx,vy)>.0025)vy*=.985;vx*=.985;idle++;if(!reduce&&!sel&&idle>60)ry+=.003;}
+  else if(!drag){ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));if(Math.hypot(vx,vy)>.0025)spinSound(Math.hypot(vx,vy));vy*=.95;vx*=.95;idle++;if(!reduce&&!sel&&idle>60)ry+=.003;}
   window.sphereYaw=ry;draw();}
   requestAnimationFrame(tick);}
 tick();
@@ -757,8 +717,7 @@ tick();
   function parentCategoryForService(service) {
     for (const [groupName, group] of Object.entries(sphereServiceGroups)) {
       if ((group.services || []).some(name => normalize(name) === normalize(service))) {
-        if (groupName === "Tile Installation") return "Tile Installation";
-        if (groupName === "Flooring Installation") return "Flooring Installation";
+        if (groupName === "Tile & Flooring") return /floor|laminate|hardwood|parquet|vinyl|carpet|cork|rubber|subfloor/i.test(service) ? "Flooring Installation" : "Tile Installation";
         if (groupName === "Painting") return "Painting";
         if (groupName === "Cabinets, Doors & Trim") return "Doors & Windows";
         if (groupName === "Electrical") return "Electrical";
@@ -766,7 +725,7 @@ tick();
         if (groupName === "Plumbing") return "Plumbing";
         if (groupName === "Appliance Maintenance") return "Appliance Maintenance";
         if (groupName === "Artificial Turf Installation") return "Artificial Turf Installation";
-        if (groupName === "Carpentry") return "Carpentry";
+        if (groupName === "Carpentry") return "Carpenter";
         if (groupName === "Basement Cleaning") return "Basement Cleaning";
         if (groupName === "House Cleaning") return "House Cleaning";
         if (groupName === "Office Cleaning") return "Office Cleaning";
