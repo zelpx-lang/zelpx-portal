@@ -1235,17 +1235,20 @@
             const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
             if(!allowed.includes(selectedFile.type))throw new Error("Choose a PDF, JPG, PNG or WebP file.");
             if(selectedFile.size>10*1024*1024)throw new Error("File must be 10 MB or smaller.");
-            const ext=selectedFile.name.split(".").pop().toLowerCase();
+            const extMap={"application/pdf":"pdf","image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
+            const ext=extMap[selectedFile.type];
+            if(!ext)throw new Error("Unsupported document type.");
             path=currentUser.id+"/profession-"+q.profession_id+"-"+Date.now()+"."+ext;
             const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,selectedFile,{upsert:false,contentType:selectedFile.type,cacheControl:"3600"});
             if(uploadError)throw uploadError;
           }
           if(!path)throw new Error("Upload the profession-specific license or credential document.");
           save.disabled=true;save.textContent="Submitting…";
-          const {error:updateError}=await db.from("contractor_profession_qualifications").update({
-            license_number:number.value.trim(),license_type:kind.value.trim(),issuing_authority:authority.value.trim()||null,
-            license_expiration_date:expiry.value||null,license_document_path:path,verification_status:"pending",verified_at:null,admin_notes:null,updated_at:new Date().toISOString()
-          }).eq("id",q.id).eq("contractor_id",currentContractor.id);
+          const {error:updateError}=await db.rpc("zelpx_submit_profession_credential",{
+            p_qualification_id:q.id,p_license_number:number.value.trim(),p_license_type:kind.value.trim(),
+            p_issuing_authority:authority.value.trim()||null,p_license_expiration_date:expiry.value||null,
+            p_license_document_path:path
+          });
           if(updateError)throw updateError;
           message("specialtiesMessage","Credential submitted. It remains unavailable for lead purchases until an administrator verifies it.","success");
           await loadProfessionQualifications();
