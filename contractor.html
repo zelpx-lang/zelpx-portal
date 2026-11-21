@@ -1242,7 +1242,7 @@
       const number=makeField("Profession license / credential number","text",q.license_number);
       const kind=makeField("License / credential type","text",q.license_type);
       const authority=makeField("Issuing authority","text",q.issuing_authority);
-      const expiry=makeField("Expiration date (if applicable)","date",q.license_expiration_date);
+      const expiry=makeField("Expiration date","date",q.license_expiration_date); expiry.required=true;
       card.append(fields);
       const fileLabel=document.createElement("label");fileLabel.textContent="Upload profession-specific document";
       const file=document.createElement("input");file.type="file";file.accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp";fileLabel.append(file);card.append(fileLabel);
@@ -1251,6 +1251,8 @@
       save.addEventListener("click",async()=>{
         try{
           if(!number.value.trim()||!kind.value.trim())throw new Error("Enter the license number and type.");
+          if(!expiry.value)throw new Error("Enter the current license expiration date.");
+          if(new Date(expiry.value+"T00:00:00")<new Date(new Date().toDateString()))throw new Error("The credential expiration date must be today or later.");
           const selectedFile=file.files?.[0];const oldPath=q.license_document_path||null;let path=oldPath;
           let uploadedNewPath=null;
           if(selectedFile){
