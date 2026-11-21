@@ -1138,60 +1138,52 @@
           noDocument.textContent = "No license photo or document uploaded.";
           actions.append(noDocument);
         }
+        const submitContractorDecision = async (choice, button) => {
+          if (button.disabled) return;
+          const labels = {
+            approve: "Approving…",
+            approve_without_license: "Approving…",
+            reject: "Rejecting…"
+          };
+          const originalText = button.textContent;
+          button.disabled = true;
+          actions.querySelectorAll("button").forEach(item => item.disabled = true);
+          setBusy(button, true, labels[choice]);
+          try {
+            const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
+              body: { contractor_id: contractor.id, decision: choice }
+            });
+            if (reviewError) throw reviewError;
+            if (data?.error) throw new Error(data.error);
+            const statusText = choice === "approve"
+              ? "Registration approved. Contractor moved to License Verification."
+              : choice === "approve_without_license"
+                ? "Registration approved. Contractor moved to Contractors without a license."
+                : "Registration rejected. Contractor remains blocked.";
+            const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
+            message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
+            await loadPendingContractors();
+          } catch (e) {
+            message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
+            actions.querySelectorAll("button").forEach(item => item.disabled = false);
+            button.textContent = originalText;
+          }
+        };
         const approve = document.createElement("button");
         approve.type = "button";
-        approve.textContent = "Approve contractor";
-        approve.textContent = "Review license";
-        approve.addEventListener("click", () => {
-          if (actions.querySelector("select[data-contractor-decision]")) return;
-          const decision = document.createElement("select");
-          decision.dataset.contractorDecision = "true";
-          decision.setAttribute("aria-label", "Choose contractor license review decision");
-          decision.style.marginTop = "10px";
-          const placeholder = document.createElement("option");
-          placeholder.value = "";
-          placeholder.textContent = "Choose decision…";
-          placeholder.selected = true;
-          placeholder.disabled = true;
-          const yesOption = document.createElement("option");
-          yesOption.value = "approve";
-          yesOption.textContent = "Approve — With License";
-          const noLicenseOption = document.createElement("option");
-          noLicenseOption.value = "approve_without_license";
-          noLicenseOption.textContent = "Approve — Without License";
-          const rejectOption = document.createElement("option");
-          rejectOption.value = "reject";
-          rejectOption.textContent = "Reject registration";
-          decision.append(placeholder, yesOption, noLicenseOption, rejectOption);
-          actions.append(decision);
-          decision.focus();
-          decision.addEventListener("change", async () => {
-            const choice = decision.value;
-            if (!choice) return;
-            approve.disabled = true;
-            decision.disabled = true;
-            setBusy(approve, true, choice === "reject" ? "Rejecting…" : "Approving…");
-            try {
-              const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
-                body: { contractor_id: contractor.id, decision: choice }
-              });
-              if (reviewError) throw reviewError;
-              if (data?.error) throw new Error(data.error);
-              const approved = choice !== "reject";
-              const statusText = choice === "approve" ? "Registration approved. Contractor moved to Contractors with a license." : choice === "approve_without_license" ? "Registration approved. Contractor moved to Contractors without a license." : "Registration rejected. Contractor remains blocked.";
-              const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
-              message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
-              await loadPendingContractors();
-            } catch (e) {
-              message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
-              decision.disabled = false;
-              decision.value = "";
-              approve.disabled = false;
-              approve.textContent = "Review license";
-            }
-          });
-        });
-        actions.append(approve);
+        approve.textContent = "Approve";
+        approve.addEventListener("click", () => submitContractorDecision("approve", approve));
+        const approveWithoutLicense = document.createElement("button");
+        approveWithoutLicense.type = "button";
+        approveWithoutLicense.className = "secondary";
+        approveWithoutLicense.textContent = "Approve without license";
+        approveWithoutLicense.addEventListener("click", () => submitContractorDecision("approve_without_license", approveWithoutLicense));
+        const reject = document.createElement("button");
+        reject.type = "button";
+        reject.className = "secondary";
+        reject.textContent = "Reject";
+        reject.addEventListener("click", () => submitContractorDecision("reject", reject));
+        actions.append(approve, approveWithoutLicense, reject);
         content.append(actions);
         list.append(card);
       });
