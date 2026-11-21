@@ -2283,6 +2283,7 @@
           service_longitude: Number($("profileServiceZip").dataset.longitude) || currentContractor.service_longitude || null,
           has_license: hasLicense, license_number: hasLicense ? licenseNumber : null,
           license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_expiration_date: hasLicense ? licenseExpiry : null,
           license_number_2: currentContractor.license_number_2 || null,
           license_state_2: currentContractor.license_state_2 || null,
           license_type_2: currentContractor.license_type_2 || null,
