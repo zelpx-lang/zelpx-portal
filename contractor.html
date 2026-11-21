@@ -1354,7 +1354,11 @@
     professionRuleRows=await loadRoleEligibilityRules(state,$("professionWorkRole").value);
     const licenseChoice=$("profileHasLicense").value;
     const role=$("professionWorkRole").value;
-    $("professionLicenseFilter").classList.toggle("hidden",role==="employee");
+    const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
+    if(licenseLabel) licenseLabel.textContent=role==="employee"
+      ? "Do you personally hold the individual trade license / certificate required for your selected work?"
+      : "Do you have the required current license / registration / trade credential?";
+    $("professionLicenseFilter").classList.remove("hidden");
     // Do not silently discard a contractor's selected professions when the
     // current state has a required, conditional, local-only, or unverified rule.
     // Keep the selection visible and save its qualification as pending; the
