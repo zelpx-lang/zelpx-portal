@@ -493,7 +493,7 @@
             <div id="selectedProfileServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">No services selected.</span></div>
           </div>
           <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
-          <div id="professionCredentialUploads" style="grid-column:1/-1;margin-top:12px"></div>
+          <!-- Per-profession credential cards removed. License details are entered once in Business license above. -->
         </div>
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
@@ -1257,63 +1257,11 @@
     else if(pendingItems && latestRequest.status==="rejected") message("professionComplianceSummary","Your previous work-type request was rejected. You can edit these selections and submit them again for administrator review. Rejected selections are not active.","error");
     await renderProfessionCredentialUploads();
   }
-  async function renderProfessionCredentialUploads(){
-    const root=$("professionCredentialUploads"); if(!root||!currentContractor)return;
-    root.replaceChildren();
-    const state=$("professionState").value;
-    const {data:rows,error}=await db.from("contractor_profession_qualifications")
-      .select("id,profession_id,work_role,verification_status,license_number,license_type,issuing_authority,license_expiration_date,license_document_path")
-      .eq("contractor_id",currentContractor.id).eq("state_code",state);
-    if(error)throw error;
-    const {data:rules,error:rulesError}=await db.from("state_profession_rules")
-      .select("profession_id,requirement_status,jurisdiction_level")
-      .eq("state_code",state).eq("jurisdiction_level","state");
-    if(rulesError)throw rulesError;
-    const role=$("professionWorkRole")?.value||"independent";
-    const ruleByProfession=new Map((rules||[]).map(r=>[r.profession_id,String(r.requirement_status||"").toLowerCase()]));
-    const selected=(rows||[]).filter(q=>selectedProfessionIds.has(q.profession_id));
-    const credentialRequired=selected.filter(q=>{
-      const status=ruleByProfession.get(q.profession_id);
-      return status==="required"||(status==="conditional"&&role==="independent");
-    });
-    const heading=document.createElement("h4");heading.textContent="Profession-specific license documents";root.append(heading);
-    const intro=document.createElement("p");intro.className="muted";intro.textContent="Enter the credential number and expiration date. An administrator will verify it; no document upload is needed.";root.append(intro);
-    if(!selected.length){const note=document.createElement("p");note.className="muted";note.textContent="Approved profession selections will appear here for credential submission.";root.append(note);return;}
-    if(!credentialRequired.length){const note=document.createElement("p");note.className="muted";note.textContent="No individual profession license upload is required for your currently selected work types and role under the state-level rules.";root.append(note);return;}
-    for(const q of credentialRequired){
-      const profession=professionCatalog.find(x=>x.id===q.profession_id);
-      const card=document.createElement("section");card.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff";
-      const title=document.createElement("h4");title.textContent=(profession?.profession_name||"Profession")+" · "+(q.verification_status||"pending").replaceAll("_"," ");card.append(title);
-      const fields=document.createElement("div");fields.className="grid";
-      const makeField=(labelText,type,value)=>{const wrap=document.createElement("div"),label=document.createElement("label"),input=document.createElement("input");label.textContent=labelText;input.type=type;input.value=value||"";wrap.append(label,input);fields.append(wrap);return input;};
-      const number=makeField("Profession license / credential number","text",q.license_number);
-      const kind=makeField("License / credential type","text",q.license_type);
-      const authority=makeField("Issuing authority","text",q.issuing_authority);
-      const expiry=makeField("Expiration date","date",q.license_expiration_date); expiry.required=true;
-      card.append(fields);
-      
-      const save=document.createElement("button");save.type="button";save.textContent="Save credential and submit for review";
-      save.addEventListener("click",async()=>{
-        try{
-          if(!number.value.trim()||!kind.value.trim())throw new Error("Enter the license number and type.");
-          if(!expiry.value)throw new Error("Enter the current license expiration date.");
-          if(new Date(expiry.value+"T00:00:00")<new Date(new Date().toDateString()))throw new Error("The credential expiration date must be today or later.");
-          
-          // License number and expiration are reviewed by an administrator; no file is required.
-          save.disabled=true;save.textContent="Submitting…";
-          const {error:updateError}=await db.rpc("zelpx_submit_profession_credential",{
-            p_qualification_id:q.id,p_license_number:number.value.trim(),p_license_type:kind.value.trim(),
-            p_issuing_authority:authority.value.trim()||null,p_license_expiration_date:expiry.value||null,
-            p_license_document_path:null
-          });
-          if(updateError) throw updateError;
-          message("specialtiesMessage","Credential submitted. It remains unavailable for lead purchases until an administrator verifies it.","success");
-          await loadProfessionQualifications();
-        }catch(e){message("specialtiesMessage","Could not submit credential: "+e.message,"error");save.disabled=false;save.textContent="Save credential and submit for review";}
-      });
-      card.append(save);root.append(card);
-    }
-  }
+  // Per-profession credential forms are intentionally removed. Contractors submit
+  // their business license once in the Business license section; qualification
+  // selections and admin review records remain intact.
+  async function renderProfessionCredentialUploads(){ return; }
+
   function renderSelectedProfileServices() {
     const list=$("selectedProfileServicesList");
     if(!list) return;
