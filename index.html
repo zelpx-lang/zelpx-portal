@@ -643,7 +643,7 @@ window.buildSphere=function(names,icon){
 box.addEventListener("pointerdown",e=>{getAudio();drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,moved:false,card:e.target.closest(".sc")};tgt=null;vx=vy=0;idle=0;});
 addEventListener("pointermove",e=>{if(!drag)return;
   if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>6){drag.moved=true;box.classList.add("grab");}
-  if(drag.moved){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;vy=dx*.008;vx=-dy*.008;spinSound(Math.hypot(vx,vy));ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));}
+  if(drag.moved){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;vy=dx*.008;vx=-dy*.008;ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));}
   drag.x=e.clientX;drag.y=e.clientY;});
 addEventListener("pointerup",()=>{if(!drag)return;const d=drag;drag=null;box.classList.remove("grab");idle=0;
   if(!d.moved&&d.card){const it=items[+d.card.dataset.i];if(it)select(it);}});
@@ -653,7 +653,7 @@ addEventListener("resize",()=>{size();draw();});
 new IntersectionObserver(es=>{vis=es[0].isIntersecting;}).observe(box);
 function tick(){if(vis){
   if(tgt){ry+=(tgt.ry-ry)*.12;rx+=(tgt.rx-rx)*.12;if(Math.abs(tgt.ry-ry)+Math.abs(tgt.rx-rx)<.002)tgt=null;}
-  else if(!drag){ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));if(Math.hypot(vx,vy)>.0025)spinSound(Math.hypot(vx,vy));vy*=.95;vx*=.95;idle++;if(!reduce&&!sel&&idle>60)ry+=.003;}
+  else if(!drag){ry+=vy;rx=Math.max(-1.3,Math.min(1.3,rx+vx));vy*=.95;vx*=.95;idle++;if(!reduce&&!sel&&idle>60)ry+=.003;}
   window.sphereYaw=ry;draw();}
   requestAnimationFrame(tick);}
 tick();
