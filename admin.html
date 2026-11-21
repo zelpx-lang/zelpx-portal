@@ -289,6 +289,28 @@
       body.admin-mode #adminPanel .admin-page .admin-page-nav button { font-size:13px; }
     }
 
+
+    /* Compact mobile layout for contractor update approvals */
+    #contractorChangesList .contractor-approval-slider { width:100%; margin:8px 0 0; }
+    #contractorChangesList .contractor-approval-viewport { height:auto !important; min-height:0 !important; }
+    #contractorChangesList .contractor-approval-slides { height:auto !important; min-height:0 !important; align-items:flex-start; }
+    #contractorChangesList .contractor-update-card { min-height:0 !important; height:auto !important; padding:14px !important; margin:6px 0 !important; border-radius:14px; }
+    #contractorChangesList .contractor-update-card h3 { font-size:18px; line-height:1.3; margin:0 0 6px; }
+    #contractorChangesList .contractor-update-card > p { font-size:13px; line-height:1.45; margin:4px 0 10px; }
+    #contractorChangesList .contractor-update-card .contactbox { padding:10px 12px; margin:8px 0 10px; border-radius:12px; }
+    #contractorChangesList .contractor-update-card .contactbox p { font-size:14px; line-height:1.4; margin:4px 0; }
+    #contractorChangesList .qualification-summary p { margin:4px 0; }
+    #contractorChangesList .contractor-update-card textarea { display:block; width:100%; min-height:62px !important; height:68px; box-sizing:border-box; resize:vertical; padding:10px 12px; margin:8px 0; border-radius:12px; font-size:14px; }
+    #contractorChangesList .contractor-update-actions { display:flex; gap:8px; margin-top:8px; }
+    #contractorChangesList .contractor-update-actions button { min-height:42px; height:42px; padding:8px 12px; border-radius:22px; font-size:14px; }
+    #contractorChangesList .contractor-approval-nav { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:260px; margin:8px auto 4px; padding:0; border:0; background:transparent; }
+    #contractorChangesList .contractor-approval-nav button { flex:0 0 42px !important; min-width:42px !important; width:42px; height:38px !important; padding:0 !important; border-radius:12px !important; font-size:14px !important; }
+    #contractorChangesList .contractor-approval-nav span { min-width:48px; font-size:13px; }
+    @media(max-width:700px) {
+      #contractorChangesList .contractor-update-card { padding:12px !important; }
+      #contractorChangesList .contractor-update-card .contactbox p { font-size:13px; }
+      #contractorChangesList .contractor-update-actions button { min-height:40px; height:40px; }
+    }
 </style>
 </head>
 <body class="admin-mode">
@@ -1226,30 +1248,30 @@
       slides.style.transition = "transform 280ms ease";
       slides.style.willChange = "transform";
       const nav = document.createElement("div");
-      nav.className = "actions";
+      nav.className = "actions contractor-approval-nav";
       nav.style.display = "flex";
       nav.style.alignItems = "center";
       nav.style.justifyContent = "center";
       nav.style.gap = "10px";
-      nav.style.margin = "12px 0 18px";
-      nav.style.padding = "8px";
+      nav.style.margin = "8px auto 4px";
+      nav.style.padding = "0";
       nav.style.width = "100%";
-      nav.style.maxWidth = "360px";
+      nav.style.maxWidth = "260px";
       nav.style.boxSizing = "border-box";
-      nav.style.border = "1px solid var(--line)";
-      nav.style.borderRadius = "14px";
-      nav.style.background = "var(--card, #fff)";
+      nav.style.border = "0";
+      nav.style.borderRadius = "0";
+      nav.style.background = "transparent";
       let slideIndex = 0;
       const previous = document.createElement("button");
       previous.type = "button"; previous.className = "secondary"; previous.textContent = "← Previous";
       previous.setAttribute("aria-label","Previous page");
-      previous.style.cssText = "flex:1;min-width:112px;height:48px;padding:0 16px;border-radius:12px;font-size:15px;font-weight:700;";
+      previous.style.cssText = "flex:0 0 42px;min-width:42px;height:38px;padding:0;border-radius:12px;font-size:14px;font-weight:700;";
       const indicator = document.createElement("span"); indicator.className = "muted";
       indicator.style.cssText = "min-width:42px;text-align:center;font-size:13px;font-weight:700;";
       const next = document.createElement("button");
       next.type = "button"; next.className = "secondary"; next.textContent = "Next →";
       next.setAttribute("aria-label","Next page");
-      next.style.cssText = "flex:1;min-width:112px;height:48px;padding:0 16px;border-radius:12px;font-size:15px;font-weight:700;";
+      next.style.cssText = "flex:0 0 42px;min-width:42px;height:38px;padding:0;border-radius:12px;font-size:14px;font-weight:700;";
       viewport.style.touchAction = "pan-y";
       const renderSlide = () => {
         const cards = requestsCards;
@@ -1291,7 +1313,7 @@
         const company = contractors.get(request.contractor_id) || {};
         const profile = profiles.get(request.user_id) || {};
         const changes = request.requested_changes || {};
-        const card = document.createElement("article"); card.className = "lead";
+        const card = document.createElement("article"); card.className = "lead contractor-update-card";
         const title = document.createElement("h3");
         title.textContent = (company.company_name || profile.full_name || "Contractor") + " — " +
           String(request.request_type || "update").replaceAll("_", " ") + " — " + String(request.status || "unknown").toUpperCase();
@@ -1391,7 +1413,7 @@
           note.placeholder = "Optional approval note; required reason if rejecting";
           note.setAttribute("aria-label", "Administrator review note");
           card.append(note);
-          const actions = document.createElement("div"); actions.className = "actions";
+          const actions = document.createElement("div"); actions.className = "actions contractor-update-actions";
           actions.style.display = "flex";
           actions.style.flexDirection = "row";
           actions.style.flexWrap = "nowrap";
