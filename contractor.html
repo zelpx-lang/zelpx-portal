@@ -2742,6 +2742,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
         $("professionWorkRole").value=data?.[0]?.work_role||"independent";
         renderProfessionOptions();
         await refreshProfessionRules();
+        await renderProfessionCredentialUploads();
       } catch(e) { message("professionComplianceSummary","Could not load saved work types: "+e.message,"error"); }
     });
     $("professionWorkRole").addEventListener("change",async()=>{
