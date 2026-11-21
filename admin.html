@@ -1215,14 +1215,20 @@
         if (!currentQualifications.has(row.contractor_id)) currentQualifications.set(row.contractor_id, []);
         currentQualifications.get(row.contractor_id).push(row);
       });
-      const [professionsResult, categoriesResult] = await Promise.all([
+      const requestedStates = [...new Set(requests.filter(r => r.request_type === "profession_qualifications").map(r => String(r.requested_changes?.state_code || "").toUpperCase()).filter(Boolean))];
+      const [professionsResult, categoriesResult, rulesResult] = await Promise.all([
         professionIds.length ? db.from("zelpx_professions").select("id,profession_name").in("id", professionIds) : Promise.resolve({data:[],error:null}),
-        categoryIds.length ? db.from("service_categories").select("id,name").in("id", categoryIds) : Promise.resolve({data:[],error:null})
+        categoryIds.length ? db.from("service_categories").select("id,name").in("id", categoryIds) : Promise.resolve({data:[],error:null}),
+        professionIds.length && requestedStates.length
+          ? db.from("state_profession_rules").select("profession_id,state_code,requirement_status").eq("jurisdiction_level","state").in("profession_id",professionIds).in("state_code",requestedStates)
+          : Promise.resolve({data:[],error:null})
       ]);
       if (professionsResult.error) throw professionsResult.error;
       if (categoriesResult.error) throw categoriesResult.error;
+      if (rulesResult.error) throw rulesResult.error;
       const professionNames = new Map((professionsResult.data || []).map(x => [x.id, x.profession_name]));
       const categoryNames = new Map((categoriesResult.data || []).map(x => [x.id, x.name]));
+      const professionRuleMap = new Map((rulesResult.data || []).map(x => [String(x.state_code).toUpperCase() + ":" + x.profession_id, String(x.requirement_status || "unverified").toLowerCase()]));
       list.replaceChildren();
       const pendingCount = requests.filter(r => r.status === "pending").length;
       const alert = $("contractorChangesAlert");
@@ -1401,9 +1407,14 @@
             const p = document.createElement("p");
             const strong = document.createElement("strong");
             strong.textContent = name + " — ";
-            const required = item.license_required_at_registration === true;
-            const licenseText = required ? "License required" :
-              item.license_required_at_registration === false ? "No license required" : "License requirement not specified";
+            const stateCode = String(changes.state_code || "").toUpperCase();
+            const requirement = professionRuleMap.get(stateCode + ":" + item.profession_id) || "unverified";
+            const required = requirement !== "not_required";
+            const licenseText = requirement === "not_required" ? "No individual license required by state rule" :
+              requirement === "required" ? "License required by state rule" :
+              requirement === "conditional" ? "Conditional — scope/role review required" :
+              requirement === "local_only" ? "Local jurisdiction review required" :
+              "Unverified — do not activate automatically";
             const parts = [licenseText];
             if (required) {
               if (item.license_number) parts.push("No. " + item.license_number);
@@ -1432,11 +1443,14 @@
           actions.style.gap = "10px";
           const approvalDecision = request.request_type === "company_profile"
             ? (changes.has_license === true ? "approved_with_license" : "approved_without_license")
-            : request.request_type === "profession_qualifications"
-              ? ((changes.items || []).some(item => item.license_required_at_registration === true) ? "approved_with_license" : "approved_without_license")
-              : "approved_without_license";
+            : "approved_without_license";
+          const approvalButtonLabel = request.request_type === "profession_qualifications"
+            ? "Approve selected professions"
+            : request.request_type === "service_categories"
+              ? "Approve selected services"
+              : "Approve";
           for (const [decision,label] of [
-            [approvalDecision,"Approved"],
+            [approvalDecision,approvalButtonLabel],
             ["rejected","Reject"]
           ]) {
             const button = document.createElement("button"); button.type = "button";
@@ -1448,11 +1462,14 @@
               if (decision === "rejected" && !note.value.trim()) {
                 note.focus(); message("contractorChangesMessage","Enter a reason before rejecting this request.","error"); return;
               }
-              if (decision !== "rejected" && !window.confirm(
-                decision === "approved_with_license"
-                  ? "Approve these updates and place the contractor in Contractors with a license?"
-                  : "Approve these updates and place the contractor in Contractors without a license?"
-              )) return;
+              const approvalPrompt = request.request_type === "profession_qualifications"
+                ? "Approve the selected professions? ZELPX will determine license requirements from the state's rules, not from the submitted form."
+                : request.request_type === "service_categories"
+                  ? "Approve these selected service categories?"
+                  : decision === "approved_with_license"
+                    ? "Approve these updates and place the contractor in Contractors with a license?"
+                    : "Approve these updates and place the contractor in Contractors without a license?";
+              if (decision !== "rejected" && !window.confirm(approvalPrompt)) return;
               button.disabled = true;
               actions.querySelectorAll("button").forEach(x => x.disabled = true);
               try {
