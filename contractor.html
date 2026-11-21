@@ -962,6 +962,7 @@
     if(!currentContractor)return;
     const update={
       has_license:m.has_license===true,
+      license_expiration_date:m.has_license===true?(m.license_expiration_date||null):null,
       license_number:m.has_license===true?(m.license_number||null):null,
       license_state:m.has_license===true?(m.license_state||null):null,
       license_type:m.has_license===true?(m.license_type||null):null,
