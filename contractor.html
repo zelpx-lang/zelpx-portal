@@ -1024,7 +1024,7 @@
     const map=new Map();
     (data||[]).forEach(x=>map.set(x.state_code,{...x}));
     if(contractor?.license_state_2 && contractor?.license_number_2 && contractor?.license_type_2 && !map.has(contractor.license_state_2)){
-      map.set(contractor.license_state_2,{state_code:contractor.license_state_2,license_number:contractor.license_number_2,license_type:contractor.license_type_2,review_status:contractor.license_review_status==="verified"?"verified":"pending"});
+      map.set(contractor.license_state_2,{state_code:contractor.license_state_2,license_number:contractor.license_number_2,license_type:contractor.license_type_2,review_status:"pending",document_path:null});
     }
     (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{if(x.state_code)map.set(x.state_code,{...x,review_status:"pending"});});
     additionalStateLicenses=[...map.values()];
