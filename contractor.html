@@ -1535,18 +1535,21 @@
     licenseEligibleLeadCategories = new Map();
     if (isAdmin || !currentContractor?.id) return;
 
-    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError}] = await Promise.all([
+    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError},{data:selectedServices,error:selectedServicesError}] = await Promise.all([
       db.from("contractor_profession_qualifications")
         .select("profession_id,state_code,verification_status,license_number,license_type,license_expiration_date")
         .eq("contractor_id",currentContractor.id),
       db.from("service_categories").select("id,name").eq("is_active",true),
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level")
+      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
+      db.from("contractor_service_categories").select("category_id").eq("contractor_id",currentContractor.id)
     ]);
     if (qualificationError) throw qualificationError;
     if (categoriesError) throw categoriesError;
     if (mapError) throw mapError;
     if (rulesError) throw rulesError;
+    if (selectedServicesError) throw selectedServicesError;
+    const explicitlySelectedCategoryIds = new Set((selectedServices || []).map(row => row.category_id));
     availableServiceCategories = categories || [];
 
     for (const state of ["OR","WA"]) {
@@ -1555,7 +1558,7 @@
         .map(q => [q.profession_id,q]));
       const professionIds = new Set(stateQualifications.keys());
       const mapped = (maps || []).filter(m => professionIds.has(m.profession_id));
-      const selectedCategoryIds = new Set(mapped.map(m => m.category_id));
+      const selectedCategoryIds = new Set(mapped.map(m => m.category_id).filter(id => explicitlySelectedCategoryIds.has(id)));
       const selectedNames = new Set(availableServiceCategories
         .filter(item => selectedCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
       selectedLeadCategoriesByState.set(state,selectedNames);
