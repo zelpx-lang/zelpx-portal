@@ -10,26 +10,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ZELPX">
   <title>ZELPX Contractor Portal</title>
-<script>
-/* Cover the sign-in form during OAuth return, without showing a blank page. */
-(() => {
-  let pending = null;
-  try { pending = JSON.parse(sessionStorage.getItem("zelpx.oauth.pending") || "null"); } catch (_) {}
-  const active = !!(pending && pending.at && Date.now() - pending.at < 10 * 60 * 1000);
-  window.ZELPXRevealOAuthPage = () => {
-    document.documentElement.classList.remove("zelpx-oauth-pending");
-    try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
-  };
-  if (active) document.documentElement.classList.add("zelpx-oauth-pending");
-  else if (pending) { try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {} }
-})();
-</script>
-<style>
-html.zelpx-oauth-pending body::before{content:"";position:fixed;inset:0;z-index:99998;background:#f6f2ec}
-html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";white-space:pre;position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;color:#171816;font:800 18px/2 ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;background:radial-gradient(ellipse at 50% 45%,#ffe4d5 0,transparent 48%)}
-</style>
-
-
   <meta name="description" content="ZELPX contractor lead marketplace">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -389,6 +369,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       </div>
       <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
         <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div id="companyLicenseReviewStatus" role="status" aria-live="polite" style="grid-column:1/-1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-size:13px">Company license review status: loading…</div>
         <div><label for="licenseState">Issuing state</label><select id="licenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
         <div><label for="licenseNumber">License number</label><input id="licenseNumber" autocomplete="off"></div>
         <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
@@ -400,8 +381,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
         <h3 style="grid-column:1/-1;margin:0">Business insurance (Certificate of Insurance)</h3>
         <p class="muted" style="grid-column:1/-1;margin:0">Independent contractors must provide current insurance policy information for ZELPX review. Employees do not need a business insurance policy for themselves.</p>
-        <div><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
-        <div><label for="signupInsuranceAgency">Insurance agency name (optional)</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div><label for="signupInsuranceAgency">Insurance agency name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
         <div><label for="signupInsuranceAgentPhone">Insurance agent phone number</label><input id="signupInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
         <div><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
       </div>
@@ -508,6 +488,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
         <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
           <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div id="companyLicenseReviewStatus" role="status" aria-live="polite" style="grid-column:1/-1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-size:13px">Company license review status: loading…</div>
           <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
           <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
@@ -533,8 +514,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           <h3>Business insurance</h3>
           <p class="muted" style="margin:0 0 10px;font-size:13px">Required for independent contractors. Employees do not need to provide their own business insurance.</p>
           <div class="grid">
-            <div><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
-            <div><label for="profileInsuranceAgency">Insurance agency name (optional)</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div><label for="profileInsuranceAgency">Insurance agency name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
             <div><label for="profileInsuranceAgentPhone">Insurance agent phone number</label><input id="profileInsuranceAgentPhone" type="tel" autocomplete="tel"></div>
             <div><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
           </div>
@@ -661,7 +641,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
     clearMessage("authMessage");
     try {
-      sessionStorage.setItem("zelpx.oauth.pending", JSON.stringify({ portal: "contractor", at: Date.now() }));
       const { error } = await db.auth.signInWithOAuth({
         provider,
         options: {
@@ -671,7 +650,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       });
       if (error) throw error;
     } catch (error) {
-      sessionStorage.removeItem("zelpx.oauth.pending");
       message("authMessage", error.message || "Social sign-in could not be started. Please try again.", "error");
       button.lastChild.textContent = provider === "google" ? " Continue with Google" : " Continue with Facebook";
       buttons.forEach(item => { item.disabled = false; });
@@ -751,7 +729,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
         : null;
       const status=rule?.requirement_status||"unverified";
-      return !searchTerm || category.name.toLowerCase().includes(searchTerm);
+      const licenseMatch=licenseChoice==="yes"
+        ? ["required","conditional"].includes(status)
+        : licenseChoice==="no"
+          ? status==="not_required"
+          : true;
+      return licenseMatch && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
     });
     if(!visibleCategories.length){root.textContent=licenseChoice==="yes"?"No verified licensed work types match this state and work status.":"No verified license-free work types match this state and work status.";return;}
     const groups=new Map();
@@ -896,14 +879,13 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
     const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    const insurancePolicyNumber=$("signupInsurancePolicyNumber").value.trim();
-    if(signupRole==="independent" && hasLicense && !insurancePolicyNumber) return message("authMessage","Enter your business insurance policy number. A document photo is not required for registration.","error");
+    if(signupRole==="independent" && hasLicense && (!insuranceAgencyName || !insuranceAgentPhone || !insuranceExpiration)) return message("authMessage","Licensed independent contractors must enter the insurance agency name, agent phone number, and expiration date.","error");
     if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, insurance_policy_number: signupRole==="independent" ? insurancePolicyNumber : null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, insurance_agency_name: signupRole==="independent" ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" ? insuranceAgentPhone : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
@@ -977,7 +959,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       license_state_2:m.has_license===true?(m.license_state_2||null):null,
       license_type_2:m.has_license===true?(m.license_type_2||null):null,
       license_document_path:currentContractor.license_document_path||null,
-      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
       insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
       insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
@@ -986,7 +967,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
     if(error)throw error;
     currentContractor={...currentContractor,...update};
-    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_policy_number:update.insurance_policy_number,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_expiration_date:update.insurance_expiration_date}});
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_expiration_date:update.insurance_expiration_date}});
     if(metadataError)throw metadataError;
   }
 
@@ -1123,9 +1104,14 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
     $("profileLicenseState").value = draftValue("license_state", contractor?.license_state);
     $("profileLicenseType").value = draftValue("license_type", contractor?.license_type);
+    const companyLicenseStatus=$("companyLicenseReviewStatus");
+    if(companyLicenseStatus){
+      const review=contractor?.license_review_status||"not submitted";
+      const label=review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified";
+      companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
+    }
     await loadAdditionalStateLicenses(draft, contractor);
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
-    $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsuranceAgentPhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
@@ -1177,6 +1163,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
   let professionCatalog = [], selectedProfessionIds = new Set(), savedProfessionIds = new Set();
   let professionRuleRows = [];
+  let professionVerificationById = new Map();
   async function loadProfessionQualifications() {
     const stateSelect = $("professionState");
     if (!currentContractor) { $("professionComplianceSummary").textContent = "A contractor profile is required before saving work types."; return; }
@@ -1198,6 +1185,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     if(pendingResult.error) console.warn("Could not load pending profession selections:",pendingResult.error.message);
     professionCatalog=professionsResult.data||[];
     const saved=qualificationsResult.data||[];
+    professionVerificationById=new Map(saved.map(x=>[x.profession_id,x.verification_status||"pending"]));
     const activeIds=saved.map(x=>x.profession_id);
     const pending=pendingResult.data?.requested_changes||null;
     const pendingItems= pending && String(pending.state_code||"").toUpperCase()===String(stateSelect.value||"").toUpperCase() && Array.isArray(pending.items) ? pending.items : null;
@@ -1224,7 +1212,10 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     }
     chosen.forEach(p=>{
       const item=document.createElement("span");
-      item.textContent=p.profession_name;
+      const status=professionVerificationById.get(p.id);
+      const statusLabel=status==="verified"?"Verified":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
+      item.textContent=p.profession_name+" · "+statusLabel;
+      item.title="Credential review status: "+statusLabel;
       item.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
       list.append(item);
     });
@@ -1437,27 +1428,19 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     const selectedNames = new Set(availableServiceCategories.filter(item => selectedContractorCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
-      const leadCategoryName = String(lead.service_category || "").trim().toLowerCase();
-      const contractorCategoryMatch = isAdmin || selectedNames.has(leadCategoryName);
-      const categoryMatch = !category || leadCategoryName === category.trim().toLowerCase();
+      const categoryMatch = !category || lead.service_category === category;
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return statusMatch && contractorCategoryMatch && categoryMatch && (!query || haystack.includes(query));
+      return statusMatch && categoryMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
     if (!filtered.length) {
       const empty = document.createElement("div"); empty.className = "lead";
-      const title = document.createElement("h3");
+      const title = document.createElement("h3"); title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
       const note = document.createElement("p"); note.className = "muted";
-      if (!isAdmin && selectedNames.size === 0) {
-        title.textContent = "Choose your services";
-        note.textContent = "Your lead list is empty until you select the work categories you provide in your contractor profile.";
-      } else {
-        title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
-        note.textContent = cachedLeads.length
-          ? "No leads match the services selected in your profile and your current filters."
-          : "New service requests for your selected services will appear here when they are published.";
-      }
+      note.textContent = cachedLeads.length
+        ? "No leads match your current filters."
+        : "New service requests will appear here when they are published.";
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
@@ -1490,11 +1473,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       if (lead.status === "available") {
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = selectedNames.has(leadCategoryName);
-        const canBuy = !isAdmin && serviceSelected;
-        if (!isAdmin && !serviceSelected) {
+        const licenseEligible = licenseEligibleLeadCategories?.has(leadCategoryName) === true;
+        const canBuy = !isAdmin && serviceSelected && licenseEligible;
+        if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
           eligibility.className = "pill";
-          eligibility.textContent = "Select this service in your profile";
+          eligibility.textContent = !serviceSelected ? "Select this service in your profile" : "License eligibility review required";
           badges.append(eligibility);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
@@ -1549,15 +1533,54 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     }
   }
 
-  // Contractor/license checks are handled manually by the ZELPX owner.
-  // Keep the complete active catalog available; no automatic license gate.
   let licenseEligibleLeadCategories = null;
   async function loadLicenseEligibleLeadCategories() {
-    const {data:categories,error}=await db.from("service_categories")
-      .select("id,name").eq("is_active",true);
-    if(error)throw error;
+    licenseEligibleLeadCategories = new Set();
+    if (isAdmin || !currentContractor?.id) return;
+    const {data:additionalLicenses,error:additionalLicenseError}=await db.from("contractor_state_licenses")
+      .select("state_code,review_status").eq("contractor_id",currentContractor.id).eq("review_status","verified");
+    if(additionalLicenseError)throw additionalLicenseError;
+    const verifiedAdditionalStates=(additionalLicenses||[]).map(item=>item.state_code);
+    const states=[...new Set([currentContractor.service_state,currentContractor.license_state,currentContractor.license_state_2,...verifiedAdditionalStates]
+      .map(value=>String(value||"").trim().toUpperCase()).filter(value=>/^[A-Z]{2}$/.test(value)))];
+    if(!states.length)return;
+    const [{data:maps,error:mapError},{data:categories,error:categoriesError}]=await Promise.all([
+      db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
+      db.from("service_categories").select("id,name").eq("is_active",true)
+    ]);
+    if(mapError)throw mapError;
+    if(categoriesError)throw categoriesError;
     availableServiceCategories=categories||[];
-    licenseEligibleLeadCategories=new Set(availableServiceCategories.map(item=>item.name.toLowerCase()));
+    const professionIds=[...new Set((maps||[]).map(x=>x.profession_id).filter(Boolean))];
+    if(!professionIds.length)return;
+    for(const state of states){
+      const [{data:qualifications,error:qualificationError},{data:rules,error:rulesError}]=await Promise.all([
+        db.from("contractor_profession_qualifications").select("profession_id,verification_status,work_role,state_code").eq("contractor_id",currentContractor.id).eq("state_code",state),
+        db.from("state_profession_eligibility").select("profession_id,worker_role,eligibility_status").eq("state_code",state).eq("worker_role","independent").in("profession_id",professionIds)
+      ]);
+      if(qualificationError)throw qualificationError;
+      if(rulesError)throw rulesError;
+      const independentQualifications=new Map((qualifications||[]).filter(q=>q.work_role==="independent").map(q=>[q.profession_id,q.verification_status]));
+      const independentRules=new Map((rules||[]).map(r=>[r.profession_id,r.eligibility_status]));
+      const legacyCompanyLicenseVerified=currentContractor.has_license===true &&
+        currentContractor.license_review_status==="verified" &&
+        [currentContractor.license_state,currentContractor.license_state_2].some(value=>String(value||"").trim().toUpperCase()===state);
+      const additionalCompanyLicenseVerified=(additionalLicenses||[]).some(item=>
+        String(item.state_code||"").trim().toUpperCase()===state && item.review_status==="verified");
+      const companyLicenseVerified=currentContractor.has_license===true &&
+        (legacyCompanyLicenseVerified || additionalCompanyLicenseVerified);
+      (maps||[]).forEach(map=>{
+        if(map.mapping_status!=="mapped"||!map.profession_id)return;
+        const rule=independentRules.get(map.profession_id);
+        const qualificationVerified=independentQualifications.get(map.profession_id)==="verified";
+        const licenseFree=rule==="allowed_no_individual_license";
+        const licensedAndVerified=companyLicenseVerified && qualificationVerified &&
+          ["individual_trade_credential_required","contractor_license_or_registration_required"].includes(rule);
+        if(licenseFree||licensedAndVerified)licenseEligibleLeadCategories.add(map.category_id);
+      });
+    }
+    const eligibleNames=new Set(availableServiceCategories.filter(item=>licenseEligibleLeadCategories.has(item.id)).map(item=>item.name.toLowerCase()));
+    licenseEligibleLeadCategories=eligibleNames;
   }
 
   async function loadLeads() {
@@ -1578,22 +1601,20 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       console.error("Could not verify profession eligibility:", eligibilityError);
       licenseEligibleLeadCategories = new Set();
     }
-    const selectedNames = availableServiceCategories
-      .filter(item => isAdmin || selectedContractorCategoryIds.has(item.id))
-      .map(item => item.name);
-    const allowedNames = new Set(availableServiceCategories
-      .filter(item => isAdmin || selectedContractorCategoryIds.has(item.id))
-      .map(item => item.name.toLowerCase()));
-    const available = cachedLeads.filter(lead => lead.status === "available" &&
-      (isAdmin || allowedNames.has(String(lead.service_category || "").trim().toLowerCase())));
+    const available = cachedLeads.filter(lead => lead.status === "available");
     $("availableCount").textContent = String(available.length);
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
-    const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = isAdmin ? "All services" : "All my selected services"; categorySelect.append(allOption);
-    selectedNames.sort((a,b)=>a.localeCompare(b)).forEach(name=>{
-      const option=document.createElement("option"); option.value=name; option.textContent=name; categorySelect.append(option);
-    });
-    if ([...categorySelect.options].some(option => option.value.toLowerCase() === selectedCategory.toLowerCase())) categorySelect.value = selectedCategory;
+    const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = "All services (full catalog)"; categorySelect.append(allOption);
+    const {data:catalog,error:catalogError}=await db.from("service_categories").select("name").eq("is_active",true).order("name");
+    if(catalogError){
+      const fallback=[...new Set(cachedLeads.map(lead=>lead.service_category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      fallback.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;categorySelect.append(option);});
+      console.warn("Full service catalog filter could not load:",catalogError.message);
+    }else{
+      (catalog||[]).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
+    }
+    if ([...categorySelect.options].some(option => option.value === selectedCategory)) categorySelect.value = selectedCategory;
     renderLeads();
   }
 
@@ -1991,7 +2012,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           license_type_2: currentContractor.license_type_2 || null,
           license_document_path,
           insurance_document_path,
-          insurance_policy_number: $("profileInsurancePolicyNumber").value.trim() || null,
           insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
           insurance_agent_phone: $("profileInsuranceAgentPhone").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
@@ -2019,7 +2039,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
           license_document_path: changes.license_document_path,
           insurance_document_path: changes.insurance_document_path,
-          insurance_policy_number: changes.insurance_policy_number,
           insurance_agency_name: changes.insurance_agency_name,
           insurance_agent_phone: changes.insurance_agent_phone,
           insurance_expiration_date: changes.insurance_expiration_date
@@ -2294,13 +2313,13 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const lic=document.createElement("section");lic.style.cssText="padding:12px;background:#fffaf5;border-radius:12px;margin:10px 0";const lh=document.createElement("h4");lh.textContent="Company license";lic.append(lh);
         line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",c.license_state);line(lic,"Type",c.license_type);line(lic,"Review status",c.license_review_status);
         if(c.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open company license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(c.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};lic.append(doc);}
-        if(c.has_license&&c.license_number&&c.license_type&&c.license_review_status!=="verified"){const b=document.createElement("button");b.textContent="Verify company license number";b.onclick=async()=>{b.disabled=true;const {error}=await db.from("contractors").update({license_review_status:"verified"}).eq("id",c.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Company license verified. Approve individual professions separately.","success");loadAdminContractorReviews();};lic.append(b);}card.append(lic);
+        if(c.has_license&&c.license_document_path&&c.license_review_status!=="verified"){const b=document.createElement("button");b.textContent="Verify company license";b.onclick=async()=>{b.disabled=true;const {error}=await db.from("contractors").update({license_review_status:"verified"}).eq("id",c.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Company license verified. Approve individual professions separately.","success");loadAdminContractorReviews();};lic.append(b);}card.append(lic);
         line(card,"Insurance",(c.insurance_review_status||"not submitted")+" · policy "+(c.insurance_policy_number||"not provided")+" · expires "+(c.insurance_expiration_date||"not provided"));
         const qs=(qr.data||[]).filter(q=>q.contractor_id===c.id);const qh=document.createElement("h4");qh.textContent="Selected professions / credentials";card.append(qh);if(!qs.length)line(card,"Professions","None selected");
         for(const q of qs){const box=document.createElement("section");box.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0";const title=document.createElement("h4");title.textContent=names.get(q.profession_id)||"Profession";box.append(title);
           line(box,"State / work status",q.state_code+" / "+q.work_role);line(box,"License required",q.license_required_at_registration?"Yes":"No / conditional");line(box,"License number",q.license_number);line(box,"Type",q.license_type);line(box,"Issuing authority",q.issuing_authority);line(box,"Expiration",q.license_expiration_date);line(box,"Review status",q.verification_status);
           if(q.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open profession license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(q.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};box.append(doc);}
-          if(q.verification_status!=="verified"){const note=document.createElement("textarea");note.rows=2;note.placeholder="Admin verification note";box.append(note);const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(q.license_required_at_registration&&(!q.license_number||!q.license_type))return message("adminContractorReviewMessage","Missing profession-specific license number or type.","error");b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()||null});if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(b);}card.append(box);
+          if(q.verification_status!=="verified"){const note=document.createElement("textarea");note.rows=2;note.placeholder="Admin verification note";box.append(note);const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(q.license_required_at_registration&&(!q.license_number||!q.license_type||!q.license_document_path))return message("adminContractorReviewMessage","Missing profession-specific license number, type, or document.","error");b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()||null});if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(b);}card.append(box);
         }root.append(card);
       }
       filterAdminContractors();
@@ -2575,8 +2594,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     function updateSignupInsuranceVisibility(){
       const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
-      ["signupInsurancePolicyNumber"].forEach(id=>$(id).required=showInsurance);
-      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=false);
+      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=showInsurance);
     }
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
@@ -2683,21 +2701,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
       }
       const { data: { session } } = await db.auth.getSession();
-      if (session) {
-        sessionStorage.removeItem("zelpx.oauth.pending");
-        await loadApp();
-        await handlePaymentReturn();
-      } else {
-        sessionStorage.removeItem("zelpx.oauth.pending");
-      }
-      if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
+      if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) {
-      message("authMessage", e.message, "error");
-      if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
-    }
+    } catch (e) { message("authMessage", e.message, "error"); }
   }
   start();
 })();
