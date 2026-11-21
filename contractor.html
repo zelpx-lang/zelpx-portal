@@ -525,7 +525,7 @@
     </section>
 
     <section id="adminPanel" class="card hidden">
-<section class="lead" id="adminContractorReviewSection"><h2>Contractor services & license verification</h2><p>Review selected services, professions, work state, license number, type and documents. Approve each profession only when the credential covers that work.</p><div class="grid" style="margin:12px 0"><div><label for="adminContractorSearch">Find contractor by name or business</label><input id="adminContractorSearch" type="search" placeholder="Search person, company, email or phone" autocomplete="off"></div><div style="display:flex;align-items:end;gap:10px"><button id="refreshContractorReviewBtn" type="button" class="secondary">Refresh contractors</button><span id="adminContractorSearchCount" class="muted" aria-live="polite"></span></div></div><div id="adminContractorReviewMessage" class="message hidden"></div><div id="adminContractorReviewList">Loading contractors…</div></section><section class="lead" id="contractorChangeReviewSection">
+<section class="lead" id="adminContractorReviewSection"><h2>Contractor services & license verification</h2><p>Review selected services, professions, work state, license number, type and expiration. Verify license numbers against the official state registry before approving each profession.</p><div class="grid" style="margin:12px 0"><div><label for="adminContractorSearch">Find contractor by name or business</label><input id="adminContractorSearch" type="search" placeholder="Search person, company, email or phone" autocomplete="off"></div><div style="display:flex;align-items:end;gap:10px"><button id="refreshContractorReviewBtn" type="button" class="secondary">Refresh contractors</button><span id="adminContractorSearchCount" class="muted" aria-live="polite"></span></div></div><div id="adminContractorReviewMessage" class="message hidden"></div><div id="adminContractorReviewList">Loading contractors…</div></section><section class="lead" id="contractorChangeReviewSection">
         <h2>Contractor profile change requests</h2>
         <p>Review and approve contractor profile, service category, and profession changes. Pending changes do not become active until approved.</p>
         <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh change requests</button></div>
@@ -958,7 +958,6 @@
       license_number_2:m.has_license===true?(m.license_number_2||null):null,
       license_state_2:m.has_license===true?(m.license_state_2||null):null,
       license_type_2:m.has_license===true?(m.license_type_2||null):null,
-      license_document_path:currentContractor.license_document_path||null,
       insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
       insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
       insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
@@ -998,7 +997,7 @@
     if(!missing.length){await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});return;}
     const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
     const rules=await loadRoleEligibilityRules(state,role);
-    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,license_document_path:req?(currentContractor.license_document_path||null):null};});
+    const rows=missing.map(profession_id=>{const r=rules.find(x=>x.profession_id===profession_id),st=r?.requirement_status||"unverified",req=(role==="independent"&&(st==="required"||st==="conditional"))||(role==="employee"&&r?.eligibility_status==="individual_trade_credential_required");return{contractor_id:currentContractor.id,profession_id,state_code:state,work_role:role,license_number:req?(m.license_number||null):null,license_type:req?(m.license_type||null):null,issuing_authority:req?(r?.licensing_authority||null):null,};});
     const {error:ie}=await db.from("contractor_profession_qualifications").insert(rows);if(ie)throw ie;
     const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
     if(metadataError)console.warn("Could not clear one-time signup metadata:",metadataError.message);
@@ -1995,7 +1994,6 @@
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
       if (currentContractor) {
         await verifyContractorBusinessAddress();
-        let license_document_path = currentContractor.license_document_path || null;
         let insurance_document_path = currentContractor.insurance_document_path || null;
         const changes = {
           full_name, phone,
@@ -2010,7 +2008,6 @@
           license_number_2: currentContractor.license_number_2 || null,
           license_state_2: currentContractor.license_state_2 || null,
           license_type_2: currentContractor.license_type_2 || null,
-          license_document_path,
           insurance_document_path,
           insurance_agency_name: $("profileInsuranceAgency").value.trim() || null,
           insurance_agent_phone: $("profileInsuranceAgentPhone").value.trim() || null,
@@ -2037,7 +2034,6 @@
           license_state: changes.license_state, license_type: changes.license_type,
           license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
-          license_document_path: changes.license_document_path,
           insurance_document_path: changes.insurance_document_path,
           insurance_agency_name: changes.insurance_agency_name,
           insurance_agent_phone: changes.insurance_agent_phone,
@@ -2298,10 +2294,10 @@
   async function loadAdminContractorReviews(){
     if(!isAdmin)return;const root=$("adminContractorReviewList");root.textContent="Loading contractors…";
     try{
-      const {data:cs,error}=await db.from("contractors").select("id,user_id,company_name,email,verification_status,service_state,has_license,license_number,license_state,license_type,license_document_path,license_review_status,insurance_review_status,insurance_policy_number,insurance_expiration_date").order("created_at",{ascending:false}).limit(1000);if(error)throw error;
+      const {data:cs,error}=await db.from("contractors").select("id,user_id,company_name,email,verification_status,service_state,has_license,license_number,license_state,license_type,license_review_status,insurance_review_status,insurance_policy_number,insurance_expiration_date").order("created_at",{ascending:false}).limit(1000);if(error)throw error;
       root.replaceChildren();if(!cs?.length){root.textContent="No contractors found.";return;}
       const ids=cs.map(c=>c.id),uids=cs.map(c=>c.user_id).filter(Boolean);
-      const [cr,qr,pr]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids)]);
+      const [cr,qr,pr]=await Promise.all([db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids),db.from("contractor_profession_qualifications").select("id,contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,verification_status,admin_notes").in("contractor_id",ids),db.from("profiles").select("id,full_name,phone").in("id",uids)]);
       if(cr.error)throw cr.error;if(qr.error)throw qr.error;if(pr.error)throw pr.error;
       const qids=[...new Set((qr.data||[]).map(q=>q.profession_id))];const rr=qids.length?await db.from("zelpx_professions").select("id,profession_name").in("id",qids):{data:[],error:null};if(rr.error)throw rr.error;
       const names=new Map((rr.data||[]).map(p=>[p.id,p.profession_name])),profiles=new Map((pr.data||[]).map(p=>[p.id,p]));
@@ -2312,14 +2308,12 @@
         line(card,"Selected service categories",(cr.data||[]).filter(x=>x.contractor_id===c.id).map(x=>x.service_categories?.name).filter(Boolean).join(", "));
         const lic=document.createElement("section");lic.style.cssText="padding:12px;background:#fffaf5;border-radius:12px;margin:10px 0";const lh=document.createElement("h4");lh.textContent="Company license";lic.append(lh);
         line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",c.license_state);line(lic,"Type",c.license_type);line(lic,"Review status",c.license_review_status);
-        if(c.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open company license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(c.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};lic.append(doc);}
-        if(c.has_license&&c.license_document_path&&c.license_review_status!=="verified"){const b=document.createElement("button");b.textContent="Verify company license";b.onclick=async()=>{b.disabled=true;const {error}=await db.from("contractors").update({license_review_status:"verified"}).eq("id",c.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Company license verified. Approve individual professions separately.","success");loadAdminContractorReviews();};lic.append(b);}card.append(lic);
+        if(c.has_license&&c.license_review_status!=="verified"){const b=document.createElement("button");b.textContent="Verify company license";b.onclick=async()=>{b.disabled=true;const {error}=await db.from("contractors").update({license_review_status:"verified"}).eq("id",c.id);if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Company license verified. Approve individual professions separately.","success");loadAdminContractorReviews();};lic.append(b);}card.append(lic);
         line(card,"Insurance",(c.insurance_review_status||"not submitted")+" · policy "+(c.insurance_policy_number||"not provided")+" · expires "+(c.insurance_expiration_date||"not provided"));
         const qs=(qr.data||[]).filter(q=>q.contractor_id===c.id);const qh=document.createElement("h4");qh.textContent="Selected professions / credentials";card.append(qh);if(!qs.length)line(card,"Professions","None selected");
         for(const q of qs){const box=document.createElement("section");box.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0";const title=document.createElement("h4");title.textContent=names.get(q.profession_id)||"Profession";box.append(title);
           line(box,"State / work status",q.state_code+" / "+q.work_role);line(box,"License required",q.license_required_at_registration?"Yes":"No / conditional");line(box,"License number",q.license_number);line(box,"Type",q.license_type);line(box,"Issuing authority",q.issuing_authority);line(box,"Expiration",q.license_expiration_date);line(box,"Review status",q.verification_status);
-          if(q.license_document_path){const doc=document.createElement("button");doc.type="button";doc.className="secondary";doc.textContent="Open profession license document";doc.onclick=async()=>{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(q.license_document_path,300);if(error)message("adminContractorReviewMessage",error.message,"error");else window.open(data.signedUrl,"_blank","noopener");};box.append(doc);}
-          if(q.verification_status!=="verified"){const note=document.createElement("textarea");note.rows=2;note.placeholder="Admin verification note";box.append(note);const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(q.license_required_at_registration&&(!q.license_number||!q.license_type||!q.license_document_path))return message("adminContractorReviewMessage","Missing profession-specific license number, type, or document.","error");b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()||null});if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(b);}card.append(box);
+          if(q.verification_status!=="verified"){const note=document.createElement("textarea");note.rows=2;note.placeholder="Admin verification note";box.append(note);const b=document.createElement("button");b.textContent="Approve this profession";b.onclick=async()=>{if(q.license_required_at_registration&&(!q.license_number||!q.license_type))return message("adminContractorReviewMessage","Missing profession-specific license number or type.","error");b.disabled=true;const {error}=await db.rpc("zelpx_admin_verify_contractor_qualification",{p_qualification_id:q.id,p_admin_notes:note.value.trim()||null});if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}message("adminContractorReviewMessage","Profession credential approved.","success");loadAdminContractorReviews();};box.append(b);}card.append(box);
         }root.append(card);
       }
       filterAdminContractors();
