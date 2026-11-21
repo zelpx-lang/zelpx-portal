@@ -1276,18 +1276,28 @@
       const renderSlide = () => {
         const cards = requestsCards;
         const count = Math.max(cards.length,1);
-        slides.style.width = (count * 100) + "%";
-        cards.forEach(card => {
-          card.style.display = "block";
-          card.style.boxSizing = "border-box";
-          card.style.flex = "0 0 " + (100 / count) + "%";
-          card.style.width = (100 / count) + "%";
-          card.style.minWidth = (100 / count) + "%";
-          card.hidden = false;
-          card.setAttribute("aria-hidden","false");
-        });
-        slides.replaceChildren(...cards);
-        slides.style.transform = "translateX(-" + (slideIndex * 100 / count) + "%)";
+        // Keep only the active card in the flex row. Rendering every card side
+        // by side made the row stretch all cards to the tallest card's height,
+        // leaving a large blank area below shorter requests on mobile.
+        slides.style.width = "100%";
+        slides.style.height = "auto";
+        slides.style.alignItems = "flex-start";
+        const activeCard = cards[slideIndex] || null;
+        if (activeCard) {
+          activeCard.style.display = "block";
+          activeCard.style.boxSizing = "border-box";
+          activeCard.style.flex = "0 0 100%";
+          activeCard.style.width = "100%";
+          activeCard.style.minWidth = "100%";
+          activeCard.style.height = "auto";
+          activeCard.style.minHeight = "0";
+          activeCard.hidden = false;
+          activeCard.setAttribute("aria-hidden","false");
+          slides.replaceChildren(activeCard);
+        } else {
+          slides.replaceChildren();
+        }
+        slides.style.transform = "none";
         indicator.textContent = (slideIndex + 1) + " / " + count;
         previous.disabled = slideIndex === 0;
         next.disabled = slideIndex === count - 1;
