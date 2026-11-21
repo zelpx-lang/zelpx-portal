@@ -2365,8 +2365,7 @@
             (changes.items||[]).forEach((item,index)=>{
               const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
               const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
-              addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
-              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);
+addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);
             });
           }else if(r.request_type==="service_categories"){
             addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
