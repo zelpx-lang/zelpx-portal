@@ -1587,7 +1587,7 @@
       const date = document.createElement("span"); date.className = "lead-date"; date.textContent = lead.created_at ? "Posted " + new Date(lead.created_at).toLocaleDateString() : ""; footer.append(date);
       if (lead.status === "available") {
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
-        const serviceSelected = selectedNames.has(leadCategoryName);
+        const serviceSelected = isLeadServiceSelected(lead);
         const canBuy = !lead.previewOnly && !isAdmin && serviceSelected;
         if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
