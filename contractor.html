@@ -685,20 +685,20 @@
   let signupServiceCatalog=[], signupCategoryMapRows=[], signupSelectedCategoryIds=new Set();
   async function loadRoleEligibilityRules(state,role){
     if(!/^[A-Z]{2}$/.test(state))return [];
-    const {data,error}=await db.from("state_profession_eligibility")
-      .select("profession_id,worker_role,eligibility_status,scope_summary,license_name,licensing_authority,official_source_url,verified_on")
-      .eq("state_code",state).eq("worker_role",role);
+    // Use the canonical state rules table. state_profession_eligibility is
+    // currently unpopulated, so it must never be treated as the source of truth.
+    const {data,error}=await db.from("state_profession_rules")
+      .select("profession_id,requirement_status,rule_summary,license_name,licensing_authority,official_source_url,verified_on,jurisdiction_level")
+      .eq("state_code",state).eq("jurisdiction_level","state");
     if(error)throw error;
     return (data||[]).map(item=>{
-      const status=item.eligibility_status;
-      let requirement_status="unverified";
-      if(status==="allowed_no_individual_license")requirement_status="not_required";
-      else if(status==="individual_trade_credential_required")requirement_status="required";
-      else if(status==="contractor_license_or_registration_required")requirement_status=role==="employee"?"conditional":"required";
-      else if(status==="employer_license_and_supervision")requirement_status=role==="employee"?"conditional":"required";
-      else if(status==="conditional")requirement_status="conditional";
-      else if(status==="local_review_required")requirement_status="local_only";
-      return {profession_id:item.profession_id,requirement_status,rule_summary:item.scope_summary||"No verified profession-specific rule is available. Do not assume this work is license-free.",licensing_authority:item.licensing_authority,official_source_url:item.official_source_url,verified_on:item.verified_on,eligibility_status:status,license_name:item.license_name};
+      const status=item.requirement_status||"unverified";
+      let eligibility_status="local_review_required";
+      if(status==="not_required")eligibility_status="allowed_no_individual_license";
+      else if(status==="required")eligibility_status=role==="employee"?"individual_trade_credential_required":"contractor_license_or_registration_required";
+      else if(status==="conditional")eligibility_status="conditional";
+      else if(status==="local_only")eligibility_status="local_review_required";
+      return {profession_id:item.profession_id,requirement_status:status,rule_summary:item.rule_summary||"No verified profession-specific rule is available. Do not assume this work is license-free.",licensing_authority:item.licensing_authority,official_source_url:item.official_source_url,verified_on:item.verified_on,eligibility_status,license_name:item.license_name};
     });
   }
   function updateSignupSelectedServices(){
