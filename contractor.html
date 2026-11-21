@@ -1735,11 +1735,9 @@
           const companyLicenseVerified = stateLicense?.review_status === "verified"
             && Boolean(String(stateLicense?.license_number || "").trim())
             && Boolean(String(stateLicense?.license_type || "").trim())
-            && Boolean(companyDocumentPath)
-            && companyDocumentPath.startsWith(String(currentUser?.id || "") + "/")
-            && licenseDocumentExists.get(companyDocumentPath) === true
             && Boolean(stateLicense.expiration_date)
             && new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString());
+          if (status === "company_required") return companyLicenseVerified;
           if (status === "required" || status === "conditional") {
             const expiry = q?.license_expiration_date;
             const notExpired = Boolean(expiry) && new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
