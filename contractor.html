@@ -927,6 +927,7 @@
     if (!isAdmin && currentContractor) {
       try {
         await syncSignupContractorDocuments(user);
+        await syncSignupCompanyStateLicenses(user);
         await syncSignupContractorServiceCategories(user);
         await syncSignupProfessionQualifications(user);
       } catch (documentError) {
@@ -980,6 +981,31 @@
     if(metadataError)throw metadataError;
   }
 
+  async function syncSignupCompanyStateLicenses(user){
+    const m=user?.user_metadata||{};
+    if(!currentContractor||m.has_license!==true||m.zelpx_signup_company_license_synced===true)return;
+    const expiration=String(m.license_expiration_date||'').trim();
+    const entries=[
+      {state:String(m.license_state||'').toUpperCase(),number:String(m.license_number||'').trim(),type:String(m.license_type||'').trim()},
+      {state:String(m.license_state_2||'').toUpperCase(),number:String(m.license_number_2||'').trim(),type:String(m.license_type_2||'').trim()}
+    ].filter(x=>x.state&&x.number&&x.type);
+    if(!entries.length)return;
+    if(!expiration)throw new Error('Your company license expiration date is missing. Update it in My Company before license review.');
+    const {data:existing,error:existingError}=await db.from('contractor_state_licenses').select('state_code').eq('contractor_id',currentContractor.id);
+    if(existingError)throw existingError;
+    const existingStates=new Set((existing||[]).map(x=>String(x.state_code||'').toUpperCase()));
+    for(const license of entries){
+      if(existingStates.has(license.state))continue;
+      const {error}=await db.rpc('zelpx_submit_company_state_license',{
+        p_state_code:license.state,p_license_number:license.number,p_license_type:license.type,
+        p_document_path:null,p_expiration_date:expiration
+      });
+      if(error)throw error;
+      existingStates.add(license.state);
+    }
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_company_license_synced:true}});
+    if(metadataError)throw metadataError;
+  }
   async function syncSignupContractorServiceCategories(user){
     // Signup categories must not become active before an administrator approves
     // the profession selection. Categories are rebuilt from approved professions.
