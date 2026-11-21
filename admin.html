@@ -2124,7 +2124,7 @@
             await loadContractorChangeRequests();
           } catch (e) {
             message("licensedContractorsMessage", "Could not verify " + license.state_code + " company license: " + (e.message || "Unknown error"), "error");
-            verify.disabled = !license.document_path || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
+            verify.disabled = !license.license_number || !license.license_type || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
             verify.textContent = "Verify " + license.state_code + " License";
           }
         });
