@@ -1540,7 +1540,7 @@
         .select("profession_id,state_code").eq("contractor_id",currentContractor.id),
       db.from("service_categories").select("id,name").eq("is_active",true),
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("state_profession_rules").select("profession_id,state_code,requirement_status"),
+      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
       db.from("contractor_state_licenses").select("state_code,review_status").eq("contractor_id",currentContractor.id)
     ]);
     if(qualificationError)throw qualificationError;
@@ -1569,11 +1569,22 @@
 
       const licenseRequiredAllowed=verifiedStates.has(state);
       const noLicenseProfessionIds=new Set((rules||[])
-        .filter(rule=>String(rule.state_code||"").toUpperCase()===state && String(rule.requirement_status||"").toLowerCase()==="not_required")
+        .filter(rule=>String(rule.state_code||"").toUpperCase()===state
+          && String(rule.jurisdiction_level||"").toLowerCase()==="state"
+          && String(rule.requirement_status||"").toLowerCase()==="not_required")
         .map(rule=>rule.profession_id));
-      const eligibleIds=new Set(mapped
-        .filter(m=>licenseRequiredAllowed || noLicenseProfessionIds.has(m.profession_id))
-        .map(m=>m.category_id));
+      // Without a verified license, every selected profession mapped to this
+      // service category must be explicitly classified as not_required.
+      // A single license-required, conditional, or unverified mapping blocks it.
+      const mappedByCategory=new Map();
+      mapped.forEach(m=>{
+        if(!mappedByCategory.has(m.category_id))mappedByCategory.set(m.category_id,new Set());
+        mappedByCategory.get(m.category_id).add(m.profession_id);
+      });
+      const eligibleIds=new Set([...mappedByCategory.entries()]
+        .filter(([categoryId,professionSet])=>licenseRequiredAllowed
+          || (professionSet.size>0 && [...professionSet].every(id=>noLicenseProfessionIds.has(id))))
+        .map(([categoryId])=>categoryId));
       licenseEligibleLeadCategories.set(state,new Set(availableServiceCategories
         .filter(item=>eligibleIds.has(item.id)).map(item=>item.name.toLowerCase())));
     }
@@ -1605,7 +1616,7 @@
     try { await loadLicenseEligibleLeadCategories(); }
     catch (eligibilityError) {
       console.error("Could not verify profession eligibility:", eligibilityError);
-      licenseEligibleLeadCategories = new Set();
+      licenseEligibleLeadCategories = new Map();
     }
     const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || (isLeadServiceSelected(lead) && isLeadLicenseEligible(lead))));
     $("availableCount").textContent = String(available.length);
