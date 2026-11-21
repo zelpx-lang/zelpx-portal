@@ -1611,20 +1611,22 @@
     licenseEligibleLeadCategories = new Map();
     if (isAdmin || !currentContractor?.id) return;
 
-    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError},{data:selectedServices,error:selectedServicesError}] = await Promise.all([
+    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError},{data:selectedServices,error:selectedServicesError},{data:stateLicenses,error:stateLicensesError}] = await Promise.all([
       db.from("contractor_profession_qualifications")
         .select("profession_id,state_code,work_role,verification_status,license_number,license_type,license_expiration_date,license_document_path")
         .eq("contractor_id",currentContractor.id),
       db.from("service_categories").select("id,name").eq("is_active",true),
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
       db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
-      db.from("contractor_service_categories").select("category_id").eq("contractor_id",currentContractor.id)
+      db.from("contractor_service_categories").select("category_id").eq("contractor_id",currentContractor.id),
+      db.from("contractor_state_licenses").select("state_code,review_status,expiration_date").eq("contractor_id",currentContractor.id)
     ]);
     if (qualificationError) throw qualificationError;
     if (categoriesError) throw categoriesError;
     if (mapError) throw mapError;
     if (rulesError) throw rulesError;
     if (selectedServicesError) throw selectedServicesError;
+    if (stateLicensesError) throw stateLicensesError;
     const explicitlySelectedCategoryIds = new Set((selectedServices || []).map(row => row.category_id));
     availableServiceCategories = categories || [];
 
@@ -1654,10 +1656,10 @@
           const status = stateRules.get(id);
           const review = String(q?.verification_status || "").toLowerCase();
           if (status === "not_required") return review === "not_required" || review === "verified";
-          const companyLicenseVerified = currentContractor?.has_license === true
-            && currentContractor?.license_review_status === "verified"
-            && [currentContractor?.license_state,currentContractor?.license_state_2]
-              .some(value => String(value || "").trim().toUpperCase() === state);
+          const stateLicense = (stateLicenses || []).find(item =>
+            String(item.state_code || "").trim().toUpperCase() === state);
+          const companyLicenseVerified = stateLicense?.review_status === "verified"
+            && (!stateLicense.expiration_date || new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString()));
           if (status === "required" || status === "conditional") {
             const expiry = q?.license_expiration_date;
             const notExpired = !expiry || new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
