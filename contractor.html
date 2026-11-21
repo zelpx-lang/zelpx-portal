@@ -353,7 +353,7 @@
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
         <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
         <div id="signupLicenseChoice">
-          <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
+          <label for="hasLicense">Do you have the required current license / registration / trade credential?</label><p class="muted" style="font-size:12px;margin:4px 0 8px">Select Yes or No. License details appear only when you select Yes. No document upload is required.</p>
           <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
         </div>
         <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
@@ -478,7 +478,7 @@
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
             <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor</option></select></div>
-            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="" disabled selected>Select Yes or No</option><option value="yes">Yes — show all work types</option><option value="no">No — show jobs that don't need a license</option></select>
+            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><p class="muted" style="font-size:12px;margin:4px 0 8px">Select Yes or No. Your license details appear only when you select Yes. No document upload is required.</p><select id="profileHasLicense"><option value="" disabled selected>Select Yes or No</option><option value="yes">Yes</option><option value="no">No</option></select>
               <div id="profileNoLicenseAckWrap" class="hidden" style="margin-top:9px;padding:10px 12px;border:1px solid #f3b18f;border-radius:10px;background:#fff8f2">
                 <label style="display:flex;align-items:flex-start;gap:9px;margin:0;font-size:13px;font-weight:600;line-height:1.4"><input id="profileNoLicenseAck" type="checkbox" style="width:18px;min-height:18px;height:18px;margin:1px 0 0;flex:0 0 18px;accent-color:#ff6a2b">I confirm I will only accept jobs that don't require a license in my state.</label>
               </div>
