@@ -1671,7 +1671,7 @@
       db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
       db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
       db.from("contractor_service_categories").select("category_id").eq("contractor_id",currentContractor.id),
-      db.from("contractor_state_licenses").select("state_code,review_status,expiration_date").eq("contractor_id",currentContractor.id)
+      db.from("contractor_state_licenses").select("state_code,review_status,expiration_date,license_number,license_type,document_path").eq("contractor_id",currentContractor.id)
     ]);
     if (qualificationError) throw qualificationError;
     if (categoriesError) throw categoriesError;
@@ -1715,16 +1715,24 @@
           if (status === "not_required") return review === "not_required";
           const stateLicense = (stateLicenses || []).find(item =>
             String(item.state_code || "").trim().toUpperCase() === state);
+          const companyDocumentPath = String(stateLicense?.document_path || "").trim();
           const companyLicenseVerified = stateLicense?.review_status === "verified"
+            && Boolean(String(stateLicense?.license_number || "").trim())
+            && Boolean(String(stateLicense?.license_type || "").trim())
+            && Boolean(companyDocumentPath)
+            && companyDocumentPath.startsWith(String(currentUser?.id || "") + "/")
             && Boolean(stateLicense.expiration_date)
             && new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString());
           if (status === "required" || status === "conditional") {
             const expiry = q?.license_expiration_date;
             const notExpired = Boolean(expiry) && new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
+            const individualDocumentPath = String(q?.license_document_path || "").trim();
+            const expectedIndividualDocumentPrefix = String(currentUser?.id || "") + "/profession-" + String(q?.profession_id || "") + "-";
             const individualCredentialVerified = review === "verified"
               && Boolean(String(q?.license_number || "").trim())
               && Boolean(String(q?.license_type || "").trim())
-              && Boolean(String(q?.license_document_path || "").trim()) && notExpired;
+              && individualDocumentPath.startsWith(expectedIndividualDocumentPrefix)
+              && notExpired;
             if (status === "required") {
               // Required scope: employees need their individual credential;
               // independent contractors need both the individual credential
@@ -1735,7 +1743,8 @@
               return false;
             }
             if (!companyLicenseVerified || review !== "verified") return false;
-            return q?.work_role === "employee" || individualCredentialVerified;
+            const role = String(q?.work_role || "").toLowerCase();
+            return role === "employee" || (role === "independent" && individualCredentialVerified);
           }
           return false;
         }))
