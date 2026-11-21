@@ -1948,7 +1948,7 @@
     if (count) count.textContent = "";
     try {
       const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,created_at")
+        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_expiration_date,insurance_policy_number,insurance_review_status,created_at")
         .eq("has_license", true)
         .eq("verification_status", "verified")
         .eq("license_review_status", "pending")
@@ -1985,6 +1985,11 @@
           ["License state", contractor.license_state || "Not provided"],
           ["License type", contractor.license_type || "Not provided"],
           ["License review", contractor.license_review_status || "Not specified"],
+          ["INSURANCE AGENCY NAME", contractor.insurance_agency_name || "Not provided"],
+          ["INSURANCE AGENT PHONE NUMBER", contractor.insurance_agent_phone || "Not provided"],
+          ["INSURANCE EXPIRATION DATE", contractor.insurance_expiration_date || "Not provided"],
+          ["Insurance policy number", contractor.insurance_policy_number || "Not provided"],
+          ["Insurance review", contractor.insurance_review_status || "Not specified"],
           ["Account approval", contractor.verification_status || "Not specified"],
           ["Business location", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
