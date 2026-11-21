@@ -894,7 +894,7 @@
     setBusy($("signupBtn"), true, "Creating account…");
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_expiration_date: hasLicense ? (licenseExpiry || null) : null, license_expiration_date: hasLicense ? licenseExpirationDate : null,
+          license_expiration_date: hasLicense ? licenseExpirationDate : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
@@ -1098,7 +1098,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
@@ -1145,6 +1145,7 @@
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
     $("profileLicenseState").value = draftValue("license_state", contractor?.license_state);
     $("profileLicenseType").value = draftValue("license_type", contractor?.license_type);
+    $("profileCompanyLicenseExpiry").value = draftValue("license_expiration_date", contractor?.license_expiration_date);
     const companyLicenseStatus=$("profileCompanyLicenseReviewStatus");
     if(companyLicenseStatus){
       const review=contractor?.license_review_status||"not submitted";
@@ -2265,7 +2266,7 @@
       if ((!isEmployee && !serviceAddress) || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error(isEmployee ? "Complete your city, state, and valid 5-digit ZIP code." : "Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
       if (!isEmployee && !$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (!isEmployee && $("profileHasLicense").value==="no" && !$("profileNoLicenseAck").checked) throw new Error("Confirm that you will only accept jobs that do not require a license in your state.");
-      if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
+      if (hasLicense && (!licenseNumber || !licenseState || !licenseType || !licenseExpiry)) throw new Error("Enter a complete first license: state, number, and type.");
       if (hasLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The company license issuing state must match the state selected for your work.");
       // No document upload: administrator reviews the submitted license number.
       if(employeeNeedsEmployerLicense && (!licenseNumber||!licenseState||!licenseType||!licenseExpiry)) throw new Error("Enter the employer license state, number, type, and current expiration date for this conditional work.");
