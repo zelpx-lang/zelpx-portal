@@ -1056,7 +1056,7 @@
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_document_path,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_document_path,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
+    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_document_path,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
     if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
@@ -2372,7 +2372,7 @@
               const name=professionNames.get(item.profession_id)||("Profession ID "+item.profession_id);
               const heading=document.createElement("h4");heading.textContent="Profession "+(index+1)+": "+name;detail.append(heading);
               addDetail("License required",item.license_required_at_registration===true?"Yes":item.license_required_at_registration===false?"No":"Not specified");
-              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);addDetail("Document",item.license_document_path);
+              addDetail("License status",item.verification_status);addDetail("License number",item.license_number);addDetail("License type",item.license_type);addDetail("Issuing authority",item.issuing_authority);addDetail("Expiration",item.license_expiration_date);
             });
           }else if(r.request_type==="service_categories"){
             addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
