@@ -375,7 +375,6 @@
           <div><label for="profileLicenseState">License state</label><input id="profileLicenseState" maxlength="2"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
         </div>
-        <div style="grid-column:1/-1"><label for="licenseDocument">License document (PDF or image)</label><input id="licenseDocument" type="file" accept=".pdf,image/*"><small id="licenseDocumentStatus" class="muted">Upload is stored privately for administrator review.</small></div>
       </div>
       <div class="actions"><button id="saveCompanyBtn">Save company details</button></div>
     </section>
@@ -619,7 +618,6 @@
     $("profileLicenseNumber").value = contractor?.license_number || ""; $("profileLicenseState").value = contractor?.license_state || "";
     $("profileLicenseType").value = contractor?.license_type || "";
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
-    $("licenseDocumentStatus").textContent = contractor?.license_document_path ? "A document is on file. Select a new file to replace it." : "No license document uploaded yet.";
   }
   async function addCredits() {
     clearMessage("appMessage");
@@ -792,16 +790,6 @@
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter license number, issuing state, and license type.");
       const { error: pErr } = await db.from("profiles").update({ full_name, phone }).eq("id", currentUser.id); if (pErr) throw pErr;
       if (currentContractor) {
-        let license_document_path = currentContractor.license_document_path || null;
-        const file = $("licenseDocument").files?.[0];
-        if (file) {
-          if (file.size > 10 * 1024 * 1024) throw new Error("License document must be 10 MB or smaller.");
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = currentUser.id + "/" + Date.now() + "-" + safeName;
-          const { error: uploadError } = await db.storage.from("contractor-licenses").upload(path, file, { upsert: false, contentType: file.type || "application/octet-stream" });
-          if (uploadError) throw uploadError;
-          license_document_path = path;
-        }
         const { error: cErr } = await db.from("contractors").update({
           company_name: $("profileCompany").value.trim(), email: $("profileCompanyEmail").value.trim(),
           service_address: $("profileServiceAddress").value.trim(), service_city: $("profileServiceCity").value.trim(),
@@ -809,12 +797,10 @@
           service_latitude: Number($("profileServiceZip").dataset.latitude) || currentContractor.service_latitude || null,
           service_longitude: Number($("profileServiceZip").dataset.longitude) || currentContractor.service_longitude || null,
           has_license: hasLicense, license_review_status: hasLicense ? "pending" : "not_applicable", license_number: hasLicense ? licenseNumber : null,
-          license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
-          license_document_path
+          license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null
         }).eq("id", currentContractor.id);
         if (cErr) throw cErr;
       }
-      $("licenseDocument").value = "";
       message("appMessage", "Company and service area details saved.", "success"); await loadAccount();
     } catch (e) { message("appMessage", e.message, "error"); }
   }
@@ -1111,33 +1097,6 @@
         });
         const actions = document.createElement("div");
         actions.className = "actions";
-        if (contractor.license_document_path) {
-          const viewDocument = document.createElement("button");
-          viewDocument.type = "button";
-          viewDocument.className = "secondary";
-          viewDocument.textContent = "View license photo / document";
-          viewDocument.addEventListener("click", async () => {
-            viewDocument.disabled = true;
-            try {
-              const { data, error: fileError } = await db.storage
-                .from("contractor-licenses")
-                .createSignedUrl(contractor.license_document_path, 300);
-              if (fileError) throw fileError;
-              if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
-              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-            } catch (e) {
-              message("pendingContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
-            } finally {
-              viewDocument.disabled = false;
-            }
-          });
-          actions.append(viewDocument);
-        } else {
-          const noDocument = document.createElement("p");
-          noDocument.className = "muted";
-          noDocument.textContent = "No license photo or document uploaded.";
-          actions.append(noDocument);
-        }
         const submitContractorDecision = async (choice, button) => {
           if (button.disabled) return;
           const labels = {
@@ -1364,7 +1323,7 @@
           service_address:"Business address", service_city:"City", service_state:"State", service_zip_code:"ZIP code",
           has_license:"Has current license",
           license_number:"License number", license_state:"License state", license_type:"License type",
-          license_document_path:"License document path", insurance_policy_number:"Insurance policy number",
+          insurance_policy_number:"Insurance policy number",
           insurance_expiration_date:"Insurance expiration date", insurance_document_path:"Insurance certificate path",
           lead_email_notifications:"Lead email notifications"
         };
@@ -1416,7 +1375,6 @@
               if (item.license_number) parts.push("No. " + item.license_number);
               if (item.license_type) parts.push(item.license_type);
               if (item.license_expiration_date) parts.push("Expires " + item.license_expiration_date);
-              parts.push(item.license_document_path ? "Document uploaded" : "Document missing");
               if (item.verification_status) parts.push("Review: " + item.verification_status);
             }
             p.append(strong, document.createTextNode(parts.join(" · ")));
@@ -2006,32 +1964,6 @@
           p.append(strong, document.createTextNode(String(value)));
           card.append(p);
         });
-        if (contractor.license_document_path) {
-          const view = document.createElement("button");
-          view.type = "button";
-          view.className = "secondary";
-          view.textContent = "View license document";
-          view.addEventListener("click", async () => {
-            view.disabled = true;
-            try {
-              const { data, error: fileError } = await db.storage.from("contractor-licenses")
-                .createSignedUrl(contractor.license_document_path, 300);
-              if (fileError) throw fileError;
-              if (!data?.signedUrl) throw new Error("Could not create a secure document link.");
-              window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-            } catch (e) {
-              message("licensedContractorsMessage", "Could not open license document: " + (e.message || "Unknown error"), "error");
-            } finally {
-              view.disabled = false;
-            }
-          });
-          card.append(view);
-        } else {
-          const note = document.createElement("p");
-          note.className = "muted";
-          note.textContent = "No license document uploaded.";
-          card.append(note);
-        }
         if (contractor.license_review_status === "pending") {
           const verify = document.createElement("button");
           verify.type = "button";
