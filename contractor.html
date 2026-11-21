@@ -1544,9 +1544,8 @@
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || lead.service_category === category;
       const serviceMatch = isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
-      const licenseMatch = isAdmin || lead.previewOnly || (lead.status !== "available") || isLeadLicenseEligible(lead);
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return statusMatch && categoryMatch && serviceMatch && licenseMatch && (!query || haystack.includes(query));
+      return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
@@ -1589,12 +1588,11 @@
       if (lead.status === "available") {
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = selectedNames.has(leadCategoryName);
-        const licenseEligible = isLeadLicenseEligible(lead);
-        const canBuy = !lead.previewOnly && !isAdmin && serviceSelected && licenseEligible;
+        const canBuy = !lead.previewOnly && !isAdmin && serviceSelected;
         if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
           eligibility.className = "pill";
-          eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : (!serviceSelected ? "Select this service in your profile" : "License eligibility review required");
+          eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : "Select this service in your profile";
           badges.append(eligibility);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
@@ -1649,135 +1647,21 @@
     }
   }
 
-  let selectedLeadCategoriesByState = new Map();
-  let licenseEligibleLeadCategories = new Map();
-  async function loadLicenseEligibleLeadCategories() {
-    selectedLeadCategoriesByState = new Map();
-    licenseEligibleLeadCategories = new Map();
+  let selectedLeadCategoryNames = new Set();
+  async function loadSelectedLeadCategories() {
+    selectedLeadCategoryNames = new Set();
     if (isAdmin || !currentContractor?.id) return;
-
-    const [{data:qualifications,error:qualificationError},{data:categories,error:categoriesError},{data:maps,error:mapError},{data:rules,error:rulesError},{data:selectedServices,error:selectedServicesError},{data:stateLicenses,error:stateLicensesError}] = await Promise.all([
-      db.from("contractor_profession_qualifications")
-        .select("profession_id,state_code,work_role,verification_status,license_number,license_type,license_expiration_date,license_document_path")
-        .eq("contractor_id",currentContractor.id),
-      db.from("service_categories").select("id,name").eq("is_active",true),
-      db.from("service_category_profession_map").select("category_id,profession_id,mapping_status").eq("mapping_status","mapped"),
-      db.from("state_profession_rules").select("profession_id,state_code,requirement_status,jurisdiction_level"),
-      db.from("contractor_service_categories").select("category_id").eq("contractor_id",currentContractor.id),
-      db.from("contractor_state_licenses").select("state_code,review_status,expiration_date,license_number,license_type,document_path").eq("contractor_id",currentContractor.id)
-    ]);
-    if (qualificationError) throw qualificationError;
-    if (categoriesError) throw categoriesError;
-    if (mapError) throw mapError;
-    if (rulesError) throw rulesError;
-    if (selectedServicesError) throw selectedServicesError;
-    if (stateLicensesError) throw stateLicensesError;
-    const explicitlySelectedCategoryIds = new Set((selectedServices || []).map(row => row.category_id));
-    availableServiceCategories = categories || [];
-
-    // Match the server's storage.objects existence check. A path string alone
-    // is not proof that the private license document still exists.
-    const licenseDocumentPaths = [...new Set([
-      ...(qualifications || []).map(row => String(row.license_document_path || "").trim()),
-      ...(stateLicenses || []).map(row => String(row.document_path || "").trim())
-    ].filter(Boolean))];
-    const licenseDocumentExists = new Map();
-    await Promise.all(licenseDocumentPaths.map(async path => {
-      const parts = path.split("/");
-      if (parts.length !== 2 || parts[0] !== String(currentUser?.id || "") || !parts[1]) {
-        licenseDocumentExists.set(path, false);
-        return;
-      }
-      try {
-        const { data: files, error } = await db.storage.from("contractor-licenses")
-          .list(parts[0], { limit: 1000, search: parts[1] });
-        licenseDocumentExists.set(path, !error && (files || []).some(file => file.name === parts[1]));
-      } catch (storageError) {
-        console.warn("Could not verify private license document:", storageError);
-        licenseDocumentExists.set(path, false);
-      }
-    }));
-
-    // Evaluate every US state represented in the contractor's saved qualifications.
-    // Do not hardcode OR/WA: the catalog and licensing rules are state-scoped.
-    const qualificationStates = [...new Set((qualifications || [])
-      .map(q => String(q.state_code || "").trim().toUpperCase())
-      .filter(state => /^[A-Z]{2}$/.test(state)))];
-    for (const state of qualificationStates) {
-      const stateQualifications = new Map((qualifications || [])
-        .filter(q => String(q.state_code || "").trim().toUpperCase() === state)
-        .map(q => [q.profession_id,q]));
-      const professionIds = new Set(stateQualifications.keys());
-      const mapped = (maps || []).filter(m => professionIds.has(m.profession_id));
-      const selectedCategoryIds = new Set(mapped.map(m => m.category_id).filter(id => explicitlySelectedCategoryIds.has(id)));
-      const selectedNames = new Set(availableServiceCategories
-        .filter(item => selectedCategoryIds.has(item.id)).map(item => item.name.toLowerCase()));
-      selectedLeadCategoriesByState.set(state,selectedNames);
-
-      const stateRules = new Map((rules || [])
-        .filter(rule => String(rule.state_code || "").toUpperCase() === state
-          && String(rule.jurisdiction_level || "").toLowerCase() === "state")
-        .map(rule => [rule.profession_id,String(rule.requirement_status || "").toLowerCase()]));
-      const mappedByCategory = new Map();
-      mapped.forEach(m => {
-        if (!mappedByCategory.has(m.category_id)) mappedByCategory.set(m.category_id,new Set());
-        mappedByCategory.get(m.category_id).add(m.profession_id);
-      });
-      const eligibleIds = new Set([...mappedByCategory.entries()]
-        .filter(([categoryId,professionSet]) => professionSet.size > 0 && [...professionSet].every(id => {
-          const q = stateQualifications.get(id);
-          const status = stateRules.get(id);
-          const review = String(q?.verification_status || "").toLowerCase();
-          if (status === "not_required") return review === "not_required";
-          const stateLicense = (stateLicenses || []).find(item =>
-            String(item.state_code || "").trim().toUpperCase() === state);
-          const companyDocumentPath = String(stateLicense?.document_path || "").trim();
-          const companyLicenseVerified = stateLicense?.review_status === "verified"
-            && Boolean(String(stateLicense?.license_number || "").trim())
-            && Boolean(String(stateLicense?.license_type || "").trim())
-            && Boolean(stateLicense.expiration_date)
-            && new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString());
-          if (status === "company_required") return companyLicenseVerified;
-          if (status === "required" || status === "conditional") {
-            const expiry = q?.license_expiration_date;
-            const notExpired = Boolean(expiry) && new Date(expiry + "T00:00:00") >= new Date(new Date().toDateString());
-            const individualDocumentPath = String(q?.license_document_path || "").trim();
-            const expectedIndividualDocumentPrefix = String(currentUser?.id || "") + "/profession-" + String(q?.profession_id || "") + "-";
-            const individualCredentialVerified = review === "verified"
-              && Boolean(String(q?.license_number || "").trim())
-              && Boolean(String(q?.license_type || "").trim())
-              && individualDocumentPath.startsWith(expectedIndividualDocumentPrefix)
-              && licenseDocumentExists.get(individualDocumentPath) === true
-              && notExpired;
-            if (status === "required") {
-              // Required scope: employees need their individual credential;
-              // independent contractors need both the individual credential
-              // and the verified company/state license.
-              const role = String(q?.work_role || "").toLowerCase();
-              if (role === "employee") return individualCredentialVerified;
-              if (role === "independent") return individualCredentialVerified && companyLicenseVerified;
-              return false;
-            }
-            if (!companyLicenseVerified || review !== "verified") return false;
-            const role = String(q?.work_role || "").toLowerCase();
-            return role === "employee" || (role === "independent" && individualCredentialVerified);
-          }
-          return false;
-        }))
-        .map(([categoryId]) => categoryId));
-      licenseEligibleLeadCategories.set(state,new Set(availableServiceCategories
-        .filter(item => eligibleIds.has(item.id)).map(item => item.name.toLowerCase())));
-    }
+    const { data, error } = await db.from("contractor_service_categories")
+      .select("category_id,service_categories(name)")
+      .eq("contractor_id", currentContractor.id);
+    if (error) throw error;
+    selectedLeadCategoryNames = new Set((data || [])
+      .map(row => String(row.service_categories?.name || "").trim().toLowerCase())
+      .filter(Boolean));
   }
 
   function isLeadServiceSelected(lead) {
-    const state=String(lead?.service_state||"").trim().toUpperCase();
-    return selectedLeadCategoriesByState.get(state)?.has(String(lead?.service_category||"").toLowerCase())===true;
-  }
-
-  function isLeadLicenseEligible(lead) {
-    const state=String(lead?.service_state||"").trim().toUpperCase();
-    return licenseEligibleLeadCategories.get(state)?.has(String(lead?.service_category||"").toLowerCase())===true;
+    return selectedLeadCategoryNames.has(String(lead?.service_category || "").trim().toLowerCase());
   }
 
   async function loadLeads() {
@@ -1809,23 +1693,23 @@
       if (purchasesError) console.warn("Could not load purchased lead access:", purchasesError.message);
       else purchasedLeadIds = new Set((purchases || []).map(row => row.lead_id));
     }
-    try { if (!publicPreviewOnly) await loadLicenseEligibleLeadCategories(); }
-    catch (eligibilityError) {
-      console.error("Could not verify profession eligibility:", eligibilityError);
-      licenseEligibleLeadCategories = new Map();
+    try { if (!publicPreviewOnly) await loadSelectedLeadCategories(); }
+    catch (categoryError) {
+      console.error("Could not load selected service categories:", categoryError);
+      selectedLeadCategoryNames = new Set();
     }
-    const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || lead.previewOnly || (isLeadServiceSelected(lead) && isLeadLicenseEligible(lead))));
+    const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || lead.previewOnly || isLeadServiceSelected(lead)));
     $("availableCount").textContent = String(available.length);
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
-    const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = "My eligible services"; categorySelect.append(allOption);
+    const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = "My selected services"; categorySelect.append(allOption);
     const {data:catalog,error:catalogError}=await db.from("service_categories").select("name").eq("is_active",true).order("name");
     if(catalogError){
       const fallback=[...new Set(cachedLeads.map(lead=>lead.service_category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
       fallback.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;categorySelect.append(option);});
       console.warn("Full service catalog filter could not load:",catalogError.message);
     }else{
-      (catalog||[]).filter(item=>isAdmin || [...licenseEligibleLeadCategories.values()].some(names=>names.has(item.name.toLowerCase()))).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
+      (catalog||[]).filter(item=>isAdmin || selectedLeadCategoryNames.has(item.name.toLowerCase())).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
     }
     if ([...categorySelect.options].some(option => option.value === selectedCategory)) categorySelect.value = selectedCategory;
     renderLeads();
