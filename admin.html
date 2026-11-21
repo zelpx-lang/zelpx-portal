@@ -2008,6 +2008,13 @@
         .limit(1000);
       if (error) throw error;
 
+      const licenseIds = (licenses || []).map(x => x.id).filter(Boolean);
+      const { data: renewalHistory, error: historyError } = licenseIds.length
+        ? await db.from("contractor_license_review_history").select("license_record_id,changed_at").eq("license_kind","company_state").in("license_record_id",licenseIds)
+        : { data: [], error: null };
+      if (historyError) throw historyError;
+      const renewalIds = new Set((renewalHistory || []).map(x => x.license_record_id));
+
       const contractorIds = [...new Set((licenses || []).map(x => x.contractor_id).filter(Boolean))];
       const { data: contractors, error: contractorError } = contractorIds.length
         ? await db.from("contractors")
@@ -2051,6 +2058,7 @@
           ["License state", license.state_code || "Not provided"],
           ["License type", license.license_type || "Not provided"],
           ["Expiration date", license.expiration_date || "Not provided"],
+          ["Submission type", renewalIds.has(license.id) ? "Renewal / resubmission after prior approval" : "Initial submission"],
           ["Review status", license.review_status || "Not specified"],
           ["Account approval", contractor.verification_status || "Not specified"],
           ["Business location", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
@@ -2102,7 +2110,7 @@
         const verify = document.createElement("button");
         verify.type = "button";
         verify.textContent = "Verify " + license.state_code + " License";
-        verify.disabled = !license.document_path || !contractor.id;
+        verify.disabled = !license.document_path || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
         verify.addEventListener("click", async () => {
           if (!adminNote.value.trim()) {
             adminNote.focus();
@@ -2124,7 +2132,7 @@
             await loadContractorChangeRequests();
           } catch (e) {
             message("licensedContractorsMessage", "Could not verify " + license.state_code + " company license: " + (e.message || "Unknown error"), "error");
-            verify.disabled = !license.document_path || !contractor.id;
+            verify.disabled = !license.document_path || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
             verify.textContent = "Verify " + license.state_code + " License";
           }
         });
@@ -2155,6 +2163,12 @@
       if (error) throw error;
 
       const rows = qualifications || [];
+      const qualificationIds = rows.map(x => x.id).filter(Boolean);
+      const { data: renewalHistory, error: historyError } = qualificationIds.length
+        ? await db.from("contractor_license_review_history").select("license_record_id,changed_at").eq("license_kind","profession").in("license_record_id",qualificationIds)
+        : { data: [], error: null };
+      if (historyError) throw historyError;
+      const renewalIds = new Set((renewalHistory || []).map(x => x.license_record_id));
       const contractorIds = [...new Set(rows.map(x => x.contractor_id).filter(Boolean))];
       const professionIds = [...new Set(rows.map(x => x.profession_id).filter(Boolean))];
       const states = [...new Set(rows.map(x => String(x.state_code || "").toUpperCase()).filter(Boolean))];
@@ -2203,8 +2217,10 @@
         const stateCode = String(q.state_code || "").toUpperCase();
         const requirement = ruleMap.get(stateCode+":"+q.profession_id) || "unverified";
         const companyLicense = companyLicenseMap.get(q.contractor_id+":"+stateCode);
+        const today = new Date().toISOString().slice(0,10);
         const companyVerified = companyLicense?.review_status === "verified" &&
-          (!companyLicense.expiration_date || companyLicense.expiration_date >= new Date().toISOString().slice(0,10));
+          !!companyLicense.expiration_date && companyLicense.expiration_date >= today;
+        const individualExpiryValid = !!q.license_expiration_date && q.license_expiration_date >= today;
         const employeeConditional = q.work_role === "employee" && requirement === "conditional";
         const card = document.createElement("article");
         card.className = "lead";
@@ -2224,6 +2240,7 @@
           ["Issuing authority",q.issuing_authority || "Not provided"],
           ["Expiration",q.license_expiration_date || "Not provided"],
           ["Company license",companyVerified ? "Verified" : (companyLicense?.review_status || "Not submitted")],
+          ["Submission type",renewalIds.has(q.id) ? "Renewal / resubmission after prior approval" : "Initial submission"],
           ["Credential status",q.verification_status || "Not specified"]
         ];
         details.forEach(([label,value]) => {
@@ -2275,7 +2292,7 @@
         const verify = document.createElement("button");
         verify.type = "button";
         verify.textContent = "Verify profession";
-        verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type));
+        verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type || !individualExpiryValid));
         verify.addEventListener("click",async()=>{
           if (!note.value.trim()) {
             note.focus();
@@ -2295,7 +2312,7 @@
             await loadPendingProfessionCredentials();
           } catch(e) {
             message("professionCredentialsMessage","Could not verify profession: "+(e.message || "Unknown error"),"error");
-            verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type));
+            verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type || !individualExpiryValid));
             verify.textContent = "Verify profession";
           }
         });
