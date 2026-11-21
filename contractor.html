@@ -475,7 +475,7 @@
           <div class="grid">
             <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
             <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select></div>
-            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes — show licensed work types</option><option value="no">No — show license-free work types</option></select></div>
+            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><select id="profileHasLicense"><option value="">Select Yes or No</option><option value="yes">Yes — show all work types</option><option value="no">No — show work types allowed without your personal trade license</option></select></div>
           </div>
           <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
           <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
@@ -735,11 +735,12 @@
         ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
         : null;
       const status=rule?.requirement_status||"unverified";
-      const eligible=licenseChoice!=="no" ||
-        (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required");
+      const eligible=licenseChoice==="yes" ||
+        (licenseChoice==="no" && (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required"));
       return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
     });
-    if(!visibleCategories.length){root.textContent="No service categories found.";return;}
+    if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your personal license status to see the work types available for your role.";return;}
+    if(!visibleCategories.length){root.textContent="No service categories match your license status and work role.";return;}
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
     const statusLabels={
@@ -1319,10 +1320,11 @@
     const matches=professionCatalog.filter(p=>{
       const rule=professionRuleRows.find(r=>r.profession_id===p.id);
       const status=rule?.requirement_status||"unverified";
-      const eligible=licenseChoice!=="no" ||
-        (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required");
+      const eligible=licenseChoice==="yes" ||
+        (licenseChoice==="no" && (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required"));
       return eligible && (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
     });
+    if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your personal license status to see work types for your role.";return;}
     const statusLabels={
       allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
       individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
@@ -2916,10 +2918,11 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       const showLicense=$("hasLicense").value==="yes";
       $("signupLicenseFields").classList.toggle("hidden",!showLicense);
       ["licenseNumber","licenseState","licenseType"].forEach(id=>{
+        // Hide and relax required validation when No is selected, but retain
+        // entered values in case the user switches back to Yes.
         $(id).required=showLicense;
-        if(!showLicense) $(id).value="";
       });
-      ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; if(!showLicense) $(id).value=""; });
+      ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; });
     }
     $("hasLicense").addEventListener("change", () => {
       // Preserve selections when switching the license filter.
