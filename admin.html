@@ -409,6 +409,7 @@
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
@@ -494,6 +495,16 @@
           <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh incoming leads</button><span id="requestCount" class="muted"></span></div>
           <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
           <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
+        </section>
+      </section>
+      <section id="adminVerifyLeadPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>License Verification</h2>
+          <p>Review company license details against the official state registry. Use Verify License only after confirming the license is active and matches the contractor.</p>
+          <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
+          <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
         </section>
       </section>
     </section>
@@ -1126,7 +1137,7 @@
             if (reviewError) throw reviewError;
             if (data?.error) throw new Error(data.error);
             const statusText = choice === "approve"
-              ? "Registration approved. Contractor moved to Contractor approvals for manual license review."
+              ? "Registration approved. Contractor moved to License Verification."
               : choice === "approve_without_license"
                 ? "Registration approved. Contractor moved to Contractors without a license."
                 : "Registration rejected. Contractor remains blocked.";
@@ -1928,7 +1939,100 @@
     }
   }
 
-  // Company license checks are performed manually in Contractor approvals.
+  async function loadLicensedContractors() {
+    if (!isAdmin) return;
+    const list = $("licensedContractorsList");
+    const count = $("licensedContractorsCount");
+    list.textContent = "Loading licensed contractors…";
+    clearMessage("licensedContractorsMessage");
+    if (count) count.textContent = "";
+    try {
+      const { data: contractors, error } = await db.from("contractors")
+        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,created_at")
+        .eq("has_license", true)
+        .eq("verification_status", "verified")
+        .in("license_review_status", ["pending", "verified"])
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
+      const { data: profiles, error: profileError } = userIds.length
+        ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      list.replaceChildren();
+      if (count) count.textContent = "Total: " + (contractors || []).length;
+      if (!contractors?.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No contractors are waiting for company license verification.";
+        list.append(empty);
+        return;
+      }
+      contractors.forEach(contractor => {
+        const profile = profileMap.get(contractor.user_id) || {};
+        const card = document.createElement("article");
+        card.className = "lead";
+        const title = document.createElement("h3");
+        title.textContent = contractor.company_name || profile.full_name || "Contractor";
+        card.append(title);
+        const details = [
+          ["Contact name", profile.full_name || "Not provided"],
+          ["Email", contractor.email || "Not provided"],
+          ["Phone", profile.phone || "Not provided"],
+          ["License number", contractor.license_number || "Not provided"],
+          ["License state", contractor.license_state || "Not provided"],
+          ["License type", contractor.license_type || "Not provided"],
+          ["License review", contractor.license_review_status || "Not specified"],
+          ["Account approval", contractor.verification_status || "Not specified"],
+          ["Business location", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
+          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+        ];
+        details.forEach(([label, value]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          card.append(p);
+        });
+        if (contractor.license_review_status === "pending") {
+          const verify = document.createElement("button");
+          verify.type = "button";
+          verify.textContent = "Verify License";
+          verify.addEventListener("click", async () => {
+            if (!window.confirm("Confirm that you checked the official state registry and this company license is active and matches the contractor?")) return;
+            verify.disabled = true;
+            verify.textContent = "Verifying…";
+            try {
+              const { data, error: verifyError } = await db.rpc("admin_verify_contractor_company_license", {
+                p_contractor_id: contractor.id
+              });
+              if (verifyError) throw verifyError;
+              if (data?.success !== true) throw new Error(data?.error || "License verification was not confirmed.");
+              message("licensedContractorsMessage", "Company license marked Verified. You can now review the contractor's licensed professions.", "success");
+              await loadLicensedContractors();
+              await loadContractorChangeRequests();
+            } catch (e) {
+              message("licensedContractorsMessage", "Could not verify company license: " + (e.message || "Unknown error"), "error");
+              verify.disabled = false;
+              verify.textContent = "Verify License";
+            }
+          });
+          card.append(verify);
+        } else {
+          const verified = document.createElement("p");
+          verified.className = "muted";
+          verified.textContent = "Company license: VERIFIED";
+          card.append(verified);
+        }
+        list.append(card);
+      });
+    } catch (e) {
+      list.textContent = "Could not load licensed contractors: " + (e.message || "Unknown error");
+      message("licensedContractorsMessage", "Check administrator access to the contractors and profiles tables. " + (e.message || ""), "error");
+    }
+  }
 
   function showAdminPage(pageId) {
     if (!isAdmin) return;
@@ -1939,6 +2043,7 @@
     if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
+    if (pageId === "adminVerifyLeadPage") loadLicensedContractors();
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
@@ -2012,6 +2117,7 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
+    $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
 $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
