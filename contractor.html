@@ -1682,6 +1682,29 @@
     const explicitlySelectedCategoryIds = new Set((selectedServices || []).map(row => row.category_id));
     availableServiceCategories = categories || [];
 
+    // Match the server's storage.objects existence check. A path string alone
+    // is not proof that the private license document still exists.
+    const licenseDocumentPaths = [...new Set([
+      ...(qualifications || []).map(row => String(row.license_document_path || "").trim()),
+      ...(stateLicenses || []).map(row => String(row.document_path || "").trim())
+    ].filter(Boolean))];
+    const licenseDocumentExists = new Map();
+    await Promise.all(licenseDocumentPaths.map(async path => {
+      const parts = path.split("/");
+      if (parts.length !== 2 || parts[0] !== String(currentUser?.id || "") || !parts[1]) {
+        licenseDocumentExists.set(path, false);
+        return;
+      }
+      try {
+        const { data: files, error } = await db.storage.from("contractor-licenses")
+          .list(parts[0], { limit: 1000, search: parts[1] });
+        licenseDocumentExists.set(path, !error && (files || []).some(file => file.name === parts[1]));
+      } catch (storageError) {
+        console.warn("Could not verify private license document:", storageError);
+        licenseDocumentExists.set(path, false);
+      }
+    }));
+
     // Evaluate every US state represented in the contractor's saved qualifications.
     // Do not hardcode OR/WA: the catalog and licensing rules are state-scoped.
     const qualificationStates = [...new Set((qualifications || [])
@@ -1721,6 +1744,7 @@
             && Boolean(String(stateLicense?.license_type || "").trim())
             && Boolean(companyDocumentPath)
             && companyDocumentPath.startsWith(String(currentUser?.id || "") + "/")
+            && licenseDocumentExists.get(companyDocumentPath) === true
             && Boolean(stateLicense.expiration_date)
             && new Date(stateLicense.expiration_date + "T00:00:00") >= new Date(new Date().toDateString());
           if (status === "required" || status === "conditional") {
@@ -1732,6 +1756,7 @@
               && Boolean(String(q?.license_number || "").trim())
               && Boolean(String(q?.license_type || "").trim())
               && individualDocumentPath.startsWith(expectedIndividualDocumentPrefix)
+              && licenseDocumentExists.get(individualDocumentPath) === true
               && notExpired;
             if (status === "required") {
               // Required scope: employees need their individual credential;
