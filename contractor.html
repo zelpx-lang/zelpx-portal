@@ -1175,7 +1175,7 @@
     const [professionsResult, qualificationsResult, pendingResult] = await Promise.all([
       db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
       db.from("contractor_profession_qualifications").select("profession_id,state_code,work_role,verification_status,license_number,license_type").eq("contractor_id",currentContractor.id).eq("state_code",stateSelect.value),
-      db.from("contractor_change_requests").select("requested_changes,created_at").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle()
+      db.from("contractor_change_requests").select("requested_changes,created_at,status,admin_note").eq("user_id",currentUser.id).eq("request_type","profession_qualifications").order("created_at",{ascending:false}).limit(1).maybeSingle()
     ]);
     if(professionsResult.error) throw professionsResult.error;
     if(qualificationsResult.error) throw qualificationsResult.error;
@@ -1184,8 +1184,9 @@
     const saved=qualificationsResult.data||[];
     professionVerificationById=new Map(saved.map(x=>[x.profession_id,x.verification_status||"pending"]));
     const activeIds=saved.map(x=>x.profession_id);
-    const pending=pendingResult.data?.requested_changes||null;
-    const pendingItems= pending && String(pending.state_code||"").toUpperCase()===String(stateSelect.value||"").toUpperCase() && Array.isArray(pending.items) ? pending.items : null;
+    const latestRequest=pendingResult.data||null;
+    const latestChanges=latestRequest?.requested_changes||null;
+    const pendingItems= latestChanges && ["pending","rejected"].includes(latestRequest.status) && String(latestChanges.state_code||"").toUpperCase()===String(stateSelect.value||"").toUpperCase() && Array.isArray(latestChanges.items) ? latestChanges.items : null;
     selectedProfessionIds=new Set(pendingItems ? pendingItems.map(x=>x.profession_id).filter(Boolean) : activeIds);
     savedProfessionIds=new Set(activeIds);
     $("professionWorkRole").value=pendingItems ? (pending.work_role||"independent") : (saved[0]?.work_role||"independent");
@@ -1193,7 +1194,8 @@
 
     renderProfessionOptions();
     await refreshProfessionRules();
-    if(pendingItems) message("professionComplianceSummary","Your latest selected work types are saved as a pending admin-review request and will remain selected after approval. They become active after approval.","success");
+    if(pendingItems && latestRequest.status==="pending") message("professionComplianceSummary","Your selected work types are pending administrator review. They are not active until approved.","success");
+    else if(pendingItems && latestRequest.status==="rejected") message("professionComplianceSummary","Your previous work-type request was rejected. You can edit these selections and submit them again for administrator review. Rejected selections are not active.","error");
     await renderProfessionCredentialUploads();
   }
   async function renderProfessionCredentialUploads(){
