@@ -500,8 +500,8 @@
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-          <h2>License Verification</h2>
-          <p>Review company license details against the official state registry. Use Verify License only after confirming the license is active and matches the contractor.</p>
+          <h2>Company State License Verification</h2>
+          <p>Review each submitted state license separately (Oregon and Washington). Open the uploaded document and confirm the active license in the official state registry before verifying it.</p>
           <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
           <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
@@ -1990,56 +1990,64 @@
     if (!isAdmin) return;
     const list = $("licensedContractorsList");
     const count = $("licensedContractorsCount");
-    list.textContent = "Loading licensed contractors…";
+    list.textContent = "Loading company state licenses…";
     clearMessage("licensedContractorsMessage");
     if (count) count.textContent = "";
     try {
-      const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_state_2,license_type,license_document_path,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_expiration_date,insurance_policy_number,insurance_review_status,created_at")
-        .eq("has_license", true)
-        .eq("verification_status", "verified")
-        .eq("license_review_status", "pending")
+      const { data: licenses, error } = await db.from("contractor_state_licenses")
+        .select("id,contractor_id,state_code,license_number,license_type,document_path,expiration_date,review_status,created_at")
+        .eq("review_status", "pending")
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
+
+      const contractorIds = [...new Set((licenses || []).map(x => x.contractor_id).filter(Boolean))];
+      const { data: contractors, error: contractorError } = contractorIds.length
+        ? await db.from("contractors")
+            .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,created_at")
+            .in("id", contractorIds)
+        : { data: [], error: null };
+      if (contractorError) throw contractorError;
+
       const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
       const { data: profiles, error: profileError } = userIds.length
         ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
         : { data: [], error: null };
       if (profileError) throw profileError;
+
+      const contractorMap = new Map((contractors || []).map(c => [c.id, c]));
       const profileMap = new Map((profiles || []).map(p => [p.id, p]));
       list.replaceChildren();
-      if (count) count.textContent = "Total: " + (contractors || []).length;
-      if (!contractors?.length) {
+      if (count) count.textContent = "Pending state licenses: " + (licenses || []).length;
+      if (!licenses?.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = "No contractors are waiting for company license verification.";
+        empty.textContent = "No company state licenses are waiting for verification.";
         list.append(empty);
         return;
       }
-      contractors.forEach(contractor => {
+
+      licenses.forEach(license => {
+        const contractor = contractorMap.get(license.contractor_id) || {};
         const profile = profileMap.get(contractor.user_id) || {};
         const card = document.createElement("article");
         card.className = "lead";
         const title = document.createElement("h3");
-        title.textContent = contractor.company_name || profile.full_name || "Contractor";
+        title.textContent = (contractor.company_name || profile.full_name || "Contractor") + " — " + license.state_code + " company license";
         card.append(title);
+
         const details = [
           ["Contact name", profile.full_name || "Not provided"],
           ["Email", contractor.email || "Not provided"],
           ["Phone", profile.phone || "Not provided"],
-          ["License number", contractor.license_number || "Not provided"],
-          ["License state", contractor.license_state || "Not provided"],
-          ["License type", contractor.license_type || "Not provided"],
-          ["License review", contractor.license_review_status || "Not specified"],
-          ["INSURANCE AGENCY NAME", contractor.insurance_agency_name || "Not provided"],
-          ["INSURANCE AGENT PHONE NUMBER", contractor.insurance_agent_phone || "Not provided"],
-          ["INSURANCE EXPIRATION DATE", contractor.insurance_expiration_date || "Not provided"],
-          ["Insurance policy number", contractor.insurance_policy_number || "Not provided"],
-          ["Insurance review", contractor.insurance_review_status || "Not specified"],
+          ["License number", license.license_number || "Not provided"],
+          ["License state", license.state_code || "Not provided"],
+          ["License type", license.license_type || "Not provided"],
+          ["Expiration date", license.expiration_date || "Not provided"],
+          ["Review status", license.review_status || "Not specified"],
           ["Account approval", contractor.verification_status || "Not specified"],
           ["Business location", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
-          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+          ["Submitted", license.created_at ? new Date(license.created_at).toLocaleString() : "Unknown"]
         ];
         details.forEach(([label, value]) => {
           const p = document.createElement("p");
@@ -2048,22 +2056,23 @@
           p.append(strong, document.createTextNode(String(value)));
           card.append(p);
         });
-        if (contractor.license_document_path) {
+
+        if (license.document_path) {
           const documentRow = document.createElement("p");
           const documentLink = document.createElement("a");
           documentLink.href = "#";
-          documentLink.textContent = "Open uploaded company license document";
+          documentLink.textContent = "Open uploaded " + license.state_code + " company license document";
           documentLink.addEventListener("click", async event => {
             event.preventDefault();
             documentLink.textContent = "Opening document…";
             try {
               const { data: signed, error: signedError } = await db.storage
                 .from("contractor-licenses")
-                .createSignedUrl(contractor.license_document_path, 3600);
+                .createSignedUrl(license.document_path, 3600);
               if (signedError) throw signedError;
               if (!signed?.signedUrl) throw new Error("A secure document link could not be created.");
               window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-              documentLink.textContent = "Open uploaded company license document";
+              documentLink.textContent = "Open uploaded " + license.state_code + " company license document";
             } catch (e) {
               documentLink.textContent = "Could not open document: " + (e.message || "Unknown error");
             }
@@ -2076,52 +2085,48 @@
           missingDocument.textContent = "No company license document uploaded. Verification is blocked until the document is provided.";
           card.append(missingDocument);
         }
-        if (contractor.license_review_status === "pending") {
-          const adminNote = document.createElement("textarea");
-          adminNote.rows = 2;
-          adminNote.placeholder = "Required administrator note: registry checked and license status confirmed";
-          adminNote.setAttribute("aria-label", "Company license verification note");
-          card.append(adminNote);
-          const verify = document.createElement("button");
-          verify.type = "button";
-          verify.textContent = "Verify License";
-          verify.disabled = !contractor.license_document_path;
-          verify.addEventListener("click", async () => {
-            if (!adminNote.value.trim()) {
-              adminNote.focus();
-              message("licensedContractorsMessage", "Enter an administrator note before verifying the company license.", "error");
-              return;
-            }
-            if (!window.confirm("Confirm that you checked the official state registry and this company license is active, matches the contractor, and covers the selected state?")) return;
-            verify.disabled = true;
-            verify.textContent = "Verifying…";
-            try {
-              const { error: verifyError } = await db.rpc("zelpx_admin_verify_company_license", {
-                p_contractor_id: contractor.id,
-                p_admin_notes: adminNote.value.trim()
-              });
-              if (verifyError) throw verifyError;
-              message("licensedContractorsMessage", "Company license marked Verified. You can now review the contractor's licensed professions.", "success");
-              await loadLicensedContractors();
-              await loadContractorChangeRequests();
-            } catch (e) {
-              message("licensedContractorsMessage", "Could not verify company license: " + (e.message || "Unknown error"), "error");
-              verify.disabled = !contractor.license_document_path;
-              verify.textContent = "Verify License";
-            }
-          });
-          card.append(verify);
-        } else {
-          const verified = document.createElement("p");
-          verified.className = "muted";
-          verified.textContent = "Company license: VERIFIED";
-          card.append(verified);
-        }
+
+        const adminNote = document.createElement("textarea");
+        adminNote.rows = 2;
+        adminNote.placeholder = "Required administrator note: registry checked and license status confirmed";
+        adminNote.setAttribute("aria-label", "Company state license verification note");
+        card.append(adminNote);
+
+        const verify = document.createElement("button");
+        verify.type = "button";
+        verify.textContent = "Verify " + license.state_code + " License";
+        verify.disabled = !license.document_path || !contractor.id;
+        verify.addEventListener("click", async () => {
+          if (!adminNote.value.trim()) {
+            adminNote.focus();
+            message("licensedContractorsMessage", "Enter an administrator note before verifying the company state license.", "error");
+            return;
+          }
+          if (!window.confirm("Confirm that you checked the official state registry and this company license is active, matches the contractor, and covers " + license.state_code + "?")) return;
+          verify.disabled = true;
+          verify.textContent = "Verifying…";
+          try {
+            const { error: verifyError } = await db.rpc("zelpx_admin_verify_company_state_license", {
+              p_contractor_id: license.contractor_id,
+              p_state_code: license.state_code,
+              p_admin_notes: adminNote.value.trim()
+            });
+            if (verifyError) throw verifyError;
+            message("licensedContractorsMessage", license.state_code + " company license marked Verified. You can now review the contractor's selected professions for this state.", "success");
+            await loadLicensedContractors();
+            await loadContractorChangeRequests();
+          } catch (e) {
+            message("licensedContractorsMessage", "Could not verify " + license.state_code + " company license: " + (e.message || "Unknown error"), "error");
+            verify.disabled = !license.document_path || !contractor.id;
+            verify.textContent = "Verify " + license.state_code + " License";
+          }
+        });
+        card.append(verify);
         list.append(card);
       });
     } catch (e) {
-      list.textContent = "Could not load licensed contractors: " + (e.message || "Unknown error");
-      message("licensedContractorsMessage", "Check administrator access to the contractors and profiles tables. " + (e.message || ""), "error");
+      list.textContent = "Could not load company state licenses: " + (e.message || "Unknown error");
+      message("licensedContractorsMessage", "Check administrator SELECT access to contractor_state_licenses, contractors, and profiles. " + (e.message || ""), "error");
     }
   }
 
