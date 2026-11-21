@@ -1633,6 +1633,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
         sphereDraft = { service: "", zip: "", services: [] };
         $("requestForm").reset();
+        $("serviceState").dataset.manualState = "false";
 
         showMessage(
           "requestMessage",
