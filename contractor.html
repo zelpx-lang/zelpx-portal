@@ -893,7 +893,8 @@
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null, license_expiration_date: hasLicense ? licenseExpirationDate : null,
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_expiration_date: hasLicense ? (licenseExpiry || null) : null, license_expiration_date: hasLicense ? licenseExpirationDate : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
@@ -2357,6 +2358,7 @@
         const complianceChanges = {
           has_license: changes.has_license, license_number: changes.license_number,
           license_state: changes.license_state, license_type: changes.license_type,
+          license_expiration_date: changes.license_expiration_date,
           license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
           additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
           has_insurance_certificate: changes.has_insurance_certificate,
