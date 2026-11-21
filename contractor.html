@@ -2469,21 +2469,11 @@
         line(card,"Selected service categories",(cr.data||[]).filter(x=>x.contractor_id===c.id).map(x=>x.service_categories?.name).filter(Boolean).join(", "));
         const lic=document.createElement("section");lic.style.cssText="padding:12px;background:#fffaf5;border-radius:12px;margin:10px 0";const lh=document.createElement("h4");lh.textContent="Company license";lic.append(lh);
         line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",c.license_state);line(lic,"Type",c.license_type);line(lic,"Document",c.license_document_path?"Uploaded":"Missing");line(lic,"Review status",c.license_review_status);if(c.license_review_notes)line(lic,"Admin review notes",c.license_review_notes);if(c.license_reviewed_at)line(lic,"Reviewed at",new Date(c.license_reviewed_at).toLocaleString());
-        if(c.has_license&&c.license_review_status!=="verified"){
-          const reviewNote=document.createElement("textarea");reviewNote.rows=2;reviewNote.placeholder="Required: record what you checked (official license lookup, name, status, expiration)…";lic.append(reviewNote);
-          const b=document.createElement("button");b.textContent="Confirm company license review";
-          b.disabled=!c.license_number||!c.license_state||!c.license_type||!c.license_document_path;
-          b.title=b.disabled?"Company license number, state, type and uploaded document are required.":"";
-          b.onclick=async()=>{
-            const note=reviewNote.value.trim();
-            if(!note)return message("adminContractorReviewMessage","Enter review notes before confirming.","error");
-            if(!window.confirm("Confirm that you personally checked the uploaded license document and verified the license details with the relevant state authority?"))return;
-            b.disabled=true;
-            const {error}=await db.rpc("zelpx_admin_verify_company_license",{p_contractor_id:c.id,p_admin_notes:note});
-            if(error){b.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}
-            message("adminContractorReviewMessage","Company license review recorded. Profession approvals remain separate.","success");loadAdminContractorReviews();
-          };
-          lic.append(b);
+        if(c.has_license){
+          const legacyNotice=document.createElement("p");
+          legacyNotice.className="muted";
+          legacyNotice.textContent="Legacy company-license fields are displayed for reference only. They cannot approve licensed work. Submit and review the current company license under Company licenses by state; profession approval remains separate.";
+          lic.append(legacyNotice);
         }
         card.append(lic);
         const stateLicenses=(sl.data||[]).filter(x=>x.contractor_id===c.id);
