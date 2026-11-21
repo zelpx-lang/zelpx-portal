@@ -352,8 +352,10 @@
         <h3>Choose your work before creating your account</h3>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
         <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
-        <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
-        <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
+        <div id="signupLicenseChoice">
+          <label for="hasLicense">Do you have the required current license / registration / trade credential?</label>
+          <select id="hasLicense" required><option value="">Select Yes or No first</option><option value="yes">Yes</option><option value="no">No</option></select>
+        </div>
         <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
         <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state first, then choose the services you offer.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Your selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen work types will appear here.</span></div></div>
         <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
@@ -725,32 +727,27 @@
     const root=$("signupProfessionOptions");root.replaceChildren();
     if(!signupServiceCatalog.length){root.textContent="No service categories are currently available. Please refresh and try again.";return;}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
-    // Filter the visible choices by work role and the user's personal credential.
-    // Keep the full catalog in the database; this only changes the registration list.
-    const licenseChoice=$("hasLicense")?.value||"";
     const role=$("signupWorkRole")?.value||"independent";
+    const licenseChoice=$("hasLicense")?.value||"";
+    // Workers looking for employment do not need a business-license Yes/No
+    // filter. They may select work types, while individual credentials and
+    // employer supervision are reviewed separately for each selected profession.
     const visibleCategories=signupServiceCatalog.filter(category=>{
       const map=signupCategoryMapRows.find(x=>x.category_id===category.id);
       const rule=map?.mapping_status==="mapped"&&map.profession_id
         ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
         : null;
       const status=rule?.requirement_status||"unverified";
-      const eligible=licenseChoice==="yes" ||
-        (licenseChoice==="no" && (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required"));
+      const eligible=role==="employee" || licenseChoice==="yes" ||
+        (licenseChoice==="no" && status==="not_required");
       return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
     });
-    if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your personal license status to see the work types available for your role.";return;}
+    if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
+      root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;
+    }
     if(!visibleCategories.length){root.textContent="No service categories match your license status and work role.";return;}
     const groups=new Map();
     visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
-    const statusLabels={
-      allowed_no_individual_license:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY",
-      individual_trade_credential_required:"INDIVIDUAL TRADE CREDENTIAL REQUIRED",
-      contractor_license_or_registration_required:"CONTRACTOR LICENSE / REGISTRATION REQUIRED",
-      employer_license_and_supervision:"EMPLOYER LICENSE / SUPERVISION REQUIRED",
-      conditional:"CONDITIONAL / SCOPE REVIEW",
-      local_review_required:"LOCAL REVIEW REQUIRED"
-    };
     [...groups.entries()].forEach(([group,cats])=>{
       const heading=document.createElement("div");heading.textContent=group;heading.style.cssText="grid-column:1/-1;font-weight:800;margin:10px 0 2px;color:var(--muted)";root.append(heading);
       cats.forEach(c=>{
@@ -758,10 +755,6 @@
         const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedCategoryIds.has(c.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
         cb.addEventListener("change",()=>{if(cb.checked)signupSelectedCategoryIds.add(c.id);else signupSelectedCategoryIds.delete(c.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
         const name=document.createElement("span");name.textContent=c.name;name.style.flex="1";
-        const map=signupCategoryMapRows.find(x=>x.category_id===c.id);
-        const rule=map?.mapping_status==="mapped"&&map.profession_id
-          ? signupRuleRows.find(r=>r.profession_id===map.profession_id)
-          : null;
         label.append(cb,name);root.append(label);
       });
     });
@@ -840,10 +833,11 @@
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
     if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.","error");
-    const hasLicense = $("hasLicense").value === "yes";
+    const signupRole=$("signupWorkRole").value;
+    const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim();
     const licenseNumber2=$("licenseNumber2").value.trim(),licenseState2=$("licenseState2").value.trim().toUpperCase(),licenseType2=$("licenseType2").value.trim();
-    const signupRole=$("signupWorkRole").value, selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
+    const selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
     // Unverified scopes may register without claiming they are license-free.
     // The acknowledgement below keeps the account pending; credential-required
     // scopes are still blocked by explicitlyRequiredWithoutLicense, and lead access
@@ -865,18 +859,18 @@
       return false;
     });
     if(!selectedServiceCategoryIds.length)return message("authMessage","Select at least one service before creating your account.","error");
-    if(!hasLicense && explicitlyRequiredWithoutLicense.length){
+    if(signupRole==="independent"&&!hasLicense && explicitlyRequiredWithoutLicense.length){
       const names=explicitlyRequiredWithoutLicense.map(p=>p.profession_name).join(", ");
       return message("authMessage","A current license or trade credential is required for: "+names+". You cannot register to offer this work without the required credential. Remove these professions or provide your license details and upload the document.","error");
     }
-    if((signupRole==="independent"&&(requiredSignup.length||conditionalSignup.length))||(signupRole==="employee"&&individualCredentialSignup.length)){
-      if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage",signupRole==="employee"?"A selected trade requires your own individual license or certificate. Enter its number, issuing state and type, or remove that profession.":"A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
+    if(signupRole==="independent"&&(requiredSignup.length||conditionalSignup.length)){
+      if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage","A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
     }
     if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
     const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
     if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
     if (!email || !password || !fullName || !phone || !companyName || !serviceAddress || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", "Complete all required fields: your name, phone, company name, company email, business street address, city, state, and a valid 5-digit ZIP code.", "error");
-    if (!$("hasLicense").value) return message("authMessage", "Please select whether you have a current license.", "error");
+    if (signupRole==="independent"&&!$("hasLicense").value) return message("authMessage", "Please select whether your business has a current license or registration.", "error");
     if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) return message("authMessage", "Enter a complete first license: state, number, and type.", "error");
     if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
     if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
@@ -1324,15 +1318,15 @@
     const matches=professionCatalog.filter(p=>{
       const rule=professionRuleRows.find(r=>r.profession_id===p.id);
       const status=rule?.requirement_status||"unverified";
-      const eligible=licenseChoice==="yes" ||
-        (licenseChoice==="no" && (role==="employee" ? ["not_required","conditional"].includes(status) : status==="not_required"));
+      const eligible=role==="employee" || licenseChoice==="yes" ||
+        (licenseChoice==="no" && status==="not_required");
       // New selections must map to a customer-facing service category.
       // Preserve previously selected legacy IDs so the contractor can remove them safely.
       const mapped=mappedProfessionIds.has(p.id);
       return (mapped || selectedProfessionIds.has(p.id)) && eligible &&
         (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(query);
     });
-    if(licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your personal license status to see work types for your role.";return;}
+    if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;}
     const statusLabels={
       allowed_no_individual_license:"NO INDIVIDUAL LICENSE IDENTIFIED",
       individual_trade_credential_required:"INDIVIDUAL CREDENTIAL REQUIRED",
@@ -1358,9 +1352,12 @@
     if(!matches.length) root.textContent="No professions found.";
   }
   function updateProfileInsuranceVisibility(){
-    const showInsurance=$("professionWorkRole").value==="independent" && $("profileHasLicense").value==="yes";
+    const role=$("professionWorkRole").value||"independent";
+    const showInsurance=role==="independent" && $("profileHasLicense").value==="yes";
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
+    const licenseFilter=$("professionLicenseFilter");
+    if(licenseFilter) licenseFilter.classList.toggle("hidden",role==="employee");
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
@@ -1370,10 +1367,8 @@
     const licenseChoice=$("profileHasLicense").value;
     const role=$("professionWorkRole").value;
     const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
-    if(licenseLabel) licenseLabel.textContent=role==="employee"
-      ? "Do you personally hold the individual trade license / certificate required for your selected work?"
-      : "Do you have the required current license / registration / trade credential?";
-    $("professionLicenseFilter").classList.remove("hidden");
+    if(licenseLabel) licenseLabel.textContent="Do you have the required current license / registration / trade credential?";
+    $("professionLicenseFilter").classList.toggle("hidden",role==="employee");
     // Do not silently discard a contractor's selected professions when the
     // current state has a required, conditional, local-only, or unverified rule.
     // Keep the selection visible and save its qualification as pending; the
@@ -2853,8 +2848,10 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
       const licenseLabel=document.querySelector('label[for="hasLicense"]');
-      if(licenseLabel)licenseLabel.textContent=employee?"Do you personally hold the individual trade license / certificate required for your selected work?":"Do you have the required current license / registration / trade credential?";
+      if(licenseLabel)licenseLabel.textContent="Do you have the required current license / registration / trade credential?";
+      updateSignupLicenseFields();
       updateSignupInsuranceVisibility();
+      renderSignupProfessionOptions();
     });
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
@@ -2933,11 +2930,14 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       catch(e) { message("professionComplianceSummary","Could not verify profession rules: "+e.message,"error"); }
     });
     function updateSignupLicenseFields(){
-      const showLicense=$("hasLicense").value==="yes";
+      const employee=$("signupWorkRole").value==="employee";
+      $("signupLicenseChoice").classList.toggle("hidden",employee);
+      $("hasLicense").required=!employee;
+      const showLicense=!employee&&$("hasLicense").value==="yes";
       $("signupLicenseFields").classList.toggle("hidden",!showLicense);
       ["licenseNumber","licenseState","licenseType"].forEach(id=>{
-        // Hide and relax required validation when No is selected, but retain
-        // entered values in case the user switches back to Yes.
+        // Business license fields apply only to Independent Contractor / Business.
+        // Employee trade credentials are collected and verified per profession.
         $(id).required=showLicense;
       });
       ["licenseNumber2","licenseState2","licenseType2"].forEach(id=>{ $(id).required=false; });
