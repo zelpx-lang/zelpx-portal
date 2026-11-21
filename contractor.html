@@ -1354,11 +1354,14 @@
   }
   function updateProfileInsuranceVisibility(){
     const role=$("professionWorkRole").value||"independent";
-    const showInsurance=role==="independent" && $("profileHasLicense").value==="yes";
+    const employee=role==="employee";
+    const showInsurance=!employee && $("profileHasLicense").value==="yes";
     const insuranceSection=$("profileBusinessInsuranceSection");
     if(insuranceSection) insuranceSection.classList.toggle("hidden",!showInsurance);
+    const companyLicenseFields=$("profileLicenseFields");
+    if(companyLicenseFields) companyLicenseFields.classList.toggle("hidden",employee || $("profileHasLicense").value!=="yes");
     const licenseFilter=$("professionLicenseFilter");
-    if(licenseFilter) licenseFilter.classList.toggle("hidden",role==="employee");
+    if(licenseFilter) licenseFilter.classList.toggle("hidden",employee);
   }
   async function refreshProfessionRules() {
     const state=$("professionState").value;
@@ -2145,20 +2148,24 @@
     let saved = false;
     try {
       const full_name = $("profileFullName").value.trim(), phone = $("profilePhone").value.trim();
-      const companyName = $("profileCompany").value.trim(), companyEmail = $("profileCompanyEmail").value.trim();
-      const hasLicense = $("profileHasLicense").value === "yes";
+      const workRole = $("professionWorkRole").value || "independent";
+      const isEmployee = workRole === "employee";
+      const companyName = isEmployee ? full_name : $("profileCompany").value.trim();
+      const companyEmail = isEmployee ? (currentUser?.email || "") : $("profileCompanyEmail").value.trim();
+      const serviceAddress = $("profileServiceAddress").value.trim();
+      const hasLicense = !isEmployee && $("profileHasLicense").value === "yes";
       const licenseNumber = $("profileLicenseNumber").value.trim(), licenseState = $("profileLicenseState").value.trim().toUpperCase(), licenseType = $("profileLicenseType").value.trim();
       const zip = $("profileServiceZip").value.trim().slice(0,5), state = $("profileServiceState").value.trim().toUpperCase();
-      if (!full_name || !phone || !companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) throw new Error("Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
-      if (!$("profileServiceAddress").value.trim() || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error("Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
-      if (!$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
+      if (!full_name || !phone || (!isEmployee && (!companyName || !companyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)))) throw new Error(isEmployee ? "Complete your name and phone number." : "Complete Your Name, Phone, Company Name, and enter a valid Company Email.");
+      if ((!isEmployee && !serviceAddress) || !$("profileServiceCity").value.trim() || !state || !/^[0-9]{5}$/.test(zip)) throw new Error(isEmployee ? "Complete your city, state, and valid 5-digit ZIP code." : "Complete Business Street Address, City, State, and enter a valid 5-digit Business ZIP Code.");
+      if (!isEmployee && !$("profileHasLicense").value) throw new Error("Select Yes or No for current license.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
       if (currentContractor) {
-        await verifyContractorBusinessAddress();
+        if (!isEmployee) await verifyContractorBusinessAddress();
         const changes = {
           full_name, phone,
           company_name: companyName, email: companyEmail,
-          service_address: $("profileServiceAddress").value.trim(), service_city: $("profileServiceCity").value.trim(),
+          service_address: serviceAddress || null, service_city: $("profileServiceCity").value.trim(),
           service_state: state, service_zip_code: zip, service_radius_miles: Number($("profileServiceRadius").value),
           lead_email_notifications: $("profileLeadEmailNotifications").checked,
           service_latitude: Number($("profileServiceZip").dataset.latitude) || currentContractor.service_latitude || null,
@@ -2215,14 +2222,16 @@
             document_path:path,expiration_date:license.expiration_date||null,review_status:"pending"};
           additionalStateLicenses=[...additionalStateLicenses.filter(x=>x.state_code!==license.state_code),savedRecord];
         };
-        if(hasLicense){
+        if(!isEmployee && hasLicense){
           await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
             document_file:$("profileCompanyLicenseFile").files?.[0]||null,
             document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
             expiration_date:$("profileCompanyLicenseExpiry").value||null});
         }
-        for(const license of additionalStateLicenses){
-          await uploadCompanyStateLicense(license);
+        if(!isEmployee){
+          for(const license of additionalStateLicenses){
+            await uploadCompanyStateLicense(license);
+          }
         }
 
         const complianceChanges = {
@@ -2235,8 +2244,10 @@
           insurance_agent_phone: changes.insurance_agent_phone,
           insurance_expiration_date: changes.insurance_expiration_date
         };
-        const {error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:complianceChanges});
-        if(requestError) throw requestError;
+        if(!isEmployee){
+          const {error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:complianceChanges});
+          if(requestError) throw requestError;
+        }
         currentContractor = { ...currentContractor, ...activeProfileChanges };
         currentProfile = { ...currentProfile, full_name, phone };
 
@@ -2264,7 +2275,9 @@
           if (professionError) throw professionError;
         }
       }
-      const successText = "Saved successfully. Your name, phone, company and location details are now active. License, insurance and profession changes remain pending administrator review.";
+      const successText = isEmployee
+        ? "Your worker profile and service area are saved. Required profession credentials must be verified before you perform regulated work."
+        : "Saved successfully. Your name, phone, company and location details are now active. License, insurance and profession changes remain pending administrator review.";
       message("appMessage", successText, "success");
       if (saveStatus) { saveStatus.textContent = "✓ " + successText; saveStatus.className = "message success"; }
       saveButton.textContent = "Submitted ✓";
