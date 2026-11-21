@@ -1208,11 +1208,22 @@
       .select("id,profession_id,work_role,verification_status,license_number,license_type,issuing_authority,license_expiration_date,license_document_path")
       .eq("contractor_id",currentContractor.id).eq("state_code",state);
     if(error)throw error;
+    const {data:rules,error:rulesError}=await db.from("state_profession_rules")
+      .select("profession_id,requirement_status,jurisdiction_level")
+      .eq("state_code",state).eq("jurisdiction_level","state");
+    if(rulesError)throw rulesError;
+    const role=$("professionWorkRole")?.value||"independent";
+    const ruleByProfession=new Map((rules||[]).map(r=>[r.profession_id,String(r.requirement_status||"").toLowerCase()]));
     const selected=(rows||[]).filter(q=>selectedProfessionIds.has(q.profession_id));
+    const credentialRequired=selected.filter(q=>{
+      const status=ruleByProfession.get(q.profession_id);
+      return status==="required"||(status==="conditional"&&role==="independent");
+    });
     const heading=document.createElement("h4");heading.textContent="Profession-specific license documents";root.append(heading);
-    const intro=document.createElement("p");intro.className="muted";intro.textContent="After your selected professions are approved, upload the matching license or trade credential here. Each profession is reviewed separately. Files are private and limited to PDF, JPG, PNG or WebP (10 MB max).";root.append(intro);
+    const intro=document.createElement("p");intro.className="muted";intro.textContent="Only professions that require an individual credential for your state and work role appear here. Files are private and limited to PDF, JPG, PNG or WebP (10 MB max).";root.append(intro);
     if(!selected.length){const note=document.createElement("p");note.className="muted";note.textContent="Approved profession selections will appear here for credential submission.";root.append(note);return;}
-    for(const q of selected){
+    if(!credentialRequired.length){const note=document.createElement("p");note.className="muted";note.textContent="No individual profession license upload is required for your currently selected work types and role under the state-level rules.";root.append(note);return;}
+    for(const q of credentialRequired){
       const profession=professionCatalog.find(x=>x.id===q.profession_id);
       const card=document.createElement("section");card.style.cssText="border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff";
       const title=document.createElement("h4");title.textContent=(profession?.profession_name||"Profession")+" · "+(q.verification_status||"pending").replaceAll("_"," ");card.append(title);
