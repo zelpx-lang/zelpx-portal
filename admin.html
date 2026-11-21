@@ -1951,7 +1951,7 @@
         .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license,license_number,license_state,license_type,license_review_status,created_at")
         .eq("has_license", true)
         .eq("verification_status", "verified")
-        .in("license_review_status", ["pending", "verified"])
+        .eq("license_review_status", "pending")
         .order("created_at", { ascending: false })
         .limit(1000);
       if (error) throw error;
