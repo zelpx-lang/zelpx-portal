@@ -500,7 +500,7 @@
           <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
           <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
-          <div style="grid-column:1/-1"><label for="profileCompanyLicenseFile">Company license document (PDF, JPG, PNG or WebP, max 10 MB)</label><input id="profileCompanyLicenseFile" type="hidden"></div>
+          <input id="profileCompanyLicenseFile" type="hidden" aria-hidden="true">
           <div><label for="profileCompanyLicenseExpiry">Expiration date (if applicable)</label><input id="profileCompanyLicenseExpiry" type="date"></div>
         <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
           <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
@@ -881,9 +881,9 @@
     if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
     const hasInsuranceCertificate=$("signupHasInsuranceCertificate").value==="yes";
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
-    const insuranceAgentPhone=$("signupInsuranceAgentPhone").value.trim();
+    const insurancePolicyNumber=$("signupInsurancePolicyNumber").value.trim();
     const insuranceExpiration=$("signupInsuranceExpiration").value;
-    if(signupRole==="independent" && hasLicense && (!insuranceAgencyName || !insuranceAgentPhone || !insuranceExpiration)) return message("authMessage","Licensed independent contractors must enter the insurance agency name, agent phone number, and expiration date.","error");
+    if(signupRole==="independent" && $("signupHasInsuranceCertificate").value==="yes" && !insurancePolicyNumber) return message("authMessage","Enter your insurance policy number.","error");
     if(signupRole==="independent" && hasLicense && insuranceExpiration && new Date(insuranceExpiration+"T23:59:59")<new Date()) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
@@ -1012,7 +1012,7 @@
       const row=document.createElement("div");
       row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;margin:5px 0;border:1px solid var(--line);border-radius:10px;background:#fffdfa";
       const label=document.createElement("span");
-      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review")+(item.document_path||item.document_file?" · Document attached":" · Document missing");
+      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review")+" · Number submitted for admin review";
       row.append(label);list.append(row);
     }
   }
@@ -1050,10 +1050,10 @@
     const state_code=$("additionalLicenseState").value;
     const license_number=$("additionalLicenseNumber").value.trim();
     const license_type=$("additionalLicenseType").value.trim();
-    const document_file=$("additionalLicenseFile").files?.[0]||null;
+    const document_file=null;
     const expiration_date=$("additionalLicenseExpiry").value||null;
-    if(!state_code||!license_number||!license_type||!document_file){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
-    if(!["application/pdf","image/jpeg","image/png","image/webp"].includes(document_file.type)||document_file.size>10*1024*1024){const m=$("additionalLicenseModalMessage");m.textContent="Choose a PDF, JPG, PNG or WebP file up to 10 MB.";m.className="message error";return;}
+    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
+    // No document upload is required for additional state licenses.
     additionalStateLicenses.push({state_code,license_number,license_type,document_file,expiration_date,review_status:"pending"});
     renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
   });
@@ -1126,6 +1126,7 @@
     }
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
+    $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
     $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
     $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
@@ -2227,7 +2228,7 @@
       if (!isEmployee && $("profileHasLicense").value==="no" && !$("profileNoLicenseAck").checked) throw new Error("Confirm that you will only accept jobs that do not require a license in your state.");
       if (hasLicense && (!licenseNumber || !licenseState || !licenseType)) throw new Error("Enter a complete first license: state, number, and type.");
       if (hasLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The company license issuing state must match the state selected for your work.");
-      if (hasLicense && !$("profileCompanyLicenseFile").files?.[0] && !($("profileCompanyLicenseFile").dataset.existingPath && $("profileCompanyLicenseFile").dataset.existingState===licenseState)) throw new Error("Upload your current license or contractor registration document.");
+      // No document upload: administrator reviews the submitted license number.
       if(employeeNeedsEmployerLicense && (!licenseNumber||!licenseState||!licenseType||!licenseExpiry)) throw new Error("Enter the employer license state, number, type, and current expiration date for this conditional work.");
       if(employeeNeedsEmployerLicense && licenseState!==$("professionState").value.trim().toUpperCase()) throw new Error("The employer license state must match the state selected for this work.");
       if (currentContractor) {
@@ -2937,7 +2938,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     function updateSignupInsuranceVisibility(){
       const showInsurance=$("signupWorkRole").value==="independent" && $("hasLicense").value==="yes";
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
-      ["signupInsuranceAgency","signupInsuranceAgentPhone","signupInsuranceExpiration"].forEach(id=>$(id).required=showInsurance);
+      $("signupInsurancePolicyNumber").required=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
     }
     $("signupWorkRole").addEventListener("change",()=>{
       const employee=$("signupWorkRole").value==="employee";
