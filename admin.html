@@ -1201,7 +1201,7 @@
       const categoryIds = [...new Set(requests.flatMap(r => r.requested_changes?.category_ids || []))];
       const [currentCategoriesResult, currentQualificationsResult] = await Promise.all([
         contractorIds.length ? db.from("contractor_service_categories").select("contractor_id,category_id").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null}),
-        contractorIds.length ? db.from("contractor_profession_qualifications").select("contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,verification_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null})
+        contractorIds.length ? db.from("contractor_profession_qualifications").select("contractor_id,profession_id,state_code,work_role,license_required_at_registration,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status").in("contractor_id", contractorIds) : Promise.resolve({data:[],error:null})
       ]);
       if (currentCategoriesResult.error) throw currentCategoriesResult.error;
       if (currentQualificationsResult.error) throw currentQualificationsResult.error;
@@ -1423,7 +1423,35 @@
               if (item.verification_status) parts.push("Review: " + item.verification_status);
             }
             p.append(strong, document.createTextNode(parts.join(" · ")));
-            qualificationList.append(p);
+            const credentialRow = beforeRows.find(row =>
+              row.profession_id === item.profession_id &&
+              String(row.state_code || "").toUpperCase() === stateCode
+            );
+            if (credentialRow?.license_document_path) {
+              const documentLink = document.createElement("a");
+              documentLink.href = "#";
+              documentLink.textContent = "Open profession license document";
+              documentLink.style.display = "inline-block";
+              documentLink.style.margin = "4px 0 10px 0";
+              documentLink.addEventListener("click", async event => {
+                event.preventDefault();
+                documentLink.textContent = "Opening document…";
+                try {
+                  const { data: signed, error: signedError } = await db.storage
+                    .from("contractor-licenses")
+                    .createSignedUrl(credentialRow.license_document_path, 3600);
+                  if (signedError) throw signedError;
+                  if (!signed?.signedUrl) throw new Error("A secure document link could not be created.");
+                  window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+                  documentLink.textContent = "Open profession license document";
+                } catch (e) {
+                  documentLink.textContent = "Could not open document: " + (e.message || "Unknown error");
+                }
+              });
+              qualificationList.append(p, documentLink);
+            } else {
+              qualificationList.append(p);
+            }
           });
           details.append(qualificationList);
         } else {
