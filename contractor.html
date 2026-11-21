@@ -3043,52 +3043,31 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     });
     $("profileLicenseState").addEventListener("change",updateProfileInsuranceVisibility);
     $("profileCompanyLicenseFile").addEventListener("change",updateProfileInsuranceVisibility);
-    // Keep the license Yes/No choice and all credential fields together in one expandable panel, matching Business Insurance.
-    function buildLicenseDetailsPanel(choiceId, fieldsId, panelId, title){
+
+    function buildLicenseSection(choiceId, fieldsId, sectionId, title, prompt){
       const choice=$(choiceId), fields=$(fieldsId);
-      if(!choice||!fields||$(panelId)) return;
-      const panel=document.createElement("section");
-      panel.id=panelId;
-      panel.style.cssText="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--card, #fff)";
+      if(!choice||!fields||$(sectionId)) return;
+      const section=document.createElement("section");
+      section.id=sectionId;
+      section.style.cssText="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px";
       const heading=document.createElement("h3");
       heading.textContent=title;
-      heading.style.cssText="margin:0 0 10px";
-      panel.append(heading);
-      choice.parentNode.insertBefore(panel,choice);
-      panel.append(choice,fields);
-      fields.style.marginTop="10px";
-      fields.style.padding="12px";
-      fields.style.border="1px solid var(--line)";
-      fields.style.borderRadius="10px";
-      fields.style.background="var(--surface, #fffaf5)";
+      heading.style.cssText="grid-column:1/-1;margin:0";
+      const description=document.createElement("p");
+      description.className="muted";
+      description.style.cssText="grid-column:1/-1;margin:0 0 10px;font-size:13px";
+      description.textContent=prompt;
+      section.append(heading,description);
+      const grid=document.createElement("div");
+      grid.className="grid";
+      grid.style.cssText="grid-column:1/-1";
+      choice.parentNode.insertBefore(section,choice);
+      section.append(grid);
+      grid.append(choice,fields);
+      fields.style.marginTop="0";
     }
-    buildLicenseDetailsPanel("signupLicenseChoice","signupLicenseFields","signupLicensePanel","Business license");
-    buildLicenseDetailsPanel("professionLicenseFilter","profileLicenseFields","profileLicensePanel","Business license");
-
-    function makeLicensePopup(choiceId, fieldsId, popupId, title){
-      const choice=$(choiceId), fields=$(fieldsId), panel=$(popupId.replace("Popup","Panel"));
-      if(!choice||!fields||$(popupId)) return;
-      const overlay=document.createElement("div");
-      overlay.id=popupId;
-      overlay.className="hidden";
-      overlay.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px";
-      const dialog=document.createElement("div");
-      dialog.setAttribute("role","dialog"); dialog.setAttribute("aria-modal","true"); dialog.setAttribute("aria-label",title);
-      dialog.style.cssText="width:min(620px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.28)";
-      const head=document.createElement("div"); head.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px";
-      const h=document.createElement("h3"); h.textContent=title; h.style.margin="0";
-      const close=document.createElement("button"); close.type="button"; close.textContent="Done"; close.style.cssText="width:auto;padding:8px 16px;background:#f0783c;color:white";
-      head.append(h,close); dialog.append(head,fields); overlay.append(dialog); document.body.append(overlay);
-      const open=()=>{overlay.classList.remove("hidden");overlay.style.display="flex";};
-      const shut=()=>{overlay.classList.add("hidden");overlay.style.display="none";};
-      close.addEventListener("click",shut);
-      overlay.addEventListener("click",e=>{if(e.target===overlay)shut();});
-      choice.addEventListener("change",()=>{if(choice.value==="yes")open();else shut();});
-      if(choice.value==="yes")open();
-      return {open,shut};
-    }
-    const signupLicensePopup=makeLicensePopup("hasLicense","signupLicenseFields","signupLicensePopup","Enter business license details");
-    const profileLicensePopup=makeLicensePopup("profileHasLicense","profileLicenseFields","profileLicensePopup","Enter business license details");
+    buildLicenseSection("signupLicenseChoice","signupLicenseFields","signupLicenseSection","Business license","No document upload is required. Select whether you have a current business license. Your license details appear below when you select Yes.");
+    buildLicenseSection("professionLicenseFilter","profileLicenseFields","profileLicenseSection","Business license","No document upload is required. Select whether you have a current business license. Your license details appear below when you select Yes.");
 
     function updateSignupLicenseFields(){
       const employee=$("signupWorkRole").value==="employee";
