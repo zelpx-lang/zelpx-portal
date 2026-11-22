@@ -5,7 +5,7 @@ module.exports = async function handler(req, res) {
   try {
     const user = await getAuthenticatedUser(req);
     const phone = normalizePhone(req.body && req.body.phone);
-    if (!/^\\+[1-9]\\d{7,14}$/.test(phone)) {
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
       return sendJson(res, 400, { error: "Enter a valid phone number in international format, including country code." });
     }
     const config = getTwilioConfig();
