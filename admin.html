@@ -1846,6 +1846,10 @@
       }
 
       filteredRequests.forEach(request => {
+        const selectedServicesMatch = String(request.description || "").match(/(?:^|\n)\s*SELECTED SERVICES\s*\n([\s\S]*?)(?=\n\s*JOB DETAILS\b|$)/i);
+        const selectedServices = selectedServicesMatch
+          ? selectedServicesMatch[1].split(/\r?\n/).map(line => line.replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean)
+          : [];
         const card = document.createElement("article"); card.className = "lead";
         const heading = document.createElement("div"); heading.className = "leadhead";
         const titleWrap = document.createElement("div");
@@ -1873,6 +1877,13 @@
         });
         const description = document.createElement("p"); description.style.whiteSpace = "pre-wrap";
         description.textContent = request.description || "No description provided."; card.append(description);
+        if (selectedServices.length) {
+          const selectedBox = document.createElement("div"); selectedBox.className = "request-card"; selectedBox.style.margin = "12px 0";
+          const selectedTitle = document.createElement("strong"); selectedTitle.textContent = "Customer selected services";
+          const selectedList = document.createElement("ul"); selectedList.style.margin = "8px 0"; selectedList.style.paddingLeft = "20px";
+          selectedServices.forEach(service => { const item = document.createElement("li"); item.textContent = service; selectedList.append(item); });
+          selectedBox.append(selectedTitle, selectedList); card.append(selectedBox);
+        }
 
         const verification = verificationByRequest[request.id];
         const verificationBox = document.createElement("div");
@@ -1971,28 +1982,47 @@
           const priceWrap = document.createElement("div"), priceLabel = document.createElement("label"), price = document.createElement("input");
           priceLabel.textContent = "Lead price (USD)"; price.type = "number"; price.min = "0.01"; price.step = "0.01"; price.placeholder = "50.00";
           priceLabel.append(price); priceWrap.append(priceLabel);
+          const publicationTypeWrap = document.createElement("div"), publicationTypeLabel = document.createElement("label"), publicationTypeSelect = document.createElement("select");
+          publicationTypeLabel.textContent = "How should this request be sold?";
+          [["regular","Regular Lead"],["lead_package","Lead Package — one buyer, entire project"]].forEach(([value,label]) => {
+            const option = document.createElement("option"); option.value = value; option.textContent = label;
+            if (value === "lead_package" && selectedServices.length < 2) option.disabled = true;
+            publicationTypeSelect.append(option);
+          });
+          publicationTypeLabel.append(publicationTypeSelect); publicationTypeWrap.append(publicationTypeLabel);
+          const packageHint = document.createElement("p"); packageHint.className = "muted";
+          packageHint.textContent = selectedServices.length >= 2
+            ? "Lead Package combines all selected services into one exclusive purchase. Set the full package price."
+            : "Lead Package becomes available when the customer selected at least two services.";
+          publicationTypeWrap.append(packageHint);
           const zipLookupNote = document.createElement("p"); zipLookupNote.className = "muted";
           zipLookupNote.textContent = "Enter a 5-digit ZIP code to fill city and state automatically. Verify the result before publishing.";
           zipWrap.append(zipLookupNote);
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
-          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap); form.append(fields);
+          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap, publicationTypeWrap); form.append(fields);
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
           publish.addEventListener("click", async () => {
-            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
+            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value), publicationType = publicationTypeSelect.value;
             if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
             if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
             if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) { feedback.textContent = "Enter the verified city and 2-letter state code."; feedback.className = "message error"; return; }
             if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
               feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places."; feedback.className = "message error"; return;
             }
+            if (publicationType === "lead_package" && selectedServices.length < 2) {
+              feedback.textContent = "A Lead Package requires at least two customer-selected services.";
+              feedback.className = "message error"; return;
+            }
             const customerName = profile.full_name || "Unavailable";
-            if (!window.confirm("Publish this customer request as a contractor lead?\n\nService: " + categoryValue +
-              "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
-              "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
-              "\n\nOnly continue after verifying the customer's details.")) return;
+            const saleLabel = publicationType === "lead_package" ? "LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD";
+            if (!window.confirm("Publish this customer request?\\n\\nSale type: " + saleLabel +
+              "\\nService: " + categoryValue + (publicationType === "lead_package" ? "\\nIncluded services: " + selectedServices.join(", ") : "") +
+              "\\nCustomer: " + customerName + "\\nAddress: " + (request.property_address || "Missing") +
+              "\\nZIP: " + zipValue + "\\nCity: " + cityValue + ", " + stateValue + "\\nPrice: $" + priceValue.toFixed(2) +
+              "\\n\\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
               // Resolve ZIP coordinates before publishing so contractor radius filtering can work.
@@ -2005,11 +2035,14 @@
                 !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
               throw new Error("Could not determine coordinates for this ZIP code. Verify the ZIP and try again.");
             }
-            const { data: leadId, error: publishError } = await db.rpc("admin_publish_service_request", {
-                p_request_id: request.id, p_zip_code: zipValue, p_city: city.value.trim(), p_state: state.value.trim().toUpperCase(),
-                p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
-                p_latitude: latitude, p_longitude: longitude
-              });
+            const publishArgs = {
+              p_request_id: request.id, p_zip_code: zipValue, p_city: city.value.trim(), p_state: state.value.trim().toUpperCase(),
+              p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
+              p_latitude: latitude, p_longitude: longitude
+            };
+            const { data: leadId, error: publishError } = publicationType === "lead_package"
+              ? await db.rpc("admin_publish_service_request_package", { ...publishArgs, p_package_services: selectedServices })
+              : await db.rpc("admin_publish_service_request", publishArgs);
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
               serviceRequestsEditing = false;
