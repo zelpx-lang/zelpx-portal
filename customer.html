@@ -1772,15 +1772,16 @@
       removedServicesRestoreList.replaceChildren();
       const services = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
       const removedServices = Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [];
-      // Keep the mobile viewport fixed while either list is rebuilt.
-      // Capture the scroll position before changing the DOM, then counter browser
-      // scroll anchoring/focus adjustments for several animation frames.
-      const preserveReviewViewport = (scrollY, previousBehavior, previousAnchor) => {
+      // Preserve the review card's exact screen position, not an absolute
+      // scrollY value. This also works when changing content height clamps scrollY.
+      const preserveReviewViewport = (anchorTop, previousBehavior, previousAnchor) => {
         let passes = 0;
         const restorePosition = () => {
-          window.scrollTo(0, scrollY);
+          const currentTop = selectedServicesReview.getBoundingClientRect().top;
+          const delta = currentTop - anchorTop;
+          if (Math.abs(delta) > 0.5) window.scrollBy(0, delta);
           passes += 1;
-          if (passes < 8) requestAnimationFrame(restorePosition);
+          if (passes < 12) requestAnimationFrame(restorePosition);
           else {
             document.documentElement.style.scrollBehavior = previousBehavior;
             document.documentElement.style.overflowAnchor = previousAnchor;
@@ -1802,7 +1803,7 @@
         pill.append(name, removeMark);
         pill.addEventListener("pointerdown", event => event.preventDefault());
         pill.addEventListener("click", () => {
-          const keepScrollY = window.scrollY;
+          const reviewAnchorTop = selectedServicesReview.getBoundingClientRect().top;
           const previousBehavior = document.documentElement.style.scrollBehavior;
           const previousAnchor = document.documentElement.style.overflowAnchor;
           document.documentElement.style.scrollBehavior = "auto";
@@ -1815,7 +1816,7 @@
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
-          preserveReviewViewport(keepScrollY, previousBehavior, previousAnchor);
+          preserveReviewViewport(reviewAnchorTop, previousBehavior, previousAnchor);
         });
         selectedServicesReviewList.appendChild(pill);
       });
@@ -1827,10 +1828,10 @@
         restore.setAttribute("aria-label", "Restore " + service);
         restore.addEventListener("pointerdown", event => {
           event.preventDefault();
-          restore.dataset.scrollY = String(window.scrollY);
+          restore.dataset.reviewTop = String(selectedServicesReview.getBoundingClientRect().top);
         });
         restore.addEventListener("click", () => {
-          const keepScrollY = Number(restore.dataset.scrollY || window.scrollY);
+          const reviewAnchorTop = Number(restore.dataset.reviewTop || selectedServicesReview.getBoundingClientRect().top);
           const previousBehavior = document.documentElement.style.scrollBehavior;
           const previousAnchor = document.documentElement.style.overflowAnchor;
           document.documentElement.style.scrollBehavior = "auto";
@@ -1843,7 +1844,7 @@
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
-          preserveReviewViewport(keepScrollY, previousBehavior, previousAnchor);
+          preserveReviewViewport(reviewAnchorTop, previousBehavior, previousAnchor);
         });
         removedServicesRestoreList.appendChild(restore);
       });
