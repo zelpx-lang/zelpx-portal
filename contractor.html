@@ -904,7 +904,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       });
       if (error) throw error;
     } catch (error) {
-      hideContractorOpening();
       message("authMessage", error.message || "Social sign-in could not be started. Please try again.", "error");
       button.lastChild.textContent = provider === "google" ? " Continue with Google" : " Continue with Facebook";
       buttons.forEach(item => { item.disabled = false; });
@@ -932,7 +931,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       }
       const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp();
     }
-    catch (e) { hideContractorOpening(); message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
+    catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
   let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
   let signupServiceCatalog=[], signupCategoryMapRows=[], signupSelectedCategoryIds=new Set();
@@ -1162,7 +1161,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     showContractorOpening();
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
-    if (!user) { hideContractorOpening(); show($("authView")); hide($("appView")); hide($("topUser")); return; }
+    if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
     await loadAccount();
     if (!isAdmin && currentContractor) {
@@ -1180,7 +1179,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       currentUser = null;
       hide($("appView")); hide($("topUser")); show($("authView"));
       message("authMessage", "This account does not have administrator access.", "error");
-      hideContractorOpening();
       return;
     }
     if (!IS_ADMIN_PORTAL && isAdmin) {
@@ -1188,7 +1186,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
       hide($("appView")); hide($("topUser")); show($("authView"));
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
-      hideContractorOpening();
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
@@ -3399,7 +3396,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) { hideContractorOpening(); message("authMessage", e.message, "error"); }
+    } catch (e) { message("authMessage", e.message, "error"); }
   }
   start();
 })();
