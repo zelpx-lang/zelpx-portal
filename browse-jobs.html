@@ -100,6 +100,58 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
   .list{max-height:none;overflow:visible}
 }
 
+
+/* Readability pass: larger type, clearer hierarchy, and easier-to-scan lead cards */
+body{font-size:16px;line-height:1.5}
+main.wrap{width:min(800px,calc(100% - 32px))}
+.intro{margin-bottom:20px}
+.eyebrow{font-size:12px;letter-spacing:.14em}
+.intro h1{font-size:clamp(30px,4vw,42px);line-height:1.08;margin:8px 0}
+.intro p{font-size:16px;line-height:1.55;max-width:720px}
+.filters{gap:10px;padding:12px 0 14px}
+.filters input,.filters select{height:48px;padding:0 14px;font-size:15px}
+.refresh{height:48px;padding:0 16px;font-size:14px}
+.meta{font-size:13px;margin-bottom:11px}
+.live:before{width:8px;height:8px}
+.list{gap:11px}
+.job{border-radius:16px;box-shadow:0 3px 12px #3127190d}
+.job-summary{min-height:78px;gap:14px;padding:14px 16px}
+.job h2{font-size:19px;line-height:1.25;margin-bottom:5px}
+.job-summary-meta{font-size:15px;line-height:1.4}
+.price{font-size:23px;letter-spacing:-.02em}
+.open-label{font-size:13px;padding:7px 10px;border:1px solid #f2c2a9;border-radius:9px;background:#fff7f1}
+.job-summary:hover .open-label{background:#ffeadf;border-color:#eea47c}
+.job-package{border-width:2px}
+.job-package-tag{font-size:12px;padding:5px 10px;margin-top:6px}
+.job-details{padding:15px 17px 17px}
+.details{font-size:14px;line-height:1.55;gap:9px 16px}
+.public-work-details{font-size:15px;line-height:1.55;padding:14px}
+.public-work-details ul{gap:7px}
+.job-details p{font-size:14px;line-height:1.55}
+.claim{font-size:15px}
+.close-job{min-height:42px;font-size:14px}
+.note{font-size:14px;line-height:1.55;padding:14px 16px;margin-top:14px}
+.state{font-size:15px}
+@media(max-width:640px){
+  main.wrap{width:calc(100% - 28px)}
+  .intro h1{font-size:clamp(29px,7vw,38px)}
+  .intro p{font-size:15px}
+  .filters input,.filters select{font-size:14px}
+  .job-summary{min-height:76px;padding:13px 14px;gap:8px}
+  .job h2{font-size:17px}
+  .job-summary-meta{font-size:14px}
+  .price{font-size:19px}
+  .open-label{font-size:12px;padding:6px 8px}
+  .details{font-size:14px}
+  .job-details p,.claim{font-size:14px}
+  .note{font-size:13px}
+}
+@media(max-width:380px){
+  .job h2{font-size:16px}
+  .price{font-size:18px}
+  .open-label{font-size:11px;padding:5px 7px}
+}
+
 </style>
 </head>
 <body>
