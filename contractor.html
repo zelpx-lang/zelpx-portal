@@ -2958,22 +2958,9 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     window.addEventListener("focus", syncPurchaseUnread);
     window.addEventListener("blur", () => { if (purchaseUnreadTimer) { window.clearInterval(purchaseUnreadTimer); purchaseUnreadTimer = null; } });
     syncPurchaseUnread();
-    // Refresh the marketplace so 3-minute sold previews expire automatically.
-    let soldPreviewRefreshTimer = null;
-    const syncSoldPreviewRefresh = () => {
-      if (soldPreviewRefreshTimer) window.clearInterval(soldPreviewRefreshTimer);
-      if (!document.hidden) {
-        soldPreviewRefreshTimer = window.setInterval(() => {
-          if (currentContractor) loadLeads().catch(error => console.warn("Marketplace refresh failed:", error));
-        }, 10000);
-      }
-    };
-    document.addEventListener("visibilitychange", syncSoldPreviewRefresh);
-    window.addEventListener("focus", syncSoldPreviewRefresh);
-    window.addEventListener("blur", () => {
-      if (soldPreviewRefreshTimer) { window.clearInterval(soldPreviewRefreshTimer); soldPreviewRefreshTimer = null; }
-    });
-    syncSoldPreviewRefresh();
+    // Do not reload/rebuild the marketplace in the background.
+    // Automatic 10-second reloads caused the lead list to flash while contractors were reading.
+    // Contractors can refresh the list using the Refresh Leads button.
         $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
     $("leadSearch").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
