@@ -2008,20 +2008,24 @@
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
-          priceLabel.textContent = isPackage ? "Lead Package total price (USD)" : "Lead price (USD)";
-          price.placeholder = isPackage ? "150.00" : "50.00";
+          priceLabel.textContent = isPackage ? "Lead Package total price (USD) — Admin sets price" : "Lead price (USD) — Admin sets price";
+          price.placeholder = isPackage ? "Enter total package price" : "Enter lead price";
+          price.disabled = !isAdmin;
+          price.readOnly = !isAdmin;
+          price.title = isAdmin ? "Only the administrator sets the sale price." : "Only an administrator can set the sale price.";
           const packagePriceGuidance = document.createElement("p");
           packagePriceGuidance.className = "muted";
           packagePriceGuidance.style.cssText = "margin:8px 0 0;font-size:14px;line-height:1.5;";
           if (isPackage) {
             const serviceCount = selectedServices.length;
-            packagePriceGuidance.textContent = serviceCount + " services included. Enter ONE total price for the entire project. Set it higher than a comparable single-service lead; consider the number of services and total scope. The contractor pays this amount once for the whole package.";
+            packagePriceGuidance.textContent = serviceCount + " services included. The administrator manually sets ONE total price for the entire project. The contractor pays this amount once for the whole package. No per-service pricing or automatic price calculation.";
           } else {
             packagePriceGuidance.textContent = "This price is for one service only.";
           }
           priceWrap.append(packagePriceGuidance);
           publish.textContent = isPackage ? "Verify and publish Special Lead Package" : "Verify and publish Regular Lead";
           publish.addEventListener("click", async () => {
+            if (!isAdmin) { feedback.textContent = "Only an administrator can set the lead price and publish this request."; feedback.className = "message error"; return; }
             const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
             if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
             if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
