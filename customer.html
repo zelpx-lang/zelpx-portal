@@ -449,6 +449,45 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
     .commercial-sharing-consent input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:var(--customer-orange)}
     .request-cancel-button{width:auto!important;min-height:38px;margin:0 8px 8px 0;padding:8px 13px;background:#fff7f2;color:#a84220;border:1px solid #edc5b0;box-shadow:none;font-size:13px}
     .request-cancel-button:hover:not(:disabled){background:#ffede2;color:#8e3215;box-shadow:none}
+    /* Keep the customer attestation checkbox compact; global form inputs are full-width. */
+    #requestForm .request-confirmation {
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      width:100%;
+      margin:14px 0;
+      padding:14px 16px;
+      border:1px solid #e7d5c5;
+      border-radius:14px;
+      background:#fffaf6;
+      color:#3f342d;
+      font-size:13px;
+      font-weight:650;
+      line-height:1.55;
+      letter-spacing:0;
+      text-transform:none;
+      cursor:pointer;
+    }
+    #requestForm .request-confirmation input[type="checkbox"] {
+      appearance:auto;
+      -webkit-appearance:checkbox;
+      display:block;
+      flex:0 0 19px;
+      width:19px;
+      min-width:19px;
+      height:19px;
+      min-height:19px;
+      margin:2px 0 0;
+      padding:0;
+      accent-color:var(--customer-orange);
+      box-shadow:none;
+    }
+    #requestForm .request-confirmation span {
+      display:block;
+      flex:1 1 auto;
+      min-width:0;
+      overflow-wrap:anywhere;
+    }
     #requestForm > button,#authForm > button { width:100%; }
     @media(max-width:600px) {
       body { padding:12px 9px; }
@@ -931,8 +970,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
 
-        <label class="request-confirmation" for="customerLiveConfirmation" style="display:flex;gap:10px;align-items:flex-start;margin:14px 0;padding:12px;border:1px solid #e7d5c5;border-radius:12px;background:#fffaf6;color:#3f342d">
-          <input id="customerLiveConfirmation" type="checkbox" required style="margin-top:3px;flex:0 0 auto">
+        <label class="request-confirmation" for="customerLiveConfirmation">
+          <input id="customerLiveConfirmation" type="checkbox" required>
           <span>I confirm this is a real project request, the contact information is mine, and I am ready to receive a call or message from a service professional about this project.</span>
         </label>
 
