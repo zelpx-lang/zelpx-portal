@@ -1,4 +1,5 @@
 -- Store server-confirmed customer phone verification state.
+create schema if not exists private;
 -- The SMS code itself is handled by Twilio Verify and is never stored by ZELPX.
 alter table public.profiles
   add column if not exists phone_verified_at timestamptz,
