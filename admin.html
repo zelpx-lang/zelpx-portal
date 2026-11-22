@@ -2038,6 +2038,17 @@
       $("protectionClaimsCount").textContent = String((claims || []).length) + " claims";
       list.replaceChildren();
       if (!claims?.length) { list.textContent = "No contractor protection claims have been submitted."; return; }
+      const purchaseIds = [...new Set(claims.map(claim => claim.purchase_id).filter(Boolean))];
+      const attemptsByPurchase = {};
+      if (purchaseIds.length) {
+        const {data: attempts,error: attemptsError}=await db.from("lead_contact_attempts")
+          .select("id,purchase_id,channel,outcome,notes,created_at")
+          .in("purchase_id",purchaseIds).order("created_at",{ascending:true});
+        if (attemptsError) console.warn("Could not load contractor contact evidence:",attemptsError.message);
+        else (attempts||[]).forEach(attempt=>{
+          (attemptsByPurchase[attempt.purchase_id] ||= []).push(attempt);
+        });
+      }
       claims.forEach(claim => {
         const card = document.createElement("article"); card.className = "request-card";
         const title = document.createElement("strong"); title.textContent = "Claim · " + claim.reason.replaceAll("_"," ");
@@ -2046,6 +2057,22 @@
         const ids = document.createElement("p"); ids.textContent = "Lead: " + claim.lead_id + " · Purchase: " + claim.purchase_id;
         const details = document.createElement("p"); details.textContent = claim.details || "No additional details supplied.";
         card.append(title,meta,ids,details);
+        const evidence = document.createElement("div"); evidence.className="lead"; evidence.style.cssText="margin:10px 0;padding:10px;border:1px solid #eaded4;border-radius:10px;background:#fffaf6";
+        const evidenceTitle=document.createElement("strong"); evidenceTitle.textContent="Contractor contact evidence";
+        evidence.append(evidenceTitle);
+        const attempts=attemptsByPurchase[claim.purchase_id]||[];
+        if (!attempts.length) {
+          const empty=document.createElement("p"); empty.className="muted"; empty.textContent="No contact attempts have been logged for this purchase."; evidence.append(empty);
+        } else {
+          const evidenceList=document.createElement("ul"); evidenceList.style.paddingLeft="20px";
+          attempts.forEach(attempt=>{
+            const line=document.createElement("li");
+            line.textContent=new Date(attempt.created_at).toLocaleString()+" · "+attempt.channel+" · "+attempt.outcome+(attempt.notes?" · "+attempt.notes:"");
+            evidenceList.append(line);
+          });
+          evidence.append(evidenceList);
+        }
+        card.append(evidence);
         if (claim.admin_note) { const note=document.createElement("p"); note.textContent="Admin note: "+claim.admin_note; card.append(note); }
         if (["open","under_review"].includes(claim.status)) {
           const noteInput = document.createElement("textarea"); noteInput.rows=2; noteInput.placeholder="Admin review note (optional)";
