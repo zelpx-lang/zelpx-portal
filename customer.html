@@ -2272,6 +2272,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         if (match) {
           select.value = match.value;
           select.dispatchEvent(new Event("change"));
+        } else if (sphereDraft.source === "sphere" && sphereDraft.services?.length) {
+          const primaryService = landingService || sphereDraft.services[0];
+          const fallback = new Option(primaryService, primaryService, true, true);
+          select.add(fallback);
+          select.value = primaryService;
+          select.dispatchEvent(new Event("change"));
         } else {
           renderServiceDetails();
         }
