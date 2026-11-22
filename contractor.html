@@ -264,6 +264,9 @@
     #purchasesList .purchase-details { padding:10px; border-top:1px solid var(--line); }
     #purchasesList .purchase-details > p { margin:7px 0; font-size:13px; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
     #purchasesList .purchase-chat-button { min-height:40px; padding:8px 14px; font-size:13px; }
+    #purchasesList .purchase-retention-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    #purchasesList .purchase-retention-actions small { color:var(--muted); font-size:12px; }
+
     #purchasesList .contactbox { margin-top:10px; }
     @media(max-width:700px) { #purchasesList .purchase-summary { min-height:46px; padding:8px; } #purchasesList .purchase-details { padding:9px 8px 12px; } }
     /* ZELPX available jobs — refreshed orange marketplace cards */
@@ -1898,7 +1901,7 @@
     const list = $("purchasesList");
     if (!currentContractor) { list.textContent = "Contractor account not found. Contact ZELPX support."; $("purchaseCount").textContent = "0"; return; }
     list.textContent = "Loading purchases…";
-    const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at").eq("contractor_id", currentContractor.id).order("purchased_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("lead_purchases").select("id,lead_id,price_cents,purchased_at,retention_kept_at").eq("contractor_id", currentContractor.id).is("hidden_at", null).order("purchased_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load purchases: " + error.message; return; }
     const purchases = data || [];
     $("purchaseCount").textContent = String(purchases.length); list.replaceChildren();
@@ -1945,6 +1948,53 @@
       summary.append(summaryText, unreadBadge, chevron); card.append(summary);
       const details = document.createElement("div"); details.className = "purchase-details hidden";
       const info = document.createElement("p"); info.className = "purchase-meta"; info.textContent = "Lead ID: " + item.lead_id + " · Price: " + money(item.price_cents) + " · Purchased: " + new Date(item.purchased_at).toLocaleString(); details.append(info);
+      const retention = document.createElement("div");
+      retention.className = "purchase-retention-actions";
+      const purchaseAgeMs = Date.now() - new Date(item.purchased_at).getTime();
+      const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
+      if (purchaseAgeMs >= tenDaysMs) {
+        const keepButton = document.createElement("button");
+        keepButton.type = "button";
+        keepButton.className = "secondary";
+        keepButton.textContent = item.retention_kept_at ? "Kept" : "Keep";
+        keepButton.disabled = Boolean(item.retention_kept_at);
+        keepButton.addEventListener("click", async () => {
+          keepButton.disabled = true;
+          try {
+            const { error: keepError } = await db.rpc("keep_own_purchased_lead", { p_purchase_id: item.id });
+            if (keepError) throw keepError;
+            keepButton.textContent = "Kept";
+          } catch (error) {
+            keepButton.disabled = false;
+            window.alert(error.message || "Could not keep this purchase.");
+          }
+        });
+        const deletePurchaseButton = document.createElement("button");
+        deletePurchaseButton.type = "button";
+        deletePurchaseButton.className = "danger";
+        deletePurchaseButton.textContent = "Delete";
+        deletePurchaseButton.addEventListener("click", async () => {
+          if (!window.confirm("Remove this purchase from your list? Payment and transaction history will remain محفوظ.")) return;
+          deletePurchaseButton.disabled = true;
+          deletePurchaseButton.textContent = "Removing…";
+          try {
+            const { error: hideError } = await db.rpc("hide_own_purchased_lead", { p_purchase_id: item.id });
+            if (hideError) throw hideError;
+            await loadPurchases();
+          } catch (error) {
+            deletePurchaseButton.disabled = false;
+            deletePurchaseButton.textContent = "Delete";
+            window.alert(error.message || "Could not remove this purchase.");
+          }
+        });
+        retention.append(keepButton, deletePurchaseButton);
+      } else {
+        const waitMessage = document.createElement("small");
+        const remainingDays = Math.max(1, Math.ceil((tenDaysMs - purchaseAgeMs) / (24 * 60 * 60 * 1000)));
+        waitMessage.textContent = "Keep or delete options available in " + remainingDays + " day" + (remainingDays === 1 ? "" : "s");
+        retention.append(waitMessage);
+      }
+      details.append(retention);
       const serviceDetails = document.createElement("div"); details.append(serviceDetails);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); details.append(contactBox);
