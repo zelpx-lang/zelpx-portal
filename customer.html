@@ -28,6 +28,26 @@
 <style>
 html.zelpx-oauth-pending body::before{content:"";position:fixed;inset:0;z-index:99998;background:#f6f2ec}
 html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";white-space:pre;position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;color:#171816;font:800 18px/2 ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;background:radial-gradient(ellipse at 50% 45%,#ffe4d5 0,transparent 48%)}
+
+    /* Compact, touch-friendly service answer controls */
+    #serviceDetails .job-choice-trigger {
+      width:100%; min-height:46px; margin:5px 0 10px; padding:11px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border:1px solid #e9b69d; border-radius:12px;
+      background:#fff8f4; color:#302820; box-shadow:none;
+      font:600 15px/1.35 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      text-align:left; white-space:normal;
+    }
+    #serviceDetails .job-choice-trigger::after { content:"⌄"; color:#b85a30; font-size:19px; flex:0 0 auto; }
+    #serviceDetails .job-choice-trigger:hover:not(:disabled) {
+      transform:none; background:#fff1e9; border-color:#e47b50; color:#302820; box-shadow:none;
+    }
+    #serviceDetails .job-detail-service { padding:12px 0!important; }
+    @media(max-width:480px) {
+      #serviceDetails .job-choice-trigger { min-height:44px; padding:10px 12px; font-size:14px; border-radius:11px; }
+      #serviceDetails .job-detail-service h3 { font-size:18px; line-height:1.3; }
+      #serviceDetails label { font-size:11px; letter-spacing:.045em; }
+    }
 </style>
 
 
@@ -1494,7 +1514,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
             wrap.dataset.jobQuestion = labelText; wrap.dataset.jobService = service;
             wrap.dataset.multiChoice = "true"; wrap.dataset.selectedValues = "[]";
             const trigger = document.createElement("button");
-            trigger.type = "button"; trigger.className = "secondary";
+            trigger.type = "button"; trigger.className = "secondary job-choice-trigger";
             trigger.textContent = "Choose one or more";
             trigger.style.cssText = "width:100%;text-align:left;min-height:50px;margin-top:6px;";
             trigger.addEventListener("click", () => {
