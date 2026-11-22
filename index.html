@@ -520,7 +520,11 @@ function renderSelectedSphereServices(){
     if(draft.services.length) localStorage.setItem("zelpx.pendingSphereRequest.v1",JSON.stringify(draft));
     else localStorage.removeItem("zelpx.pendingSphereRequest.v1");
   } catch (_) {}
-  if(selectedSphereServices.length){
+  if(selectedSphereServices.length===1){
+    alert("A Lead Package must include at least 2 services. Please select one more service.");
+    return;
+  }
+  if(selectedSphereServices.length>=2){
     const query=new URLSearchParams();
     query.set("service",parentService);
     query.set("services",selectedSphereServices.join("|"));
