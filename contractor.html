@@ -1568,7 +1568,7 @@
       const card = document.createElement("article"); card.className = "lead lead-compact" + (isPackage ? " lead-package-card" : ""); card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
       const summary = document.createElement("button"); summary.type = "button"; summary.className = "lead-summary"; summary.setAttribute("aria-expanded", "false");
       const summaryMain = document.createElement("span"); summaryMain.className = "lead-summary-main";
-      const title = document.createElement("strong"); title.className = "lead-summary-title"; title.textContent = isPackage ? "Lead Package" : (lead.service_category || "Home service");
+      const title = document.createElement("strong"); title.className = "lead-summary-title"; title.textContent = isPackage ? "Multi-Service Home Project" : (lead.service_category || "Home service");
       const zip = document.createElement("span"); zip.className = "lead-summary-zip"; zip.textContent = "ZIP " + (lead.zip_code || "Area not specified");
       summaryMain.append(title, zip);
       const summarySide = document.createElement("span"); summarySide.className = "lead-summary-side";
@@ -1989,7 +1989,7 @@
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
         if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
         const isPurchasedPackage = contact.lead_type === "lead_package";
-        heading.textContent = isPurchasedPackage ? "Lead Package" : (contact.service_category || "Purchased service");
+        heading.textContent = isPurchasedPackage ? "Multi-Service Home Project" : (contact.service_category || "Purchased service");
         serviceDetails.replaceChildren();
         if (isPurchasedPackage && Array.isArray(contact.package_services) && contact.package_services.length) {
           const packageHeading = document.createElement("h3"); packageHeading.className = "lead-details-label"; packageHeading.textContent = "Included services in this package";
