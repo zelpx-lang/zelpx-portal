@@ -2,6 +2,14 @@
 -- Apply only after the updated customer portal is deployed.
 -- Any pre-deployment request without a server-recorded confirmation is grandfathered.
 
+-- Admin reviewers need read-only access to the contact evidence attached to claims.
+drop policy if exists "Admins read all lead contact attempts" on public.lead_contact_attempts;
+create policy "Admins read all lead contact attempts" on public.lead_contact_attempts
+ for select to authenticated using (
+  exists(select 1 from public.profiles p where p.id=(select auth.uid()) and p.role='admin')
+ );
+
+
 -- "Unable to reach" claims need documented, spaced contact attempts.
 -- Immediate claims remain available for invalid numbers, wrong persons, duplicates,
 -- and explicit customer denial.
