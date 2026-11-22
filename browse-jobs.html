@@ -132,7 +132,7 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
      const place=[x.service_city,x.service_state].filter(Boolean).join(", ");
      const when=x.created_at?new Date(x.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not specified";
      const urgency=x.urgency?String(x.urgency).replace(/_/g," "):"Not specified";
-     const workDetails=(x.public_work_details||"").split("\\n").filter(Boolean);
+     const workDetails=(x.public_work_details||"").split("\n").filter(Boolean);
      const isPackage=x.lead_type==="lead_package";
      const packageServices=Array.isArray(x.package_services)?x.package_services:[];
      const packageHtml=isPackage?'<section class="public-work-details package-services"><strong>Included services in this package</strong><ul>'+packageServices.map(service=>'<li>'+esc(service)+'</li>').join("")+'</ul><p><strong>One purchase:</strong> one contractor buys the entire project.</p></section>':"";
