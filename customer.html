@@ -1330,36 +1330,62 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       "Moving": [["Home size","Studio, 1 bedroom, 2 bedrooms, 3+ bedrooms, office"],["Move distance","Local, long distance"],["Packing needed?","Yes, no"],["Stairs/elevator?","Stairs, elevator, ground floor"]],
       "Handyman": [["Describe tasks","Describe"],["Number of tasks/items","number"],["Estimated hours","number"]],
       "Junk Removal": [["Amount","A few items, pickup load, 1/4 truck, 1/2 truck, full truck"],["Item types","Furniture, appliances, construction debris, yard waste, other"],["Stairs/access notes","Describe"]],
+      "Carpentry": [["Work needed","Cabinet work, framing, trim/baseboards, doors, shelving, deck repair, other"],["Describe the carpentry work","Describe"],["Approximate project size","Small, medium, large, not sure"],["Materials supplied by","Customer, contractor, not sure"]],
+      "Cabinet installation": [["Number of cabinets","number"],["Install or replace?","New installation, replacement, repair"],["Cabinet type","Kitchen, bathroom, laundry, garage, other"],["Remove existing cabinets?","Yes, no, not sure"],["Who supplies cabinets/materials?","Customer, contractor, not sure"]],
+      "Wood rot repair": [["Location of wood rot","Siding, trim, fascia, deck, window/door frame, other"],["Approximate damaged area","Small, medium, large, not sure"],["Replace damaged wood?","Yes, no, not sure"],["Painting or sealing needed?","Yes, no, not sure"]],
+      "Artificial turf infill replacement": [["Approximate turf area (sq ft)","number"],["Existing infill type","Silica sand, crumb rubber, organic, not sure"],["Remove old infill?","Yes, no, not sure"],["New infill supplied by","Customer, contractor, not sure"]],
+      "Putting green turf installation": [["Putting green area (sq ft)","number"],["Number of holes/cups","number"],["Base preparation needed?","Yes, no, not sure"],["Existing turf removal?","Yes, no, not sure"],["Turf/material supplied by","Customer, contractor, not sure"]],
       "Other": [["Describe the service","Describe"],["Approximate size or quantity","Describe"]]
     };
     function renderServiceDetails() {
-      const service = $("serviceType").value, panel = $("serviceDetails");
+      const panel = $("serviceDetails");
       panel.replaceChildren();
       const heading = document.createElement("strong"); heading.textContent = "Job details"; panel.append(heading);
-      const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
-      questions.forEach(([labelText, options]) => {
-        const label = document.createElement("label"); label.textContent = labelText;
-        let input;
-        if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = labelText.toLowerCase().includes("sq ft") ? "1" : "any"; input.inputMode = "decimal"; input.placeholder = labelText.toLowerCase().includes("sq ft") ? "Enter square feet (sq ft)" : "Enter amount"; }
-        else if (options === "Describe") {
-          const presets = {
-            "Appliance/plumbing/electrical changes?": ["No changes", "Plumbing changes", "Electrical changes", "Appliance installation", "Several changes", "Not sure"],
-            "Leak or damage?": ["Active leak", "Missing or damaged shingles", "Storm damage", "Sagging roof", "No visible damage", "Inspection only", "Not sure"],
-            "Describe tasks": ["Furniture assembly", "TV or shelf mounting", "Minor home repairs", "Fixture replacement", "Multiple small jobs", "Other / not sure"],
-            "Stairs/access notes": ["Ground floor / easy access", "One flight of stairs", "Multiple flights of stairs", "Elevator available", "Narrow access", "Other / not sure"],
-            "Describe the service": ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"],
-            "Approximate size or quantity": ["Small job", "Medium job", "Large job", "Several items / areas", "Not sure"]
-          };
-          input = document.createElement("select");
-          const first = document.createElement("option"); first.value = ""; first.textContent = "Choose an option"; input.append(first);
-          (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"]).forEach(value => {
-            const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option);
-          });
-        }
-        else { input = document.createElement("select"); const first = document.createElement("option"); first.value = ""; first.textContent = "Select / not sure"; input.append(first); options.split(", ").forEach(value => { const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option); }); }
-        input.dataset.jobQuestion = labelText; label.append(input); panel.append(label);
+      const sphereServices = sphereDraft && sphereDraft.source === "sphere" && Array.isArray(sphereDraft.services)
+        ? [...new Set(sphereDraft.services.map(value => String(value || "").trim()).filter(Boolean))]
+        : [];
+      const servicesToRender = sphereServices.length ? sphereServices : [$("serviceType").value].filter(Boolean);
+      if (!servicesToRender.length) {
+        const empty = document.createElement("p"); empty.className = "subtitle";
+        empty.textContent = "Choose a service to see the questions that help contractors estimate the job.";
+        panel.append(empty); return;
+      }
+      servicesToRender.forEach((service, serviceIndex) => {
+        const section = document.createElement("section");
+        section.className = "job-detail-service";
+        section.style.cssText = "padding:14px 0;border-bottom:1px solid var(--customer-line);";
+        const serviceHeading = document.createElement("h3");
+        serviceHeading.textContent = service;
+        serviceHeading.style.cssText = "margin:0 0 12px;font-size:17px;";
+        section.append(serviceHeading);
+        const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
+        questions.forEach(([labelText, options]) => {
+          const label = document.createElement("label"); label.textContent = labelText;
+          let input;
+          if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = labelText.toLowerCase().includes("sq ft") ? "1" : "any"; input.inputMode = "decimal"; input.placeholder = labelText.toLowerCase().includes("sq ft") ? "Enter square feet (sq ft)" : "Enter amount"; }
+          else if (options === "Describe") {
+            const presets = {
+              "Appliance/plumbing/electrical changes?": ["No changes", "Plumbing changes", "Electrical changes", "Appliance installation", "Several changes", "Not sure"],
+              "Leak or damage?": ["Active leak", "Missing or damaged shingles", "Storm damage", "Sagging roof", "No visible damage", "Inspection only", "Not sure"],
+              "Describe tasks": ["Furniture assembly", "TV or shelf mounting", "Minor home repairs", "Fixture replacement", "Multiple small jobs", "Other / not sure"],
+              "Stairs/access notes": ["Ground floor / easy access", "One flight of stairs", "Multiple flights of stairs", "Elevator available", "Narrow access", "Other / not sure"],
+              "Describe the service": ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"],
+              "Approximate size or quantity": ["Small job", "Medium job", "Large job", "Several items / areas", "Not sure"]
+            };
+            input = document.createElement("select");
+            const first = document.createElement("option"); first.value = ""; first.textContent = "Choose an option"; input.append(first);
+            (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"]).forEach(value => {
+              const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option);
+            });
+          }
+          else { input = document.createElement("select"); const first = document.createElement("option"); first.value = ""; first.textContent = "Select / not sure"; input.append(first); options.split(", ").forEach(value => { const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option); }); }
+          input.dataset.jobQuestion = labelText;
+          input.dataset.jobService = service;
+          label.append(input); section.append(label);
+        });
+        panel.append(section);
       });
-      const note = document.createElement("p"); note.className = "subtitle"; note.textContent = "Answer what you can. You can leave unknown measurements blank and add photos or details below."; panel.append(note);
+      const note = document.createElement("p"); note.className = "subtitle"; note.textContent = "Answer what you can for each selected service. You can leave unknown measurements blank and add photos or details below."; panel.append(note);
     }
     $("serviceType").addEventListener("change", renderServiceDetails);
     // Live service suggestions use the currently available service categories.
@@ -1628,9 +1654,18 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       lookupCustomerZip();
     }
     function collectServiceDetails() {
-      return [...$("serviceDetails").querySelectorAll("[data-job-question]")].map(input =>
-        input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided")
-      ).join("\n");
+      const inputs = [...$("serviceDetails").querySelectorAll("[data-job-question]")];
+      let currentService = "";
+      const lines = [];
+      inputs.forEach(input => {
+        const service = input.dataset.jobService || "";
+        if (service && service !== currentService) {
+          currentService = service;
+          lines.push("\\n" + currentService);
+        }
+        lines.push(input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided"));
+      });
+      return lines.join("\\n").trim();
     }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
