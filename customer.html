@@ -814,6 +814,23 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
+        <div class="request-card" id="customerPhoneVerificationPanel" style="margin-top:12px;border-color:#f1c4ad;background:#fffaf6">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <strong>Phone number verification</strong>
+            <span id="customerPhoneVerificationBadge" class="status">Not verified</span>
+          </div>
+          <p id="customerPhoneVerificationStatus" class="subtitle" style="text-align:left;margin:8px 0 12px">Verify your mobile number to protect service requests and help professionals reach you.</p>
+          <label for="customerPhoneNewNumber">Mobile phone number</label>
+          <input id="customerPhoneNewNumber" type="tel" autocomplete="tel" inputmode="tel" placeholder="+1 555 555 5555">
+          <button id="customerPhoneSendCode" type="button">Send SMS Code</button>
+          <div id="customerPhoneCodePanel" class="hidden">
+            <label for="customerPhoneCode">6-digit verification code</label>
+            <input id="customerPhoneCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter SMS code">
+            <button id="customerPhoneVerifyCode" type="button">Verify Phone Number</button>
+          </div>
+          <div id="customerPhoneVerificationMessage" class="message" role="status"></div>
+          <small class="subtitle" style="display:block;text-align:left;margin:10px 0 0">SMS rates may apply. Never share this code with anyone.</small>
+        </div>
         <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
         <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
         <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
@@ -1200,11 +1217,81 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       }
     });
 
+    async function customerPhoneApi(path, payload) {
+      const { data, error } = await db.auth.getSession();
+      if (error) throw error;
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Please sign in again.");
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Phone verification service is unavailable.");
+      return result;
+    }
+
+    $("customerPhoneSendCode").addEventListener("click", async () => {
+      const button = $("customerPhoneSendCode");
+      const phone = $("customerPhoneNewNumber").value.trim();
+      const message = $("customerPhoneVerificationMessage");
+      message.textContent = ""; message.className = "message";
+      if (!/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s().-]/g, ""))) {
+        message.textContent = "Enter the phone number in international format, for example +15035550123.";
+        message.className = "message error"; return;
+      }
+      button.disabled = true; button.textContent = "Sending…";
+      try {
+        const normalized = phone.replace(/[\s().-]/g, "");
+        await customerPhoneApi("/api/customer-phone/send-code", { phone: normalized });
+        $("customerPhoneNewNumber").value = normalized;
+        $("customerPhoneCodePanel").classList.remove("hidden");
+        $("customerPhoneVerificationStatus").textContent = "A verification code was sent. Enter the 6-digit code below.";
+        message.textContent = "SMS code sent. It expires shortly; request another code if needed.";
+        message.className = "message success";
+      } catch (error) {
+        message.textContent = error.message || "Could not send SMS code.";
+        message.className = "message error";
+      } finally { button.disabled = false; button.textContent = "Send SMS Code"; }
+    });
+
+    $("customerPhoneVerifyCode").addEventListener("click", async () => {
+      const button = $("customerPhoneVerifyCode");
+      const phone = $("customerPhoneNewNumber").value.trim().replace(/[\s().-]/g, "");
+      const code = $("customerPhoneCode").value.trim();
+      const message = $("customerPhoneVerificationMessage");
+      message.textContent = ""; message.className = "message";
+      if (!/^\d{6}$/.test(code)) {
+        message.textContent = "Enter the 6-digit code from the SMS.";
+        message.className = "message error"; return;
+      }
+      button.disabled = true; button.textContent = "Verifying…";
+      try {
+        await customerPhoneApi("/api/customer-phone/verify-code", { phone, code });
+        $("customerPhone").value = phone;
+        $("customerPhoneNewNumber").value = phone;
+        $("customerPhoneCodePanel").classList.add("hidden");
+        $("customerPhoneCode").value = "";
+        $("customerPhoneVerificationBadge").textContent = "Verified";
+        $("customerPhoneVerificationBadge").style.background = "#eaf7f0";
+        $("customerPhoneVerificationBadge").style.color = "#176b43";
+        $("customerPhoneVerificationStatus").textContent = "This number has been verified by SMS. You can submit service requests.";
+        $("customerPhoneVerificationMessage").textContent = "Phone number verified and saved to your profile.";
+        $("customerPhoneVerificationMessage").className = "message success";
+        window.zelpxCustomerPhoneVerified = true;
+        originalProfileValues.phone = phone;
+      } catch (error) {
+        message.textContent = error.message || "The code could not be verified.";
+        message.className = "message error";
+      } finally { button.disabled = false; button.textContent = "Verify Phone Number"; }
+    });
+
     async function loadCustomerProfile(user) {
       clearMessage("profileMessage");
       const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role,avatar_url")
+        .select("full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -1215,6 +1302,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      const phoneVerified = Boolean(data.phone_verified_at && data.phone_verified_number && data.phone_verified_number === data.phone);
+      window.zelpxCustomerPhoneVerified = phoneVerified;
+      $("customerPhoneNewNumber").value = data.phone || user.user_metadata?.phone || "";
+      $("customerPhoneVerificationBadge").textContent = phoneVerified ? "Verified" : "Not verified";
+      $("customerPhoneVerificationBadge").style.background = phoneVerified ? "#eaf7f0" : "#fff0e8";
+      $("customerPhoneVerificationBadge").style.color = phoneVerified ? "#176b43" : "#c2410c";
+      $("customerPhoneVerificationStatus").textContent = phoneVerified
+        ? "This number has been verified by SMS. You can submit service requests."
+        : "A one-time SMS code is required before you can submit a service request.";
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
@@ -1251,7 +1347,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       clearMessage("profileMessage");
       originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
       profileNameInput.readOnly = false;
-      profilePhoneInput.readOnly = false;
+      profilePhoneInput.readOnly = true;
       requestProfileUpdateButton.classList.add("hidden");
       confirmProfileUpdateButton.classList.remove("hidden");
       cancelProfileUpdateButton.classList.remove("hidden");
@@ -1277,6 +1373,10 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
       if (!fullName) {
         showMessage("profileMessage", "Please enter your full name.", "error");
+        return;
+      }
+      if (phone !== originalProfileValues.phone) {
+        showMessage("profileMessage", "Phone numbers can only be changed after SMS verification in the Phone Number Verification section.", "error");
         return;
       }
       if (!phone || phone.replace(/\D/g, "").length < 7) {
@@ -2161,6 +2261,18 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         if (!session) {
           throw new Error("Please log in before submitting a request.");
         }
+        const { data: phoneProfile, error: phoneProfileError } = await db
+          .from("profiles")
+          .select("phone,phone_verified_at,phone_verified_number")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (phoneProfileError) throw phoneProfileError;
+        if (!phoneProfile?.phone_verified_at || !phoneProfile?.phone_verified_number ||
+            phoneProfile.phone_verified_number !== phoneProfile.phone) {
+          window.zelpxCustomerPhoneVerified = false;
+          throw new Error("Verify your phone number by SMS in My Profile before submitting a service request.");
+        }
+        window.zelpxCustomerPhoneVerified = true;
 
         const verifiedAddress = await verifyCustomerStreetAddress();
 
