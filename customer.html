@@ -1361,6 +1361,25 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
         questions.forEach(([labelText, options]) => {
           const label = document.createElement("label"); label.textContent = labelText;
+          if (service === "Carpentry" && labelText === "Work needed") {
+            const group = document.createElement("div");
+            group.dataset.jobQuestion = labelText;
+            group.dataset.jobService = service;
+            group.style.cssText = "display:grid;grid-template-columns:1fr;gap:10px;margin:8px 0 16px;";
+            ["Cabinet work","Framing","Trim/baseboards","Doors","Shelving","Deck repair","Other"].forEach(value => {
+              const choice = document.createElement("label");
+              choice.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--customer-line);border-radius:12px;font-weight:600;";
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox"; checkbox.value = value;
+              checkbox.style.cssText = "width:20px;height:20px;min-width:20px;accent-color:var(--customer-orange);";
+              choice.append(checkbox, document.createTextNode(value));
+              group.append(choice);
+            });
+            const hint = document.createElement("small");
+            hint.className = "subtitle"; hint.textContent = "Select all that apply.";
+            section.append(label, hint, group);
+            return;
+          }
           let input;
           if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = labelText.toLowerCase().includes("sq ft") ? "1" : "any"; input.inputMode = "decimal"; input.placeholder = labelText.toLowerCase().includes("sq ft") ? "Enter square feet (sq ft)" : "Enter amount"; }
           else if (options === "Describe") {
@@ -1663,7 +1682,10 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           currentService = service;
           lines.push("\n" + currentService);
         }
-        lines.push(input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided"));
+        const answer = input.matches("div[data-job-question]")
+          ? [...input.querySelectorAll('input[type="checkbox"]:checked')].map(item => item.value).join(", ")
+          : input.value.trim();
+        lines.push(input.dataset.jobQuestion + ": " + (answer || "Not provided"));
       });
       return lines.join("\n").trim();
     }
