@@ -2268,8 +2268,8 @@
             const item = document.createElement("li");
             const passed = verification.checks?.[key] === true;
             if (key === "phone_sms_confirmed" && !passed) {
-              item.textContent = label + ": SMS verification is not configured yet";
-              item.style.color = "#667085";
+              item.textContent = label + ": Not verified";
+              item.style.color = "#a15c00";
             } else {
               const flagged = ["same_customer_duplicate","duplicate_description","high_submission_frequency"].includes(key) ? passed : !passed;
               item.textContent = label + ": " + (flagged ? "Needs attention" : "OK");
@@ -2290,7 +2290,7 @@
         liveConfirmation.textContent = "Customer live-contact confirmation: " + (request.customer_live_confirmed_at ? "Confirmed" : "Not confirmed");
         verificationBox.append(liveConfirmation);
         const smsNote = document.createElement("p"); smsNote.className = "muted";
-        smsNote.textContent = "SMS OTP status: not configured; email confirmation and customer live-contact confirmation are checked separately.";
+        smsNote.textContent = "SMS OTP status: checked against the customer's saved phone number and successful Twilio verification record. Email confirmation and live-contact confirmation are checked separately.";
         verificationBox.append(smsNote);
         card.append(verificationBox);
 
