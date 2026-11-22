@@ -152,6 +152,46 @@ main.wrap{width:min(800px,calc(100% - 32px))}
   .open-label{font-size:11px;padding:5px 7px}
 }
 
+
+/* ZELPX JOB GALAXY */
+.galaxy-shell{margin:2px 0 14px;padding:18px 18px 15px;border:1px solid #ead9ca;border-radius:24px;background:radial-gradient(ellipse at 50% 43%,#fff 0%,#fffaf4 48%,#f8eee5 100%);box-shadow:0 12px 36px #5a35100d;overflow:hidden}
+.galaxy-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.galaxy-kicker{font-size:11px;font-weight:950;letter-spacing:.16em;color:#e65e2c}
+.galaxy-topline h2{margin:4px 0 2px;font-size:21px;letter-spacing:-.03em}
+.galaxy-topline p{margin:0;color:#76695e;font-size:13px}
+.galaxy-live{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:99px;background:#e8f5ee;color:#167653;font-size:10px;font-weight:900;letter-spacing:.08em}
+.galaxy-live i{width:7px;height:7px;border-radius:50%;background:#20a36f;box-shadow:0 0 0 4px #20a36f20}
+.galaxy-stage{height:350px;position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate;overflow:hidden}
+.galaxy-aura{position:absolute;width:270px;height:270px;border-radius:50%;background:radial-gradient(circle,#ffb47c45 0%,#ffdfc52b 48%,transparent 72%);filter:blur(5px)}
+.galaxy-globe{position:absolute;width:210px;height:210px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 32% 25%,#fff0df 0%,#ffb078 19%,#f36b38 48%,#9d3b20 83%,#59251c 100%);box-shadow:inset -22px -18px 34px #55231975,inset 12px 10px 28px #fff8e7a8,0 0 32px #f36b3860,0 0 90px #f36b3825;z-index:1}
+.globe-grid{position:absolute;inset:-20%;border-radius:50%;background:repeating-linear-gradient(0deg,transparent 0 25px,#fff7e92b 26px 27px),repeating-linear-gradient(90deg,transparent 0 25px,#fff7e926 26px 27px);transform:rotate(-18deg);mask-image:radial-gradient(circle,#000 48%,transparent 72%)}
+.globe-glow{position:absolute;inset:0;border-radius:50%;background:linear-gradient(130deg,#fff9e85c,transparent 42%,#44180c55 90%)}
+.globe-wordmark{position:absolute;inset:0;display:grid;place-items:center;color:#fff9ee;font-size:28px;font-weight:950;letter-spacing:.16em;text-shadow:0 2px 12px #692b1d88}
+.galaxy-orbit{position:absolute;border:1px solid #e99b6b80;border-radius:50%;z-index:0;pointer-events:none}
+.orbit-one{width:310px;height:118px;transform:rotate(-22deg)}
+.orbit-two{width:350px;height:150px;transform:rotate(32deg);border-color:#f4c5a580}
+.galaxy-nodes{position:absolute;inset:0;z-index:3;animation:galaxyTurn 34s linear infinite}
+.galaxy-node{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border:2px solid #fff;border-radius:50%;background:linear-gradient(145deg,#ff9a62,#e94f22);color:white;box-shadow:0 4px 16px #a8442460,0 0 0 6px #f36b3818;display:grid;place-items:center;font-size:12px;font-weight:950;cursor:pointer;animation:nodePulse 2.8s ease-in-out infinite;transform:translate(var(--x),var(--y));transition:box-shadow .2s,scale .2s}
+.galaxy-node.package-node{background:linear-gradient(145deg,#4b3027,#171816);box-shadow:0 4px 18px #34201870,0 0 0 6px #34201818}
+.galaxy-node:hover,.galaxy-node:focus-visible{scale:1.16;outline:3px solid #fff;box-shadow:0 0 0 9px #f36b3840,0 7px 24px #9b452b80}
+@keyframes galaxyTurn{from{rotate:0deg}to{rotate:360deg}}
+@keyframes nodePulse{0%,100%{box-shadow:0 4px 16px #a8442460,0 0 0 5px #f36b3818}50%{box-shadow:0 4px 22px #a8442475,0 0 0 10px #f36b3810}}
+.galaxy-caption{position:absolute;bottom:7px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:2px;z-index:2;color:#76695e}
+.galaxy-caption strong{font-size:14px;color:#3a2a22}
+.galaxy-caption span{font-size:9px;font-weight:850;letter-spacing:.16em}
+.galaxy-selected{margin:0 auto 2px;max-width:570px;padding:15px 16px;border:1px solid #efc4a8;border-radius:16px;background:#fffefa;box-shadow:0 5px 18px #6a35100d}
+.galaxy-selected h3{margin:0 0 4px;font-size:18px}
+.galaxy-selected .selected-meta{color:#74675d;font-size:14px;margin-bottom:10px}
+.galaxy-selected .selected-price{font-size:22px;font-weight:950;color:#171816}
+.galaxy-selected .selected-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.galaxy-selected .selected-actions a{color:#d95628;font-weight:850;text-decoration:none}
+.view-switch{display:flex;justify-content:center;gap:8px;margin:0 0 12px}
+.view-mode{min-height:40px;padding:0 16px;border:1px solid #ded3c8;border-radius:999px;background:#fffefa;color:#4c4038;font-weight:800;cursor:pointer}
+.view-mode.active{background:#211b18;border-color:#211b18;color:#fff}
+@media(prefers-reduced-motion:reduce){.galaxy-nodes,.galaxy-node{animation:none!important;transition:none!important}}
+@media(max-width:640px){.galaxy-shell{padding:15px 12px 12px;border-radius:19px}.galaxy-stage{height:310px}.galaxy-globe{width:174px;height:174px}.globe-wordmark{font-size:23px}.orbit-one{width:270px;height:104px}.orbit-two{width:300px;height:128px}.galaxy-node{width:42px;height:42px;margin:-21px 0 0 -21px;font-size:11px}.galaxy-topline h2{font-size:19px}.galaxy-selected .selected-actions{align-items:stretch;flex-direction:column}}
+@media(max-width:380px){.galaxy-stage{height:280px}.galaxy-globe{width:150px;height:150px}.orbit-one{width:235px}.orbit-two{width:260px}}
+
 </style>
 </head>
 <body>
@@ -164,7 +204,21 @@ main.wrap{width:min(800px,calc(100% - 32px))}
 <button class="refresh" id="refreshBtn" type="button">↻ Refresh</button>
 </section>
 <div class="meta"><span id="resultCount">Loading available jobs…</span><span class="live">Live list · updates every 30 sec</span></div>
-<section class="list" id="jobsList" aria-live="polite"><div class="state">Loading available jobs…</div></section>
+<section class="galaxy-shell" id="jobGalaxy" aria-label="Interactive live jobs sphere">
+  <div class="galaxy-topline"><div><span class="galaxy-kicker">ZELPX LIVE GALAXY</span><h2>Explore new opportunities</h2><p>Tap a glowing job to see its details.</p></div><span class="galaxy-live"><i></i> LIVE</span></div>
+  <div class="galaxy-stage" id="galaxyStage">
+    <div class="galaxy-aura"></div><div class="galaxy-orbit orbit-one"></div><div class="galaxy-orbit orbit-two"></div>
+    <div class="galaxy-globe"><div class="globe-grid"></div><div class="globe-glow"></div><span class="globe-wordmark">ZELPX</span></div>
+    <div class="galaxy-nodes" id="galaxyNodes"></div>
+    <div class="galaxy-caption"><strong id="galaxyCount">Loading jobs…</strong><span>NEW PROJECTS · NEW CONNECTIONS</span></div>
+  </div>
+  <div class="galaxy-selected hidden" id="galaxySelected" aria-live="polite"></div>
+</section>
+<div class="view-switch" role="group" aria-label="Job display mode">
+  <button type="button" id="sphereViewBtn" class="view-mode active" aria-pressed="true">✦ Sphere view</button>
+  <button type="button" id="listViewBtn" class="view-mode" aria-pressed="false">☷ List view</button>
+</div>
+<section class="list hidden" id="jobsList" aria-live="polite"><div class="state">Loading available jobs…</div></section>
 <div class="note">Public listings show structured job information such as work area, measurements, materials, and selected options. Customer names, phone numbers, email addresses, street addresses, and free-text notes or descriptions are kept private.</div>
 </main>
 <script>
