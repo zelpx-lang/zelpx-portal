@@ -996,6 +996,21 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         </button>
       </form>
 
+      <div id="submitPhoneOtpModal" class="submit-phone-otp-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="submitPhoneOtpTitle">
+        <div class="submit-phone-otp-dialog">
+          <p class="terms-eyebrow">ZELPX · Security check</p>
+          <h2 id="submitPhoneOtpTitle">Verify your phone to submit</h2>
+          <p id="submitPhoneOtpDescription">We sent a 6-digit verification code to your account phone number.</p>
+          <label for="submitPhoneOtpCode">6-digit SMS code</label>
+          <input id="submitPhoneOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
+          <p id="submitPhoneOtpMessage" class="message" role="status"></p>
+          <div class="submit-phone-otp-actions">
+            <button type="button" id="submitPhoneOtpCancel" class="secondary-button">Cancel</button>
+            <button type="button" id="submitPhoneOtpVerify">Verify & Submit</button>
+          </div>
+        </div>
+      </div>
+
       <div id="requestMessage" class="message" role="status"></div>
 
       <hr class="section-divider">
@@ -1091,6 +1106,65 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       if (!response.ok) throw new Error(result.error || "Phone verification service is unavailable.");
       return result;
     }
+    // A fresh SMS challenge is required at the final Submit step for every request.
+    window.zelpxSubmitPhoneVerified = false;
+    let submitOtpPhone = "";
+    let submitOtpSending = false;
+    async function startSubmitPhoneOtp() {
+      if (submitOtpSending) return;
+      submitOtpSending = true;
+      try {
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        const user = sessionData.session?.user;
+        if (!user) throw new Error("Please log in before submitting a request.");
+        const { data: profile, error } = await db.from("profiles").select("phone").eq("id", user.id).maybeSingle();
+        if (error) throw error;
+        submitOtpPhone = normalizeCustomerPhone(profile?.phone || "");
+        if (!submitOtpPhone) throw new Error("Add a valid phone number in My Profile before submitting your request.");
+        $("submitPhoneOtpDescription").textContent = "Enter the 6-digit code sent to " + submitOtpPhone + ".";
+        $("submitPhoneOtpCode").value = "";
+        $("submitPhoneOtpMessage").textContent = "Sending verification code…";
+        $("submitPhoneOtpModal").hidden = false;
+        document.body.classList.add("zelpx-modal-open");
+        await callCustomerPhoneApi("/api/customer-phone/send-code", { phone: submitOtpPhone });
+        $("submitPhoneOtpMessage").textContent = "Code sent. Check your phone.";
+        $("submitPhoneOtpCode").focus();
+      } catch (error) {
+        $("submitPhoneOtpModal").hidden = true;
+        document.body.classList.remove("zelpx-modal-open");
+        showMessage("requestMessage", error.message || "Could not send the phone verification code.", "error");
+      } finally {
+        submitOtpSending = false;
+      }
+    }
+    $("submitPhoneOtpCancel").addEventListener("click", () => {
+      $("submitPhoneOtpModal").hidden = true;
+      document.body.classList.remove("zelpx-modal-open");
+    });
+    $("submitPhoneOtpVerify").addEventListener("click", async () => {
+      const button = $("submitPhoneOtpVerify");
+      const code = $("submitPhoneOtpCode").value.trim();
+      if (!/^\\d{6}$/.test(code)) {
+        $("submitPhoneOtpMessage").textContent = "Enter the 6-digit code from SMS.";
+        return;
+      }
+      button.disabled = true;
+      button.textContent = "Verifying…";
+      try {
+        await callCustomerPhoneApi("/api/customer-phone/verify-code", { phone: submitOtpPhone, code });
+        window.zelpxSubmitPhoneVerified = true;
+        $("submitPhoneOtpModal").hidden = true;
+        document.body.classList.remove("zelpx-modal-open");
+        $("requestForm").requestSubmit();
+      } catch (error) {
+        $("submitPhoneOtpMessage").textContent = error.message || "The code could not be verified. Please try again.";
+      } finally {
+        button.disabled = false;
+        button.textContent = "Verify & Submit";
+      }
+    });
+
     $("sendCustomerPhoneCodeButton").addEventListener("click", async () => {
       const button = $("sendCustomerPhoneCodeButton");
       const phone = normalizeCustomerPhone($("customerPhone").value);
@@ -2289,6 +2363,11 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         return;
       }
 
+      if (!window.zelpxSubmitPhoneVerified) {
+        await startSubmitPhoneOtp();
+        return;
+      }
+      window.zelpxSubmitPhoneVerified = false;
       const button = $("requestButton");
       button.disabled = true;
       button.textContent = "Submitting...";
@@ -3101,6 +3180,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 </script>
 
   <style>
+    .submit-phone-otp-overlay[hidden]{display:none!important}
+    .submit-phone-otp-overlay{position:fixed;inset:0;z-index:100010;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(40,27,19,.58);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .submit-phone-otp-dialog{width:min(100%,440px);padding:25px 24px 22px;border:1px solid #f0ded1;border-radius:22px;background:#fffefa;color:#30231e;box-shadow:0 24px 80px #26170f40}
+    .submit-phone-otp-dialog h2{margin:0 0 9px;text-align:left;font-size:23px;color:#30231e}
+    .submit-phone-otp-dialog p{line-height:1.5}
+    .submit-phone-otp-dialog label{display:block;margin:18px 0 7px;font-weight:700}
+    .submit-phone-otp-dialog input{width:100%;padding:13px;border:1px solid #ead9ce;border-radius:12px;font-size:20px;letter-spacing:.18em}
+    .submit-phone-otp-actions{display:flex;gap:10px;margin-top:18px}
+    .submit-phone-otp-actions button{flex:1;min-height:44px;border-radius:12px}
     body.zelpx-modal-open{overflow:hidden}
     #commercialSharingModal[hidden]{display:none!important}
     #commercialSharingModal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(40,27,19,.48);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
