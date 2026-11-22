@@ -43,6 +43,8 @@
     .actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:16px; }
     .actions > button { max-width:100%; }
     .hidden { display:none!important; } .muted { color:var(--muted); }
+    /* Prevent the login form from flashing before Supabase restores an existing OAuth session. */
+    body.auth-pending #authView { display:none!important; }
     .message { padding:11px 13px; border-radius:9px; margin:12px 0; background:#eef4fb; color:#24425f; white-space:pre-wrap; overflow-wrap:anywhere; }
     .message.error { background:#fff0ef; color:var(--red); } .message.success { background:#eaf7f0; color:var(--green); }
     .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; position:relative; }
@@ -532,7 +534,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 
 </style>
 </head>
-<body>
+<body class="auth-pending">
 <header class="top">
   <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
 </header>
@@ -3419,8 +3421,6 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       }
       const { data: { session } } = await db.auth.getSession();
       if (session) {
-        // On the OAuth callback, never flash the login form while the account
-        // and dashboard are being restored. Show a neutral loading state instead.
         hide($("authView"));
         show($("oauthReturnLoading"));
         try {
@@ -3432,11 +3432,17 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
           show($("authView"));
           throw loadError;
         }
+      } else {
+        show($("authView"));
       }
+      document.body.classList.remove("auth-pending");
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("oauthReturnLoading")); hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) { hide($("oauthReturnLoading")); show($("authView")); message("authMessage", e.message, "error"); }
+    } catch (e) {
+      document.body.classList.remove("auth-pending");
+      hide($("oauthReturnLoading")); show($("authView")); message("authMessage", e.message, "error");
+    }
   }
   start();
 })();
