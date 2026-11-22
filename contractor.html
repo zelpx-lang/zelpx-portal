@@ -1982,8 +1982,15 @@
       try {
         const { data: contact, error: contactError } = await db.rpc("get_purchased_lead_contact", { p_lead_id: item.lead_id });
         if (contactError) throw contactError; if (!contact) throw new Error("Contact details not returned.");
-        heading.textContent = contact.service_category || "Purchased service";
+        const isPurchasedPackage = contact.lead_type === "lead_package";
+        heading.textContent = isPurchasedPackage ? "Lead Package" : (contact.service_category || "Purchased service");
         serviceDetails.replaceChildren();
+        if (isPurchasedPackage && Array.isArray(contact.package_services) && contact.package_services.length) {
+          const packageHeading = document.createElement("h3"); packageHeading.className = "lead-details-label"; packageHeading.textContent = "Included services in this package";
+          const packageList = document.createElement("ul"); packageList.className = "lead-package-services";
+          contact.package_services.forEach(service => { const item = document.createElement("li"); item.textContent = service; packageList.append(item); });
+          serviceDetails.append(packageHeading, packageList);
+        }
         const description = document.createElement("p");
         description.style.whiteSpace = "pre-wrap";
         description.textContent = contact.description || contact.work_details || "No service description provided.";
