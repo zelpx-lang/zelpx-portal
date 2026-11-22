@@ -1594,6 +1594,14 @@
         const packageList = document.createElement("ul"); packageList.className = "lead-package-services";
         packageServices.forEach(service => { const item = document.createElement("li"); item.textContent = service; packageList.append(item); });
         details.append(badges, packageTitle, packageList);
+        if (lead.project_value_cents != null) {
+          const projectValue = document.createElement("p");
+          projectValue.className = "lead-details-description";
+          const valueLabel = document.createElement("strong");
+          valueLabel.textContent = "Estimated total project value: ";
+          projectValue.append(valueLabel, document.createTextNode(money(lead.project_value_cents)));
+          details.append(projectValue);
+        }
       }
       const ownsPurchase = purchasedLeadIds.has(lead.id);
       if (ownsPurchase && descriptionParts.notes) {
@@ -1689,7 +1697,7 @@
 
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
-    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
+    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
     let publicPreviewOnly = false;
     if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
       // Safe public fallback: never request private descriptions or contact data
