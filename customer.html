@@ -1167,8 +1167,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
         await loadRequests(session);
-        // Sphere selections are one-time onboarding context, not permanent login preferences.
-        try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+        // Keep an unsubmitted sphere package draft through login and page refresh.
+        // It is cleared only after the service request is successfully inserted.
         try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
         try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
         // If the customer arrived from the public homepage with a selected service,
@@ -1486,14 +1486,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       // A URL from the sphere is an explicit, fresh selection.
       sphereDraft = urlSphereDraft;
       try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
-    } else if (sphereAuthPending) {
-      // Use the temporary local draft only while returning from the OAuth flow.
-      try { sphereDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null"); } catch (_) {}
     } else {
-      // A normal visit/login must never inherit an old sphere selection.
-      try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
-      try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
-      try { sessionStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
+      // Restore a recent sphere selection even if an auth redirect or a new tab
+      // dropped the query string. Keep it until the customer submits the package.
+      try {
+        const savedDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null");
+        const age = savedDraft?.createdAt ? Date.now() - Number(savedDraft.createdAt) : Infinity;
+        if (savedDraft?.source === "sphere" && Array.isArray(savedDraft.services) &&
+            savedDraft.services.length > 0 && age >= 0 && age < 2 * 60 * 60 * 1000) {
+          sphereDraft = savedDraft;
+        } else {
+          localStorage.removeItem(SPHERE_DRAFT_KEY);
+          localStorage.removeItem("zelpx.sphere.auth.pending");
+          sessionStorage.removeItem("zelpx.sphere.auth.pending");
+        }
+      } catch (_) {
+        try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+      }
     }
     if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [], removedServices: [] };
     if (!Array.isArray(sphereDraft.services)) sphereDraft.services = [];
