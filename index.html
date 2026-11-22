@@ -494,6 +494,7 @@ const serviceGroups={
 };
 window.zelpxServiceGroups = serviceGroups;
 const selectedSphereServices=[];
+let sphereViewMode="main";
 window.selectedSphereGroup="";
 function renderSelectedSphereServices(){
   const pick=document.getElementById("pick"), names=document.getElementById("pickName");
@@ -626,6 +627,7 @@ function chooseService(name,groupName){
   if(count) count.textContent=selectedSphereServices.length+" selected";
 }
 function showMainSphere(){
+  sphereViewMode="main";
   const names=Object.keys(serviceGroups);
   // Returning to the main categories must never clear previously selected work.
   window.buildSphere(names,name=>serviceGroups[name].icon);
@@ -633,23 +635,36 @@ function showMainSphere(){
   renderSelectedSphereServices();
 }
 function select(it){
-  const group=serviceGroups[it.name];
-  // On an attempted sixth selection, skip all ordinary click feedback.
-  if(!group && !selectedSphereServices.includes(it.name) && selectedSphereServices.length>=5){
-    chooseService(it.name,it.groupName||"Home services");
-    return;
-  }
-  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);if(navigator.vibrate)navigator.vibrate(12);items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
-  if(group){
+  // Main sphere buttons are categories only. They must open their work list,
+  // never become selected services themselves.
+  if(sphereViewMode==="main"){
+    const group=serviceGroups[it.name];
+    if(!group) return;
+    sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.name);
+    if(navigator.vibrate)navigator.vibrate(12);
+    items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
     window.selectedSphereGroup=it.name;
     panel.hidden=true;document.getElementById("serviceSubpanel").hidden=true;
+    sphereViewMode="detail";
     window.buildSphere(group.services,serviceIconForDetail);
     items.forEach(item=>item.groupName=it.name);
     box.classList.add("detail-mode");
     const back=document.createElement("button");back.type="button";back.className="sphere-back";back.textContent="← All categories";
     back.addEventListener("click",e=>{e.stopPropagation();serviceSound("Back to categories");showMainSphere();});
     box.append(back);
-  }else{chooseService(it.name,it.groupName||"Home services");}
+    return;
+  }
+
+  // Only a specific work item inside a category's detail list is selectable.
+  if(!it.groupName) it.groupName=window.selectedSphereGroup||"Home services";
+  if(!selectedSphereServices.includes(it.name)&&selectedSphereServices.length>=5){
+    chooseService(it.name,it.groupName);
+    return;
+  }
+  sel=it;serviceSound(it.name);if(window.galaxyTint)window.galaxyTint(it.groupName);
+  if(navigator.vibrate)navigator.vibrate(12);
+  items.forEach(o=>o.el.classList.toggle("sel",o===it));rotateTo(it);
+  chooseService(it.name,it.groupName);
 }
 function serviceIconForDetail(name){
   const n=name.toLowerCase();
