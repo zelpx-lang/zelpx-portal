@@ -1891,71 +1891,104 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     return true;
   }
 
+  // Render the primary lead query immediately; secondary badges and filters load in parallel.
+  let leadsLoadSequence = 0;
   async function loadLeads() {
-    const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
-    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
+    const sequence = ++leadsLoadSequence;
+    const list = $("leadsList");
+    const hadLeads = cachedLeads.length > 0;
+    if (!hadLeads) {
+      list.textContent = "Loading available leads…";
+      $("leadResultsCount").textContent = "Loading…";
+    } else {
+      // Keep the current list visible during background refresh instead of blanking the screen.
+      $("leadResultsCount").textContent = "Updating leads…";
+    }
+
+    let { data, error } = await db.from("leads")
+      .select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services")
+      .order("created_at", { ascending: false }).limit(100);
     let publicPreviewOnly = false;
+
     if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
-      // Safe public fallback: never request private descriptions or contact data
-      // when the current API role cannot read the protected leads table.
       const preview = await db.from("public_available_leads")
         .select("id,service_category,service_state,zip_code,urgency,price_cents,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (preview.error) {
-        list.textContent = "Could not load public lead previews: " + preview.error.message;
+        if (sequence !== leadsLoadSequence) return;
+        if (!hadLeads) list.textContent = "Could not load public lead previews: " + preview.error.message;
         $("leadResultsCount").textContent = "Unable to load leads";
         return;
       }
-      const packageInfo = await db.from("public_available_lead_package_info").select("id,lead_type,package_services");
-      if (packageInfo.error) console.warn("Could not load public package labels:", packageInfo.error.message);
-      const packageById = new Map((packageInfo.data || []).map(item => [item.id, item]));
-      data = (preview.data || []).map(lead => ({ ...lead, ...(packageById.get(lead.id) || {}), status: "available", description: "", previewOnly: true }));
+      data = (preview.data || []).map(lead => ({ ...lead, status: "available", description: "", previewOnly: true }));
       publicPreviewOnly = true;
       error = null;
     }
-    if (error) { list.textContent = "Could not load leads: " + error.message; $("leadResultsCount").textContent = "Unable to load leads"; return; }
+    if (sequence !== leadsLoadSequence) return;
+    if (error) {
+      if (!hadLeads) list.textContent = "Could not load leads: " + error.message;
+      $("leadResultsCount").textContent = "Unable to load leads";
+      return;
+    }
+
+    // Show the main lead list as soon as the primary query returns.
     cachedLeads = data || [];
-    // Sold projects remain visible as a safe public preview for exactly 3 minutes.
-    // The RPC exposes no customer description, contact details, or address.
-    if (!publicPreviewOnly && !isAdmin) {
-      const { data: recentSold, error: soldError } = await db.rpc("get_recent_sold_leads");
-      if (soldError) {
-        console.warn("Could not load recent sold lead previews:", soldError.message);
-      } else {
-        const knownLeadIds = new Set(cachedLeads.map(lead => lead.id));
-        (recentSold || []).forEach(lead => {
-          if (!knownLeadIds.has(lead.id)) cachedLeads.push({ ...lead, description: "", previewOnly: true });
-        });
-      }
+    if (publicPreviewOnly) purchasedLeadIds = new Set();
+    $("availableCount").textContent = String(cachedLeads.filter(lead => lead.status === "available").length);
+    renderLeads();
+
+    // Recent sold previews, purchase ownership, and category options are independent.
+    // Fetch them concurrently so none delays the first visible lead cards.
+    const recentSoldPromise = (!publicPreviewOnly && !isAdmin)
+      ? db.rpc("get_recent_sold_leads")
+      : Promise.resolve({ data: [], error: null });
+    const purchasesPromise = (!publicPreviewOnly && currentContractor?.id && cachedLeads.length)
+      ? db.from("lead_purchases").select("lead_id")
+          .eq("contractor_id", currentContractor.id)
+          .in("lead_id", cachedLeads.map(lead => lead.id))
+      : Promise.resolve({ data: [], error: null });
+    const catalogPromise = db.from("service_categories")
+      .select("name").eq("is_active", true).order("name");
+
+    const [soldResult, purchasesResult, catalogResult] = await Promise.all([
+      recentSoldPromise, purchasesPromise, catalogPromise
+    ]);
+    if (sequence !== leadsLoadSequence) return;
+
+    if (soldResult.error) {
+      console.warn("Could not load recent sold lead previews:", soldResult.error.message);
+    } else {
+      const knownLeadIds = new Set(cachedLeads.map(lead => lead.id));
+      (soldResult.data || []).forEach(lead => {
+        if (!knownLeadIds.has(lead.id)) cachedLeads.push({ ...lead, description: "", previewOnly: true });
+      });
     }
-    purchasedLeadIds = new Set();
-    if (!publicPreviewOnly && currentContractor?.id && cachedLeads.length) {
-      const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
-        .select("lead_id").eq("contractor_id", currentContractor.id)
-        .in("lead_id", cachedLeads.map(lead => lead.id));
-      if (purchasesError) console.warn("Could not load purchased lead access:", purchasesError.message);
-      else purchasedLeadIds = new Set((purchases || []).map(row => row.lead_id));
+
+    if (purchasesResult.error) {
+      console.warn("Could not load purchased lead access:", purchasesResult.error.message);
+    } else {
+      purchasedLeadIds = new Set((purchasesResult.data || []).map(row => row.lead_id));
     }
-    try { if (!publicPreviewOnly) await loadSelectedLeadCategories(); }
-    catch (categoryError) {
-      console.error("Could not load selected service categories:", categoryError);
-      selectedLeadCategoryNames = new Set();
-    }
-    const available = cachedLeads.filter(lead => lead.status === "available" && (isAdmin || lead.previewOnly || isLeadServiceSelected(lead)));
-    $("availableCount").textContent = String(available.length);
-    const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
+
+    const categorySelect = $("leadCategoryFilter");
+    const selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
-    const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = "All services"; categorySelect.append(allOption);
-    const packageOption = document.createElement("option"); packageOption.value = "__lead_package__"; packageOption.textContent = "Lead Packages"; categorySelect.append(packageOption);
-    const {data:catalog,error:catalogError}=await db.from("service_categories").select("name").eq("is_active",true).order("name");
-    if(catalogError){
-      const fallback=[...new Set(cachedLeads.map(lead=>lead.service_category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-      fallback.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;categorySelect.append(option);});
-      console.warn("Full service catalog filter could not load:",catalogError.message);
-    }else{
-      (catalog||[]).filter(item=>isAdmin || selectedLeadCategoryNames.has(item.name.toLowerCase())).forEach(item=>{const option=document.createElement("option");option.value=item.name;option.textContent=item.name;categorySelect.append(option);});
+    const allOption = document.createElement("option");
+    allOption.value = ""; allOption.textContent = "All services"; categorySelect.append(allOption);
+    const packageOption = document.createElement("option");
+    packageOption.value = "__lead_package__"; packageOption.textContent = "Lead Packages"; categorySelect.append(packageOption);
+    if (catalogResult.error) {
+      const fallback = [...new Set(cachedLeads.map(lead => lead.service_category).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+      fallback.forEach(name => { const option = document.createElement("option"); option.value = name; option.textContent = name; categorySelect.append(option); });
+      console.warn("Full service catalog filter could not load:", catalogResult.error.message);
+    } else {
+      (catalogResult.data || []).forEach(item => {
+        const option = document.createElement("option"); option.value = item.name; option.textContent = item.name; categorySelect.append(option);
+      });
     }
     if ([...categorySelect.options].some(option => option.value === selectedCategory)) categorySelect.value = selectedCategory;
+
+    $("availableCount").textContent = String(cachedLeads.filter(lead => lead.status === "available").length);
     renderLeads();
   }
 
