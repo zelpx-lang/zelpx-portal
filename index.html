@@ -225,7 +225,7 @@ const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
 let items=[],rx=-.25,ry=0,vx=0,vy=0,tgt=null,drag=null,idle=0,vis=true,W=0,R=0,sel=null,lastGestureDragged=false;
 let soundEnabled=true,audioContext=null,lastSpinSound=0;
 const serviceGroups={
-  "Tile & Flooring":{"icon":"🧱","services":[
+  "Tile Installation":{"icon":"🧱","services":[
     "Tile floor installation",
     "Tile wall installation",
     "Bathroom tile installation",
@@ -245,7 +245,8 @@ const serviceGroups={
     "Tile repair and replacement",
     "Cracked tile repair",
     "Grout and regrouting",
-    "Grout sealing",
+    "Grout sealing"]},
+  "Flooring":{"icon":"🪵","services":[
     "Laminate flooring installation",
     "Laminate floor repair",
     "Hardwood flooring installation",
@@ -271,7 +272,6 @@ const serviceGroups={
     "Floor underlayment installation",
     "Floor soundproofing",
     "Transition strip installation",
-    "Baseboard installation",
     "Commercial flooring installation",
     "Cork flooring installation",
     "Rubber flooring installation"]},
