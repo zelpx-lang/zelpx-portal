@@ -226,13 +226,61 @@ main.wrap{width:min(800px,calc(100% - 32px))}
  const URL="https://zsrnjkndgbchfxibxiyd.supabase.co";
  const KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
  const list=document.getElementById("jobsList"),zip=document.getElementById("zipFilter"),category=document.getElementById("categoryFilter"),count=document.getElementById("resultCount");
- let rows=[],busy=false;
+ const galaxyNodes=document.getElementById("galaxyNodes"),galaxyCount=document.getElementById("galaxyCount"),galaxySelected=document.getElementById("galaxySelected");
+ const sphereViewBtn=document.getElementById("sphereViewBtn"),listViewBtn=document.getElementById("listViewBtn");
+ let rows=[],busy=false,activeView="sphere",selectedJobId=null;
  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
+ function renderGalaxy(items){
+   galaxyNodes.innerHTML="";
+   if(!items.length){galaxySelected.classList.add("hidden");return;}
+   const radius=Math.min(142,Math.max(112,document.getElementById("galaxyStage").clientWidth*.36));
+   items.forEach((item,index)=>{
+     const angle=(-Math.PI/2)+(index/Math.max(items.length,1))*Math.PI*2;
+     const x=Math.cos(angle)*radius,y=Math.sin(angle)*radius*.68;
+     const node=document.createElement("button");
+     node.type="button";
+     node.className="galaxy-node"+(item.lead_type==="lead_package"?" package-node":"");
+     node.style.setProperty("--x",x.toFixed(1)+"px");
+     node.style.setProperty("--y",y.toFixed(1)+"px");
+     node.style.animationDelay=(index*.18)+"s";
+     node.textContent=item.lead_type==="lead_package"?"P":String(index+1);
+     node.setAttribute("aria-label",(item.lead_type==="lead_package"?"Lead Package":item.service_category||"Home service")+" — "+money(item.price_cents));
+     node.addEventListener("click",()=>showGalaxyJob(item));
+     galaxyNodes.appendChild(node);
+   });
+   if(selectedJobId && items.some(x=>x.id===selectedJobId)){
+     showGalaxyJob(items.find(x=>x.id===selectedJobId));
+   }else{
+     showGalaxyJob(items[0]);
+   }
+ }
+ function showGalaxyJob(item){
+   if(!item)return;
+   selectedJobId=item.id;
+   const isPackage=item.lead_type==="lead_package";
+   const services=Array.isArray(item.package_services)?item.package_services:[];
+   const area=[item.service_city,item.service_state].filter(Boolean).join(", ");
+   galaxySelected.classList.remove("hidden");
+   galaxySelected.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><span class="galaxy-kicker">'+(isPackage?"MULTI-SERVICE PACKAGE":"NEW OPPORTUNITY")+'</span><h3>'+esc(isPackage?"Lead Package":item.service_category||"Home service")+'</h3><div class="selected-meta">ZIP '+esc(item.zip_code||"Not specified")+(area?" · "+esc(area):"")+(isPackage?" · "+services.length+" services":"")+'</div></div><div class="selected-price">'+money(item.price_cents)+'</div></div><div class="selected-actions"><a href="/contractor">Sign in / Create account to view and buy →</a><button type="button" class="close-job" id="galaxyClearSelection">Close</button></div>';
+   document.getElementById("galaxyClearSelection").addEventListener("click",()=>{galaxySelected.classList.add("hidden");selectedJobId=null;});
+ }
+ function setView(view){
+   activeView=view;
+   const sphere=view==="sphere";
+   document.getElementById("jobGalaxy").classList.toggle("hidden",!sphere);
+   list.classList.toggle("hidden",sphere);
+   sphereViewBtn.classList.toggle("active",sphere);
+   listViewBtn.classList.toggle("active",!sphere);
+   sphereViewBtn.setAttribute("aria-pressed",String(sphere));
+   listViewBtn.setAttribute("aria-pressed",String(!sphere));
+ }
  function render(){
    const z=zip.value.trim(),cat=category.value;
    const filtered=rows.filter(x=>(!z||String(x.zip_code||"").startsWith(z))&&(!cat||(cat==="__lead_package__"?x.lead_type==="lead_package":x.service_category===cat)));
    count.textContent=filtered.length+" available "+(filtered.length===1?"job":"jobs");
+   galaxyCount.textContent=filtered.length+" "+(filtered.length===1?"opportunity":"opportunities");
+   renderGalaxy(filtered);
    if(!filtered.length){list.innerHTML='<div class="state">No available jobs match these filters.</div>';return;}
    list.innerHTML=filtered.map(x=>{
      const place=[x.service_city,x.service_state].filter(Boolean).join(", ");
@@ -278,6 +326,9 @@ main.wrap{width:min(800px,calc(100% - 32px))}
    finally{busy=false;}
  }
  zip.addEventListener("input",render);category.addEventListener("change",render);
+ sphereViewBtn.addEventListener("click",()=>setView("sphere"));
+ listViewBtn.addEventListener("click",()=>setView("list"));
+ window.addEventListener("resize",()=>{if(activeView==="sphere")render();});
  document.getElementById("refreshBtn").addEventListener("click",load);
  load();setInterval(load,30000);
 })();
