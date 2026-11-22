@@ -1547,7 +1547,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
             wrap.dataset.jobQuestion = labelText; wrap.dataset.jobService = service;
             wrap.dataset.multiChoice = "false"; wrap.dataset.selectedValue = "";
             const trigger = document.createElement("button");
-            trigger.type = "button"; trigger.className = "secondary";
+            trigger.type = "button"; trigger.className = "secondary job-choice-trigger";
             trigger.textContent = "Select / not sure";
             trigger.style.cssText = "width:100%;text-align:left;min-height:50px;margin-top:6px;";
             trigger.addEventListener("click", () => {
