@@ -1987,8 +1987,14 @@
           [["normal","Normal"],["urgent","Urgent"],["low","Low"]].forEach(([v,t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; urgency.append(o); });
           urgencyLabel.append(urgency); urgencyWrap.append(urgencyLabel);
           const priceWrap = document.createElement("div"), priceLabel = document.createElement("label"), price = document.createElement("input");
-          priceLabel.textContent = "Lead price (USD)"; price.type = "number"; price.min = "0.01"; price.step = "0.01"; price.placeholder = "50.00";
-          priceLabel.append(price); priceWrap.append(priceLabel);
+          priceLabel.textContent = "Lead price (USD)";
+          price.id = "serviceRequestLeadPrice";
+          price.type = "number"; price.min = "0.01"; price.step = "0.01"; price.inputMode = "decimal";
+          price.placeholder = "50.00"; price.required = true;
+          price.setAttribute("aria-label", "Lead price in US dollars");
+          price.style.cssText = "display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:52px;padding:12px 14px;margin-top:8px;border:1.5px solid #e7e0d5;border-radius:14px;background:#fffdfa;color:#15171c;font-size:18px;font-weight:600;position:relative;z-index:1;";
+          priceLabel.htmlFor = price.id;
+          priceWrap.append(priceLabel, price);
           const requestTypeNote = document.createElement("p"); requestTypeNote.className = "muted";
           requestTypeNote.textContent = isPackage
             ? "SPECIAL LEAD PACKAGE — created from the service sphere. One contractor purchases the entire project. Set the total package price."
