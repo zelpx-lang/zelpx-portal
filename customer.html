@@ -1302,7 +1302,10 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
 
     async function checkSession(sessionOverride = undefined) {
       const openingScreen = $("zelpxAccountOpening");
-      if (openingScreen) openingScreen.classList.add("is-visible");
+      if (openingScreen) {
+        openingScreen.classList.add("is-visible");
+        window.setTimeout(() => openingScreen.classList.remove("is-visible"), 2000);
+      }
       let session = sessionOverride;
       if (sessionOverride === undefined) {
         const { data, error } = await db.auth.getSession();
