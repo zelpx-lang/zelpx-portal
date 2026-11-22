@@ -75,5 +75,5 @@ begin
 end;
 $$;
 
-revoke all on function public.cancel_own_service_request(uuid) from public;
+revoke all on function public.cancel_own_service_request(uuid) from public, anon;
 grant execute on function public.cancel_own_service_request(uuid) to authenticated;
