@@ -172,13 +172,40 @@ const box=document.getElementById("sphere"),panel=document.getElementById("pick"
 const limitNotice=document.getElementById("serviceLimitNotice"),limitOk=document.getElementById("serviceLimitOk"),limitClose=document.getElementById("serviceLimitClose");
 const serviceLimitAudio=new Audio("https://remotion.media/windows-xp-error.wav");
 serviceLimitAudio.preload="auto";
+serviceLimitAudio.volume=1;
+function playFallbackErrorSound(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ctx=audioContext||(audioContext=new AC());
+    const run=()=>{
+      const now=ctx.currentTime;
+      const master=ctx.createGain();
+      master.gain.setValueAtTime(0.0001,now);
+      master.gain.exponentialRampToValueAtTime(0.22,now+0.01);
+      master.gain.exponentialRampToValueAtTime(0.0001,now+0.58);
+      master.connect(ctx.destination);
+      [[880,0,0.16],[660,0.18,0.22],[440,0.39,0.17]].forEach(([hz,delay,duration])=>{
+        const osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.type="triangle";
+        osc.frequency.setValueAtTime(hz,now+delay);
+        gain.gain.setValueAtTime(0.0001,now+delay);
+        gain.gain.exponentialRampToValueAtTime(0.9,now+delay+0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+duration);
+        osc.connect(gain);gain.connect(master);
+        osc.start(now+delay);osc.stop(now+delay+duration+0.02);
+      });
+    };
+    if(ctx.state==="suspended")ctx.resume().then(run).catch(()=>{});else run();
+  }catch(_){}
+}
 function playServiceLimitSound(){
   try{
     serviceLimitAudio.pause();
     serviceLimitAudio.currentTime=0;
     const playback=serviceLimitAudio.play();
-    if(playback&&typeof playback.catch==="function")playback.catch(()=>{});
-  }catch(_){}
+    if(playback&&typeof playback.catch==="function")playback.catch(()=>playFallbackErrorSound());
+  }catch(_){playFallbackErrorSound();}
 }
 function showServiceLimitNotice(){playServiceLimitSound();limitNotice.hidden=false;limitOk.focus();}
 function hideServiceLimitNotice(){limitNotice.hidden=true;}
