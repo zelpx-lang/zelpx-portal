@@ -987,16 +987,19 @@
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
     if (!data?.length) { list.textContent = "No leads created yet."; return; }
     const wrap = document.createElement("div"); wrap.className = "tablewrap";
     const table = document.createElement("table"), thead = document.createElement("thead"), headerRow = document.createElement("tr");
-    ["Category","ZIP","Urgency","Price","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
+    ["Type / Category","Included services","ZIP","Urgency","Price","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
     thead.append(headerRow); table.append(thead); const body = document.createElement("tbody");
     data.forEach(lead => {
       const tr = document.createElement("tr");
-      [lead.service_category,lead.zip_code,lead.urgency,money(lead.price_cents),lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
+      const packageType = lead.lead_type === "lead_package";
+      const typeLabel = packageType ? "Lead Package" : (lead.service_category || "Regular Lead");
+      const includedServices = packageType && Array.isArray(lead.package_services) ? lead.package_services.join(", ") : "—";
+      [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
       body.append(tr);
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
@@ -2055,7 +2058,7 @@
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
               serviceRequestsEditing = false;
-              message("serviceRequestsMessage", "Request published successfully. Lead ID: " + leadId, "success");
+              message("serviceRequestsMessage", (publicationType === "lead_package" ? "Lead Package published successfully. One buyer can purchase the entire project. Lead ID: " : "Request published successfully. Lead ID: ") + leadId, "success");
               await loadServiceRequests(); await loadAdminLeads(); await loadLeads();
             } catch (e) {
               feedback.textContent = "Could not publish request: " + (e.message || "Unknown error");
