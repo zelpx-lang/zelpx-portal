@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     const body = await readJson(req);
     const phone = normalizeE164(body.phone);
     const code = String(body.code || "").trim();
-    if (!phone || !/^\\d{6}$/.test(code)) {
+    if (!phone || !/^\d{6}$/.test(code)) {
       return sendJson(res, 400, { error: "Enter a valid phone number and the 6-digit SMS code." });
     }
     const config = twilioConfig();
