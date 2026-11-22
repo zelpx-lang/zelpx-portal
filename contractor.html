@@ -2940,9 +2940,9 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     let soldPreviewRefreshTimer = null;
     const syncSoldPreviewRefresh = () => {
       if (soldPreviewRefreshTimer) window.clearInterval(soldPreviewRefreshTimer);
-      if (!document.hidden && currentContractor) {
+      if (!document.hidden) {
         soldPreviewRefreshTimer = window.setInterval(() => {
-          loadLeads().catch(error => console.warn("Marketplace refresh failed:", error));
+          if (currentContractor) loadLeads().catch(error => console.warn("Marketplace refresh failed:", error));
         }, 10000);
       }
     };
