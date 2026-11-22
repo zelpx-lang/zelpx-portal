@@ -57,21 +57,21 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 @media(max-width:850px){.hero-grid{grid-template-columns:1fr;gap:35px}.hero-art{min-height:370px}.navlinks{display:none}.hero{padding:55px 0}.section-head{align-items:flex-start;flex-direction:column}.pro-cta{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){.wrap{width:calc(100% - 30px)}header{height:68px}.logo{font-size:24px}.navright .outline{display:none}.hero{padding:42px 0}.hero-copy{font-size:16px}.searchgrid{grid-template-columns:1fr;gap:7px}.field{padding:7px 10px;border-bottom:1px solid var(--line)}.searchbox .btn{width:100%}.hero-art{min-height:330px;padding:20px}.art-card{left:24px;right:24px;top:125px}.art-shape{inset:75px 18px 20px}.steps{grid-template-columns:1fr}.block{padding:54px 0!important}.pro-cta{padding:28px 22px}.trustline{gap:10px 18px}.sc{font-size:12px;padding:6px 11px 6px 8px}}
  .selected-service-count{font-size:15px;color:var(--muted);font-weight:700;margin-top:2px}.selected-service-chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}.selected-services{display:flex;flex-direction:column;align-items:center;gap:9px;width:100%}.selected-service-list{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.selected-service-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--orange);border-radius:999px;background:#fff8f1;color:var(--ink);font-size:14px}.selected-service-chip button{border:0;background:transparent;color:var(--orange);font-size:19px;line-height:1;cursor:pointer;padding:0 2px}.pick{flex-direction:column;margin-top:18px}.pick[hidden]{display:none}.service-field{position:relative}.home-suggestions{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:260px;overflow:auto;background:#fffefa;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px #31271922}.home-suggestions button{display:block;width:100%;padding:11px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;color:var(--ink);cursor:pointer}.home-suggestions button:hover,.home-suggestions button:focus{background:var(--soft)}
-/* Original ZELPX retro alert — nostalgic desktop-dialog feel, custom brand styling */
-.xp-limit-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:18px;background:rgba(18,15,13,.62);backdrop-filter:blur(2px)}
+/* Modern ZELPX service notice */
+.xp-limit-overlay{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(24,20,17,.48);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .xp-limit-overlay[hidden]{display:none}
-.xp-limit-window{width:min(430px,100%);overflow:hidden;border:1px solid #9b431f;border-radius:12px;background:#fff9ed;box-shadow:0 22px 65px #0009,0 2px 0 #ffffff80 inset;font-family:Tahoma,Arial,sans-serif;color:#30251f;animation:zelpxAlertIn .16s ease-out}
-.xp-limit-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 11px 10px 16px;background:linear-gradient(180deg,#ff9a60 0%,#f36b38 52%,#d94f26 100%);color:#fff;font-size:15px;font-weight:700;text-shadow:0 1px 1px #873719;letter-spacing:.1px}
-.xp-limit-close{width:25px;height:25px;padding:0;border:1px solid #ffffff9c;border-radius:6px;background:linear-gradient(#ffb39a,#d94b2b);color:white;font:bold 18px/20px Arial;box-shadow:0 1px 2px #8c321e66;cursor:pointer}
-.xp-limit-content{display:flex;align-items:center;gap:17px;padding:27px 24px 22px;font-size:15px;line-height:1.55}
-.xp-limit-error-icon{flex:0 0 42px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff866b,#d83d26);border:2px solid #fff;box-shadow:0 0 0 1px #b9472b,0 3px 8px #9c452b35;color:#fff;font:bold 25px/1 Arial}
-.xp-limit-actions{display:flex;justify-content:center;padding:0 18px 20px}
-.xp-limit-ok{min-width:104px;padding:8px 26px;border:1px solid #b95a32;border-radius:7px;background:linear-gradient(#fffdf8,#f6dfcc);box-shadow:inset 0 1px #fff,0 2px 3px #7a351d20;color:#71371f;font:700 13px Tahoma,Arial,sans-serif;cursor:pointer}
-.xp-limit-ok:hover{background:linear-gradient(#fff,#ffe9d8);border-color:#e46b3b}
-.xp-limit-ok:focus-visible{outline:2px solid #e46b3b;outline-offset:3px}
-@keyframes zelpxAlertIn{from{opacity:0;transform:translateY(7px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-@media(max-width:420px){.xp-limit-content{padding:22px 17px}.xp-limit-window{width:min(390px,100%)}}
-
+.xp-limit-window{position:relative;width:min(420px,100%);overflow:hidden;border:1px solid #f0dfd2;border-radius:24px;background:linear-gradient(155deg,#fffefa 0%,#fff7ef 100%);box-shadow:0 28px 90px #1b120e40,0 2px 8px #7a452018;color:#29231f;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;animation:zelpxAlertIn .24s cubic-bezier(.2,.8,.2,1)}
+.xp-limit-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 22px 0;background:transparent;color:#29231f;font-size:17px;font-weight:750;letter-spacing:-.3px}
+.xp-limit-close{width:34px;height:34px;padding:0;border:1px solid #eee1d7;border-radius:50%;background:#fff;color:#8b7567;font:400 22px/30px Arial;cursor:pointer}
+.xp-limit-close:hover{background:#fff0e5;color:#bd592d}
+.xp-limit-content{display:flex;align-items:flex-start;gap:15px;padding:23px 24px 24px;font-size:15px;line-height:1.6;color:#62564e}
+.xp-limit-error-icon{flex:0 0 48px;width:48px;height:48px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(145deg,#ffead9,#ffd1b5);box-shadow:inset 0 1px #fff;color:#c45b2c;font:bold 24px/1 Arial}
+.xp-limit-actions{display:flex;justify-content:flex-end;padding:0 24px 23px}
+.xp-limit-ok{min-width:112px;padding:11px 24px;border:0;border-radius:13px;background:linear-gradient(135deg,#f58a50,#df642f);box-shadow:0 5px 14px #d76b3933;color:#fff;font:700 14px inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.xp-limit-ok:hover{transform:translateY(-1px);box-shadow:0 8px 18px #d76b3940}
+.xp-limit-ok:focus-visible{outline:3px solid #f5b18e;outline-offset:3px}
+@keyframes zelpxAlertIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:420px){.xp-limit-content{padding:20px 19px 22px}.xp-limit-titlebar{padding:19px 19px 0}.xp-limit-actions{padding:0 19px 19px}.xp-limit-window{border-radius:21px}}
 /* Keep mobile taps clean while preserving keyboard focus visibility. */
 *{-webkit-tap-highlight-color:transparent}
 button,a,input,select,textarea,[role="button"]{-webkit-tap-highlight-color:transparent}
@@ -169,7 +169,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 <div id="serviceLimitNotice" class="xp-limit-overlay" hidden>
   <section class="xp-limit-window" role="alertdialog" aria-modal="true" aria-labelledby="serviceLimitTitle" aria-describedby="serviceLimitText">
     <div class="xp-limit-titlebar"><span id="serviceLimitTitle">ZELPX — Service selection</span><button class="xp-limit-close" id="serviceLimitClose" type="button" aria-label="Close">×</button></div>
-    <div class="xp-limit-content"><span class="xp-limit-error-icon" aria-hidden="true">!</span><div id="serviceLimitText">You can select up to 5 services. Remove one selected service before choosing another.</div></div>
+    <div class="xp-limit-content"><span class="xp-limit-error-icon" aria-hidden="true">✦</span><div id="serviceLimitText">You can select up to 5 services. Remove one selected service before choosing another.</div></div>
     <div class="xp-limit-actions"><button id="serviceLimitOk" class="xp-limit-ok" type="button">OK</button></div>
   </section>
 </div>
@@ -178,42 +178,27 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 (()=>{
 const box=document.getElementById("sphere"),panel=document.getElementById("pick"),pn=document.getElementById("pickName"),pg=document.getElementById("pgGo");
 const limitNotice=document.getElementById("serviceLimitNotice"),limitOk=document.getElementById("serviceLimitOk"),limitClose=document.getElementById("serviceLimitClose");
-const serviceLimitAudio=new Audio("https://remotion.media/windows-xp-error.wav");
-serviceLimitAudio.preload="auto";
-serviceLimitAudio.volume=1;
-function playFallbackErrorSound(){
+function playServiceLimitSound(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext;
     if(!AC)return;
     const ctx=audioContext||(audioContext=new AC());
-    const run=()=>{
+    const play=()=>{
       const now=ctx.currentTime;
-      const master=ctx.createGain();
-      master.gain.setValueAtTime(0.0001,now);
-      master.gain.exponentialRampToValueAtTime(0.22,now+0.01);
-      master.gain.exponentialRampToValueAtTime(0.0001,now+0.58);
-      master.connect(ctx.destination);
-      [[880,0,0.16],[660,0.18,0.22],[440,0.39,0.17]].forEach(([hz,delay,duration])=>{
-        const osc=ctx.createOscillator(),gain=ctx.createGain();
-        osc.type="triangle";
-        osc.frequency.setValueAtTime(hz,now+delay);
-        gain.gain.setValueAtTime(0.0001,now+delay);
-        gain.gain.exponentialRampToValueAtTime(0.9,now+delay+0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001,now+delay+duration);
-        osc.connect(gain);gain.connect(master);
-        osc.start(now+delay);osc.stop(now+delay+duration+0.02);
+      // A soft, friendly three-note chime — not an error or system alert.
+      [[659.25,0,.34],[783.99,.13,.38],[987.77,.27,.55]].forEach(([hz,delay,duration],i)=>{
+        const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+        osc.type="sine";osc.frequency.setValueAtTime(hz,now+delay);
+        filter.type="lowpass";filter.frequency.setValueAtTime(2400,now+delay);
+        gain.gain.setValueAtTime(.0001,now+delay);
+        gain.gain.exponentialRampToValueAtTime(i===2?.045:.035,now+delay+.025);
+        gain.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);
+        osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+        osc.start(now+delay);osc.stop(now+delay+duration+.03);
       });
     };
-    if(ctx.state==="suspended")ctx.resume().then(run).catch(()=>{});else run();
+    if(ctx.state==="suspended")ctx.resume().then(play).catch(()=>{});else play();
   }catch(_){}
-}
-function playServiceLimitSound(){
-  try{
-    serviceLimitAudio.pause();
-    serviceLimitAudio.currentTime=0;
-    const playback=serviceLimitAudio.play();
-    if(playback&&typeof playback.catch==="function")playback.catch(()=>playFallbackErrorSound());
-  }catch(_){playFallbackErrorSound();}
 }
 function showServiceLimitNotice(message="You can select up to 5 services. Remove one selected service before choosing another.",title="ZELPX — Service selection"){const text= document.getElementById("serviceLimitText"),heading=document.getElementById("serviceLimitTitle");if(text)text.textContent=message;if(heading)heading.textContent=title;playServiceLimitSound();limitNotice.hidden=false;limitOk.focus();}
 function hideServiceLimitNotice(){limitNotice.hidden=true;}
@@ -527,7 +512,7 @@ function renderSelectedSphereServices(){
     else localStorage.removeItem("zelpx.pendingSphereRequest.v1");
   } catch (_) {}
   if(selectedSphereServices.length===1){
-    showServiceLimitNotice("A Multi-Service Package needs at least 2 services. You have selected 1 service. Please choose one more service to continue.","ZELPX — Multi-Service Package");
+    showServiceLimitNotice("Choose one more service to build your Multi-Service Package. You’re almost there!","A little more to go");
     return;
   }
   if(selectedSphereServices.length>=2){
