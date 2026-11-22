@@ -679,6 +679,23 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
  #serviceDetails label{font-size:10.5px}
  .grid{gap:3px}
 }
+
+/* ZELPX account-openin
+
+<div id="zelpxAccountOpening" aria-live="polite" aria-label="Opening your account">
+  <div class="opening-glow" aria-hidden="true"></div>
+  <div class="opening-copy"><span class="opening-brand">ZELPX</span><span class="opening-message">Opening your account<span class="opening-dots"></span></span></div>
+</div>
+g screen */
+#zelpxAccountOpening{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;padding:24px;background:#f7f3ed;color:#211d19;font-family:Arial,sans-serif}
+#zelpxAccountOpening.is-visible{display:flex}
+#zelpxAccountOpening .opening-glow{position:absolute;width:min(78vw,520px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#ffe0c9 0%,#fff0e4 34%,rgba(255,245,235,0) 72%);filter:blur(14px);animation:zelpxOpeningPulse 2.8s ease-in-out infinite}
+#zelpxAccountOpening .opening-copy{position:relative;text-align:center;font-size:clamp(17px,4.5vw,27px);font-weight:800;letter-spacing:.13em;line-height:1.5}
+#zelpxAccountOpening .opening-brand{display:block;margin-bottom:7px;font-size:1.12em;letter-spacing:.2em}
+#zelpxAccountOpening .opening-message{display:block;font-size:.78em;letter-spacing:.09em;font-weight:650}
+#zelpxAccountOpening .opening-dots:after{content:"";display:inline-block;width:1.5em;text-align:left;animation:zelpxOpeningDots 1.25s steps(4,end) infinite}
+@keyframes zelpxOpeningPulse{0%,100%{transform:scale(.92);opacity:.65}50%{transform:scale(1.08);opacity:1}}
+@keyframes zelpxOpeningDots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
 </style>
 </head>
 
@@ -1284,6 +1301,8 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
     });
 
     async function checkSession(sessionOverride = undefined) {
+      const openingScreen = $("zelpxAccountOpening");
+      if (openingScreen) openingScreen.classList.add("is-visible");
       let session = sessionOverride;
       if (sessionOverride === undefined) {
         const { data, error } = await db.auth.getSession();
@@ -1321,6 +1340,7 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
+        if (openingScreen) openingScreen.classList.remove("is-visible");
 
         try {
           await loadCustomerProfile(session.user);
