@@ -13,6 +13,7 @@
 <script>
 /* Never let a stale OAuth marker cover the customer sign-in buttons. */
 (() => {
+  document.documentElement.classList.add("zelpx-session-check");
   window.ZELPXRevealOAuthPage = () => {
     document.documentElement.classList.remove("zelpx-oauth-pending");
     try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
@@ -683,6 +684,7 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
 /* Original ZELPX account-opening screen — centered single-line message */
 #zelpxAccountOpening{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;overflow:hidden;padding:18px;background:#f6f2ec;color:#171513;font-family:Arial,sans-serif}
 #zelpxAccountOpening.is-visible{display:flex}
+html.zelpx-session-check #zelpxAccountOpening{display:flex}
 #zelpxAccountOpening .opening-glow{position:absolute;left:50%;top:50%;width:min(92vw,680px);height:min(72vh,760px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,222,199,.68) 0%,rgba(255,235,221,.42) 35%,rgba(255,245,237,0) 72%);filter:blur(24px);animation:zelpxOpeningPulse 3.8s ease-in-out infinite}
 #zelpxAccountOpening .opening-copy{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.18em;max-width:100%;white-space:nowrap;text-align:center;font-size:clamp(17px,4.5vw,31px);font-weight:800;letter-spacing:.14em;line-height:1.2}
 #zelpxAccountOpening .opening-brand{display:inline;font-size:1em;letter-spacing:.18em}
@@ -1302,6 +1304,7 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
 
     async function checkSession(sessionOverride = undefined) {
       const openingScreen = $("zelpxAccountOpening");
+      document.documentElement.classList.remove("zelpx-session-check");
       if (openingScreen) {
         openingScreen.classList.add("is-visible");
         window.setTimeout(() => openingScreen.classList.remove("is-visible"), 2000);
@@ -1387,6 +1390,8 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
           history.replaceState({}, "", window.location.pathname);
         }
       } else {
+        document.documentElement.classList.remove("zelpx-session-check");
+        if (openingScreen) openingScreen.classList.remove("is-visible");
         $("authView").classList.remove("hidden");
         $("dashboardView").classList.add("hidden");
       }
