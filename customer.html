@@ -715,8 +715,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
                placeholder="Street address" autocomplete="street-address" required>
 
         <div class="grid">
-          <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
-          <div><label for="serviceState">State</label><select id="serviceState" autocomplete="address-level1" required>
+          <div><label for="serviceCity">City (verified by ZIP)</label><input id="serviceCity" autocomplete="address-level2" required readonly></div>
+          <div><label for="serviceState">State (verified by ZIP)</label><select id="serviceState" autocomplete="address-level1" required disabled>
             <option value="">Select a state</option>
             <option value="AL">Alabama (AL)</option>
             <option value="AK">Alaska (AK)</option>
@@ -1247,22 +1247,19 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const place = (data.places || [])[0];
         if (data["country abbreviation"] !== "US" || String(data["post code"]) !== zip || !place) throw new Error("ZIP_NOT_FOUND");
         $("serviceCity").value = place["place name"] || "";
-        // ZIP lookup supplies the state by default, but never replaces a state
-        // the customer deliberately selected from the dropdown.
+        // ZIP is the source of truth for city and state. Customers cannot
+        // accidentally submit a city/state combination that conflicts with ZIP.
         const stateSelect = $("serviceState");
-        if (stateSelect.dataset.manualState !== "true") {
-          stateSelect.value = place["state abbreviation"] || "";
-        }
+        stateSelect.value = place["state abbreviation"] || "";
+        $("serviceCity").value = place["place name"] || "";
         zipInput.dataset.latitude = place.latitude || "";
         zipInput.dataset.longitude = place.longitude || "";
         zipInput.dataset.verifiedZip = zip;
-        $("serviceZipStatus").textContent = stateSelect.dataset.manualState === "true"
-          ? "Valid US ZIP code. City verified. Your manually selected state will be checked against the address."
-          : "Valid US ZIP code. City and state verified.";
+        $("serviceZipStatus").textContent = "ZIP verified. City and state were filled automatically.";
         return true;
       } catch (error) {
         $("serviceCity").value = "";
-        if ($("serviceState").dataset.manualState !== "true") $("serviceState").value = "";
+        $("serviceState").value = "";
         $("serviceZipStatus").textContent = error.message === "ZIP_NOT_FOUND"
           ? "This ZIP code was not found in the US ZIP database. Enter a valid ZIP code."
           : "ZIP verification is temporarily unavailable. You cannot submit until the ZIP code is verified.";
@@ -1308,12 +1305,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     });
     $("serviceZip").addEventListener("change", lookupCustomerZip);
     $("serviceZip").addEventListener("blur", lookupCustomerZip);
-    $("serviceState").addEventListener("change", () => {
-      $("serviceState").dataset.manualState = "true";
-      $("serviceZipStatus").textContent =
-        "State manually selected. It must match the verified street address and ZIP code before submission.";
-    });
-
     const serviceDetailQuestions = {
       "Tile Installation": [["Work area","Floor, Walls, Walls & Floors, Shower, Backsplash"],["Approximate area (sq ft)","number"],["Tile type","Ceramic, porcelain, natural stone, not sure"],["Remove old tile?","Yes, no, not sure"],["Subfloor/wall repair needed?","Yes, no, not sure"],["Materials supplied by","Customer, contractor, not sure"]],
       "House Cleaning": [["Approximate area to clean (sq ft)","number"],["Bedrooms","number"],["Bathrooms","number"],["Home type","Apartment, single-story, multi-story, townhouse"],["Cleaning type","Standard, deep clean, move-in/out"],["Frequency","One-time, weekly, biweekly, monthly"],["Inside oven/fridge?","Yes, no"],["Pets?","Yes, no"]],
@@ -1947,7 +1938,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
         sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
-        $("serviceState").dataset.manualState = "false";
+        $("serviceState").value = "";
 
         showMessage(
           "requestMessage",
