@@ -1546,7 +1546,7 @@
     const category = $("leadCategoryFilter").value, statusFilter = $("leadStatusFilter").value;
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
-      const categoryMatch = !category || lead.service_category === category;
+      const categoryMatch = !category || (category === "__lead_package__" ? lead.lead_type === "lead_package" : lead.service_category === category);
       const serviceMatch = isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
       const haystack = [lead.service_category, lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
@@ -1719,6 +1719,7 @@
     const categorySelect = $("leadCategoryFilter"), selectedCategory = categorySelect.value;
     categorySelect.replaceChildren();
     const allOption = document.createElement("option"); allOption.value = ""; allOption.textContent = "My selected services"; categorySelect.append(allOption);
+    const packageOption = document.createElement("option"); packageOption.value = "__lead_package__"; packageOption.textContent = "Lead Packages"; categorySelect.append(packageOption);
     const {data:catalog,error:catalogError}=await db.from("service_categories").select("name").eq("is_active",true).order("name");
     if(catalogError){
       const fallback=[...new Set(cachedLeads.map(lead=>lead.service_category).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
