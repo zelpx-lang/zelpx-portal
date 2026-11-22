@@ -1774,11 +1774,18 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         removeMark.textContent = "×";
         pill.append(name, removeMark);
         pill.addEventListener("click", () => {
+          const keepScrollY = window.scrollY;
           const [removed] = sphereDraft.services.splice(index, 1);
           if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
+          // Rebuilding detail cards changes document height. Keep the viewport
+          // fixed so the customer's finger remains over the same screen position.
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" });
+            requestAnimationFrame(() => window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" }));
+          });
         });
         selectedServicesReviewList.appendChild(pill);
       });
@@ -1789,11 +1796,16 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         restore.textContent = "↶ " + service;
         restore.setAttribute("aria-label", "Restore " + service);
         restore.addEventListener("click", () => {
+          const keepScrollY = window.scrollY;
           const [restored] = sphereDraft.removedServices.splice(index, 1);
           if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
+          requestAnimationFrame(() => {
+            window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" });
+            requestAnimationFrame(() => window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" }));
+          });
         });
         removedServicesRestoreList.appendChild(restore);
       });
