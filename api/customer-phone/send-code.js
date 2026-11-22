@@ -1,4 +1,4 @@
-const { sendJson, normalizePhone, getAuthenticatedUser, getTwilioConfig, twilioHeaders } = require("./_shared");
+const { sendJson, normalizePhone, getAuthenticatedUser, getTwilioConfig, twilioHeaders } = require("../../lib/customer-phone");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." });
