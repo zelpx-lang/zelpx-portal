@@ -380,6 +380,86 @@
     }
     body.admin-mode .admin-page-nav button:first-child,
     body.admin-mode .admin-nav a:first-child { background:#e7e1d8 !important; }
+
+    /* Final responsive pass for the administrator portal */
+    @media screen and (max-width: 760px) {
+      html, body { width:100%; max-width:100%; overflow-x:hidden!important; }
+      body.admin-mode { font-size:15px; }
+      body.admin-mode .top {
+        width:100%; min-height:96px; padding:14px 16px!important;
+        display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+      }
+      body.admin-mode .brand { font-size:22px; line-height:1.2; }
+      body.admin-mode .top small { display:block; font-size:11px; letter-spacing:.14em; }
+      body.admin-mode #topUser {
+        width:100%; max-width:none!important; display:flex; justify-content:space-between;
+        align-items:center; gap:8px; margin-top:2px;
+      }
+      body.admin-mode #userEmail { min-width:0; max-width:68%; font-size:12px; overflow-wrap:anywhere; }
+      body.admin-mode #logoutBtn { min-height:40px; padding:8px 13px; white-space:nowrap; }
+      body.admin-mode main {
+        width:calc(100% - 20px)!important; max-width:none!important;
+        margin:12px auto!important; padding:0!important;
+      }
+      body.admin-mode .card,
+      body.admin-mode #adminPanel {
+        width:100%; min-width:0; padding:13px!important; margin:0 0 12px!important;
+        border-radius:15px!important;
+      }
+      body.admin-mode #adminPanel .admin-page-nav {
+        display:grid!important; grid-template-columns:minmax(0,1fr)!important;
+        width:100%!important; gap:7px!important; padding:0!important;
+        margin:0 0 13px!important; border:0!important; background:transparent!important;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button {
+        display:flex!important; width:100%!important; min-width:0!important;
+        min-height:46px!important; height:auto!important; justify-content:flex-start!important;
+        align-items:center!important; padding:11px 13px!important; margin:0!important;
+        border-radius:11px!important; white-space:normal!important; text-align:left!important;
+        font-size:14px!important; line-height:1.3!important;
+        background:#eee9e1!important; color:#302c27!important;
+        border:1px solid #ddd5ca!important; box-shadow:none!important;
+      }
+      body.admin-mode #adminPanel .admin-page-nav button.active {
+        background:#d9c9b9!important; color:#29231e!important;
+        border-color:#cdb9a6!important;
+      }
+      body.admin-mode #adminPanel .admin-page,
+      body.admin-mode #adminPanel .admin-page > *,
+      body.admin-mode #adminPanel .lead {
+        min-width:0!important; max-width:100%!important; box-sizing:border-box;
+      }
+      body.admin-mode #adminPanel .admin-page .grid {
+        display:grid!important; grid-template-columns:minmax(0,1fr)!important; gap:10px!important;
+      }
+      body.admin-mode #adminPanel input,
+      body.admin-mode #adminPanel select,
+      body.admin-mode #adminPanel textarea {
+        width:100%!important; max-width:100%!important; min-width:0!important;
+        font-size:16px!important; box-sizing:border-box!important;
+      }
+      body.admin-mode #adminPanel .actions {
+        display:flex!important; flex-direction:column!important; align-items:stretch!important;
+        width:100%!important; gap:8px!important;
+      }
+      body.admin-mode #adminPanel .actions > *,
+      body.admin-mode #adminPanel .actions button {
+        width:100%!important; max-width:none!important; min-width:0!important;
+      }
+      body.admin-mode #adminPanel table { display:block!important; width:100%!important; overflow-x:auto!important; }
+      body.admin-mode #adminPanel img,
+      body.admin-mode #adminPanel iframe { max-width:100%!important; }
+      body.admin-mode #adminPanel h1 { font-size:22px!important; }
+      body.admin-mode #adminPanel h2 { font-size:19px!important; }
+      body.admin-mode #adminPanel h3 { font-size:16px!important; }
+    }
+    @media screen and (max-width:390px) {
+      body.admin-mode main { width:calc(100% - 14px)!important; }
+      body.admin-mode #adminPanel { padding:10px!important; }
+      body.admin-mode #adminPanel .admin-page-nav button { font-size:13px!important; padding:10px!important; }
+      body.admin-mode #topUser { align-items:flex-start; }
+    }
+
 </style>
 </head>
 <body class="admin-mode">
