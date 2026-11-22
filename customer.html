@@ -1497,7 +1497,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       const session = sessionData.session;
       if (!session) throw new Error("Please log in before verifying your address.");
       $("serviceZipStatus").textContent = "Verifying street address and ZIP code…";
-      const response = await fetch(SUPABASE_URL + "/functions/v1/verify-service-address", {
+      const response = await fetch("/api/verify-service-address", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
