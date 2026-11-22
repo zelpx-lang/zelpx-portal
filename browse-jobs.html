@@ -125,7 +125,7 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
  const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
  function render(){
    const z=zip.value.trim(),cat=category.value;
-   const filtered=rows.filter(x=>(!z||String(x.zip_code||"").startsWith(z))&&(!cat||x.service_category===cat));
+   const filtered=rows.filter(x=>(!z||String(x.zip_code||"").startsWith(z))&&(!cat||(cat==="__lead_package__"?x.lead_type==="lead_package":x.service_category===cat)));
    count.textContent=filtered.length+" available "+(filtered.length===1?"job":"jobs");
    if(!filtered.length){list.innerHTML='<div class="state">No available jobs match these filters.</div>';return;}
    list.innerHTML=filtered.map(x=>{
@@ -165,7 +165,7 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
      const packageById=new Map((Array.isArray(packageRows)?packageRows:[]).map(item=>[item.id,item]));
      rows=rows.map(item=>({...item,public_work_details:detailById.get(item.id)||"",...(packageById.get(item.id)||{})}));
      const selected=category.value, cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
-     category.innerHTML='<option value="">All categories</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+     category.innerHTML='<option value="">All categories</option><option value="__lead_package__">Lead Packages</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
      category.value=cats.includes(selected)?selected:"";
      render();
    }catch(e){console.error(e);if(!rows.length)list.innerHTML='<div class="state">The job list is temporarily unavailable. Please try again.</div>';count.textContent="Could not refresh jobs";}
