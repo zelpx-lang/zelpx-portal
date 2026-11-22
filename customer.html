@@ -1611,11 +1611,6 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       if (searchHint) searchHint.hidden = true;
       if (typeLabel) typeLabel.hidden = true;
       $("serviceType").hidden = true;
-      const packageNotice = document.createElement("div");
-      packageNotice.className = "request-card sphere-package-lock";
-      packageNotice.setAttribute("role", "status");
-      packageNotice.innerHTML = "<strong>Special Lead Package</strong><p class='subtitle'>Your sphere selection is a complete package of " + landingServices.length + " services. You cannot add another service from this form. To change the package, return to the sphere and make a new selection.</p>";
-      selectedServicesReview.before(packageNotice);
       selectedServicesReview.classList.add("sphere-package-review");
     }
     if (landingService) {
