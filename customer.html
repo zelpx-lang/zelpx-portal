@@ -1492,8 +1492,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       try {
         const savedDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null");
         const age = savedDraft?.createdAt ? Date.now() - Number(savedDraft.createdAt) : Infinity;
+        const recentDraft = savedDraft?.createdAt
+          ? age >= 0 && age < 2 * 60 * 60 * 1000
+          : sphereAuthPending;
         if (savedDraft?.source === "sphere" && Array.isArray(savedDraft.services) &&
-            savedDraft.services.length > 0 && age >= 0 && age < 2 * 60 * 60 * 1000) {
+            savedDraft.services.length > 0 && recentDraft) {
           sphereDraft = savedDraft;
         } else {
           localStorage.removeItem(SPHERE_DRAFT_KEY);
