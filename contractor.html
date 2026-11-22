@@ -434,12 +434,36 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 }
 @media(prefers-reduced-motion:reduce){.tabs button{transition:none!important}}
 
+
+/* Put contractor logout in the same dashboard-banner position as customer portal */
+.top{justify-content:center!important;padding:17px 16px!important;min-height:82px}
+#topUser.contractor-dashboard-logout{
+  position:static!important;transform:none!important;
+  display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto;
+  margin-left:auto;gap:0;
+}
+#topUser.contractor-dashboard-logout.hidden{display:none!important}
+#topUser.contractor-dashboard-logout #userEmail{display:none}
+#topUser.contractor-dashboard-logout #logoutBtn{
+  width:auto;min-width:112px;min-height:48px;margin:0;padding:10px 18px;
+  border:1px solid #f3d8c9;border-radius:999px;
+  background:#fffaf6;color:#76675c;font-size:15px;font-weight:750;
+  box-shadow:0 4px 12px #3a1c101c;white-space:nowrap
+}
+#topUser.contractor-dashboard-logout #logoutBtn:hover:not(:disabled){
+  background:#fff0e8;color:#a94c25;transform:translateY(-1px);box-shadow:0 5px 14px #3a1c1022
+}
+@media(max-width:700px){
+  .top{padding:13px 16px!important;min-height:72px}
+  #appView>.card:first-child .dashboard-intro{gap:12px}
+  #topUser.contractor-dashboard-logout #logoutBtn{min-width:96px;min-height:44px;padding:9px 14px;font-size:14px}
+}
+
 </style>
 </head>
 <body>
 <header class="top">
   <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
-  <div id="topUser" class="hidden"><span id="userEmail"></span><button id="logoutBtn" class="secondary">Log out</button></div>
 </header>
 <main>
   <section id="authView" class="card">
@@ -529,7 +553,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
           <h1 id="welcomeTitle">Contractor dashboard</h1>
           <p id="accountLine">Your ZELPX account</p>
         </div>
-        <div class="dashboard-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div id="topUser" class="hidden contractor-dashboard-logout"><span id="userEmail"></span><button id="logoutBtn" type="button">Log Out</button></div>
       </div>
       <div class="statrow">
         <div class="stat"><span class="muted">Credit balance</span><strong id="walletBalance">$0.00</strong></div>
