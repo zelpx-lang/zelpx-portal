@@ -2011,7 +2011,7 @@
         const titleWrap = document.createElement("div");
         const title = document.createElement("h3");
         title.textContent = isPackage ? "Multi-Service Home Project" : (request.service_type || "Home service request");
-        if (isPackage) title.style.cssText = "font-size:30px;font-weight:800;text-transform:uppercase;letter-spacing:.045em;line-height:1.45;margin:0 0 8px;color:#15171c;";
+        if (isPackage) title.style.cssText = "font-size:18px;font-weight:600;text-transform:none;letter-spacing:-.02em;line-height:1.4;margin:0 0 8px;color:#15171c;";
         const meta = document.createElement("p"); meta.className = "muted";
         meta.textContent = "Submitted: " + (request.created_at ? new Date(request.created_at).toLocaleString() : "Unknown date");
         titleWrap.append(title, meta);
