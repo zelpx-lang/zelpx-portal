@@ -47,3 +47,36 @@ for each row
 execute function private.require_verified_customer_phone();
 
 revoke all on function private.require_verified_customer_phone() from public, anon, authenticated;
+
+
+-- Customers must not be able to set their own verified flag through the Data API.
+-- Only the authenticated server-side service-role write from the Twilio callback
+-- may persist a verified number. New profiles always start unverified.
+create or replace function private.guard_profile_phone_verification()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+  if tg_op = 'INSERT' then
+    new.phone_verified_at := null;
+    new.phone_verified_number := null;
+  elsif (
+    new.phone_verified_at is distinct from old.phone_verified_at
+    or new.phone_verified_number is distinct from old.phone_verified_number
+  ) and coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+    raise exception 'Phone verification can only be recorded by the ZELPX SMS verification service.';
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists profiles_guard_phone_verification on public.profiles;
+create trigger profiles_guard_phone_verification
+before insert or update of phone_verified_at, phone_verified_number
+on public.profiles
+for each row
+execute function private.guard_profile_phone_verification();
+
+revoke all on function private.guard_profile_phone_verification() from public, anon, authenticated;
