@@ -1709,6 +1709,19 @@
     }
     if (error) { list.textContent = "Could not load leads: " + error.message; $("leadResultsCount").textContent = "Unable to load leads"; return; }
     cachedLeads = data || [];
+    // Sold projects remain visible as a safe public preview for exactly 3 minutes.
+    // The RPC exposes no customer description, contact details, or address.
+    if (!publicPreviewOnly && !isAdmin) {
+      const { data: recentSold, error: soldError } = await db.rpc("get_recent_sold_leads");
+      if (soldError) {
+        console.warn("Could not load recent sold lead previews:", soldError.message);
+      } else {
+        const knownLeadIds = new Set(cachedLeads.map(lead => lead.id));
+        (recentSold || []).forEach(lead => {
+          if (!knownLeadIds.has(lead.id)) cachedLeads.push({ ...lead, description: "", previewOnly: true });
+        });
+      }
+    }
     purchasedLeadIds = new Set();
     if (!publicPreviewOnly && currentContractor?.id && cachedLeads.length) {
       const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
