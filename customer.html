@@ -598,6 +598,87 @@ button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 13px #df
  .dashboard-menu{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 15px}
  .dashboard-menu-button{min-height:42px;padding:8px 5px;text-align:center;font-size:12px;line-height:1.2}
 }
+
+/* Full visual refresh: ZELPX warm premium customer dashboard */
+:root{--customer-ink:#30231e;--customer-muted:#85766d;--customer-line:#f0ded1;--customer-soft:#fff0e6;--customer-orange:#ed762f;--customer-orange-dark:#ce571f}
+body{padding:0 0 28px;background:linear-gradient(180deg,#fff7f0 0,#fffaf6 260px,#f8f3ee 100%);font-family:Inter,ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--customer-ink)}
+.container{max-width:900px;min-height:100vh;margin:0 auto;padding:0 28px 42px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#dashboardView{position:relative;padding-top:0}
+.dashboard-topbar{position:relative;top:auto;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 -28px 24px;padding:23px 28px 26px;background:radial-gradient(ellipse at 80% -30%,#ffb36f 0,transparent 48%),linear-gradient(115deg,#472315 0%,#7c3518 48%,#b84e1d 100%);border:0;border-radius:0 0 30px 30px;box-shadow:0 12px 28px #8e431d24;color:#fff}
+.dashboard-topbar:after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:18px;background:#fff8f2;clip-path:ellipse(55% 45% at 50% 100%);opacity:.95}
+.dashboard-topbar h1{font-size:24px;font-weight:800;letter-spacing:-.6px;color:#fff}
+.dashboard-topbar:before{content:"ZELPX";display:block;position:absolute;left:28px;top:7px;font-size:10px;letter-spacing:3px;font-weight:900;color:#ffd9bd;opacity:.9}
+.dashboard-topbar h1{padding-top:8px}
+.top-logout-button{min-height:40px;margin:0;border:1px solid #ffffff50;border-radius:999px;background:#ffffff16;color:#fff;padding:9px 17px;font-size:13px;box-shadow:none}
+.top-logout-button:hover:not(:disabled){background:#ffffff28;color:#fff}
+#dashboardView>.subtitle{margin:0 0 18px;color:#8a7568;font-size:13px;text-align:left}
+#accountEmail{font-size:12px;color:#9a887c}
+.dashboard-menu{position:sticky;bottom:10px;z-index:40;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:22px 0 18px;padding:8px;border:1px solid #f0ded2;border-radius:22px;background:#fffdfbf2;box-shadow:0 10px 35px #50301b20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dashboard-menu-button{display:flex;align-items:center;justify-content:center;min-height:48px;margin:0;padding:9px 7px;border:1px solid transparent;border-radius:15px;background:transparent;color:#77665b;font-size:13px;font-weight:700;line-height:1.2;box-shadow:none}
+.dashboard-menu-button:before{display:block;margin-right:7px;font-size:17px;line-height:1}
+.dashboard-menu-button[data-dashboard-page="profile"]:before{content:"♙"}
+.dashboard-menu-button[data-dashboard-page="service"]:before{content:"＋"}
+.dashboard-menu-button[data-dashboard-page="requests"]:before{content:"▤"}
+.dashboard-menu-button.active{background:linear-gradient(135deg,#fff0e4,#ffe4d2);border-color:#f4d0ba;color:#b94e20;box-shadow:inset 0 1px #fff}
+.dashboard-home-grid{gap:14px;margin:22px 0}
+.dashboard-home-card{min-height:148px;padding:19px;border:1px solid #f0e2d8;border-radius:22px;background:linear-gradient(150deg,#fff 0%,#fff8f2 100%);box-shadow:0 10px 25px -22px #6e452b88}
+.dashboard-home-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:15px;background:linear-gradient(145deg,#ffbd83,#f07836);color:#fff;font-size:23px;box-shadow:0 5px 12px #ed762f30}
+.dashboard-home-card strong{font-size:15px;letter-spacing:-.2px}
+.dashboard-home-card span:last-child{font-size:12px;line-height:1.45;color:#89786d}
+.dashboard-home-card:hover:not(:disabled){transform:translateY(-2px);border-color:#efc3a7;background:#fff9f4}
+.dashboard-page h2{text-align:left;margin:18px 0 8px;font-size:21px;letter-spacing:-.4px}
+.profile-panel,#requestForm,.request-tools{padding:22px;border:1px solid #f0e1d6;border-radius:24px;background:#fffdfa;box-shadow:0 12px 30px -26px #633d2580}
+#serviceDetails.request-card,#selectedServicesReview.request-card{margin:14px 0;padding:20px;border:1px solid #f0ded2;border-radius:22px;background:linear-gradient(145deg,#fff 0%,#fff8f2 100%);box-shadow:0 10px 28px -25px #6b412a88}
+#serviceDetails>strong{display:block;margin-bottom:16px;font-size:19px;letter-spacing:-.4px}
+#serviceDetails .job-detail-service{padding:17px 0!important;border-bottom:1px solid #f2e8e1!important}
+#serviceDetails .job-detail-service:last-child{border-bottom:0!important}
+#serviceDetails .job-detail-service h3{margin:0 0 14px!important;font-size:19px!important;font-weight:800;letter-spacing:-.35px;color:#3a2921}
+#serviceDetails label{margin:13px 0 7px;font-size:11px;font-weight:800;letter-spacing:.07em;color:#89786c}
+#serviceDetails .job-choice-trigger{min-height:48px!important;margin:4px 0 5px!important;padding:12px 15px!important;border:1px solid #e9c9b5!important;border-radius:15px!important;background:linear-gradient(120deg,#fffaf6,#fff3eb)!important;color:#514036!important;font-size:14px!important;font-weight:650!important;box-shadow:inset 0 1px #fff,0 3px 10px #7443260b!important}
+#serviceDetails .job-choice-trigger::after{color:#d66b35;font-size:20px}
+#serviceDetails .job-choice-trigger:hover:not(:disabled){background:#ffede1!important;border-color:#e9ad8d!important}
+input,select,textarea{border:1px solid #eadbd0;border-radius:14px;background:#fffdfa;color:#3a2d25}
+input:focus,select:focus,textarea:focus{outline:3px solid #ffe1cf;border-color:#e98a57}
+button{border-radius:15px;background:linear-gradient(135deg,#f58b4a,#e56a2c);box-shadow:0 6px 15px #df6c3026}
+button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);box-shadow:0 8px 18px #df6c3033}
+.secondary-button,.secondary,.top-logout-button{background:#fff9f4;color:#7a675b;border:1px solid #eadbd0;box-shadow:none}
+.message{border-radius:15px}
+.status{background:#fff0e5;color:#b95727}
+#requestsList{overflow:hidden;border:1px solid #f0e1d7;border-radius:20px;background:#fffdfa}
+#requestsList>.request-card{padding:5px 8px}
+#requestsList .request-summary{min-height:62px;padding:11px 13px;border-radius:13px}
+#requestsList .request-summary:hover{background:#fff6ef}
+#requestsList .request-summary-title{font-size:15px}
+#requestsList .request-details{padding:15px;border-top:1px solid #f2e7df}
+#requestsList .request-details-close{border-radius:13px}
+.customer-chat{border-color:#f0ded2;background:#fff8f2}
+.customer-chat-messages{border-color:#f0e3da;background:#fffdfa}
+.customer-chat-bubble.customer{background:#ffe8d9}
+.customer-chat-bubble.contractor{background:#f2ece6}
+@media(max-width:600px){
+ body{padding:0 0 18px}
+ .container{width:100%;margin:0 auto;padding:0 13px 30px}
+ .dashboard-topbar{margin:0 -13px 21px;padding:21px 16px 24px;border-radius:0 0 25px 25px}
+ .dashboard-topbar:before{left:17px;top:6px}
+ .dashboard-topbar h1{font-size:20px;padding-top:9px}
+ .top-logout-button{min-width:0;padding:8px 13px;font-size:12px}
+ .dashboard-menu{position:fixed;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));margin:0;padding:7px;gap:4px;border-radius:20px}
+ .dashboard-menu-button{min-height:50px;display:flex;flex-direction:column;gap:3px;padding:6px 3px;font-size:10px}
+ .dashboard-menu-button:before{margin:0;font-size:19px}
+ #dashboardView{padding-bottom:75px}
+ .dashboard-home-grid{grid-template-columns:1fr;gap:10px}
+ .dashboard-home-card{min-height:0;display:grid;grid-template-columns:48px 1fr;column-gap:12px;row-gap:3px;padding:14px 15px;border-radius:18px}
+ .dashboard-home-icon{grid-row:span 2;width:43px;height:43px}
+ .dashboard-home-card strong{align-self:end}
+ .dashboard-home-card span:last-child{align-self:start}
+ .profile-panel,#requestForm,.request-tools{padding:16px;border-radius:19px}
+ #serviceDetails.request-card,#selectedServicesReview.request-card{padding:15px 14px;border-radius:19px}
+ #serviceDetails .job-detail-service{padding:13px 0!important}
+ #serviceDetails .job-detail-service h3{font-size:17px!important}
+ #serviceDetails .job-choice-trigger{min-height:46px!important;padding:11px 13px!important;font-size:13px!important}
+ #serviceDetails label{font-size:10.5px}
+ .grid{gap:3px}
+}
 </style>
 </head>
 
