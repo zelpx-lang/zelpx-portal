@@ -452,7 +452,7 @@
       <div class="lead-controls" aria-label="Lead filters">
         <input id="leadSearch" type="search" placeholder="Search service or work details…" aria-label="Search leads">
         <select id="leadCategoryFilter" aria-label="Filter by service category"><option value="">All services (full catalog)</option></select>
-        <select id="leadStatusFilter" aria-label="Filter by lead status"><option value="available">Available leads</option><option value="all">All statuses</option><option value="sold">Sold leads</option></select>
+        <select id="leadStatusFilter" aria-label="Filter by lead status"><option value="all" selected>All statuses</option><option value="available">Available leads</option><option value="sold">Sold leads</option></select>
       </div>
       <div class="lead-toolbar"><span id="leadResultsCount" class="lead-count">Loading leads…</span><button id="refreshLeadsBtn" class="secondary" type="button">Refresh leads</button></div>
       <div id="leadsList"><p class="muted">Loading leads…</p></div>
@@ -2936,6 +2936,22 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     window.addEventListener("focus", syncPurchaseUnread);
     window.addEventListener("blur", () => { if (purchaseUnreadTimer) { window.clearInterval(purchaseUnreadTimer); purchaseUnreadTimer = null; } });
     syncPurchaseUnread();
+    // Refresh the marketplace so 3-minute sold previews expire automatically.
+    let soldPreviewRefreshTimer = null;
+    const syncSoldPreviewRefresh = () => {
+      if (soldPreviewRefreshTimer) window.clearInterval(soldPreviewRefreshTimer);
+      if (!document.hidden && currentContractor) {
+        soldPreviewRefreshTimer = window.setInterval(() => {
+          loadLeads().catch(error => console.warn("Marketplace refresh failed:", error));
+        }, 10000);
+      }
+    };
+    document.addEventListener("visibilitychange", syncSoldPreviewRefresh);
+    window.addEventListener("focus", syncSoldPreviewRefresh);
+    window.addEventListener("blur", () => {
+      if (soldPreviewRefreshTimer) { window.clearInterval(soldPreviewRefreshTimer); soldPreviewRefreshTimer = null; }
+    });
+    syncSoldPreviewRefresh();
         $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
     $("leadSearch").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
