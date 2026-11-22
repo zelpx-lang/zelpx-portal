@@ -1844,14 +1844,14 @@
             const delta = nextTop - reviewAnchor;
             if (Math.abs(delta) > 1) window.scrollBy(0, delta);
           };
-          const previousAnchor = document.documentElement.style.overflowAnchor;
+          const previousAnchorAfterRestore = document.documentElement.style.overflowAnchor;
           document.documentElement.style.overflowAnchor = "none";
           let viewportPasses = 0;
           const stabilizeViewport = () => {
             restoreViewport();
             viewportPasses += 1;
             if (viewportPasses < 4) requestAnimationFrame(stabilizeViewport);
-            else document.documentElement.style.overflowAnchor = previousAnchor;
+            else document.documentElement.style.overflowAnchor = previousAnchorAfterRestore;
           };
           requestAnimationFrame(stabilizeViewport);
         });
