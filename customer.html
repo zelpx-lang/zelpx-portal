@@ -1145,7 +1145,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     $("submitPhoneOtpVerify").addEventListener("click", async () => {
       const button = $("submitPhoneOtpVerify");
       const code = $("submitPhoneOtpCode").value.trim();
-      if (!/^\\d{6}$/.test(code)) {
+      if (!/^\d{6}$/.test(code)) {
         $("submitPhoneOtpMessage").textContent = "Enter the 6-digit code from SMS.";
         return;
       }
