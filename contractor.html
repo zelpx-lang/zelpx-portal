@@ -1126,7 +1126,9 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
-    currentUser = user; hide($("authView")); show($("appView")); show($("topUser")); $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    currentUser = user; $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    // Keep the sign-in screen in place while account data loads. Reveal the dashboard
+    // only when it is ready, avoiding a brief flash of a half-loaded/empty portal.
     await loadAccount();
     if (!isAdmin && currentContractor) {
       try {
@@ -1153,6 +1155,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       return;
     }
     await loadCategories(); await loadLeads(); await loadPurchases();
+    hide($("authView")); show($("appView")); show($("topUser"));
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
     if (IS_ADMIN_PORTAL && isAdmin) switchTab("adminPanel");
