@@ -504,6 +504,9 @@
       box-shadow:none; font-size:13px;
     }
     .request-delete-button:hover:not(:disabled) { color:#842018; background:#fff2ef; box-shadow:none; }
+    .request-retention-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .request-retention-actions small { color:var(--customer-muted); font-size:12px; }
+
     @media(max-width:600px) {
       .request-tools { grid-template-columns:1fr; }
     }
@@ -2222,8 +2225,9 @@
 
         const { data, error } = await db
           .from("service_requests")
-          .select("id, lead_id, service_type, description, property_address, preferred_time, status, created_at")
+          .select("id, lead_id, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
           .eq("user_id", session.user.id)
+          .is("hidden_at", null)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -2325,34 +2329,53 @@
 
           const actions = document.createElement("div");
           actions.className = "request-actions";
-          const deleteButton = document.createElement("button");
-          deleteButton.type = "button";
-          deleteButton.className = "request-delete-button";
-          deleteButton.textContent = "Delete request";
-          deleteButton.addEventListener("click", async () => {
-            const confirmed = window.confirm("Delete this service request? This cannot be undone.");
-            if (!confirmed) return;
-            deleteButton.disabled = true;
-            deleteButton.textContent = "Deleting...";
-            try {
-              const { data: deletedRows, error: deleteError } = await db
-                .from("service_requests")
-                .delete()
-                .eq("id", request.id)
-                .eq("user_id", session.user.id)
-                .select("id");
-              if (deleteError) throw deleteError;
-              if (!deletedRows || deletedRows.length === 0) {
-                throw new Error("The request was not deleted. Your account may not have permission to delete requests.");
+          const retention = document.createElement("div");
+          retention.className = "request-retention-actions";
+          const ageMs = Date.now() - new Date(request.created_at).getTime();
+          const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
+          if (ageMs >= tenDaysMs) {
+            const keepButton = document.createElement("button");
+            keepButton.type = "button";
+            keepButton.className = "secondary-button";
+            keepButton.textContent = request.retention_kept_at ? "Kept" : "Keep";
+            keepButton.disabled = Boolean(request.retention_kept_at);
+            keepButton.addEventListener("click", async () => {
+              keepButton.disabled = true;
+              try {
+                const { error: keepError } = await db.rpc("keep_own_service_request", { p_request_id: request.id });
+                if (keepError) throw keepError;
+                keepButton.textContent = "Kept";
+              } catch (error) {
+                keepButton.disabled = false;
+                window.alert(error.message || "Could not keep this request.");
               }
-              await loadRequests();
-            } catch (deleteError) {
-              window.alert(deleteError.message || "Could not delete this request. Please try again.");
-              deleteButton.disabled = false;
-              deleteButton.textContent = "Delete request";
-            }
-          });
-          actions.append(status, deleteButton);
+            });
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "request-delete-button";
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", async () => {
+              if (!window.confirm("Remove this request from your account? The project history and any contractor purchase will remain محفوظ.")) return;
+              deleteButton.disabled = true;
+              deleteButton.textContent = "Removing…";
+              try {
+                const { error: hideError } = await db.rpc("hide_own_service_request", { p_request_id: request.id });
+                if (hideError) throw hideError;
+                await loadRequests();
+              } catch (error) {
+                window.alert(error.message || "Could not remove this request.");
+                deleteButton.disabled = false;
+                deleteButton.textContent = "Delete";
+              }
+            });
+            retention.append(keepButton, deleteButton);
+          } else {
+            const waitMessage = document.createElement("small");
+            const remainingDays = Math.max(1, Math.ceil((tenDaysMs - ageMs) / (24 * 60 * 60 * 1000)));
+            waitMessage.textContent = "Keep or delete options available in " + remainingDays + " day" + (remainingDays === 1 ? "" : "s");
+            retention.append(waitMessage);
+          }
+          actions.append(status, retention);
           details.appendChild(actions);
 
           if (request.lead_id) {
