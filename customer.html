@@ -1721,6 +1721,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
     // Keep the sphere selection across Google/Facebook OAuth redirects and URL cleanup.
     // The draft is browser-local until the customer successfully posts the request.
     const SPHERE_DRAFT_KEY = "zelpx.pendingSphereRequest.v1";
+    const CUSTOMER_REQUEST_INTENT_KEY = "zelpx.pendingCustomerRequest.v1";
     const landingParams = new URLSearchParams(window.location.search);
     const urlSphereDraft = {
       service: landingParams.get("service") || "",
@@ -1729,6 +1730,20 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
       services: (landingParams.get("source") === "sphere" ? (landingParams.get("services") || "") : "").split("|").map(value => value.trim()).filter(Boolean),
       createdAt: Date.now()
     };
+    // Preserve a single-service homepage selection through email login, registration,
+    // Google/Facebook OAuth redirects, and a fresh customer-portal load.
+    let customerRequestIntent = null;
+    try {
+      if (urlSphereDraft.service || urlSphereDraft.zip) {
+        customerRequestIntent = { service: urlSphereDraft.service, zip: urlSphereDraft.zip, createdAt: Date.now() };
+        localStorage.setItem(CUSTOMER_REQUEST_INTENT_KEY, JSON.stringify(customerRequestIntent));
+      } else {
+        const savedIntent = JSON.parse(localStorage.getItem(CUSTOMER_REQUEST_INTENT_KEY) || "null");
+        const intentAge = savedIntent?.createdAt ? Date.now() - Number(savedIntent.createdAt) : Infinity;
+        if (savedIntent && intentAge >= 0 && intentAge < 2 * 60 * 60 * 1000) customerRequestIntent = savedIntent;
+        else localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY);
+      }
+    } catch (_) {}
     let sphereDraft = null;
     const hasSphereUrlData = urlSphereDraft.source === "sphere" && urlSphereDraft.services.length > 0;
     let sphereAuthPending = false;
@@ -1767,8 +1782,8 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
     if (!sphereDraft || typeof sphereDraft !== "object") sphereDraft = { service: "", zip: "", services: [], removedServices: [] };
     if (!Array.isArray(sphereDraft.services)) sphereDraft.services = [];
     if (!Array.isArray(sphereDraft.removedServices)) sphereDraft.removedServices = [];
-    const landingService = sphereDraft.service || "";
-    const landingZip = sphereDraft.zip || "";
+    const landingService = sphereDraft.service || customerRequestIntent?.service || "";
+    const landingZip = sphereDraft.zip || customerRequestIntent?.zip || "";
     const landingServices = sphereDraft.services;
     function saveSphereDraftBeforeAuth() {
       const params = new URLSearchParams(window.location.search);
@@ -2006,6 +2021,8 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
         if (error) throw error;
 
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
+        try { localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY); } catch (_) {}
+        customerRequestIntent = null;
         sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
         $("serviceState").value = "";
