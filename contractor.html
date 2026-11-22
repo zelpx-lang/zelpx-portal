@@ -1550,10 +1550,9 @@
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || (category === "__lead_package__" ? lead.lead_type === "lead_package" : lead.service_category === category);
-      // Sold previews are visible to every contractor during the 3-minute window,
-      // independent of the contractor's selected service categories.
-      // Every approved contractor can view and purchase any available lead or multi-service package, regardless of selected service categories.
-      const serviceMatch = true;
+      // Ordinary leads are visible only for categories approved in this contractor's
+      // profile. Multi-service packages are visible to all approved contractors.
+      const serviceMatch = isLeadServiceSelected(lead);
       const haystack = [lead.service_category, ...(Array.isArray(lead.package_services) ? lead.package_services : []), lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
     });
@@ -1687,10 +1686,12 @@
       .filter(Boolean));
   }
 
-  function isLeadServiceSelected(_lead) {
-    // Marketplace access is not limited by a contractor's selected profile services.
-    // Every approved contractor may view and purchase any available lead or Lead Package.
-    return true;
+  function isLeadServiceSelected(lead) {
+    // Admins can review every lead. Lead Packages remain available to every
+    // admin-approved contractor because they contain multiple service types.
+    if (isAdmin || lead?.lead_type === "lead_package") return true;
+    const category = String(lead?.service_category || "").trim().toLowerCase();
+    return !!category && selectedLeadCategoryNames.has(category);
   }
 
   async function loadLeads() {
