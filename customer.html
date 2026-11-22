@@ -1594,9 +1594,29 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         serviceSelect.value = primaryOption.value;
         serviceSelect.dispatchEvent(new Event("change"));
       }
-      $("serviceSearch").value = primaryService || "Multiple services selected";
+      $("serviceSearch").value = "Special Lead Package — " + landingServices.length + " selected services";
       $("serviceSearch").readOnly = true;
-      $("serviceSearch").setAttribute("aria-label", "Services selected on the sphere");
+      $("serviceSearch").setAttribute("aria-label", "Special Lead Package services locked");
+      // A sphere selection is already the complete Special Lead Package.
+      // Do not let the customer append a sixth service from the regular
+      // single-service picker in the account.
+      $("serviceSearch").disabled = true;
+      $("serviceType").disabled = true;
+      const searchLabel = document.querySelector('label[for="serviceSearch"]');
+      const searchWrap = $("serviceSearch").closest(".service-search-wrap");
+      const searchHint = document.querySelector(".service-search-hint");
+      const typeLabel = document.querySelector('label[for="serviceType"]');
+      if (searchLabel) searchLabel.hidden = true;
+      if (searchWrap) searchWrap.hidden = true;
+      if (searchHint) searchHint.hidden = true;
+      if (typeLabel) typeLabel.hidden = true;
+      $("serviceType").hidden = true;
+      const packageNotice = document.createElement("div");
+      packageNotice.className = "request-card sphere-package-lock";
+      packageNotice.setAttribute("role", "status");
+      packageNotice.innerHTML = "<strong>Special Lead Package</strong><p class='subtitle'>Your sphere selection is a complete package of " + landingServices.length + " services. You cannot add another service from this form. To change the package, return to the sphere and make a new selection.</p>";
+      selectedServicesReview.before(packageNotice);
+      selectedServicesReview.classList.add("sphere-package-review");
     }
     if (landingService) {
       const serviceOption = [...$("serviceType").options].find(option =>
