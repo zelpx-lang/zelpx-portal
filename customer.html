@@ -931,15 +931,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
 
-        <section class="commercial-sharing-notice" aria-labelledby="commercialSharingHeading">
-          <strong id="commercialSharingHeading">Your request is free — here's how ZELPX works</strong>
-          <p>You will not be charged to submit a service request. ZELPX may share the project details you provide with one eligible service professional. That professional pays ZELPX to unlock your contact information so they can respond to your project. Your name, phone number, email and exact street address are not shown publicly.</p>
-          <label class="commercial-sharing-consent">
-            <input id="commercialSharingConsent" type="checkbox" required>
-            <span>I understand and agree that my project details may be shared with one service professional, and that the professional pays ZELPX to access my contact information.</span>
-          </label>
-        </section>
-
         <button id="requestButton" type="submit">
           Submit Request
         </button>
@@ -2132,9 +2123,13 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       event.preventDefault();
       clearMessage("requestMessage");
 
-      if (!$("commercialSharingConsent").checked) {
-        showMessage("requestMessage", "Please review and accept how ZELPX shares service requests before submitting.", "error");
-        $("commercialSharingConsent").focus();
+      if (!window.zelpxCommercialSharingAccepted) {
+        const termsModal = $("commercialSharingModal");
+        if (termsModal) {
+          termsModal.hidden = false;
+          document.body.classList.add("zelpx-modal-open");
+          $("commercialSharingConsent").focus();
+        }
         return;
       }
 
@@ -2906,5 +2901,67 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
   });
 </script>
 
+  <style>
+    body.zelpx-modal-open{overflow:hidden}
+    #commercialSharingModal[hidden]{display:none!important}
+    #commercialSharingModal{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(40,27,19,.48);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    #commercialSharingModal .terms-dialog{position:relative;width:min(100%,480px);max-height:min(86vh,720px);overflow:auto;padding:25px 24px 22px;border:1px solid #f0ded1;border-radius:24px;background:#fffefa;color:#30231e;box-shadow:0 24px 80px #26170f40;animation:zelpxTermsIn .18s ease-out}
+    @keyframes zelpxTermsIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+    #commercialSharingModal .terms-eyebrow{margin:0 0 8px;color:#c56a3b;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}
+    #commercialSharingModal h2{margin:0 0 8px;text-align:left;font-size:23px;line-height:1.2;letter-spacing:-.5px;color:#30231e}
+    #commercialSharingModal .terms-intro{margin:0 0 18px;color:#81766d;font-size:13px;line-height:1.5}
+    #commercialSharingModal .terms-item{display:flex;gap:12px;padding:12px 0;border-top:1px solid #f1e7df}
+    #commercialSharingModal .terms-number{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:9px;background:#fff0e7;color:#c45b2c;font-size:12px;font-weight:850}
+    #commercialSharingModal .terms-item strong{display:block;margin:0 0 3px;font-size:13px;color:#403229}
+    #commercialSharingModal .terms-item p{margin:0;color:#81766d;font-size:12px;line-height:1.5}
+    #commercialSharingModal .terms-consent{display:flex;align-items:flex-start;gap:10px;margin:15px 0 16px;padding:12px;border:1px solid #f0ded1;border-radius:13px;background:#fff8f3;color:#514238;font-size:12px;font-weight:650;line-height:1.45;text-transform:none;letter-spacing:0}
+    #commercialSharingModal .terms-consent input{flex:0 0 19px;width:19px;height:19px;min-height:19px;margin:1px 0 0;accent-color:#ed762f}
+    #commercialSharingModal .terms-actions{display:flex;gap:9px}
+    #commercialSharingModal .terms-actions button{width:50%;min-height:44px;margin:0;padding:10px 12px;font-size:13px}
+    #commercialSharingModal .terms-cancel{border:1px solid #eee1d7;background:#fffaf6;color:#79695e;box-shadow:none}
+    #commercialSharingModal .terms-accept:disabled{opacity:.45;cursor:not-allowed}
+    @media(max-width:480px){#commercialSharingModal{padding:12px}#commercialSharingModal .terms-dialog{padding:21px 18px 18px;border-radius:20px;max-height:90vh}#commercialSharingModal h2{font-size:21px}}
+  </style>
+  <div id="commercialSharingModal" hidden role="dialog" aria-modal="true" aria-labelledby="commercialSharingHeading" aria-describedby="commercialSharingIntro">
+    <div class="terms-dialog">
+      <p class="terms-eyebrow">ZELPX · Before submitting</p>
+      <h2 id="commercialSharingHeading">Please read before submitting</h2>
+      <p id="commercialSharingIntro" class="terms-intro">Your request is free. Here is how ZELPX connects your project with a service professional.</p>
+      <div class="terms-item"><span class="terms-number">1</span><div><strong>Your request is free</strong><p>You will not be charged to submit a service request.</p></div></div>
+      <div class="terms-item"><span class="terms-number">2</span><div><strong>How professionals receive your request</strong><p>Eligible professionals may view your project details. One professional can purchase exclusive access to your contact information.</p></div></div>
+      <div class="terms-item"><span class="terms-number">3</span><div><strong>Your privacy</strong><p>Your phone number, email and exact street address remain private until a professional purchases the lead.</p></div></div>
+      <div class="terms-item"><span class="terms-number">4</span><div><strong>You can cancel before purchase</strong><p>You can cancel your request while it has not yet been purchased by a professional.</p></div></div>
+      <label class="terms-consent"><input id="commercialSharingConsent" type="checkbox"><span>I have read and agree to these conditions.</span></label>
+      <div class="terms-actions">
+        <button type="button" class="terms-cancel" id="commercialTermsCancel">Not now</button>
+        <button type="button" class="terms-accept" id="commercialTermsAccept" disabled>Continue to submit</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.zelpxCommercialSharingAccepted = false;
+    (() => {
+      const modal = document.getElementById("commercialSharingModal");
+      const consent = document.getElementById("commercialSharingConsent");
+      const accept = document.getElementById("commercialTermsAccept");
+      const cancel = document.getElementById("commercialTermsCancel");
+      const close = () => {
+        modal.hidden = true;
+        document.body.classList.remove("zelpx-modal-open");
+      };
+      consent.addEventListener("change", () => { accept.disabled = !consent.checked; });
+      cancel.addEventListener("click", close);
+      modal.addEventListener("click", event => { if (event.target === modal) close(); });
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !modal.hidden) close();
+      });
+      accept.addEventListener("click", () => {
+        if (!consent.checked) return;
+        window.zelpxCommercialSharingAccepted = true;
+        close();
+        document.getElementById("requestForm").requestSubmit();
+      });
+    })();
+  </script>
 </body>
 </html>
