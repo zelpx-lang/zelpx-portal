@@ -276,6 +276,9 @@
     .lead-count { color:#75695f; font-size:13px; font-weight:700; }
     #leadsList .lead.lead-compact { display:block; position:relative; overflow:hidden; margin:10px 0; padding:0; border:1px solid #eee2d8; border-radius:17px; background:#fff; box-shadow:0 5px 18px -15px #6b3b1e80; transition:border-color .18s,box-shadow .18s,transform .18s; }
     #leadsList .lead.lead-compact::before { top:0; bottom:0; left:0; width:4px; border-radius:0; background:#f36b2b; }
+    #leadsList .lead.lead-compact.lead-package-card { border:2px solid #e9a06f; background:linear-gradient(180deg,#fffaf5,#fff); }
+    #leadsList .lead-details .package-pill { background:#fff0e4!important; color:#a84d20!important; border-color:#edc7aa!important; }
+    #leadsList .lead-package-services { margin:8px 0 14px; padding-left:20px; display:grid; gap:6px; }
     #leadsList .lead.lead-compact:hover { border-color:#f2b18e; box-shadow:0 12px 25px -18px #a64e2080; transform:translateY(-1px); }
     #leadsList .lead-summary { width:100%; min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px 12px 20px; border:0; border-radius:16px; background:transparent; color:#29251f; box-shadow:none; text-align:left; }
     #leadsList .lead-summary:hover:not(:disabled) { background:#fff8f3; color:#29251f; box-shadow:none; transform:none; }
@@ -1484,7 +1487,8 @@
     if (!data?.length) first.textContent = "No active categories found";
   }
   async function buyLead(lead, button) {
-    if (!window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
+    const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
+    if (!window.confirm("Buy " + purchaseLabel + " for " + money(lead.price_cents) + "?\\n\\nThe amount will be deducted from your ZELPX credit balance.")) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
@@ -1559,10 +1563,12 @@
       empty.append(title, note); list.append(empty); return;
     }
     filtered.forEach(lead => {
-      const card = document.createElement("article"); card.className = "lead lead-compact"; card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
+      const isPackage = lead.lead_type === "lead_package";
+      const packageServices = Array.isArray(lead.package_services) ? lead.package_services : [];
+      const card = document.createElement("article"); card.className = "lead lead-compact" + (isPackage ? " lead-package-card" : ""); card.dataset.leadId = lead.id; card.id = "lead-" + lead.id;
       const summary = document.createElement("button"); summary.type = "button"; summary.className = "lead-summary"; summary.setAttribute("aria-expanded", "false");
       const summaryMain = document.createElement("span"); summaryMain.className = "lead-summary-main";
-      const title = document.createElement("strong"); title.className = "lead-summary-title"; title.textContent = lead.service_category || "Home service";
+      const title = document.createElement("strong"); title.className = "lead-summary-title"; title.textContent = isPackage ? "Lead Package" : (lead.service_category || "Home service");
       const zip = document.createElement("span"); zip.className = "lead-summary-zip"; zip.textContent = "ZIP " + (lead.zip_code || "Area not specified");
       summaryMain.append(title, zip);
       const summarySide = document.createElement("span"); summarySide.className = "lead-summary-side";
@@ -1572,11 +1578,18 @@
       const details = document.createElement("div"); details.className = "lead-details hidden";
       const badges = document.createElement("div"); badges.className = "lead-badges";
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; badges.append(status);
+      if (isPackage) { const packageBadge = document.createElement("span"); packageBadge.className = "pill package-pill"; packageBadge.textContent = "Multi-service · one purchase"; badges.append(packageBadge); }
       if (lead.urgency === "urgent") { const urgent = document.createElement("span"); urgent.className = "pill urgent"; urgent.textContent = "Urgent"; badges.append(urgent); }
       if (lead.status === "available") { const privacy = document.createElement("span"); privacy.className = "pill"; privacy.textContent = "Contact details protected"; badges.append(privacy); }
       const descTitle = document.createElement("h3"); descTitle.className = "lead-details-label"; descTitle.textContent = "Work details";
       const descriptionParts = splitLeadDescription(lead.description);
       const desc = document.createElement("p"); desc.className = "lead-details-description"; desc.textContent = lead.previewOnly ? "Sign in with an approved contractor account to view full project details." : (descriptionParts.work || "No work details provided.");
+      if (isPackage && packageServices.length) {
+        const packageTitle = document.createElement("h3"); packageTitle.className = "lead-details-label"; packageTitle.textContent = "Included services in this package";
+        const packageList = document.createElement("ul"); packageList.className = "lead-package-services";
+        packageServices.forEach(service => { const item = document.createElement("li"); item.textContent = service; packageList.append(item); });
+        details.append(badges, packageTitle, packageList);
+      }
       const ownsPurchase = purchasedLeadIds.has(lead.id);
       if (ownsPurchase && descriptionParts.notes) {
         const notesTitle = document.createElement("h3"); notesTitle.className = "lead-details-label"; notesTitle.textContent = "Additional customer notes";
@@ -1596,7 +1609,7 @@
           badges.append(eligibility);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
-        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? "View & Buy Lead" : "Not eligible to purchase");
+        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
         buyButton.disabled = !canBuy;
         if (canBuy) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         footer.append(buyButton);
@@ -1666,7 +1679,7 @@
 
   async function loadLeads() {
     const list = $("leadsList"); list.textContent = "Loading leads…"; $("leadResultsCount").textContent = "Loading leads…";
-    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at").order("created_at", { ascending: false }).limit(100);
+    let { data, error } = await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
     let publicPreviewOnly = false;
     if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
       // Safe public fallback: never request private descriptions or contact data
@@ -1679,7 +1692,10 @@
         $("leadResultsCount").textContent = "Unable to load leads";
         return;
       }
-      data = (preview.data || []).map(lead => ({ ...lead, status: "available", description: "", previewOnly: true }));
+      const packageInfo = await db.from("public_available_lead_package_info").select("id,lead_type,package_services");
+      if (packageInfo.error) console.warn("Could not load public package labels:", packageInfo.error.message);
+      const packageById = new Map((packageInfo.data || []).map(item => [item.id, item]));
+      data = (preview.data || []).map(lead => ({ ...lead, ...(packageById.get(lead.id) || {}), status: "available", description: "", previewOnly: true }));
       publicPreviewOnly = true;
       error = null;
     }
