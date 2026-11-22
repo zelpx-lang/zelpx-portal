@@ -28,6 +28,10 @@ main{padding:22px 0 40px}.intro{margin:0 0 17px}.eyebrow{color:var(--orange);fon
 .public-work-details{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff8f2;color:var(--ink);font-size:13px}
 .public-work-details ul{margin:8px 0 0;padding-left:19px;display:grid;gap:5px}
 .public-work-details li{overflow-wrap:anywhere}
+   .job-package{border:2px solid #e9a06f;background:linear-gradient(180deg,#fffaf5,#fff)}
+   .job-package .job-summary h2{color:#a84d20}
+   .job-package-tag{display:inline-block;margin-top:5px;padding:4px 8px;border-radius:999px;background:#fff0e4;color:#a84d20;font-size:11px;font-weight:800;letter-spacing:.04em}
+   .package-services{border-color:#edc7aa;background:#fff7f0}
 .job-details p{margin:8px 0;color:var(--muted);font-size:12px;line-height:1.45}
 .job-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
 .claim{display:inline-flex;color:var(--orange);font-size:13px;font-weight:850}
@@ -129,8 +133,12 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
      const when=x.created_at?new Date(x.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Not specified";
      const urgency=x.urgency?String(x.urgency).replace(/_/g," "):"Not specified";
      const workDetails=(x.public_work_details||"").split("\\n").filter(Boolean);
+     const isPackage=x.lead_type==="lead_package";
+     const packageServices=Array.isArray(x.package_services)?x.package_services:[];
+     const packageHtml=isPackage?'<section class="public-work-details package-services"><strong>Included services in this package</strong><ul>'+packageServices.map(service=>'<li>'+esc(service)+'</li>').join("")+'</ul><p><strong>One purchase:</strong> one contractor buys the entire project.</p></section>':"";
      const workDetailsHtml=workDetails.length?'<section class="public-work-details"><strong>Project details</strong><ul>'+workDetails.map(line=>'<li>'+esc(line)+'</li>').join("")+'</ul></section>':"";
-     return '<article class="job"><button class="job-summary" type="button" aria-expanded="false"><span class="job-summary-main"><h2>'+esc(x.service_category||"Home service") + '</h2><span class="job-summary-meta">ZIP '+esc(x.zip_code||"Not specified") + '</span></span><span class="price">'+money(x.price_cents)+'</span><span class="open-label">Open ＋</span></button><div class="job-details hidden"><div class="details"><span><strong>Service:</strong> '+esc(x.service_category||"Home service")+'</span><span><strong>ZIP:</strong> '+esc(x.zip_code||"Not specified")+'</span>'+(place?'<span><strong>Area:</strong> '+esc(place)+'</span>':"")+'<span><strong>Posted:</strong> '+esc(when)+'</span><span><strong>Urgency:</strong> '+esc(urgency)+'</span><span><strong>Lead price:</strong> '+money(x.price_cents)+'</span></div>'+workDetailsHtml+'<p>Sign in or create a free contractor account to purchase this lead. Customer contact information and private notes are protected.</p><div class="job-actions"><a class="claim" href="/contractor">Sign in / Create contractor account to buy →</a><button class="close-job" type="button">Close</button></div></div></article>';
+     const cardTitle=isPackage?"Lead Package":(x.service_category||"Home service");
+     return '<article class="job '+(isPackage?"job-package":"")+'"><button class="job-summary" type="button" aria-expanded="false"><span class="job-summary-main"><h2>'+esc(cardTitle) + '</h2>'+(isPackage?'<span class="job-package-tag">MULTI-SERVICE · ONE PURCHASE</span>':'')+'<span class="job-summary-meta">'+(isPackage?'Primary service: '+esc(x.service_category||"Home service")+' · ':'')+'ZIP '+esc(x.zip_code||"Not specified") + '</span></span><span class="price">'+money(x.price_cents)+'</span><span class="open-label">Open ＋</span></button><div class="job-details hidden"><div class="details"><span><strong>Service:</strong> '+esc(x.service_category||"Home service")+'</span><span><strong>ZIP:</strong> '+esc(x.zip_code||"Not specified")+'</span>'+(place?'<span><strong>Area:</strong> '+esc(place)+'</span>':"")+'<span><strong>Posted:</strong> '+esc(when)+'</span><span><strong>Urgency:</strong> '+esc(urgency)+'</span><span><strong>'+ (isPackage?"Package price:":"Lead price:") +'</strong> '+money(x.price_cents)+'</span></div>'+packageHtml+workDetailsHtml+'<p>Sign in or create a free contractor account to purchase this '+(isPackage?"entire Lead Package":"lead")+'. Customer contact information and private notes are protected.</p><div class="job-actions"><a class="claim" href="/contractor">Sign in / Create contractor account to buy →</a><button class="close-job" type="button">Close</button></div></div></article>';
    }).join("");
    list.querySelectorAll(".job").forEach(card=>{
      const opener=card.querySelector(".job-summary"),details=card.querySelector(".job-details"),label=card.querySelector(".open-label"),closer=card.querySelector(".close-job");
@@ -151,7 +159,11 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
      if(!detailResponse.ok)throw new Error("Could not load public job details ("+detailResponse.status+")");
      const detailRows=await detailResponse.json();
      const detailById=new Map((Array.isArray(detailRows)?detailRows:[]).map(item=>[item.id,item.public_work_details]));
-     rows=rows.map(item=>({...item,public_work_details:detailById.get(item.id)||""}));
+     const packageResponse=await fetch(URL+"/rest/v1/public_available_lead_package_info?select=id,lead_type,package_services",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
+     if(!packageResponse.ok)throw new Error("Could not load public package information ("+packageResponse.status+")");
+     const packageRows=await packageResponse.json();
+     const packageById=new Map((Array.isArray(packageRows)?packageRows:[]).map(item=>[item.id,item]));
+     rows=rows.map(item=>({...item,public_work_details:detailById.get(item.id)||"",...(packageById.get(item.id)||{})}));
      const selected=category.value, cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
      category.innerHTML='<option value="">All categories</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
      category.value=cats.includes(selected)?selected:"";
