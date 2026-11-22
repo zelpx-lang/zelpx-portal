@@ -2369,6 +2369,94 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
         await openContractorChat(item.lead_id, chatPanel);
       });
       details.append(chatButton, chatPanel);
+
+      // Evidence log used by ZELPX protection review. A report of "unable to reach"
+      // requires repeated documented contact attempts rather than a single click.
+      const contactLog = document.createElement("section");
+      contactLog.className = "lead";
+      contactLog.style.cssText = "margin-top:12px;padding:12px;border:1px solid #eaded4;border-radius:12px;background:#fffaf6";
+      const contactTitle = document.createElement("strong");
+      contactTitle.textContent = "Contact attempt history";
+      const contactHelp = document.createElement("p");
+      contactHelp.className = "muted";
+      contactHelp.textContent = "Record each genuine call, text, email, or chat attempt. These records support protection claims.";
+      const contactControls = document.createElement("div");
+      contactControls.className = "actions";
+      const channelSelect = document.createElement("select");
+      channelSelect.setAttribute("aria-label","Contact method");
+      [["call","Phone call"],["sms","Text message"],["email","Email"],["chat","ZELPX chat"]].forEach(([value,label]) => {
+        const option=document.createElement("option"); option.value=value; option.textContent=label; channelSelect.append(option);
+      });
+      const outcomeSelect = document.createElement("select");
+      outcomeSelect.setAttribute("aria-label","Contact result");
+      [["no_answer","No answer"],["connected","Customer reached"],["invalid_number","Invalid number"],["wrong_person","Wrong person"],["customer_denied_request","Customer denies request"],["voicemail","Voicemail"],["message_sent","Message sent"],["other","Other"]].forEach(([value,label]) => {
+        const option=document.createElement("option"); option.value=value; option.textContent=label; outcomeSelect.append(option);
+      });
+      const contactNote = document.createElement("input");
+      contactNote.type="text"; contactNote.maxLength=1000; contactNote.placeholder="Optional notes"; contactNote.setAttribute("aria-label","Contact attempt notes");
+      const saveContact = document.createElement("button");
+      saveContact.type="button"; saveContact.textContent="Save contact attempt";
+      const contactFeedback = document.createElement("p"); contactFeedback.className="muted"; contactFeedback.setAttribute("role","status");
+      saveContact.addEventListener("click", async () => {
+        saveContact.disabled=true; saveContact.textContent="Saving…";
+        try {
+          const {data,error}=await db.rpc("log_lead_contact_attempt",{
+            p_purchase_id:item.id,p_channel:channelSelect.value,p_outcome:outcomeSelect.value,p_notes:contactNote.value.trim()
+          });
+          if(error) throw error;
+          if(!data) throw new Error("The server did not confirm the contact record.");
+          contactFeedback.textContent="Contact attempt saved to ZELPX protection history.";
+          contactFeedback.style.color="#147d55"; contactNote.value="";
+        } catch(e) {
+          contactFeedback.textContent=e.message||"Could not save contact attempt.";
+          contactFeedback.style.color="#b42318";
+        } finally { saveContact.disabled=false; saveContact.textContent="Save contact attempt"; }
+      });
+      contactControls.append(channelSelect,outcomeSelect,contactNote,saveContact);
+      contactLog.append(contactTitle,contactHelp,contactControls,contactFeedback);
+      details.append(contactLog);
+
+      const claimButton = document.createElement("button");
+      claimButton.type = "button";
+      claimButton.className = "secondary";
+      claimButton.textContent = "Report a problem with this lead";
+      claimButton.style.cssText = "display:block;margin-top:12px;border-color:#d7a18a;color:#9b3b24";
+      const claimForm = document.createElement("section");
+      claimForm.className = "lead hidden";
+      claimForm.style.cssText = "margin-top:10px;padding:12px;border:1px solid #eaded4;border-radius:12px;background:#fffaf6";
+      const claimHeading=document.createElement("strong"); claimHeading.textContent="Lead protection report";
+      const claimHelp=document.createElement("p"); claimHelp.className="muted"; claimHelp.textContent="Choose the problem and give ZELPX enough detail to review it. Reports are reviewed by an administrator.";
+      const reasonSelect=document.createElement("select"); reasonSelect.setAttribute("aria-label","Problem with this lead");
+      [["invalid_phone","Invalid phone number"],["customer_denies_request","Customer denies submitting request"],["wrong_person","Wrong person"],["duplicate_lead","Duplicate lead"],["fake_customer","Fake customer"],["false_service_request","False service request"],["unable_to_reach","Unable to reach customer"],["other","Other"]].forEach(([value,label])=>{
+        const option=document.createElement("option");option.value=value;option.textContent=label;reasonSelect.append(option);
+      });
+      const claimDetails=document.createElement("textarea"); claimDetails.rows=3; claimDetails.maxLength=2000; claimDetails.placeholder="Describe what happened (optional)"; claimDetails.setAttribute("aria-label","Report details");
+      const claimActions=document.createElement("div"); claimActions.className="actions";
+      const submitClaim=document.createElement("button"); submitClaim.type="button"; submitClaim.textContent="Submit report";
+      const cancelClaim=document.createElement("button"); cancelClaim.type="button"; cancelClaim.className="secondary"; cancelClaim.textContent="Cancel";
+      const claimFeedback=document.createElement("p"); claimFeedback.className="muted"; claimFeedback.setAttribute("role","status");
+      claimButton.addEventListener("click",()=>{claimForm.classList.toggle("hidden");});
+      cancelClaim.addEventListener("click",()=>{claimForm.classList.add("hidden");});
+      submitClaim.addEventListener("click", async () => {
+        submitClaim.disabled=true; submitClaim.textContent="Submitting…";
+        try {
+          const {data:claimId,error}=await db.rpc("submit_lead_protection_claim",{
+            p_purchase_id:item.id,p_reason:reasonSelect.value,p_details:claimDetails.value.trim()
+          });
+          if(error) throw error;
+          if(!claimId) throw new Error("The server did not confirm the report.");
+          claimFeedback.textContent="Your report was sent to ZELPX for review. Reference: "+claimId;
+          claimFeedback.style.color="#147d55";
+          submitClaim.hidden=true; cancelClaim.textContent="Close";
+        } catch(e) {
+          claimFeedback.textContent=e.message||"Could not submit the report.";
+          claimFeedback.style.color="#b42318";
+          submitClaim.disabled=false; submitClaim.textContent="Submit report";
+        }
+      });
+      claimActions.append(submitClaim,cancelClaim);
+      claimForm.append(claimHeading,claimHelp,reasonSelect,claimDetails,claimActions,claimFeedback);
+      details.append(claimButton,claimForm);
       const closeLeadButton = document.createElement("button");
       closeLeadButton.type = "button";
       closeLeadButton.className = "secondary";
