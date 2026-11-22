@@ -1661,11 +1661,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const service = input.dataset.jobService || "";
         if (service && service !== currentService) {
           currentService = service;
-          lines.push("\\n" + currentService);
+          lines.push("\n" + currentService);
         }
         lines.push(input.dataset.jobQuestion + ": " + (input.value.trim() || "Not provided"));
       });
-      return lines.join("\\n").trim();
+      return lines.join("\n").trim();
     }
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
