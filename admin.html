@@ -578,6 +578,7 @@
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
+        <button type="button" data-admin-page="adminLeadProtectionPage">Lead Protection Claims</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -662,6 +663,16 @@
           <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh incoming leads</button><span id="requestCount" class="muted"></span></div>
           <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
           <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
+        </section>
+      </section>
+      <section id="adminLeadProtectionPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>ZELPX Lead Protection Claims</h2>
+          <p>Review contractor reports. Approving a valid claim returns the original lead price to the contractor's ZELPX credit wallet. Every refund is recorded in the credit ledger and can only be issued once.</p>
+          <div class="actions"><button id="refreshProtectionClaimsBtn" type="button" class="secondary">Refresh claims</button><span id="protectionClaimsCount" class="muted"></span></div>
+          <div id="protectionClaimsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="protectionClaimsList"><p class="muted">Open this page to load protection claims…</p></div>
         </section>
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
@@ -2012,6 +2023,72 @@
     }
   }
 
+  async function loadProtectionClaims() {
+    if (!isAdmin) return;
+    const list = $("protectionClaimsList");
+    if (!list) return;
+    list.textContent = "Loading protection claims…";
+    const status = $("protectionClaimsMessage");
+    if (status) { status.className = "message hidden"; status.textContent = ""; }
+    try {
+      const { data: claims, error } = await db.from("lead_protection_claims")
+        .select("id,purchase_id,lead_id,contractor_id,reason,details,status,admin_note,created_at,reviewed_at")
+        .order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      $("protectionClaimsCount").textContent = String((claims || []).length) + " claims";
+      list.replaceChildren();
+      if (!claims?.length) { list.textContent = "No contractor protection claims have been submitted."; return; }
+      claims.forEach(claim => {
+        const card = document.createElement("article"); card.className = "request-card";
+        const title = document.createElement("strong"); title.textContent = "Claim · " + claim.reason.replaceAll("_"," ");
+        const meta = document.createElement("p"); meta.className = "muted";
+        meta.textContent = "Status: " + claim.status + " · Submitted: " + new Date(claim.created_at).toLocaleString();
+        const ids = document.createElement("p"); ids.textContent = "Lead: " + claim.lead_id + " · Purchase: " + claim.purchase_id;
+        const details = document.createElement("p"); details.textContent = claim.details || "No additional details supplied.";
+        card.append(title,meta,ids,details);
+        if (claim.admin_note) { const note=document.createElement("p"); note.textContent="Admin note: "+claim.admin_note; card.append(note); }
+        if (["open","under_review"].includes(claim.status)) {
+          const noteInput = document.createElement("textarea"); noteInput.rows=2; noteInput.placeholder="Admin review note (optional)";
+          const actions=document.createElement("div"); actions.className="actions";
+          const approve=document.createElement("button"); approve.type="button"; approve.textContent="Approve refund";
+          approve.addEventListener("click", async () => {
+            if (!window.confirm("Approve this claim and return the original purchase price to the contractor's ZELPX credit wallet?")) return;
+            approve.disabled=true;
+            try {
+              const {data,error}=await db.rpc("admin_resolve_lead_protection_claim",{p_claim_id:claim.id,p_decision:"approve",p_admin_note:noteInput.value});
+              if(error) throw error;
+              if(!data?.success) throw new Error("The refund was not confirmed by the server.");
+              if(status){status.className="message success";status.textContent="Refund issued and recorded in the contractor credit ledger.";}
+              await loadProtectionClaims();
+            } catch(e) {
+              approve.disabled=false;
+              if(status){status.className="message error";status.textContent=e.message||"Could not approve the refund.";}
+            }
+          });
+          const reject=document.createElement("button"); reject.type="button"; reject.className="secondary"; reject.textContent="Reject claim";
+          reject.addEventListener("click", async () => {
+            if (!window.confirm("Reject this protection claim?")) return;
+            reject.disabled=true;
+            try {
+              const {data,error}=await db.rpc("admin_resolve_lead_protection_claim",{p_claim_id:claim.id,p_decision:"reject",p_admin_note:noteInput.value});
+              if(error) throw error;
+              if(!data?.success) throw new Error("The claim decision was not confirmed by the server.");
+              await loadProtectionClaims();
+            } catch(e) {
+              reject.disabled=false;
+              if(status){status.className="message error";status.textContent=e.message||"Could not reject the claim.";}
+            }
+          });
+          actions.append(approve,reject); card.append(noteInput,actions);
+        }
+        list.append(card);
+      });
+    } catch(e) {
+      list.textContent="Could not load protection claims: "+(e.message||"Unknown error");
+      if(status){status.className="message error";status.textContent="Check the lead_protection_claims table and admin RLS policy. "+(e.message||"");}
+    }
+  }
+
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadServiceRequests() {
     if (!isAdmin) return;
@@ -2692,6 +2769,7 @@
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
+    if (pageId === "adminLeadProtectionPage") loadProtectionClaims();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
@@ -2737,6 +2815,7 @@
           event.target.closest("#serviceRequestsList")) serviceRequestsEditing = true;
     });
     $("refreshRequestsBtn")?.addEventListener("click", () => { serviceRequestsEditing = false; loadServiceRequests(); });
+    $("refreshProtectionClaimsBtn")?.addEventListener("click", loadProtectionClaims);
     $("requestSearch")?.addEventListener("input", () => {
       const term = ($("requestSearch").value || "").trim().toLowerCase();
       const cards = [...$("serviceRequestsList").children].filter(node => node.matches("article.lead"));
