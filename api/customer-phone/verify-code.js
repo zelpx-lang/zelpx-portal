@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
     const user = await getAuthenticatedUser(req);
     const phone = normalizePhone(req.body && req.body.phone);
     const code = typeof (req.body && req.body.code) === "string" ? req.body.code.trim() : "";
-    if (!/^\\+[1-9]\\d{7,14}$/.test(phone) || !/^\\d{6}$/.test(code)) {
+    if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{6}$/.test(code)) {
       return sendJson(res, 400, { error: "Enter a valid phone number and the 6-digit SMS code." });
     }
     const config = getTwilioConfig();
