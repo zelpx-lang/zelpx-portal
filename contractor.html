@@ -876,14 +876,19 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       try { localStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
       try { sessionStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
 
-      const { error } = await db.auth.signInWithOAuth({
+      const { data, error } = await db.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: new URL("/contractor", window.location.origin).toString(),
+          skipBrowserRedirect: true,
           ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
         }
       });
       if (error) throw error;
+      if (!data?.url) throw new Error("Google sign-in did not return a redirect URL. Please try again.");
+      // Navigate explicitly after Supabase returns the provider URL. This avoids
+      // relying on an automatic redirect inside the SDK on mobile browsers.
+      window.location.assign(data.url);
     } catch (error) {
       console.error("Contractor social sign-in failed:", provider, error);
       try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
