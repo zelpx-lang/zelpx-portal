@@ -2174,8 +2174,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         const request = {
           user_id: session.user.id,
-          customer_live_confirmed_at: new Date().toISOString(),
-          customer_live_confirmation_version: "2026-11-22-v1",
           request_type: isSpherePackage ? "lead_package" : "regular",
           service_type: $("serviceType").value,
           property_address: $("propertyAddress").value.trim(),
@@ -2197,11 +2195,17 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code.");
         }
 
-        const { error } = await db
+        const { data: createdRequest, error } = await db
           .from("service_requests")
-          .insert(request);
+          .insert(request)
+          .select("id")
+          .single();
 
         if (error) throw error;
+        const { error: confirmationError } = await db.rpc("confirm_own_service_request", {
+          p_request_id: createdRequest.id
+        });
+        if (confirmationError) throw confirmationError;
 
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
         try { localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY); } catch (_) {}
