@@ -858,12 +858,11 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <label for="customerPhone">Phone Number</label>
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
-        <p class="subtitle">Phone number changes are saved only after SMS verification. Enter the new number below, choose “Send SMS Code,” then enter the code and choose “Verify Phone Number.” The verified number is saved automatically. “Save Changes” updates your name only.</p>
+        <p class="subtitle">To change your number, choose “Edit Profile,” enter the new number in this Phone Number field, then send and verify the SMS code below. The number is saved to your account only after successful verification.</p>
         <section id="customerPhoneVerification" class="phone-verification-panel" aria-labelledby="customerPhoneVerificationHeading">
           <h3 id="customerPhoneVerificationHeading">Verify your phone number</h3>
           <p id="customerPhoneVerificationStatus" class="subtitle" role="status">Phone verification is required before submitting a service request.</p>
-          <label for="customerVerificationPhone">Mobile number (include country code)</label>
-          <input id="customerVerificationPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" maxlength="20">
+          <input id="customerVerificationPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" maxlength="20" hidden aria-hidden="true" tabindex="-1">
           <button id="sendCustomerPhoneCodeButton" type="button">Send SMS Code</button>
           <label for="customerPhoneVerificationCode">6-digit SMS code</label>
           <input id="customerPhoneVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
@@ -1094,7 +1093,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     }
     $("sendCustomerPhoneCodeButton").addEventListener("click", async () => {
       const button = $("sendCustomerPhoneCodeButton");
-      const phone = normalizeCustomerPhone($("customerVerificationPhone").value);
+      const phone = normalizeCustomerPhone($("customerPhone").value);
       $("customerPhoneVerificationMessage").className = "message";
       $("customerPhoneVerificationMessage").textContent = "";
       if (!phone) {
@@ -1105,14 +1104,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       try {
         await callCustomerPhoneApi("/api/customer-phone/send-code", { phone });
         $("customerVerificationPhone").value = phone;
-        showMessage("customerPhoneVerificationMessage", "SMS code sent. Check your phone and enter the 6-digit code.", "success");
+        showMessage("customerPhoneVerificationMessage", "SMS code sent to " + phone + ". Enter the 6-digit code below.", "success");
       } catch (error) {
         showMessage("customerPhoneVerificationMessage", error.message || "Could not send SMS code.", "error");
       } finally { button.disabled = false; button.textContent = "Send SMS Code"; }
     });
     $("verifyCustomerPhoneCodeButton").addEventListener("click", async () => {
       const button = $("verifyCustomerPhoneCodeButton");
-      const phone = normalizeCustomerPhone($("customerVerificationPhone").value);
+      const phone = normalizeCustomerPhone($("customerPhone").value);
       const code = $("customerPhoneVerificationCode").value.trim();
       $("customerPhoneVerificationMessage").className = "message";
       $("customerPhoneVerificationMessage").textContent = "";
@@ -1395,7 +1394,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       clearMessage("profileMessage");
       originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
       profileNameInput.readOnly = false;
-      profilePhoneInput.readOnly = true;
+      profilePhoneInput.readOnly = false;
       requestProfileUpdateButton.classList.add("hidden");
       confirmProfileUpdateButton.classList.remove("hidden");
       cancelProfileUpdateButton.classList.remove("hidden");
@@ -1424,8 +1423,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         showMessage("profileMessage", "Please enter your full name.", "error");
         return;
       }
-      if (!phone || phone.replace(/\D/g, "").length < 7) {
-        showMessage("profileMessage", "Please enter a valid phone number.", "error");
+      if (!phone || !normalizeCustomerPhone(phone)) {
+        showMessage("profileMessage", "Enter a valid phone number with country code, then verify it by SMS before saving.", "error");
+        return;
+      }
+      const phoneChanged = normalizeCustomerPhone(phone) !== normalizeCustomerPhone(originalProfileValues.phone);
+      if (phoneChanged && (!window.zelpxCustomerPhoneVerified || normalizeCustomerPhone(window.zelpxCustomerVerifiedPhone) !== normalizeCustomerPhone(phone))) {
+        $("customerVerificationPhone").value = normalizeCustomerPhone(phone);
+        showMessage("profileMessage", "Your new number is not saved yet. Send an SMS code to this number and verify it first.", "error");
+        $("sendCustomerPhoneCodeButton").scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
 
