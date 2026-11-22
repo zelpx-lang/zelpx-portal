@@ -354,6 +354,14 @@
     .zelpx-modal-confirm:active{transform:scale(.98)}
     @media(max-width:420px){.zelpx-modal-backdrop{padding:16px}.zelpx-purchase-modal{border-radius:21px}.zelpx-modal-top{padding:23px 20px 17px}.zelpx-modal-body{padding:17px 19px 3px}.zelpx-modal-actions{padding:14px 19px 19px}.zelpx-modal-title{font-size:21px}}
     @media(prefers-reduced-motion:reduce){.zelpx-modal-backdrop,.zelpx-purchase-modal{transition:none}}
+
+    .zelpx-modal-meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+    .zelpx-modal-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#f4f6f8;color:#536071;font-size:12px;font-weight:750}
+    .zelpx-modal-included{margin:0 0 15px;padding:13px 14px;border:1px solid #f0e5db;border-radius:15px;background:#fff}
+    .zelpx-modal-included-title{margin:0 0 8px;font-size:12px;font-weight:850;color:#344054}
+    .zelpx-modal-included-list{margin:0;padding:0 0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;color:#596579;font-size:12px;line-height:1.4}
+    .zelpx-modal-included-list li{padding-left:1px;overflow-wrap:anywhere}
+    @media(max-width:380px){.zelpx-modal-included-list{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1466,24 +1474,11 @@
       let saveStatus=$("professionSaveStatus");
       if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
       saveStatus.className="message success";
-      saveStatus.textContent="Your work types were submitted for administrator review. They become active after approval.";
-      $("saveProfessionQualificationsBtn").disabled=true;
-    } catch(e) {
-      const summary=$("professionComplianceSummary");
-      let saveStatus=$("professionSaveStatus");
-      if(!saveStatus){saveStatus=document.createElement("div");saveStatus.id="professionSaveStatus";saveStatus.className="message";summary.insertAdjacentElement("afterend",saveStatus);}
-      saveStatus.className="message error";
-      saveStatus.textContent="Could not save work types: "+(e.message||"Unknown error");
-    }
-    finally {setBusy(button,false);}
-  }
-
-  async function addCredits() {
-    clearMessage("appMessage");
-    if (!currentContractor || !currentWallet) return messa  function confirmLeadPurchase(lead) {
+      save  function confirmLeadPurchase(lead) {
     return new Promise(resolve => {
       const isPackage = lead.lead_type === "lead_package";
       const amount = money(lead.price_cents);
+      const services = Array.isArray(lead.package_services) ? lead.package_services.filter(Boolean) : [];
       const overlay = document.createElement("div");
       overlay.className = "zelpx-modal-backdrop";
       overlay.innerHTML = `
@@ -1492,17 +1487,37 @@
             <div class="zelpx-modal-icon" aria-hidden="true">↗</div>
             <div class="zelpx-modal-eyebrow">ZELPX secure checkout</div>
             <h2 class="zelpx-modal-title" id="zelpxPurchaseTitle">${isPackage ? "Purchase Lead Package?" : "Purchase Exclusive Lead?"}</h2>
-            <p class="zelpx-modal-subtitle" id="zelpxPurchaseDescription">${isPackage ? "Get the complete multi-service home project." : "This exclusive lead will be assigned to you after purchase."}</p>
+            <p class="zelpx-modal-subtitle" id="zelpxPurchaseDescription">${isPackage ? "Review the complete multi-service home project before checkout." : "This exclusive lead will be assigned to you after purchase."}</p>
           </div>
           <div class="zelpx-modal-body">
+            <div class="zelpx-modal-meta">
+              <span class="zelpx-modal-chip">📍 ZIP <strong class="zelpx-modal-zip"></strong></span>
+              <span class="zelpx-modal-chip">${isPackage ? "▦ Multi-service package" : "✓ Exclusive lead"}</span>
+            </div>
+            <div class="zelpx-modal-included" ${isPackage ? "" : "hidden"}>
+              <h3 class="zelpx-modal-included-title">Services included in this package</h3>
+              <ul class="zelpx-modal-included-list"></ul>
+            </div>
             <div class="zelpx-modal-summary"><div><div class="zelpx-modal-summary-label">Total to pay</div><strong>${isPackage ? "Entire package" : "One exclusive lead"}</strong></div><div class="zelpx-modal-summary-value">${amount}</div></div>
-            <div class="zelpx-modal-note"><span aria-hidden="true">🔒</span><span>This amount will be deducted from your ZELPX credit balance. Please review before confirming.</span></div>
+            <div class="zelpx-modal-note"><span aria-hidden="true">🔒</span><span>This amount will be deducted from your ZELPX credit balance. No charge is made until you confirm.</span></div>
           </div>
           <div class="zelpx-modal-actions">
             <button type="button" class="zelpx-modal-cancel">Cancel</button>
             <button type="button" class="zelpx-modal-confirm">Confirm purchase</button>
           </div>
         </section>`;
+      overlay.querySelector(".zelpx-modal-zip").textContent = String(lead.zip_code || "Not provided");
+      const included = overlay.querySelector(".zelpx-modal-included-list");
+      services.forEach(service => {
+        const li = document.createElement("li");
+        li.textContent = String(service);
+        included.append(li);
+      });
+      if (isPackage && !services.length) {
+        const li = document.createElement("li");
+        li.textContent = "Full package";
+        included.append(li);
+      }
       const finish = value => {
         document.removeEventListener("keydown", onKey);
         overlay.remove();
@@ -1518,32 +1533,7 @@
       overlay.querySelector(".zelpx-modal-confirm").focus();
     });
   }
-
-ge("appMessage", "Your contractor account or credit wallet is not ready. Contact ZELPX support.", "error");
-    const dollars = Number($("creditAmount").value);
-    if (!Number.isFinite(dollars) || dollars < 10 || dollars > 10000 || Math.round(dollars * 100) !== dollars * 100)
-      return message("appMessage", "Enter an amount from $10 to $10,000, with no more than 2 decimal places.", "error");
-    const button = $("addCreditsBtn"); setBusy(button, true, "Connecting to Stripe…");
-    try {
-      const { data, error } = await db.functions.invoke("create-checkout-session", { body: { amount_cents: Math.round(dollars * 100) } });
-      if (error) throw error;
-      if (!data?.url || typeof data.url !== "string" || !data.url.startsWith("https://")) throw new Error(data?.error || "Stripe did not return a valid checkout link.");
-      window.location.assign(data.url);
-    } catch (e) { message("appMessage", "Could not start payment: " + (e.message || "Unknown error"), "error"); setBusy(button, false); }
-  }
-  async function handlePaymentReturn() {
-    const params = new URLSearchParams(window.location.search), payment = params.get("payment");
-    if (payment === "success") {
-      message("appMessage", "Stripe returned you to ZELPX. Your payment is being confirmed. Click Refresh balance in a few moments; credits appear after the secure webhook confirms payment.", "success");
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (payment === "cancelled") {
-      message("appMessage", "Payment was cancelled. No credits were added.", "error"); window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }
-  async function loadCategories() {
-    const select = $("leadCategory"); select.replaceChildren();
-    const loading = document.createElement("option"); loading.value = ""; loading.textContent = "Loading categories…"; select.append(loading);
-    const { data, error } = await db.from("service_categories").select("name,slug").eq("is_active", true).order("name");
+ries").select("name,slug").eq("is_active", true).order("name");
     if (error) {
       select.replaceChildren(); const option = document.createElement("option"); option.value = ""; option.textContent = "Could not load categories"; select.append(option);
       if (isAdmin) message("adminMessage", "Category loading error: " + error.message, "error"); return;
