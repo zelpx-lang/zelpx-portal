@@ -562,20 +562,20 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     <div class="logo">ZELPX</div>
 
     <section id="authView">
-      <h1 id="formTitle">Create Customer Account</h1>
+      <h1 id="formTitle">Customer Log In</h1>
       <p class="subtitle" id="formSubtitle">
-        Create an account to request services and communicate with contractors.
+        Log in to access your customer account.
       </p>
 
       <form id="authForm">
-        <div id="nameField">
+        <div id="nameField" class="hidden">
           <label for="fullName">Full Name</label>
           <input id="fullName" type="text" autocomplete="name">
         </div>
 
-        <div id="phoneField">
+        <div id="phoneField" class="hidden">
           <label for="phone">Phone Number</label>
-          <input id="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+          <input id="phone" type="tel" autocomplete="tel" inputmode="tel">
         </div>
 
         <label for="email">Email Address</label>
@@ -587,15 +587,15 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
         </div>
 
-        <button id="submitButton" type="submit">Create Account</button>
-        <div id="forgotPasswordRow" class="switch hidden"><a id="forgotPasswordLink" href="/forgot-password.html">Forgot password?</a></div>
+        <button id="submitButton" type="submit">Log In</button>
+        <div id="forgotPasswordRow" class="switch"><a id="forgotPasswordLink" href="/forgot-password.html">Forgot password?</a></div>
       </form>
 
       <div id="message" class="message" role="status"></div>
 
       <div class="switch">
-        <span id="switchText">Already have an account?</span>
-        <a id="switchLink" href="#">Log In</a>
+        <span id="switchText">Don't have an account?</span>
+        <a id="switchLink" href="#">Create Account</a>
       </div>
 
       <div class="social-auth" aria-label="Other sign-in options">
