@@ -2010,6 +2010,16 @@
           publish.style.marginTop = "14px";
           priceLabel.textContent = isPackage ? "Lead Package total price (USD)" : "Lead price (USD)";
           price.placeholder = isPackage ? "150.00" : "50.00";
+          const packagePriceGuidance = document.createElement("p");
+          packagePriceGuidance.className = "muted";
+          packagePriceGuidance.style.cssText = "margin:8px 0 0;font-size:14px;line-height:1.5;";
+          if (isPackage) {
+            const serviceCount = selectedServices.length;
+            packagePriceGuidance.textContent = serviceCount + " services included. Enter ONE total price for the entire project. Set it higher than a comparable single-service lead; consider the number of services and total scope. The contractor pays this amount once for the whole package.";
+          } else {
+            packagePriceGuidance.textContent = "This price is for one service only.";
+          }
+          priceWrap.append(packagePriceGuidance);
           publish.textContent = isPackage ? "Verify and publish Special Lead Package" : "Verify and publish Regular Lead";
           publish.addEventListener("click", async () => {
             const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
