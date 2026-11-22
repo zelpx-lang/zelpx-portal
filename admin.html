@@ -1791,7 +1791,7 @@
     clearMessage("serviceRequestsMessage");
     try {
       const { data: requests, error } = await db.from("service_requests")
-        .select("id,user_id,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
+        .select("id,user_id,request_type,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       const requestIds = (requests || []).map(request => request.id);
