@@ -1987,11 +1987,17 @@
             const { error: keepError } = await db.rpc("keep_own_purchased_lead", { p_purchase_id: item.id });
             if (keepError) throw keepError;
             keepButton.textContent = "Kept";
+            const deleteButton = retention.querySelector(".danger");
+            if (deleteButton) deleteButton.remove();
+            const keptNote = document.createElement("small");
+            keptNote.textContent = "This purchase is saved permanently and cannot be deleted.";
+            retention.append(keptNote);
           } catch (error) {
             keepButton.disabled = false;
             window.alert(error.message || "Could not keep this purchase.");
           }
         });
+        if (!item.retention_kept_at) {
         const deletePurchaseButton = document.createElement("button");
         deletePurchaseButton.type = "button";
         deletePurchaseButton.className = "danger";
@@ -2010,7 +2016,14 @@
             window.alert(error.message || "Could not remove this purchase.");
           }
         });
-        retention.append(keepButton, deletePurchaseButton);
+        retention.append(keepButton);
+        if (!item.retention_kept_at) retention.append(deletePurchaseButton);
+        else {
+          const keptNote = document.createElement("small");
+          keptNote.textContent = "This purchase is saved permanently and cannot be deleted.";
+          retention.append(keptNote);
+        }
+        }
       } else {
         const waitMessage = document.createElement("small");
         const remainingDays = Math.max(1, Math.ceil((tenDaysMs - purchaseAgeMs) / (24 * 60 * 60 * 1000)));
