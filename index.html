@@ -512,7 +512,7 @@ function renderSelectedSphereServices(){
     : selectedGroup==="Cabinets, Doors & Trim" ? "Doors & Windows"
     : selectedGroup==="Heating & Air (HVAC)" ? "HVAC" : selectedGroup;
   const zip=document.getElementById("zip").value.trim();
-  const draft={service:selectedSphereServices.length?parentService:"",zip:/^\d{5}$/.test(zip)?zip:"",services:[...selectedSphereServices]};
+  const draft={service:selectedSphereServices.length?parentService:"",zip:/^\d{5}$/.test(zip)?zip:"",source:"sphere",services:[...selectedSphereServices]};
   // Persist the sphere selection before navigating to the customer portal.
   // This survives sign-in redirects and URL cleanup after authentication.
   try {
@@ -523,6 +523,7 @@ function renderSelectedSphereServices(){
     const query=new URLSearchParams();
     query.set("service",parentService);
     query.set("services",selectedSphereServices.join("|"));
+    query.set("source","sphere");
     if(draft.zip)query.set("zip",draft.zip);
     pg.href="/customer?"+query.toString()+"#requestForm";
   }else pg.href="#";
