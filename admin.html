@@ -2114,25 +2114,37 @@
           const fields = document.createElement("div"); fields.className = "grid";
           const categoryWrap = document.createElement("div"), categoryLabel = document.createElement("label"), category = document.createElement("select");
           categoryLabel.textContent = "Service category";
-          const categoryPlaceholder = document.createElement("option");
-          categoryPlaceholder.value = ""; categoryPlaceholder.textContent = "Choose a service";
-          category.append(categoryPlaceholder);
-          (serviceCategories || []).forEach(item => {
-            const option = document.createElement("option");
-            option.value = item.name; option.textContent = item.name;
-            category.append(option);
-          });
-          // Preserve the customer's submitted service even if the active category
-          // catalogue is temporarily unavailable or the service is newly added.
-          if (request.service_type && ![...category.options].some(option =>
-              option.value.toLowerCase() === String(request.service_type).toLowerCase())) {
-            const submittedOption = document.createElement("option");
-            submittedOption.value = request.service_type;
-            submittedOption.textContent = request.service_type + " (submitted)";
-            category.append(submittedOption);
+          if (isPackage) {
+            // Show a package-level label while retaining the original service
+            // category value internally for existing database rules and matching.
+            const packageOption = document.createElement("option");
+            packageOption.value = request.service_type || "Home service";
+            packageOption.textContent = "Multi-Service Home Project";
+            category.append(packageOption);
+            category.value = packageOption.value;
+            category.disabled = true;
+            category.setAttribute("aria-label", "Package category: Multi-Service Home Project");
+          } else {
+            const categoryPlaceholder = document.createElement("option");
+            categoryPlaceholder.value = ""; categoryPlaceholder.textContent = "Choose a service";
+            category.append(categoryPlaceholder);
+            (serviceCategories || []).forEach(item => {
+              const option = document.createElement("option");
+              option.value = item.name; option.textContent = item.name;
+              category.append(option);
+            });
+            // Preserve the customer's submitted service even if the active category
+            // catalogue is temporarily unavailable or the service is newly added.
+            if (request.service_type && ![...category.options].some(option =>
+                option.value.toLowerCase() === String(request.service_type).toLowerCase())) {
+              const submittedOption = document.createElement("option");
+              submittedOption.value = request.service_type;
+              submittedOption.textContent = request.service_type + " (submitted)";
+              category.append(submittedOption);
+            }
+            const matchingCategory = [...category.options].find(option => option.value.toLowerCase() === String(request.service_type || "").toLowerCase());
+            if (matchingCategory) category.value = matchingCategory.value;
           }
-          const matchingCategory = [...category.options].find(option => option.value.toLowerCase() === String(request.service_type || "").toLowerCase());
-          if (matchingCategory) category.value = matchingCategory.value;
           categoryLabel.append(category); categoryWrap.append(categoryLabel);
           const zipWrap = document.createElement("div"), zipLabel = document.createElement("label"), zip = document.createElement("input");
           zipLabel.textContent = "Verified ZIP code"; zip.maxLength = 10; zip.inputMode = "numeric"; zip.placeholder = "97201"; zip.value = "";
@@ -2199,7 +2211,7 @@
             const customerName = profile.full_name || "Unavailable";
             const saleLabel = isPackage ? "SPECIAL LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD — one service";
             if (!window.confirm("Publish this customer request?\n\nSale type: " + saleLabel +
-              "\nService: " + categoryValue + (isPackage ? "\nIncluded services: " + selectedServices.join(", ") : "") +
+              "\nService: " + (isPackage ? "Multi-Service Home Project" : categoryValue) + (isPackage ? "\nIncluded services: " + selectedServices.join(", ") : "") +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
               "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
               "\n\nOnly continue after verifying the customer's details.")) return;
