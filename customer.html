@@ -914,7 +914,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       }
 
       const setButtonLabel = (label) => {
-        const textNode = Array.from(button.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+        const textNodes = Array.from(button.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+        const textNode = textNodes[textNodes.length - 1];
         if (textNode) textNode.textContent = " " + label;
         else button.append(document.createTextNode(" " + label));
       };
