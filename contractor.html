@@ -2369,6 +2369,53 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
         await openContractorChat(item.lead_id, chatPanel);
       });
       details.append(chatButton, chatPanel);
+
+      // Evidence log used by ZELPX protection review. A report of "unable to reach"
+      // requires repeated documented contact attempts rather than a single click.
+      const contactLog = document.createElement("section");
+      contactLog.className = "lead";
+      contactLog.style.cssText = "margin-top:12px;padding:12px;border:1px solid #eaded4;border-radius:12px;background:#fffaf6";
+      const contactTitle = document.createElement("strong");
+      contactTitle.textContent = "Contact attempt history";
+      const contactHelp = document.createElement("p");
+      contactHelp.className = "muted";
+      contactHelp.textContent = "Record each genuine call, text, email, or chat attempt. These records support protection claims.";
+      const contactControls = document.createElement("div");
+      contactControls.className = "actions";
+      const channelSelect = document.createElement("select");
+      channelSelect.setAttribute("aria-label","Contact method");
+      [["call","Phone call"],["sms","Text message"],["email","Email"],["chat","ZELPX chat"]].forEach(([value,label]) => {
+        const option=document.createElement("option"); option.value=value; option.textContent=label; channelSelect.append(option);
+      });
+      const outcomeSelect = document.createElement("select");
+      outcomeSelect.setAttribute("aria-label","Contact result");
+      [["no_answer","No answer"],["connected","Customer reached"],["invalid_number","Invalid number"],["wrong_person","Wrong person"],["customer_denied_request","Customer denies request"],["voicemail","Voicemail"],["message_sent","Message sent"],["other","Other"]].forEach(([value,label]) => {
+        const option=document.createElement("option"); option.value=value; option.textContent=label; outcomeSelect.append(option);
+      });
+      const contactNote = document.createElement("input");
+      contactNote.type="text"; contactNote.maxLength=1000; contactNote.placeholder="Optional notes"; contactNote.setAttribute("aria-label","Contact attempt notes");
+      const saveContact = document.createElement("button");
+      saveContact.type="button"; saveContact.textContent="Save contact attempt";
+      const contactFeedback = document.createElement("p"); contactFeedback.className="muted"; contactFeedback.setAttribute("role","status");
+      saveContact.addEventListener("click", async () => {
+        saveContact.disabled=true; saveContact.textContent="Saving…";
+        try {
+          const {data,error}=await db.rpc("log_lead_contact_attempt",{
+            p_purchase_id:item.id,p_channel:channelSelect.value,p_outcome:outcomeSelect.value,p_notes:contactNote.value.trim()
+          });
+          if(error) throw error;
+          if(!data) throw new Error("The server did not confirm the contact record.");
+          contactFeedback.textContent="Contact attempt saved to ZELPX protection history.";
+          contactFeedback.style.color="#147d55"; contactNote.value="";
+        } catch(e) {
+          contactFeedback.textContent=e.message||"Could not save contact attempt.";
+          contactFeedback.style.color="#b42318";
+        } finally { saveContact.disabled=false; saveContact.textContent="Save contact attempt"; }
+      });
+      contactControls.append(channelSelect,outcomeSelect,contactNote,saveContact);
+      contactLog.append(contactTitle,contactHelp,contactControls,contactFeedback);
+      details.append(contactLog);
+
       const claimButton = document.createElement("button");
       claimButton.type = "button";
       claimButton.className = "secondary";
