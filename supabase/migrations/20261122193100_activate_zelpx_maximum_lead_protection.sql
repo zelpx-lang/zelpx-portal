@@ -2,6 +2,43 @@
 -- Apply only after the updated customer portal is deployed.
 -- Any pre-deployment request without a server-recorded confirmation is grandfathered.
 
+-- "Unable to reach" claims need documented, spaced contact attempts.
+-- Immediate claims remain available for invalid numbers, wrong persons, duplicates,
+-- and explicit customer denial.
+create or replace function public.submit_lead_protection_claim(p_purchase_id uuid,p_reason text,p_details text default null)
+returns uuid language plpgsql security definer set search_path=''
+as $function$
+declare v_purchase public.lead_purchases%rowtype; v_claim_id uuid; v_attempt_count integer; v_first_attempt timestamptz; v_last_attempt timestamptz;
+begin
+ if auth.uid() is null then raise exception 'You must be signed in.'; end if;
+ if p_reason not in ('invalid_phone','customer_denies_request','wrong_person','duplicate_lead','fake_customer','false_service_request','unable_to_reach','other') then
+  raise exception 'Choose a valid claim reason.';
+ end if;
+ select lp.* into v_purchase from public.lead_purchases lp
+ join public.contractors c on c.id=lp.contractor_id
+ where lp.id=p_purchase_id and c.user_id=auth.uid() for update of lp;
+ if not found then raise exception 'Purchased lead not found for this contractor.'; end if;
+ if v_purchase.purchased_at < now()-interval '7 days' then raise exception 'The 7-day lead protection claim period has expired.'; end if;
+ if p_reason='unable_to_reach' then
+  select count(*),min(created_at),max(created_at)
+  into v_attempt_count,v_first_attempt,v_last_attempt
+  from public.lead_contact_attempts where purchase_id=p_purchase_id
+    and outcome in ('no_answer','voicemail','message_sent');
+  if coalesce(v_attempt_count,0)<3 or v_last_attempt-v_first_attempt<interval '24 hours' then
+   raise exception 'For an unable-to-reach claim, record at least 3 contact attempts spanning 24 hours first.';
+  end if;
+ end if;
+ insert into public.lead_protection_claims(purchase_id,lead_id,contractor_id,reason,details)
+ values(v_purchase.id,v_purchase.lead_id,v_purchase.contractor_id,p_reason,left(coalesce(p_details,''),2000))
+ returning id into v_claim_id;
+ return v_claim_id;
+end;
+$function$;
+
+revoke all on function public.submit_lead_protection_claim(uuid,text,text) from public,anon;
+grant execute on function public.submit_lead_protection_claim(uuid,text,text) to authenticated;
+
+
 -- Do not let a browser/client forge the server timestamp that represents
 -- the customer's explicit confirmation. Only confirm_own_service_request may set it.
 create or replace function private.guard_service_request_confirmation_fields()
