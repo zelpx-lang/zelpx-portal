@@ -528,26 +528,9 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 }
 .social-auth-button:disabled{background:#fff!important;border-color:#e8ddd4!important;opacity:.65}
 
-/* Original ZELPX account-opening screen — centered single-line message */
-#zelpxAccountOpening{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;overflow:hidden;padding:18px;background:#f6f2ec;color:#171513;font-family:Arial,sans-serif}
-#zelpxAccountOpening.is-visible{display:flex}
-html.zelpx-session-check #zelpxAccountOpening{display:flex}
-#zelpxAccountOpening .opening-glow{position:absolute;left:50%;top:50%;width:min(92vw,680px);height:min(72vh,760px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,222,199,.68) 0%,rgba(255,235,221,.42) 35%,rgba(255,245,237,0) 72%);filter:blur(24px);animation:zelpxOpeningPulse 3.8s ease-in-out infinite}
-#zelpxAccountOpening .opening-copy{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.18em;max-width:100%;white-space:nowrap;text-align:center;font-size:clamp(17px,4.5vw,31px);font-weight:800;letter-spacing:.14em;line-height:1.2}
-#zelpxAccountOpening .opening-brand{display:inline;font-size:1em;letter-spacing:.18em}
-#zelpxAccountOpening .opening-message{display:inline;font-size:1em;letter-spacing:.12em;font-weight:800}
-#zelpxAccountOpening .opening-dots:after{content:"...";display:inline-block;width:1.5em;text-align:left;animation:zelpxOpeningDots 1.3s steps(4,end) infinite}
-@keyframes zelpxOpeningPulse{0%,100%{opacity:.55;scale:.94}50%{opacity:.95;scale:1.06}}
-@keyframes zelpxOpeningDots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
-@media(max-width:390px){#zelpxAccountOpening .opening-copy{font-size:clamp(14px,3.7vw,17px);letter-spacing:.09em;gap:.12em}#zelpxAccountOpening .opening-brand,#zelpxAccountOpening .opening-message{letter-spacing:.08em}}
-
 </style>
 </head>
 <body>
-<div id="zelpxAccountOpening" aria-live="polite" aria-label="Opening your account">
-  <div class="opening-glow" aria-hidden="true"></div>
-  <div class="opening-copy"><span class="opening-brand">ZELPX\\A</span><span class="opening-message">Opening your account<span class="opening-dots"></span></span></div>
-</div>
 <header class="top">
   <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
 </header>
@@ -826,24 +809,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
   const $ = (id) => document.getElementById(id);
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
-  let contractorOpeningTimer = null;
-  // Match the customer portal exactly: show the opening screen for 2 seconds.
-  function showContractorOpening() {
-    const screen = $("zelpxAccountOpening");
-    if (!screen) return;
-    if (contractorOpeningTimer) window.clearTimeout(contractorOpeningTimer);
-    screen.classList.add("is-visible");
-    contractorOpeningTimer = window.setTimeout(() => {
-      screen.classList.remove("is-visible");
-      contractorOpeningTimer = null;
-    }, 2000);
-  }
-  function hideContractorOpening() {
-    const screen = $("zelpxAccountOpening");
-    if (contractorOpeningTimer) window.clearTimeout(contractorOpeningTimer);
-    contractorOpeningTimer = null;
-    if (screen) screen.classList.remove("is-visible");
-  }
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
   let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
@@ -1158,7 +1123,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     } finally { setBusy($("signupBtn"), false); }
   }
   async function loadApp() {
-    showContractorOpening();
     const { data: { user }, error: userError } = await db.auth.getUser();
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
@@ -3379,7 +3343,6 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
   async function start() {
-    showContractorOpening();
     wireEvents();
     try {
       initClient();
