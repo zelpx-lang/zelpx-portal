@@ -460,6 +460,24 @@
       body.admin-mode #topUser { align-items:flex-start; }
     }
 
+
+    /* Branded ZELPX purchase confirmation */
+    .zelpx-confirm-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(12,20,30,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .zelpx-confirm-dialog{width:min(100%,430px);overflow:hidden;border:1px solid rgba(255,255,255,.75);border-radius:22px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:zelpxModalIn .2s ease-out}
+    .zelpx-confirm-top{padding:25px 25px 18px;background:linear-gradient(135deg,#fff7ed,#fff);text-align:center}
+    .zelpx-confirm-icon{width:58px;height:58px;margin:0 auto 13px;border-radius:18px;display:grid;place-items:center;background:#ffead5;color:#c45a12;font-size:28px;font-weight:800}
+    .zelpx-confirm-title{margin:0;color:#182638;font-size:22px;line-height:1.25;font-weight:800}
+    .zelpx-confirm-body{padding:20px 25px 8px;text-align:center;color:#536174;font-size:15px;line-height:1.55}
+    .zelpx-confirm-price{display:block;margin:7px 0 4px;color:#c45a12;font-size:32px;font-weight:800;letter-spacing:-.7px}
+    .zelpx-confirm-note{margin:8px 0 0;color:#778294;font-size:13px}
+    .zelpx-confirm-actions{display:flex;gap:12px;padding:22px 25px 25px}
+    .zelpx-confirm-actions button{flex:1;min-height:48px;border-radius:12px;font-weight:750;cursor:pointer}
+    .zelpx-confirm-cancel{border:1px solid #d9e0e8;background:#fff;color:#435064}
+    .zelpx-confirm-buy{border:1px solid #d96519;background:linear-gradient(135deg,#f28a32,#d96519);color:#fff;box-shadow:0 5px 14px rgba(217,101,25,.22)}
+    .zelpx-confirm-actions button:focus-visible{outline:3px solid #f7b77e;outline-offset:3px}
+    @keyframes zelpxModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @media(max-width:480px){.zelpx-confirm-overlay{padding:16px}.zelpx-confirm-dialog{border-radius:19px}.zelpx-confirm-top{padding:22px 18px 15px}.zelpx-confirm-body{padding:17px 20px 5px}.zelpx-confirm-actions{padding:18px 20px 21px}}
+
 </style>
 </head>
 <body class="admin-mode">
@@ -832,8 +850,70 @@
     (data || []).forEach(category => { const option = document.createElement("option"); option.value = category.name; option.textContent = category.name; select.append(option); });
     if (!data?.length) first.textContent = "No active categories found";
   }
+
+  function confirmLeadPurchase(price) {
+    return new Promise(resolve => {
+      const overlay = document.createElement("div");
+      overlay.className = "zelpx-confirm-overlay";
+      const dialog = document.createElement("section");
+      dialog.className = "zelpx-confirm-dialog";
+      dialog.setAttribute("role", "dialog");
+      dialog.setAttribute("aria-modal", "true");
+      dialog.setAttribute("aria-labelledby", "zelpxConfirmTitle");
+      const top = document.createElement("div");
+      top.className = "zelpx-confirm-top";
+      const icon = document.createElement("div");
+      icon.className = "zelpx-confirm-icon";
+      icon.textContent = "$";
+      const title = document.createElement("h2");
+      title.className = "zelpx-confirm-title";
+      title.id = "zelpxConfirmTitle";
+      title.textContent = "Confirm lead purchase";
+      top.append(icon, title);
+      const body = document.createElement("div");
+      body.className = "zelpx-confirm-body";
+      body.append(document.createTextNode("Buy this exclusive lead for"));
+      const amount = document.createElement("strong");
+      amount.className = "zelpx-confirm-price";
+      amount.textContent = price;
+      body.append(amount, document.createTextNode("The amount will be deducted from your ZELPX credit balance."));
+      const note = document.createElement("p");
+      note.className = "zelpx-confirm-note";
+      note.textContent = "This lead is exclusive to one professional.";
+      body.append(note);
+      const actions = document.createElement("div");
+      actions.className = "zelpx-confirm-actions";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "zelpx-confirm-cancel";
+      cancel.textContent = "Cancel";
+      const buy = document.createElement("button");
+      buy.type = "button";
+      buy.className = "zelpx-confirm-buy";
+      buy.textContent = "Buy Lead";
+      actions.append(cancel, buy);
+      dialog.append(top, body, actions);
+      overlay.append(dialog);
+      document.body.append(overlay);
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener("keydown", onKey);
+        overlay.remove();
+        resolve(value);
+      };
+      const onKey = event => { if (event.key === "Escape") finish(false); };
+      cancel.addEventListener("click", () => finish(false));
+      buy.addEventListener("click", () => finish(true));
+      overlay.addEventListener("click", event => { if (event.target === overlay) finish(false); });
+      document.addEventListener("keydown", onKey);
+      buy.focus();
+    });
+  }
+
   async function buyLead(lead, button) {
-    if (!window.confirm("Buy this exclusive lead for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
+    if (!await confirmLeadPurchase(money(lead.price_cents))) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
