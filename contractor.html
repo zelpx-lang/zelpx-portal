@@ -851,27 +851,44 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
 
   async function signInContractorWithProvider(provider, buttonId) {
-    try { if (!db || !db.auth || !db.functions) initClient(); }
-    catch (clientError) { return message("authMessage", clientError.message, "error"); }
-    const buttonIds = ["contractorGoogleSignInButton", "contractorFacebookSignInButton"];
-    const buttons = buttonIds.map(id => $(id));
-    buttons.forEach(button => { button.disabled = true; });
     const button = $(buttonId);
-    button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
-    clearMessage("authMessage");
+    const buttons = ["contractorGoogleSignInButton", "contractorFacebookSignInButton"]
+      .map(id => $(id)).filter(Boolean);
+    const setButtonLabel = (label) => {
+      const textNodes = Array.from(button.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+      const textNode = textNodes[textNodes.length - 1];
+      if (textNode) textNode.textContent = " " + label;
+      else button.append(document.createTextNode(" " + label));
+    };
     try {
+      if (!db || !db.auth || !db.functions) initClient();
+      if (!button || typeof db.auth.signInWithOAuth !== "function") {
+        throw new Error("Google sign-in is temporarily unavailable. Please refresh and try again.");
+      }
+      buttons.forEach(item => { item.disabled = true; });
+      setButtonLabel(provider === "google" ? "Connecting to Google..." : "Connecting to Facebook...");
+      clearMessage("authMessage");
+
+      // Mark this as a contractor OAuth flow so the callback returns to this portal.
+      const oauthMarker = JSON.stringify({ portal: "contractor", at: Date.now() });
+      try { localStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+      try { sessionStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+
       const { error } = await db.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: window.location.origin + "/contractor",
+          redirectTo: new URL("/contractor", window.location.origin).toString(),
           ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
         }
       });
       if (error) throw error;
     } catch (error) {
-      message("authMessage", error.message || "Social sign-in could not be started. Please try again.", "error");
-      button.lastChild.textContent = provider === "google" ? " Continue with Google" : " Continue with Facebook";
+      console.error("Contractor social sign-in failed:", provider, error);
+      try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+      try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+      message("authMessage", error?.message || "Social sign-in could not be started. Please try again.", "error");
       buttons.forEach(item => { item.disabled = false; });
+      setButtonLabel(provider === "google" ? "Continue with Google" : "Continue with Facebook");
     }
   }
   $("contractorGoogleSignInButton").addEventListener("click", () => signInContractorWithProvider("google", "contractorGoogleSignInButton"));
