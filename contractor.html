@@ -1550,7 +1550,9 @@
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
       const categoryMatch = !category || (category === "__lead_package__" ? lead.lead_type === "lead_package" : lead.service_category === category);
-      const serviceMatch = isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
+      // Sold previews are visible to every contractor during the 3-minute window,
+      // independent of the contractor's selected service categories.
+      const serviceMatch = lead.status !== "available" || isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
       const haystack = [lead.service_category, ...(Array.isArray(lead.package_services) ? lead.package_services : []), lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
     });
