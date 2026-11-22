@@ -1337,6 +1337,105 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       "Putting green turf installation": [["Putting green area (sq ft)","number"],["Number of holes/cups","number"],["Base preparation needed?","Yes, no, not sure"],["Existing turf removal?","Yes, no, not sure"],["Turf/material supplied by","Customer, contractor, not sure"]],
       "Other": [["Describe the service","Describe"],["Approximate size or quantity","Describe"]]
     };
+    function getProfessionSpecificQuestions(serviceName) {
+      const name = String(serviceName || "").toLowerCase();
+      const has = (...terms) => terms.some(term => name.includes(term));
+      const yesNo = "Yes, no, not sure";
+      const size = ["Approximate project area (sq ft)","number"];
+      if (has("clean","janitorial","maid","housekeeping","sanitiz")) return [
+        ["Property type","House, apartment, condo, office, commercial, other"],
+        ["Approximate area to clean (sq ft)","number"],["Number of rooms","number"],
+        ["Bathrooms","number"],["Cleaning scope","Standard cleaning, deep cleaning, move-in, move-out, post-construction, selected areas"],
+        ["Frequency","One-time, daily, weekly, biweekly, monthly"],["Areas to focus on","Kitchen, bathrooms, bedrooms, living areas, windows, floors, all areas"]
+      ];
+      if (has("floor","carpet","tile","laminate","hardwood","vinyl","lvp","lvt","grout")) return [
+        ["Work requested","New installation, replacement, repair, refinishing, removal, cleaning"],
+        ["Flooring/material type","Tile, porcelain, stone, hardwood, engineered wood, laminate, LVP, LVT, carpet, other, not sure"],
+        ["Approximate area (sq ft)","number"],["Number of rooms/areas","number"],
+        ["Remove existing material? ",yesNo],["Subfloor preparation or repair needed?",yesNo],
+        ["Stairs included?",yesNo],["Who supplies materials?","Customer, contractor, not sure"]
+      ];
+      if (has("plumb","pipe","drain","sewer","septic","water heater","well pump","backflow","irrigation")) return [
+        ["Work requested","Installation, repair, replacement, maintenance, inspection, leak detection, unclogging"],
+        ["System or fixture","Sink, faucet, toilet, shower/tub, drain, sewer line, water heater, pipe, pump, other"],
+        ["Describe issue/location","Kitchen, bathroom, basement, crawl space, outdoors, multiple areas, not sure"],
+        ["Number of fixtures/locations","number"],["Is there an active leak or blockage?",yesNo],
+        ["Water shutoff available?",yesNo],["Urgency","Emergency, within 24 hours, this week, flexible"]
+      ];
+      if (has("electric","wiring","lighting","solar","alarm","security","doorbell","generator")) return [
+        ["Work requested","New installation, repair, replacement, upgrade, troubleshooting, inspection"],
+        ["System or item","Outlet, switch, lighting, panel, wiring, breaker, alarm, camera, solar panel, other"],
+        ["Number of items/locations","number"],["Is power available at the work area?",yesNo],
+        ["Panel or wiring upgrade involved?",yesNo],["Urgency","Emergency, soon, flexible"]
+      ];
+      if (has("hvac","air condition","air conditioner","furnace","boiler","heat pump","ventilat","thermostat","duct")) return [
+        ["Work requested","Installation, repair, replacement, maintenance, inspection"],
+        ["Equipment type","Central AC, furnace, heat pump, mini-split, boiler, thermostat, ductwork, ventilation, other"],
+        ["Approximate property area (sq ft)","number"],["Number of units","number"],
+        ["Equipment age","0–5 years, 6–10 years, 11–15 years, over 15 years, not sure"],
+        ["System currently operating?",yesNo],["Urgency","No heat/AC, reduced performance, routine, flexible"]
+      ];
+      if (has("paint","wallpaper","stain","finish","refinish","coating")) return [
+        ["Work requested","New application, repainting, repair, refinishing, removal, staining, sealing"],
+        ["Location","Interior, exterior, both"],["Surfaces","Walls, ceilings, trim, cabinets, doors, deck, fence, floors, other"],
+        ["Approximate area (sq ft)","number"],["Number of rooms/items","number"],
+        ["Surface preparation or repairs needed?",yesNo],["Who supplies materials?","Customer, contractor, not sure"]
+      ];
+      if (has("roof","gutter","siding","chimney","window","glass","glazier","door","garage door","screen")) return [
+        ["Work requested","Installation, repair, replacement, cleaning, inspection, maintenance"],
+        ["Area or item","Roof, gutter, siding, chimney, window, glass, entry door, garage door, other"],
+        ["Number of items/sections","number"],["Number of stories","1, 2, 3+"],
+        ["Approximate area or length","number"],["Leak, damage, or safety issue?",yesNo],
+        ["Remove existing materials?",yesNo]
+      ];
+      if (has("landscap","lawn","turf","grass","tree","arbor","stump","garden","yard","fence","deck","paver","sprinkler")) return [
+        ["Work requested","New installation, repair, removal, trimming, cleanup, maintenance, design"],
+        ["Work area","Front yard, backyard, side yard, entire property, specific area"],
+        ["Approximate area (sq ft)","number"],["Number of trees/items/sections","number"],
+        ["Existing material or vegetation removal?",yesNo],["Haul away debris?",yesNo],
+        ["Materials/plants supplied by","Customer, contractor, not sure"]
+      ];
+      if (has("cabinet","countertop","carpenter","carpentry","trim","molding","framing","drywall","handyman","remodel","renovat","basement","concrete","mason","brick","stucco","foundation","demolition")) return [
+        ["Work requested","New installation, repair, replacement, remodeling, removal, finishing"],
+        ["Work area or item","Kitchen, bathroom, basement, living area, exterior, multiple areas, other"],
+        ["Describe the specific work","Cabinets, countertops, framing, drywall, trim, doors, concrete, masonry, demolition, other"],
+        ["Approximate area (sq ft)","number"],["Number of items/rooms","number"],
+        ["Remove existing materials?",yesNo],["Structural or surface preparation needed?",yesNo],
+        ["Who supplies materials?","Customer, contractor, not sure"]
+      ];
+      if (has("move","junk","haul","removal","cleanout","搬")) return [
+        ["Work requested","Pickup, removal, hauling, loading, moving, disposal, cleanout"],
+        ["Items/materials","Furniture, appliances, construction debris, yard waste, boxes, mixed items, other"],
+        ["Estimated volume","A few items, 1/4 truck, 1/2 truck, 3/4 truck, full truck, not sure"],
+        ["Pickup or access location","Inside property, garage, curbside, upstairs, basement, outdoors"],
+        ["Stairs or elevator access?",yesNo],["Heavy or oversized items?",yesNo]
+      ];
+      if (has("pool","spa","hot tub")) return [
+        ["Work requested","Installation, repair, maintenance, cleaning, inspection, removal"],
+        ["Pool/spa type","Above-ground, in-ground, spa, hot tub, other"],["Approximate size","Small, medium, large, not sure"],
+        ["Issue or work area","Pump, filter, liner, plumbing, surface, heater, water quality, other"],
+        ["Number of units","number"],["Is the system operating?",yesNo]
+      ];
+      if (has("pest","extermin","termite","rodent","wildlife","mold","asbestos","lead abatement","radon","remediation")) return [
+        ["Work requested","Inspection, testing, treatment, removal, remediation, prevention"],
+        ["Affected area","Kitchen, attic, basement, crawl space, walls, exterior, whole property"],
+        ["Approximate affected area (sq ft)","number"],["Issue identified","Pest, mold, moisture, asbestos, lead, radon, other, not sure"],
+        ["Is the area occupied?",yesNo],["Is this urgent?",yesNo]
+      ];
+      if (has("inspect","inspection","survey","energy audit")) return [
+        ["Inspection type","Pre-purchase, maintenance, safety, damage, system-specific, other"],
+        ["Property type","House, condo, apartment, commercial, other"],["Approximate property size (sq ft)","number"],
+        ["Number of stories","1, 2, 3+"],["Reason for inspection","Purchase, sale, maintenance, suspected damage, other"]
+      ];
+      return [
+        ["Work requested","Installation, repair, replacement, maintenance, removal, inspection, other"],
+        ["Specific item or area","Single item, multiple items, one room, multiple rooms, exterior, whole property"],
+        ["Approximate size or quantity","Small, medium, large, multiple items, not sure"],
+        ["Number of items/areas","number"],["Existing item/material removal needed?",yesNo],
+        ["Who supplies materials?","Customer, contractor, not sure"]
+      ];
+    }
+
     function renderServiceDetails() {
       const panel = $("serviceDetails");
       panel.replaceChildren();
@@ -1358,7 +1457,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         serviceHeading.textContent = service;
         serviceHeading.style.cssText = "margin:0 0 12px;font-size:17px;";
         section.append(serviceHeading);
-        const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
+        const questions = serviceDetailQuestions[service] || getProfessionSpecificQuestions(service);
         questions.forEach(([labelText, options]) => {
           const label = document.createElement("label"); label.textContent = labelText;
           // Default every service-detail option list to popup multi-select.
@@ -1403,14 +1502,14 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
               overlay.style.cssText = "position:fixed;inset:0;z-index:100000;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;";
               const dialog = document.createElement("div");
               dialog.setAttribute("role","dialog"); dialog.setAttribute("aria-modal","true");
-              dialog.style.cssText = "width:min(100%,520px);max-height:min(80vh,720px);overflow:auto;background:#fffdfa;color:#211f1c;border-radius:22px;padding:20px;box-shadow:0 18px 60px #0005;";
+              dialog.style.cssText = "width:min(100%,520px);max-height:min(68vh,560px);overflow:auto;background:#fffdfa;color:#211f1c;border-radius:16px;padding:14px;box-shadow:0 12px 36px #0004;";
               const title = document.createElement("h3"); title.textContent = labelText; title.style.marginTop="0";
               const hint = document.createElement("p"); hint.className="subtitle"; hint.textContent="Select all that apply.";
               const choices = document.createElement("div"); choices.style.cssText="display:grid;gap:9px;";
               const selected = new Set(JSON.parse(wrap.dataset.selectedValues || "[]"));
               values.filter(v=>v.toLowerCase()!=="all").forEach(value=>{
                 const row=document.createElement("label");
-                row.style.cssText="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--customer-line);border-radius:12px;";
+                row.style.cssText="display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid var(--customer-line);border-radius:10px;font-size:14px;line-height:1.3;";
                 const cb=document.createElement("input"); cb.type="checkbox"; cb.value=value; cb.checked=selected.has(value);
                 cb.style.cssText="width:21px;height:21px;min-width:21px;accent-color:var(--customer-orange);";
                 row.append(cb,document.createTextNode(value)); choices.append(row);
