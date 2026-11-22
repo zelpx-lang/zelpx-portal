@@ -537,6 +537,13 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
 </header>
 <main>
+  <section id="oauthReturnLoading" class="card hidden" role="status" aria-live="polite">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span aria-hidden="true" style="width:22px;height:22px;border:3px solid #f2d7c8;border-top-color:#e8753d;border-radius:50%;display:inline-block;animation:zelpxAuthSpin .8s linear infinite"></span>
+      <div><strong>Signing you in…</strong><div class="muted">Please wait while your contractor dashboard loads.</div></div>
+    </div>
+  </section>
+  <style>@keyframes zelpxAuthSpin{to{transform:rotate(360deg)}}</style>
   <section id="authView" class="card">
     <h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
     <div id="authMessage" class="message hidden"></div>
@@ -3388,11 +3395,25 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
         history.replaceState(null, "", window.location.pathname + (cleanQuery ? "?" + cleanQuery : "") + window.location.hash);
       }
       const { data: { session } } = await db.auth.getSession();
-      if (session) { await loadApp(); await handlePaymentReturn(); }
+      if (session) {
+        // On the OAuth callback, never flash the login form while the account
+        // and dashboard are being restored. Show a neutral loading state instead.
+        hide($("authView"));
+        show($("oauthReturnLoading"));
+        try {
+          await loadApp();
+          hide($("oauthReturnLoading"));
+          await handlePaymentReturn();
+        } catch (loadError) {
+          hide($("oauthReturnLoading"));
+          show($("authView"));
+          throw loadError;
+        }
+      }
       db.auth.onAuthStateChange((_event, sessionNow) => {
-        if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
+        if (!sessionNow) { hide($("oauthReturnLoading")); hide($("appView")); hide($("topUser")); show($("authView")); }
       });
-    } catch (e) { message("authMessage", e.message, "error"); }
+    } catch (e) { hide($("oauthReturnLoading")); show($("authView")); message("authMessage", e.message, "error"); }
   }
   start();
 })();
