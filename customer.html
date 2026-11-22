@@ -1289,12 +1289,22 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
     async function loadCustomerProfile(user) {
       clearMessage("profileMessage");
-      const { data, error } = await db
+      let { data, error } = await db
         .from("profiles")
         .select("full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number")
         .eq("id", user.id)
         .maybeSingle();
 
+      // Keep the existing profile screen usable on previews/environments
+      // where the additive phone-verification migration has not been applied yet.
+      if (error && /phone_verified_(at|number)|column .* does not exist/i.test(error.message || "")) {
+        const fallback = await db.from("profiles")
+          .select("full_name,phone,role,avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+        data = fallback.data;
+        error = fallback.error;
+      }
       if (error) throw error;
       if (!data) {
         throw new Error("Customer profile is not ready yet. Please sign out and sign in again, or contact ZELPX support.");
