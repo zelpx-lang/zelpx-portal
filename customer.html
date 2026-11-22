@@ -682,10 +682,7 @@ button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);b
 
 /* ZELPX account-openin
 
-<div id="zelpxAccountOpening" aria-live="polite" aria-label="Opening your account">
-  <div class="opening-glow" aria-hidden="true"></div>
-  <div class="opening-copy"><span class="opening-brand">ZELPX</span><span class="opening-message">Opening your account<span class="opening-dots"></span></span></div>
-</div>
+
 g screen */
 #zelpxAccountOpening{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;padding:24px;background:#f7f3ed;color:#211d19;font-family:Arial,sans-serif}
 #zelpxAccountOpening.is-visible{display:flex}
@@ -700,6 +697,11 @@ g screen */
 </head>
 
 <body>
+<div id="zelpxAccountOpening" aria-live="polite" aria-label="Opening your account">
+  <div class="opening-glow" aria-hidden="true"></div>
+  <div class="opening-copy"><span class="opening-brand">ZELPX</span><span class="opening-message">Opening your account<span class="opening-dots"></span></span></div>
+</div>
+
   <main class="container">
     <div class="logo">ZELPX</div>
 
