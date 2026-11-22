@@ -459,6 +459,30 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   #topUser.contractor-dashboard-logout #logoutBtn{min-width:96px;min-height:44px;padding:9px 14px;font-size:14px}
 }
 
+
+/* Critical mobile flex fix: reserve a real text column beside the logout button */
+#appView>.card:first-child .dashboard-intro{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:space-between!important;width:100%;min-width:0
+}
+#appView>.card:first-child .dashboard-intro-copy{
+  display:block!important;flex:1 1 0%!important;width:0!important;min-width:0!important;
+  max-width:none!important
+}
+#appView>.card:first-child .dashboard-intro-copy h1,
+#appView>.card:first-child .dashboard-intro-copy p{
+  max-width:100%;word-break:normal!important;overflow-wrap:normal!important
+}
+#appView>.card:first-child #topUser.contractor-dashboard-logout{
+  display:flex!important;flex:0 0 auto!important;width:auto!important;
+  max-width:none!important;min-width:0!important;margin-left:12px!important
+}
+@media(max-width:700px){
+  #appView>.card:first-child .dashboard-intro{gap:10px!important}
+  #appView>.card:first-child .dashboard-intro-copy h1{font-size:clamp(21px,5vw,25px)!important;line-height:1.2}
+  #appView>.card:first-child #topUser.contractor-dashboard-logout #logoutBtn{min-width:94px}
+}
+
 </style>
 </head>
 <body>
