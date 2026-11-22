@@ -1787,21 +1787,15 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           // Rebuilding detail cards changes document height. Keep the review
           // card at the same viewport position on mobile, even when browser
           // focus handling tries to scroll after the tapped button is removed.
-          const restoreViewport = () => {
-            const nextTop = selectedServicesReview.getBoundingClientRect().top;
-            const delta = nextTop - reviewAnchor;
-            if (Math.abs(delta) > 1) {
-              window.scrollTo({ top: window.scrollY + delta, left: 0, behavior: "instant" });
-            }
-          };
-          const previousAnchor = document.documentElement.style.overflowAnchor;
-          document.documentElement.style.overflowAnchor = "none";
           let viewportPasses = 0;
           const stabilizeViewport = () => {
-            restoreViewport();
+            window.scrollTo(0, keepScrollY);
             viewportPasses += 1;
-            if (viewportPasses < 4) requestAnimationFrame(stabilizeViewport);
-            else document.documentElement.style.overflowAnchor = previousAnchor;
+            if (viewportPasses < 8) requestAnimationFrame(stabilizeViewport);
+            else {
+              document.documentElement.style.scrollBehavior = previousBehavior;
+              document.documentElement.style.overflowAnchor = previousAnchor;
+            }
           };
           requestAnimationFrame(stabilizeViewport);
         });
@@ -1813,9 +1807,16 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         restore.className = "restore-service-button";
         restore.textContent = "↶ " + service;
         restore.setAttribute("aria-label", "Restore " + service);
-        restore.addEventListener("pointerdown", event => event.preventDefault());
+        restore.addEventListener("pointerdown", event => {
+          event.preventDefault();
+          restore.dataset.scrollY = String(window.scrollY);
+        });
         restore.addEventListener("click", () => {
-          const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
+          const keepScrollY = Number(restore.dataset.scrollY || window.scrollY);
+          const previousBehavior = document.documentElement.style.scrollBehavior;
+          const previousAnchor = document.documentElement.style.overflowAnchor;
+          document.documentElement.style.scrollBehavior = "auto";
+          document.documentElement.style.overflowAnchor = "none";
           if (document.activeElement && document.activeElement !== document.body) {
             document.activeElement.blur();
           }
