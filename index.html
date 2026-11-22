@@ -731,6 +731,7 @@ tick();
   const sphereSubservices = [...Object.keys(sphereServiceGroups), ...Object.values(sphereServiceGroups).flatMap(group => group.services || [])];
   const uniqueServices = values => [...new Map(values.filter(Boolean).map(value => [String(value).toLowerCase(), String(value)])).values()];
   let availableServices = uniqueServices([...FALLBACK, ...sphereSubservices]);
+  let catalogServiceNames = [];
   let selectedService = "";
   function serviceIcon(name) {
     return sphereServiceGroups[name]?.icon || "🧰";
@@ -752,7 +753,8 @@ tick();
       const payload = await response.json();
       const data = Array.isArray(payload.categories) ? payload.categories : [];
       if (!data.length) throw new Error(payload.error || "No active services");
-      availableServices = uniqueServices([...data.map(item => item.name), ...FALLBACK, ...sphereSubservices]);
+      catalogServiceNames = uniqueServices(data.map(item => item.name));
+      availableServices = uniqueServices([...catalogServiceNames, ...FALLBACK, ...sphereSubservices]);
       serviceInput.placeholder = "Search all home services…";
       renderCards(availableServices);
     } catch (error) {
@@ -820,17 +822,38 @@ tick();
     if(event.key==="Enter"&&!suggestions.hidden){const first=suggestions.querySelector("button");if(first){event.preventDefault();first.click();}}
   });
   function parentCategoryForService(service) {
+    const key = normalize(service);
+    // Use the exact active profession/category from the database whenever possible.
+    const exactCatalogMatch = catalogServiceNames.find(name => normalize(name) === key);
+    if (exactCatalogMatch) return exactCatalogMatch;
+
+    const aliases = [
+      [/^closet system installation$|^custom closet installation$|^closet shelving installation$|^pantry shelving installation$|^floating shelf installation$/, "Closet and Shelving Installation"],
+      [/^kitchen cabinet installation$|^kitchen cabinet replacement$|^bathroom vanity installation$|^bathroom cabinet installation$|^cabinet hardware installation$/, "Cabinet Installation"],
+      [/^kitchen cabinet refacing$|^cabinet refacing$/, "Cabinet Refacing"],
+      [/^interior carpentry$|^custom built ins$|^framing repair$/, "Carpentry"],
+      [/^sliding door installation$|^barn door installation$|^door replacement$|^door hardware and lock installation$/, "Door Installation"],
+      [/^drywall patching and repair$|^drywall texture repair$/, "Drywall Repair and Texturing"],
+      [/^small home repairs$/, "Handyman Services"]
+    ];
+    for (const [pattern, category] of aliases) {
+      if (pattern.test(key)) {
+        const match = catalogServiceNames.find(name => normalize(name) === normalize(category));
+        if (match) return match;
+      }
+    }
+
     for (const [groupName, group] of Object.entries(sphereServiceGroups)) {
-      if ((group.services || []).some(name => normalize(name) === normalize(service))) {
+      if ((group.services || []).some(name => normalize(name) === key)) {
         if (groupName === "Tile & Flooring") return /floor|laminate|hardwood|parquet|vinyl|carpet|cork|rubber|subfloor/i.test(service) ? "Flooring Installation" : "Tile Installation";
         if (groupName === "Painting") return "Painting";
-        if (groupName === "Cabinets, Doors & Trim") return "Doors & Windows";
+        if (groupName === "Cabinets, Doors & Trim") return "Carpentry";
         if (groupName === "Electrical") return "Electrical";
         if (groupName === "Heating & Air (HVAC)") return "HVAC";
         if (groupName === "Plumbing") return "Plumbing";
         if (groupName === "Appliance Maintenance") return "Appliance Maintenance";
         if (groupName === "Artificial Turf Installation") return "Artificial Turf Installation";
-        if (groupName === "Carpentry") return "Carpenter";
+        if (groupName === "Carpentry") return "Carpentry";
         if (groupName === "Basement Cleaning") return "Basement Cleaning";
         if (groupName === "House Cleaning") return "House Cleaning";
         if (groupName === "Office Cleaning") return "Office Cleaning";
