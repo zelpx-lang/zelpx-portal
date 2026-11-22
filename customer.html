@@ -438,6 +438,17 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
       gap:12px;
     }
     .grid > div { min-width:0; }
+    .commercial-sharing-notice {
+      margin:18px 0 16px;padding:16px 17px;border:1px solid #f0d6c5;
+      border-radius:17px;background:linear-gradient(145deg,#fff8f2,#fffdfa);
+      color:var(--customer-ink);font-size:13px;line-height:1.55;
+    }
+    .commercial-sharing-notice>strong{display:block;margin-bottom:7px;font-size:15px;color:#9d421e}
+    .commercial-sharing-notice p{margin:0 0 12px;color:var(--customer-muted)}
+    .commercial-sharing-consent{display:flex;align-items:flex-start;gap:10px;margin:0!important;color:var(--customer-ink);font-size:13px;font-weight:650;letter-spacing:0!important}
+    .commercial-sharing-consent input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:var(--customer-orange)}
+    .request-cancel-button{width:auto!important;min-height:38px;margin:0 8px 8px 0;padding:8px 13px;background:#fff7f2;color:#a84220;border:1px solid #edc5b0;box-shadow:none;font-size:13px}
+    .request-cancel-button:hover:not(:disabled){background:#ffede2;color:#8e3215;box-shadow:none}
     #requestForm > button,#authForm > button { width:100%; }
     @media(max-width:600px) {
       body { padding:12px 9px; }
@@ -919,6 +930,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
+
+        <section class="commercial-sharing-notice" aria-labelledby="commercialSharingHeading">
+          <strong id="commercialSharingHeading">Your request is free — here's how ZELPX works</strong>
+          <p>You will not be charged to submit a service request. ZELPX may share the project details you provide with one eligible service professional. That professional pays ZELPX to unlock your contact information so they can respond to your project. Your name, phone number, email and exact street address are not shown publicly.</p>
+          <label class="commercial-sharing-consent">
+            <input id="commercialSharingConsent" type="checkbox" required>
+            <span>I understand and agree that my project details may be shared with one service professional, and that the professional pays ZELPX to access my contact information.</span>
+          </label>
+        </section>
 
         <button id="requestButton" type="submit">
           Submit Request
@@ -2112,6 +2132,12 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       event.preventDefault();
       clearMessage("requestMessage");
 
+      if (!$("commercialSharingConsent").checked) {
+        showMessage("requestMessage", "Please review and accept how ZELPX shares service requests before submitting.", "error");
+        $("commercialSharingConsent").focus();
+        return;
+      }
+
       const button = $("requestButton");
       button.disabled = true;
       button.textContent = "Submitting...";
@@ -2154,7 +2180,9 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           service_latitude: Number(verifiedAddress.latitude) || null,
           service_longitude: Number(verifiedAddress.longitude) || null,
           description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
-          preferred_time: $("preferredTime").value || null
+          preferred_time: $("preferredTime").value || null,
+          commercial_sharing_consent_at: new Date().toISOString(),
+          commercial_sharing_consent_version: "2026-11-22-v1"
         };
 
         if (!request.service_type || !request.property_address || !request.service_city ||
@@ -2397,7 +2425,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         const { data, error } = await db
           .from("service_requests")
-          .select("id, lead_id, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
+          .select("id, lead_id, purchased_by, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
           .eq("user_id", session.user.id)
           .is("hidden_at", null)
           .order("created_at", { ascending: false });
@@ -2571,6 +2599,28 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
             retention.append(waitMessage);
           }
           actions.append(status, retention);
+          if ((request.status === "new" || request.status === "published") && !request.purchased_by) {
+            const cancelButton = document.createElement("button");
+            cancelButton.type = "button";
+            cancelButton.className = "request-cancel-button";
+            cancelButton.textContent = "Cancel request";
+            cancelButton.addEventListener("click", async () => {
+              if (!window.confirm("Cancel this service request? If it has not been purchased, it will be removed from the available jobs list.")) return;
+              cancelButton.disabled = true;
+              cancelButton.textContent = "Cancelling…";
+              try {
+                const { error: cancelError } = await db.rpc("cancel_own_service_request", { p_request_id: request.id });
+                if (cancelError) throw cancelError;
+                await loadRequests();
+                showMessage("requestMessage", "Your service request has been cancelled.", "success");
+              } catch (error) {
+                window.alert(error.message || "Could not cancel this request.");
+                cancelButton.disabled = false;
+                cancelButton.textContent = "Cancel request";
+              }
+            });
+            actions.insertBefore(cancelButton, retention);
+          }
           details.appendChild(actions);
 
           if (request.lead_id) {
