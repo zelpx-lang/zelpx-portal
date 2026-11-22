@@ -2369,6 +2369,32 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
         await openContractorChat(item.lead_id, chatPanel);
       });
       details.append(chatButton, chatPanel);
+      const claimButton = document.createElement("button");
+      claimButton.type = "button";
+      claimButton.className = "secondary";
+      claimButton.textContent = "Report a problem with this lead";
+      claimButton.style.cssText = "display:block;margin-top:12px;border-color:#d7a18a;color:#9b3b24";
+      claimButton.addEventListener("click", async () => {
+        const reason = window.prompt("Choose a reason by entering its number:\n1. Invalid phone number\n2. Customer denies submitting request\n3. Wrong person\n4. Duplicate lead\n5. Fake customer\n6. False service request\n7. Unable to reach customer\n8. Other");
+        if (reason === null) return;
+        const reasonMap = { "1":"invalid_phone", "2":"customer_denies_request", "3":"wrong_person", "4":"duplicate_lead", "5":"fake_customer", "6":"false_service_request", "7":"unable_to_reach", "8":"other" };
+        const selectedReason = reasonMap[String(reason).trim()];
+        if (!selectedReason) { window.alert("Please enter a number from 1 to 8."); return; }
+        const detailsText = window.prompt("Add details to help ZELPX review this report (optional).") || "";
+        claimButton.disabled = true; claimButton.textContent = "Submitting report…";
+        try {
+          const { data: claimId, error: claimError } = await db.rpc("submit_lead_protection_claim", {
+            p_purchase_id: item.id, p_reason: selectedReason, p_details: detailsText
+          });
+          if (claimError) throw claimError;
+          claimButton.textContent = "Report submitted";
+          window.alert("Your report was sent to ZELPX for review. Reference: " + claimId);
+        } catch (claimError) {
+          claimButton.disabled = false; claimButton.textContent = "Report a problem with this lead";
+          window.alert(claimError.message || "Could not submit the report.");
+        }
+      });
+      details.append(claimButton);
       const closeLeadButton = document.createElement("button");
       closeLeadButton.type = "button";
       closeLeadButton.className = "secondary";
