@@ -931,6 +931,11 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
 
+        <label class="request-confirmation" for="customerLiveConfirmation" style="display:flex;gap:10px;align-items:flex-start;margin:14px 0;padding:12px;border:1px solid #e7d5c5;border-radius:12px;background:#fffaf6;color:#3f342d">
+          <input id="customerLiveConfirmation" type="checkbox" required style="margin-top:3px;flex:0 0 auto">
+          <span>I confirm this is a real project request, the contact information is mine, and I am ready to receive a call or message from a service professional about this project.</span>
+        </label>
+
         <button id="requestButton" type="submit">
           Submit Request
         </button>
@@ -2163,8 +2168,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         if (isSpherePackage && requestedServices.length < 2) {
           throw new Error("A Special Lead Package must include at least two services. Please return to the sphere and select at least two.");
         }
+        if (!$("customerLiveConfirmation").checked) {
+          throw new Error("Please confirm that this is a real project and that you are ready to be contacted.");
+        }
+
         const request = {
           user_id: session.user.id,
+          customer_live_confirmed_at: new Date().toISOString(),
+          customer_live_confirmation_version: "2026-11-22-v1",
           request_type: isSpherePackage ? "lead_package" : "regular",
           service_type: $("serviceType").value,
           property_address: $("propertyAddress").value.trim(),
