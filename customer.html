@@ -11,23 +11,18 @@
   <meta name="apple-mobile-web-app-title" content="ZELPX">
   <title>ZELPX | Customer Portal</title>
 <script>
-/* Cover the sign-in form during OAuth return, without showing a blank page. */
+/* Never let a stale OAuth marker cover the customer sign-in buttons. */
 (() => {
-  let pending = null;
-  try { pending = JSON.parse(sessionStorage.getItem("zelpx.oauth.pending") || "null"); } catch (_) {}
-  const active = !!(pending && pending.at && Date.now() - pending.at < 10 * 60 * 1000);
   window.ZELPXRevealOAuthPage = () => {
     document.documentElement.classList.remove("zelpx-oauth-pending");
     try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
     try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
   };
-  if (active) document.documentElement.classList.add("zelpx-oauth-pending");
-  else if (pending) { try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {} }
+  document.documentElement.classList.remove("zelpx-oauth-pending");
+  try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
 })();
 </script>
 <style>
-html.zelpx-oauth-pending body::before{content:"";position:fixed;inset:0;z-index:99998;background:#f6f2ec}
-html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";white-space:pre;position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;text-align:center;color:#171816;font:800 18px/2 ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.16em;background:radial-gradient(ellipse at 50% 45%,#ffe4d5 0,transparent 48%)}
 
     /* Compact, touch-friendly service answer controls */
     #serviceDetails .job-choice-trigger {
