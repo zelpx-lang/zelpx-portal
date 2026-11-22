@@ -1146,7 +1146,7 @@
     data.forEach(lead => {
       const tr = document.createElement("tr");
       const packageType = lead.lead_type === "lead_package";
-      const typeLabel = packageType ? "Lead Package" : (lead.service_category || "Regular Lead");
+      const typeLabel = packageType ? "Multi-Service Home Project" : (lead.service_category || "Regular Lead");
       const includedServices = packageType && Array.isArray(lead.package_services) ? lead.package_services.join(", ") : "—";
       [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
       body.append(tr);
