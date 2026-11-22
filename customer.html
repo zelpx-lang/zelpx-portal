@@ -1774,17 +1774,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         removeMark.textContent = "×";
         pill.append(name, removeMark);
         pill.addEventListener("click", () => {
-          const keepScrollY = window.scrollY;
+          const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
           const [removed] = sphereDraft.services.splice(index, 1);
           if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
-          // Rebuilding detail cards changes document height. Keep the viewport
-          // fixed so the customer's finger remains over the same screen position.
+          // Rebuilding detail cards changes document height. Keep the review
+          // card at the same viewport position on mobile, even when browser
+          // focus handling tries to scroll after the tapped button is removed.
+          const restoreViewport = () => {
+            const nextTop = selectedServicesReview.getBoundingClientRect().top;
+            const delta = nextTop - reviewAnchor;
+            if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+          };
           requestAnimationFrame(() => {
-            window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" });
-            requestAnimationFrame(() => window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" }));
+            restoreViewport();
+            requestAnimationFrame(restoreViewport);
           });
         });
         selectedServicesReviewList.appendChild(pill);
@@ -1796,15 +1802,23 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         restore.textContent = "↶ " + service;
         restore.setAttribute("aria-label", "Restore " + service);
         restore.addEventListener("click", () => {
-          const keepScrollY = window.scrollY;
+          const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
           const [restored] = sphereDraft.removedServices.splice(index, 1);
           if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
+          // Rebuilding detail cards changes document height. Keep the review
+          // card at the same viewport position on mobile, even when browser
+          // focus handling tries to scroll after the tapped button is removed.
+          const restoreViewport = () => {
+            const nextTop = selectedServicesReview.getBoundingClientRect().top;
+            const delta = nextTop - reviewAnchor;
+            if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+          };
           requestAnimationFrame(() => {
-            window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" });
-            requestAnimationFrame(() => window.scrollTo({ top: keepScrollY, left: 0, behavior: "instant" }));
+            restoreViewport();
+            requestAnimationFrame(restoreViewport);
           });
         });
         removedServicesRestoreList.appendChild(restore);
