@@ -483,6 +483,24 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   #appView>.card:first-child #topUser.contractor-dashboard-logout #logoutBtn{min-width:94px}
 }
 
+
+/* Full-bleed dashboard hero: span the entire screen, not the inset card */
+#appView>.card:first-child{overflow:visible!important}
+#appView>.card:first-child .dashboard-intro{
+  position:relative!important;left:50%!important;transform:translateX(-50%)!important;
+  width:100vw!important;max-width:100vw!important;box-sizing:border-box!important;
+  margin:0 0 16px!important;padding:26px max(22px,calc((100vw - 1120px)/2)) 24px!important;
+  border-radius:0 0 28px 28px!important
+}
+@media(max-width:700px){
+  #appView>.card:first-child{padding-top:0!important}
+  #appView>.card:first-child .dashboard-intro{
+    width:100vw!important;max-width:100vw!important;
+    margin:0 0 16px!important;padding:24px 22px 22px!important;
+    border-radius:0 0 26px 26px!important;min-height:148px
+  }
+}
+
 </style>
 </head>
 <body>
