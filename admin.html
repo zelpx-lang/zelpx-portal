@@ -311,6 +311,35 @@
       #contractorChangesList .contractor-update-card .contactbox p { font-size:13px; }
       #contractorChangesList .contractor-update-actions button { min-height:40px; height:40px; }
     }
+
+    /* Administrator palette refinement: orange is an accent, not the whole interface */
+    :root { --blue:#b96f4d; --accent-soft:#f3e7df; }
+    body.admin-mode button {
+      background:#eee8df !important;
+      color:#302b26 !important;
+      border:1px solid #ded5c9 !important;
+      box-shadow:none !important;
+    }
+    body.admin-mode button:hover:not(:disabled) {
+      background:#e5dbcf !important;
+      color:#25211d !important;
+      transform:none !important;
+      box-shadow:none !important;
+    }
+    body.admin-mode button.active,
+    body.admin-mode button.primary,
+    body.admin-mode button[type="submit"] {
+      background:#b96f4d !important;
+      color:#fff !important;
+      border-color:#b96f4d !important;
+    }
+    body.admin-mode button.secondary {
+      background:#fffdfa !important;
+      color:#39332d !important;
+      border-color:#ded5c9 !important;
+    }
+    body.admin-mode .brand::after { background:#c17a58; }
+    body.admin-mode .pill:not(.sold):not(.available) { background:#f1e8df; color:#76513e; }
 </style>
 </head>
 <body class="admin-mode">
