@@ -166,7 +166,7 @@ main.wrap{width:min(760px,calc(100% - 28px));min-width:0}
      rows=rows.map(item=>({...item,public_work_details:detailById.get(item.id)||"",...(packageById.get(item.id)||{})}));
      const selected=category.value, cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
      category.innerHTML='<option value="">All categories</option><option value="__lead_package__">Lead Packages</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
-     category.value=cats.includes(selected)?selected:"";
+     category.value=(selected==="__lead_package__"||cats.includes(selected))?selected:"";
      render();
    }catch(e){console.error(e);if(!rows.length)list.innerHTML='<div class="state">The job list is temporarily unavailable. Please try again.</div>';count.textContent="Could not refresh jobs";}
    finally{busy=false;}
