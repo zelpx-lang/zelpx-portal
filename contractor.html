@@ -2421,27 +2421,42 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       claimButton.className = "secondary";
       claimButton.textContent = "Report a problem with this lead";
       claimButton.style.cssText = "display:block;margin-top:12px;border-color:#d7a18a;color:#9b3b24";
-      claimButton.addEventListener("click", async () => {
-        const reason = window.prompt("Choose a reason by entering its number:\n1. Invalid phone number\n2. Customer denies submitting request\n3. Wrong person\n4. Duplicate lead\n5. Fake customer\n6. False service request\n7. Unable to reach customer\n8. Other");
-        if (reason === null) return;
-        const reasonMap = { "1":"invalid_phone", "2":"customer_denies_request", "3":"wrong_person", "4":"duplicate_lead", "5":"fake_customer", "6":"false_service_request", "7":"unable_to_reach", "8":"other" };
-        const selectedReason = reasonMap[String(reason).trim()];
-        if (!selectedReason) { window.alert("Please enter a number from 1 to 8."); return; }
-        const detailsText = window.prompt("Add details to help ZELPX review this report (optional).") || "";
-        claimButton.disabled = true; claimButton.textContent = "Submitting report…";
+      const claimForm = document.createElement("section");
+      claimForm.className = "lead hidden";
+      claimForm.style.cssText = "margin-top:10px;padding:12px;border:1px solid #eaded4;border-radius:12px;background:#fffaf6";
+      const claimHeading=document.createElement("strong"); claimHeading.textContent="Lead protection report";
+      const claimHelp=document.createElement("p"); claimHelp.className="muted"; claimHelp.textContent="Choose the problem and give ZELPX enough detail to review it. Reports are reviewed by an administrator.";
+      const reasonSelect=document.createElement("select"); reasonSelect.setAttribute("aria-label","Problem with this lead");
+      [["invalid_phone","Invalid phone number"],["customer_denies_request","Customer denies submitting request"],["wrong_person","Wrong person"],["duplicate_lead","Duplicate lead"],["fake_customer","Fake customer"],["false_service_request","False service request"],["unable_to_reach","Unable to reach customer"],["other","Other"]].forEach(([value,label])=>{
+        const option=document.createElement("option");option.value=value;option.textContent=label;reasonSelect.append(option);
+      });
+      const claimDetails=document.createElement("textarea"); claimDetails.rows=3; claimDetails.maxLength=2000; claimDetails.placeholder="Describe what happened (optional)"; claimDetails.setAttribute("aria-label","Report details");
+      const claimActions=document.createElement("div"); claimActions.className="actions";
+      const submitClaim=document.createElement("button"); submitClaim.type="button"; submitClaim.textContent="Submit report";
+      const cancelClaim=document.createElement("button"); cancelClaim.type="button"; cancelClaim.className="secondary"; cancelClaim.textContent="Cancel";
+      const claimFeedback=document.createElement("p"); claimFeedback.className="muted"; claimFeedback.setAttribute("role","status");
+      claimButton.addEventListener("click",()=>{claimForm.classList.toggle("hidden");});
+      cancelClaim.addEventListener("click",()=>{claimForm.classList.add("hidden");});
+      submitClaim.addEventListener("click", async () => {
+        submitClaim.disabled=true; submitClaim.textContent="Submitting…";
         try {
-          const { data: claimId, error: claimError } = await db.rpc("submit_lead_protection_claim", {
-            p_purchase_id: item.id, p_reason: selectedReason, p_details: detailsText
+          const {data:claimId,error}=await db.rpc("submit_lead_protection_claim",{
+            p_purchase_id:item.id,p_reason:reasonSelect.value,p_details:claimDetails.value.trim()
           });
-          if (claimError) throw claimError;
-          claimButton.textContent = "Report submitted";
-          window.alert("Your report was sent to ZELPX for review. Reference: " + claimId);
-        } catch (claimError) {
-          claimButton.disabled = false; claimButton.textContent = "Report a problem with this lead";
-          window.alert(claimError.message || "Could not submit the report.");
+          if(error) throw error;
+          if(!claimId) throw new Error("The server did not confirm the report.");
+          claimFeedback.textContent="Your report was sent to ZELPX for review. Reference: "+claimId;
+          claimFeedback.style.color="#147d55";
+          submitClaim.hidden=true; cancelClaim.textContent="Close";
+        } catch(e) {
+          claimFeedback.textContent=e.message||"Could not submit the report.";
+          claimFeedback.style.color="#b42318";
+          submitClaim.disabled=false; submitClaim.textContent="Submit report";
         }
       });
-      details.append(claimButton);
+      claimActions.append(submitClaim,cancelClaim);
+      claimForm.append(claimHeading,claimHelp,reasonSelect,claimDetails,claimActions,claimFeedback);
+      details.append(claimButton,claimForm);
       const closeLeadButton = document.createElement("button");
       closeLeadButton.type = "button";
       closeLeadButton.className = "secondary";
