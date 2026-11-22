@@ -1552,7 +1552,8 @@
       const categoryMatch = !category || (category === "__lead_package__" ? lead.lead_type === "lead_package" : lead.service_category === category);
       // Sold previews are visible to every contractor during the 3-minute window,
       // independent of the contractor's selected service categories.
-      const serviceMatch = lead.status !== "available" || isAdmin || lead.previewOnly || isLeadServiceSelected(lead);
+      // Every approved contractor can view and purchase any available lead or multi-service package, regardless of selected service categories.
+      const serviceMatch = true;
       const haystack = [lead.service_category, ...(Array.isArray(lead.package_services) ? lead.package_services : []), lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
       return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
     });
