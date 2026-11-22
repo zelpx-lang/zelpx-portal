@@ -1072,7 +1072,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     window.zelpxCustomerVerifiedPhone = "";
     function normalizeCustomerPhone(value) {
       const raw = String(value || "").trim();
-      const digits = raw.replace(/\\D/g, "");
+      const digits = raw.replace(/\D/g, "");
       if (raw.startsWith("+") && digits.length >= 8 && digits.length <= 15) return "+" + digits;
       if (digits.length === 10) return "+1" + digits;
       if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
@@ -1116,7 +1116,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       const code = $("customerPhoneVerificationCode").value.trim();
       $("customerPhoneVerificationMessage").className = "message";
       $("customerPhoneVerificationMessage").textContent = "";
-      if (!phone || !/^\\d{6}$/.test(code)) {
+      if (!phone || !/^\d{6}$/.test(code)) {
         showMessage("customerPhoneVerificationMessage", "Enter the same phone number and the 6-digit code from SMS.", "error");
         return;
       }
