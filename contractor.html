@@ -1974,7 +1974,7 @@
         deletePurchaseButton.className = "danger";
         deletePurchaseButton.textContent = "Delete";
         deletePurchaseButton.addEventListener("click", async () => {
-          if (!window.confirm("Remove this purchase from your list? Payment and transaction history will remain محفوظ.")) return;
+          if (!window.confirm("Remove this purchase from your list? Payment and transaction history will remain saved.")) return;
           deletePurchaseButton.disabled = true;
           deletePurchaseButton.textContent = "Removing…";
           try {
