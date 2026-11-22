@@ -153,47 +153,33 @@ main.wrap{width:min(800px,calc(100% - 32px))}
 }
 
 
-/* ZELPX JOB GALAXY — immersive universe scale */
-.galaxy-shell{margin:2px 0 16px;padding:22px 20px 18px;border:1px solid #ead8c8;border-radius:28px;background:radial-gradient(ellipse at 50% 48%,#fff 0%,#fffaf4 45%,#f4e8dc 100%);box-shadow:0 18px 55px #5a351018;overflow:hidden}
+/* ZELPX JOB GALAXY — fixed-scale rotating universe, canvas-rendered jobs */
+.galaxy-shell{margin:2px 0 16px;padding:20px 18px 16px;border:1px solid #2d263f;border-radius:26px;background:linear-gradient(145deg,#100e20,#171326 55%,#211629);box-shadow:0 20px 65px #1a112b30;overflow:hidden;color:#fff}
 .galaxy-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.galaxy-kicker{font-size:12px;font-weight:950;letter-spacing:.18em;color:#e65e2c}
-.galaxy-topline h2{margin:5px 0 3px;font-size:clamp(23px,3vw,30px);letter-spacing:-.04em}
-.galaxy-topline p{margin:0;color:#76695e;font-size:15px}
-.galaxy-live{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:99px;background:#e8f5ee;color:#167653;font-size:11px;font-weight:900;letter-spacing:.1em}
-.galaxy-live i{width:8px;height:8px;border-radius:50%;background:#20a36f;box-shadow:0 0 0 4px #20a36f20}
-.galaxy-stage{height:660px;position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate;overflow:hidden;border-radius:22px;background:radial-gradient(ellipse at 50% 50%,#fce8d8 0%,#f8eee6 35%,#f6f0e9 62%,transparent 78%)}
-.galaxy-aura{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,#ffb47c55 0%,#ffdfc538 46%,transparent 72%);filter:blur(12px)}
-.galaxy-globe{position:absolute;width:390px;height:390px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 30% 23%,#fff4df 0%,#ffc08a 13%,#ff8a4c 29%,#ed5c2d 49%,#a43e25 76%,#51241e 100%);box-shadow:inset -42px -32px 60px #55231980,inset 20px 15px 42px #fff8e7b8,0 0 55px #f36b3875,0 0 150px #f36b3835;z-index:1}
-.globe-grid{position:absolute;inset:-20%;border-radius:50%;background:repeating-linear-gradient(0deg,transparent 0 31px,#fff7e92c 32px 33px),repeating-linear-gradient(90deg,transparent 0 31px,#fff7e926 32px 33px);transform:rotate(-18deg);mask-image:radial-gradient(circle,#000 48%,transparent 72%)}
-.globe-glow{position:absolute;inset:0;border-radius:50%;background:linear-gradient(130deg,#fff9e880,transparent 40%,#44180c70 90%)}
-.globe-wordmark{position:absolute;inset:0;display:grid;place-items:center;color:#fff9ee;font-size:clamp(34px,5vw,48px);font-weight:950;letter-spacing:.19em;text-shadow:0 3px 18px #692b1d99}
-.galaxy-orbit{position:absolute;border:1px solid #e99b6b80;border-radius:50%;z-index:0;pointer-events:none}
-.orbit-one{width:min(92%,940px);height:300px;transform:rotate(-18deg);border-width:2px;border-color:#e99b6b70}
-.orbit-two{width:min(96%,1000px);height:390px;transform:rotate(26deg);border-color:#dba77e88}
-.galaxy-nodes{position:absolute;inset:0;z-index:4;pointer-events:none}
-.galaxy-node{position:absolute;left:50%;top:50%;width:220px;min-height:68px;margin:-34px 0 0 -110px;padding:10px 13px;border:1px solid #f5b28d;border-radius:16px;background:linear-gradient(145deg,#fffefa,#fff1e8);color:#2b211c;box-shadow:0 8px 25px #9c49232c,0 0 0 5px #f36b3812;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;text-align:left;cursor:pointer;pointer-events:auto;transform:translate(var(--x),var(--y));animation:nodePulse 3.4s ease-in-out infinite;transition:box-shadow .2s,scale .2s,border-color .2s}
-.galaxy-node .node-title{display:block;width:100%;font-size:15px;font-weight:900;line-height:1.2;overflow-wrap:anywhere}
-.galaxy-node .node-meta{font-size:12px;font-weight:700;color:#88634e}
-.galaxy-node .node-price{font-size:16px;font-weight:950;color:#171816}
-.galaxy-node.package-node{background:linear-gradient(145deg,#fff6ed,#ffe3d1);border:2px solid #e76b35;box-shadow:0 8px 28px #c45b3035,0 0 0 6px #f36b3820}
-.galaxy-node.package-node .node-title{color:#a84420}
-.galaxy-node:hover,.galaxy-node:focus-visible{z-index:8;scale:1.07;outline:3px solid #fff;box-shadow:0 0 0 9px #f36b3840,0 12px 30px #9b452b55}
-@keyframes nodePulse{0%,100%{box-shadow:0 8px 25px #9c49232c,0 0 0 5px #f36b3812}50%{box-shadow:0 10px 30px #9c49233c,0 0 0 9px #f36b380c}}
-.galaxy-caption{position:absolute;bottom:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:2;color:#76695e}
-.galaxy-caption strong{font-size:16px;color:#3a2a22}
+.galaxy-kicker{font-size:12px;font-weight:950;letter-spacing:.19em;color:#ff9b69}
+.galaxy-topline h2{margin:5px 0 3px;font-size:clamp(23px,3vw,30px);letter-spacing:-.04em;color:#fff}
+.galaxy-topline p{margin:0;color:#c5bbd2;font-size:15px}
+.galaxy-live{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:99px;background:#183c36;color:#8ff0c2;font-size:11px;font-weight:900;letter-spacing:.1em}
+.galaxy-live i{width:8px;height:8px;border-radius:50%;background:#42e5a2;box-shadow:0 0 0 4px #42e5a220}
+.galaxy-stage{height:clamp(540px,66vw,760px);min-height:540px;position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate;overflow:hidden;border-radius:20px;background:radial-gradient(ellipse at 50% 48%,#29203e 0%,#171329 48%,#0b0a17 100%)}
+#galaxyCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:pan-y}
+.galaxy-center-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff7e9;font-size:clamp(20px,3vw,34px);font-weight:950;letter-spacing:.22em;text-shadow:0 0 16px #ff9a67,0 0 40px #f36b38;z-index:2}
+.galaxy-caption{position:absolute;bottom:14px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:3;color:#d9cce6;pointer-events:none;text-shadow:0 1px 8px #090714}
+.galaxy-caption strong{font-size:16px;color:#fff}
 .galaxy-caption span{font-size:10px;font-weight:850;letter-spacing:.17em}
-.galaxy-selected{margin:0 auto 2px;max-width:650px;padding:18px 20px;border:1px solid #efc4a8;border-radius:18px;background:#fffefa;box-shadow:0 8px 24px #6a351016}
-.galaxy-selected h3{margin:0 0 4px;font-size:21px}
-.galaxy-selected .selected-meta{color:#74675d;font-size:15px;margin-bottom:10px}
-.galaxy-selected .selected-price{font-size:25px;font-weight:950;color:#171816}
+.galaxy-selected{margin:12px auto 2px;max-width:680px;padding:18px 20px;border:1px solid #684c61;border-radius:18px;background:linear-gradient(140deg,#282039,#191629);color:#fff;box-shadow:0 8px 28px #08061150}
+.galaxy-selected h3{margin:0 0 4px;font-size:21px;color:#fff}
+.galaxy-selected .selected-meta{color:#d1c3d9;font-size:15px;margin-bottom:10px}
+.galaxy-selected .selected-price{font-size:25px;font-weight:950;color:#ffb17f}
 .galaxy-selected .selected-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
-.galaxy-selected .selected-actions a{color:#d95628;font-weight:850;text-decoration:none}
+.galaxy-selected .selected-actions a{color:#ffab7d;font-weight:850;text-decoration:none}
+.galaxy-selected .close-job{background:#30263d;border-color:#66516d;color:#fff}
 .view-switch{display:flex;justify-content:center;gap:8px;margin:0 0 14px}
 .view-mode{min-height:44px;padding:0 18px;border:1px solid #ded3c8;border-radius:999px;background:#fffefa;color:#4c4038;font-weight:800;cursor:pointer}
 .view-mode.active{background:#211b18;border-color:#211b18;color:#fff}
-@media(prefers-reduced-motion:reduce){.galaxy-node{animation:none!important;transition:none!important}}
-@media(max-width:760px){.galaxy-shell{padding:16px 12px 13px;border-radius:20px}.galaxy-stage{height:570px}.galaxy-globe{width:290px;height:290px}.globe-wordmark{font-size:34px}.orbit-one{width:105%;height:245px}.orbit-two{width:110%;height:300px}.galaxy-node{width:178px;min-height:62px;margin:-31px 0 0 -89px;padding:8px 10px}.galaxy-node .node-title{font-size:13px}.galaxy-node .node-meta{font-size:11px}.galaxy-node .node-price{font-size:14px}.galaxy-topline h2{font-size:22px}.galaxy-selected .selected-actions{align-items:stretch;flex-direction:column}}
-@media(max-width:480px){.galaxy-stage{height:520px}.galaxy-globe{width:230px;height:230px}.globe-wordmark{font-size:29px}.orbit-one{height:205px}.orbit-two{height:250px}.galaxy-node{width:152px;min-height:58px;margin:-29px 0 0 -76px;padding:7px 9px}.galaxy-node .node-title{font-size:12px}.galaxy-node .node-meta{font-size:10px}.galaxy-node .node-price{font-size:13px}}
+@media(max-width:640px){.galaxy-shell{padding:15px 10px 13px;border-radius:20px}.galaxy-stage{height:560px;min-height:560px}.galaxy-topline h2{font-size:22px}.galaxy-selected .selected-actions{align-items:stretch;flex-direction:column}}
+@media(max-width:420px){.galaxy-stage{height:510px;min-height:510px}}
+@media(prefers-reduced-motion:reduce){#galaxyCanvas{cursor:pointer}}
 
 </style>
 </head>
@@ -210,10 +196,9 @@ main.wrap{width:min(800px,calc(100% - 32px))}
 <section class="galaxy-shell" id="jobGalaxy" aria-label="Interactive live jobs sphere">
   <div class="galaxy-topline"><div><span class="galaxy-kicker">ZELPX LIVE GALAXY</span><h2>Explore new opportunities</h2><p>Tap a glowing job to see its details.</p></div><span class="galaxy-live"><i></i> LIVE</span></div>
   <div class="galaxy-stage" id="galaxyStage">
-    <div class="galaxy-aura"></div><div class="galaxy-orbit orbit-one"></div><div class="galaxy-orbit orbit-two"></div>
-    <div class="galaxy-globe"><div class="globe-grid"></div><div class="globe-glow"></div><span class="globe-wordmark">ZELPX</span></div>
-    <div class="galaxy-nodes" id="galaxyNodes"></div>
-    <div class="galaxy-caption"><strong id="galaxyCount">Loading jobs…</strong><span>NEW PROJECTS · NEW CONNECTIONS</span></div>
+    <canvas id="galaxyCanvas" aria-label="Rotating galaxy showing every available job as a star. Select a star to view that job."></canvas>
+    <div class="galaxy-center-mark">ZELPX</div>
+    <div class="galaxy-caption"><strong id="galaxyCount">Loading all available jobs…</strong><span>SELECT ANY STAR TO EXPLORE A JOB</span></div>
   </div>
   <div class="galaxy-selected hidden" id="galaxySelected" aria-live="polite"></div>
 </section>
@@ -234,35 +219,91 @@ main.wrap{width:min(800px,calc(100% - 32px))}
  let rows=[],busy=false,activeView="sphere",selectedJobId=null;
  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
+ let galaxyFrame=0,galaxyAngle=0,galaxyPoints=[],galaxyHitTargets=[],galaxyCanvasReady=false;
+ function setupGalaxyCanvas(){
+   const canvas=document.getElementById("galaxyCanvas");
+   if(!canvas||galaxyCanvasReady)return;
+   galaxyCanvasReady=true;
+   const ctx=canvas.getContext("2d");
+   const resize=()=>{
+     const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+     canvas.width=Math.max(1,Math.round(rect.width*dpr));canvas.height=Math.max(1,Math.round(rect.height*dpr));
+     ctx.setTransform(dpr,0,0,dpr,0,0);
+   };
+   resize();
+   const draw=()=>{
+     const w=canvas.clientWidth,h=canvas.clientHeight,cx=w/2,cy=h/2;
+     ctx.clearRect(0,0,w,h);
+     const bg=ctx.createRadialGradient(cx,cy,5,cx,cy,Math.max(w,h)*.62);
+     bg.addColorStop(0,"#302342");bg.addColorStop(.48,"#17142b");bg.addColorStop(1,"#090916");
+     ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+     // distant stars are decorative; each job below is a separate mapped particle.
+     for(let s=0;s<170;s++){
+       const x=((s*7919)%997)/997*w,y=((s*3571)%991)/991*h;
+       ctx.globalAlpha=.22+((s*13)%70)/100;ctx.fillStyle="#fff4e9";ctx.fillRect(x,y,1.1,1.1);
+     }
+     ctx.globalAlpha=1;
+     const maxR=Math.min(w*.43,h*.39),arms=4;
+     // soft galactic nebula
+     const nebula=ctx.createRadialGradient(cx,cy,8,cx,cy,maxR);
+     nebula.addColorStop(0,"#ffbd8c33");nebula.addColorStop(.25,"#bc78c52a");nebula.addColorStop(.68,"#7448a01c");nebula.addColorStop(1,"transparent");
+     ctx.fillStyle=nebula;ctx.beginPath();ctx.arc(cx,cy,maxR,0,Math.PI*2);ctx.fill();
+     // spiral arms, rotating continuously regardless of number of orders
+     ctx.save();ctx.translate(cx,cy);ctx.rotate(galaxyAngle);
+     for(let arm=0;arm<arms;arm++){
+       ctx.beginPath();
+       for(let t=0;t<240;t++){
+         const p=t/239,r=8+p*maxR,a=arm*Math.PI*2/arms+p* Math.PI*4.2;
+         const x=Math.cos(a)*r,y=Math.sin(a)*r*.69;
+         if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+       }
+       ctx.strokeStyle=arm%2?"#d59ad044":"#ffad804d";ctx.lineWidth=2;ctx.stroke();
+     }
+     // jobs are distributed deterministically along the spiral arms. Canvas keeps
+     // thousands of jobs lightweight: one particle per job, no DOM card explosion.
+     galaxyHitTargets=[];
+     const total=galaxyPoints.length;
+     for(let i=0;i<total;i++){
+       const p=galaxyPoints[i],arm=i%arms,rank=Math.floor(i/arms);
+       const normalized=total>1?rank/Math.max(1,Math.ceil(total/arms)-1):.15;
+       const r=20+Math.sqrt(normalized)*maxR;
+       const a=arm*Math.PI*2/arms+normalized*Math.PI*4.2;
+       const wobble=1+Math.sin(i*12.9898)*.018;
+       const x=Math.cos(a)*r*wobble,y=Math.sin(a)*r*.69*wobble;
+       const px=cx+x,py=cy+y;
+       const isPackage=p.lead_type==="lead_package";
+       const radius=isPackage?3.4:2.1;
+       ctx.beginPath();ctx.arc(px,py,radius+(isPackage?1.2:0),0,Math.PI*2);
+       ctx.fillStyle=isPackage?"#ffc08a":"#d9c8ff";ctx.shadowColor=isPackage?"#ff8c54":"#ad8cff";ctx.shadowBlur=isPackage?13:6;ctx.fill();ctx.shadowBlur=0;
+       if(p.id===selectedJobId){ctx.beginPath();ctx.arc(px,py,9,0,Math.PI*2);ctx.strokeStyle="#fff4d6";ctx.lineWidth=1.5;ctx.stroke();}
+       galaxyHitTargets.push({x:px,y:py,r:Math.max(8,radius+5),item:p});
+     }
+     ctx.restore();
+     // bright core
+     const core=ctx.createRadialGradient(cx,cy,1,cx,cy,Math.max(34,maxR*.16));
+     core.addColorStop(0,"#fff8df");core.addColorStop(.13,"#ffd3a0");core.addColorStop(.34,"#ff9a69aa");core.addColorStop(1,"transparent");
+     ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,Math.max(34,maxR*.16),0,Math.PI*2);ctx.fill();
+     ctx.globalAlpha=1;
+     galaxyAngle+=.0018;
+     galaxyFrame=requestAnimationFrame(draw);
+   };
+   const selectAt=e=>{
+     const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+     let nearest=null,best=24;
+     for(const hit of galaxyHitTargets){const d=Math.hypot(hit.x-x,hit.y-y);if(d<best){best=d;nearest=hit;}}
+     if(nearest)showGalaxyJob(nearest.item);
+   };
+   canvas.addEventListener("click",selectAt);
+   if(window.ResizeObserver){new ResizeObserver(resize).observe(canvas);}else window.addEventListener("resize",resize);
+   draw();
+ }
  function renderGalaxy(items){
-   galaxyNodes.innerHTML="";
-   if(!items.length){galaxySelected.classList.add("hidden");return;}
-   const stage=document.getElementById("galaxyStage");
-   const width=stage.clientWidth||900;
-   const height=stage.clientHeight||660;
-   const radiusX=Math.min(width*.39, width/2-116);
-   const radiusY=Math.min(height*.36, 245);
-   items.forEach((item,index)=>{
-     const angle=(-Math.PI/2)+(index/Math.max(items.length,1))*Math.PI*2;
-     const x=Math.cos(angle)*radiusX,y=Math.sin(angle)*radiusY;
-     const node=document.createElement("button");
-     node.type="button";
-     node.className="galaxy-node"+(item.lead_type==="lead_package"?" package-node":"");
-     node.style.setProperty("--x",x.toFixed(1)+"px");
-     node.style.setProperty("--y",y.toFixed(1)+"px");
-     node.style.animationDelay=(index*.22)+"s";
-     const title=item.lead_type==="lead_package"?"Lead Package":(item.service_category||"Home service");
-     const meta=item.lead_type==="lead_package"?"PACKAGE · "+(Array.isArray(item.package_services)?item.package_services.length:0)+" SERVICES · ZIP "+(item.zip_code||"—"):"NEW LEAD · ZIP "+(item.zip_code||"—");
-     node.innerHTML='<span class="node-title">'+esc(title)+'</span><span class="node-meta">'+esc(meta)+'</span><span class="node-price">'+money(item.price_cents)+'</span>';
-     node.setAttribute("aria-label",title+" — "+meta+" — "+money(item.price_cents));
-     node.addEventListener("click",()=>showGalaxyJob(item));
-     galaxyNodes.appendChild(node);
-   });
-   if(selectedJobId && items.some(x=>x.id===selectedJobId)){
-     showGalaxyJob(items.find(x=>x.id===selectedJobId));
-   }else{
-     showGalaxyJob(items[0]);
-   }
+   galaxyPoints=items.slice();
+   setupGalaxyCanvas();
+   galaxyCount.textContent=items.length.toLocaleString("en-US")+" "+(items.length===1?"job":"jobs")+" across the galaxy";
+   if(!items.length){galaxySelected.classList.add("hidden");}
+   else if(selectedJobId && items.some(x=>x.id===selectedJobId)){showGalaxyJob(items.find(x=>x.id===selectedJobId));}
+   else showGalaxyJob(items[0]);
  }
  function showGalaxyJob(item){
    if(!item)return;
@@ -310,24 +351,32 @@ main.wrap{width:min(800px,calc(100% - 32px))}
      closer.addEventListener("click",close);
    });
  }
+ async function fetchAllPages(path){
+   const pageSize=1000,all=[];
+   for(let offset=0;offset<100000;offset+=pageSize){
+     const separator=path.includes("?")?"&":"?";
+     const response=await fetch(URL+path+separator+"limit="+pageSize+"&offset="+offset,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
+     if(!response.ok)throw new Error("Could not load jobs ("+response.status+")");
+     const page=await response.json();
+     if(!Array.isArray(page)||!page.length)break;
+     all.push(...page);
+     if(page.length<pageSize)break;
+   }
+   return all;
+ }
  async function load(){
    if(busy)return;busy=true;
    try{
-     const r=await fetch(URL+"/rest/v1/public_available_leads?select=id,service_category,zip_code,service_city,service_state,price_cents,created_at,urgency&order=created_at.desc&limit=250",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
-     if(!r.ok)throw new Error("Request failed ("+r.status+")");
-     const data=await r.json();rows=Array.isArray(data)?data:[];
-     // Fetch only the database-sanitized structured answers. The public endpoint
-     // never returns free-form customer notes, contact fields, or street addresses.
-     const detailResponse=await fetch(URL+"/rest/v1/public_available_lead_details?select=id,public_work_details",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
-     if(!detailResponse.ok)throw new Error("Could not load public job details ("+detailResponse.status+")");
-     const detailRows=await detailResponse.json();
-     const detailById=new Map((Array.isArray(detailRows)?detailRows:[]).map(item=>[item.id,item.public_work_details]));
-     const packageResponse=await fetch(URL+"/rest/v1/public_available_lead_package_info?select=id,lead_type,package_services",{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
-     if(!packageResponse.ok)throw new Error("Could not load public package information ("+packageResponse.status+")");
-     const packageRows=await packageResponse.json();
-     const packageById=new Map((Array.isArray(packageRows)?packageRows:[]).map(item=>[item.id,item]));
+     const [data,detailRows,packageRows]=await Promise.all([
+       fetchAllPages("/rest/v1/public_available_leads?select=id,service_category,zip_code,service_city,service_state,price_cents,created_at,urgency&order=created_at.desc"),
+       fetchAllPages("/rest/v1/public_available_lead_details?select=id,public_work_details"),
+       fetchAllPages("/rest/v1/public_available_lead_package_info?select=id,lead_type,package_services")
+     ]);
+     rows=Array.isArray(data)?data:[];
+     const detailById=new Map(detailRows.map(item=>[item.id,item.public_work_details]));
+     const packageById=new Map(packageRows.map(item=>[item.id,item]));
      rows=rows.map(item=>({...item,public_work_details:detailById.get(item.id)||"",...(packageById.get(item.id)||{})}));
-     const selected=category.value, cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
+     const selected=category.value,cats=[...new Set(rows.map(x=>x.service_category).filter(Boolean))].sort();
      category.innerHTML='<option value="">All categories</option><option value="__lead_package__">Lead Packages</option>'+cats.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
      category.value=(selected==="__lead_package__"||cats.includes(selected))?selected:"";
      render();
