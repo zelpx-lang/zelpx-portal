@@ -826,6 +826,15 @@ tick();
     if (exactCatalogMatch) return exactCatalogMatch;
 
     const aliases = [
+      [/^tile floor installation$/, "Tile Floor Installation"],
+      [/^tile wall installation$|^bathroom tile installation$|^porcelain tile installation$|^ceramic tile installation$|^mosaic tile installation$|^large format tile installation$|^granite tile installation$/, "Tile Installation"],
+      [/^shower tile installation$/, "Tile Shower Installation"],
+      [/^kitchen backsplash installation$/, "Tile Backsplash Installation"],
+      [/^tile repair and replacement$|^cracked tile repair$/, "Tile Repair"],
+      [/^natural stone installation$|^marble installation$/, "Stone Installation"],
+      [/^grout and regrouting$/, "Grout Repair"],
+      [/^grout sealing$/, "Grout Sealing"],
+      [/^shower tile repair$/, "Shower Tile Repair"],
       [/^faucet installation$|^bathroom sink installation$|^kitchen sink installation$|^utility sink installation$|^outdoor faucet installation$/, "Sink and Faucet Installation"],
       [/^faucet replacement$/, "Faucet Replacement"],
       [/^toilet installation$/, "Toilet Installation"],
