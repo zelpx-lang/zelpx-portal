@@ -1846,9 +1846,12 @@
       }
 
       filteredRequests.forEach(request => {
-        const selectedServicesMatch = String(request.description || "").match(/(?:^|\n)\s*SELECTED SERVICES\s*\n([\s\S]*?)(?=\n\s*JOB DETAILS\b|$)/i);
-        const selectedServices = selectedServicesMatch
-          ? selectedServicesMatch[1].split(/\r?\n/).map(line => line.replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean)
+        const requestDescriptionLines = String(request.description || "").split(/\\r?\\n/);
+        const selectedServicesStart = requestDescriptionLines.findIndex(line => line.trim().toUpperCase() === "SELECTED SERVICES");
+        const selectedServicesEnd = requestDescriptionLines.findIndex((line, index) => index > selectedServicesStart && line.trim().toUpperCase() === "JOB DETAILS");
+        const selectedServices = selectedServicesStart >= 0
+          ? requestDescriptionLines.slice(selectedServicesStart + 1, selectedServicesEnd >= 0 ? selectedServicesEnd : undefined)
+              .map(line => line.replace(/^\\s*[-•]\\s*/, "").trim()).filter(Boolean)
           : [];
         const card = document.createElement("article"); card.className = "lead";
         const heading = document.createElement("div"); heading.className = "leadhead";
