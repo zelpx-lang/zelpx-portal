@@ -1773,8 +1773,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         removeMark.setAttribute("aria-hidden", "true");
         removeMark.textContent = "×";
         pill.append(name, removeMark);
+        pill.addEventListener("pointerdown", event => event.preventDefault());
         pill.addEventListener("click", () => {
           const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
+          if (document.activeElement && document.activeElement !== document.body) {
+            document.activeElement.blur();
+          }
           const [removed] = sphereDraft.services.splice(index, 1);
           if (removed && !sphereDraft.removedServices.includes(removed)) sphereDraft.removedServices.push(removed);
           saveSphereDraft();
@@ -1788,10 +1792,13 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
             const delta = nextTop - reviewAnchor;
             if (Math.abs(delta) > 1) window.scrollBy(0, delta);
           };
-          requestAnimationFrame(() => {
+          let viewportPasses = 0;
+          const stabilizeViewport = () => {
             restoreViewport();
-            requestAnimationFrame(restoreViewport);
-          });
+            viewportPasses += 1;
+            if (viewportPasses < 6) requestAnimationFrame(stabilizeViewport);
+          };
+          requestAnimationFrame(stabilizeViewport);
         });
         selectedServicesReviewList.appendChild(pill);
       });
@@ -1801,8 +1808,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         restore.className = "restore-service-button";
         restore.textContent = "↶ " + service;
         restore.setAttribute("aria-label", "Restore " + service);
+        restore.addEventListener("pointerdown", event => event.preventDefault());
         restore.addEventListener("click", () => {
           const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
+          if (document.activeElement && document.activeElement !== document.body) {
+            document.activeElement.blur();
+          }
           const [restored] = sphereDraft.removedServices.splice(index, 1);
           if (restored && !sphereDraft.services.includes(restored)) sphereDraft.services.push(restored);
           saveSphereDraft();
