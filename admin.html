@@ -1852,10 +1852,11 @@
         const requestDescriptionLines = String(request.description || "").split(/\r?\n/);
         const selectedServicesStart = requestDescriptionLines.findIndex(line => line.trim().toUpperCase() === "SELECTED SERVICES");
         const selectedServicesEnd = requestDescriptionLines.findIndex((line, index) => index > selectedServicesStart && line.trim().toUpperCase() === "JOB DETAILS");
-        const selectedServices = selectedServicesStart >= 0
+        const selectedServices = request.request_type === "lead_package" && selectedServicesStart >= 0
           ? requestDescriptionLines.slice(selectedServicesStart + 1, selectedServicesEnd >= 0 ? selectedServicesEnd : undefined)
               .map(line => line.replace(/^\s*[-•]\s*/, "").trim()).filter(Boolean)
           : [];
+        const isPackage = request.request_type === "lead_package";
         const card = document.createElement("article"); card.className = "lead";
         const heading = document.createElement("div"); heading.className = "leadhead";
         const titleWrap = document.createElement("div");
@@ -1988,50 +1989,38 @@
           const priceWrap = document.createElement("div"), priceLabel = document.createElement("label"), price = document.createElement("input");
           priceLabel.textContent = "Lead price (USD)"; price.type = "number"; price.min = "0.01"; price.step = "0.01"; price.placeholder = "50.00";
           priceLabel.append(price); priceWrap.append(priceLabel);
-          const publicationTypeWrap = document.createElement("div"), publicationTypeLabel = document.createElement("label"), publicationTypeSelect = document.createElement("select");
-          publicationTypeLabel.textContent = "How should this request be sold?";
-          [["regular","Regular Lead"],["lead_package","Lead Package — one buyer, entire project"]].forEach(([value,label]) => {
-            const option = document.createElement("option"); option.value = value; option.textContent = label;
-            if (value === "lead_package" && selectedServices.length < 2) option.disabled = true;
-            publicationTypeSelect.append(option);
-          });
-          publicationTypeLabel.append(publicationTypeSelect); publicationTypeWrap.append(publicationTypeLabel);
-          const packageHint = document.createElement("p"); packageHint.className = "muted";
-          packageHint.textContent = selectedServices.length >= 2
-            ? "Lead Package combines all selected services into one exclusive purchase. Set the full package price."
-            : "Lead Package becomes available when the customer selected at least two services.";
-          publicationTypeWrap.append(packageHint);
+          const requestTypeNote = document.createElement("p"); requestTypeNote.className = "muted";
+          requestTypeNote.textContent = isPackage
+            ? "SPECIAL LEAD PACKAGE — created from the service sphere. One contractor purchases the entire project. Set the total package price."
+            : "REGULAR LEAD — one service from the homepage ZIP form or customer request form.";
           const zipLookupNote = document.createElement("p"); zipLookupNote.className = "muted";
           zipLookupNote.textContent = "Enter a 5-digit ZIP code to fill city and state automatically. Verify the result before publishing.";
           zipWrap.append(zipLookupNote);
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
-          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap, publicationTypeWrap); form.append(fields);
+          fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap, requestTypeNote); form.append(fields);
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
-          publicationTypeSelect.addEventListener("change", () => {
-            const isPackage = publicationTypeSelect.value === "lead_package";
-            priceLabel.textContent = isPackage ? "Lead Package price (USD)" : "Lead price (USD)";
-            price.placeholder = isPackage ? "150.00" : "50.00";
-            publish.textContent = isPackage ? "Verify and publish Lead Package" : "Verify and publish as lead";
-          });
+          priceLabel.textContent = isPackage ? "Lead Package total price (USD)" : "Lead price (USD)";
+          price.placeholder = isPackage ? "150.00" : "50.00";
+          publish.textContent = isPackage ? "Verify and publish Special Lead Package" : "Verify and publish Regular Lead";
           publish.addEventListener("click", async () => {
-            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value), publicationType = publicationTypeSelect.value;
+            const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value);
             if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
             if (!/^[0-9]{5}(-[0-9]{4})?$/.test(zipValue)) { feedback.textContent = "Enter a valid 5-digit US ZIP code (ZIP+4 is also accepted)."; feedback.className = "message error"; return; }
             if (!cityValue || !/^[A-Z]{2}$/.test(stateValue)) { feedback.textContent = "Enter the verified city and 2-letter state code."; feedback.className = "message error"; return; }
             if (!Number.isFinite(priceValue) || priceValue <= 0 || Math.round(priceValue * 100) !== priceValue * 100) {
               feedback.textContent = "Enter a price greater than zero with no more than 2 decimal places."; feedback.className = "message error"; return;
             }
-            if (publicationType === "lead_package" && selectedServices.length < 2) {
+            if (isPackage && selectedServices.length < 2) {
               feedback.textContent = "A Lead Package requires at least two customer-selected services.";
               feedback.className = "message error"; return;
             }
             const customerName = profile.full_name || "Unavailable";
-            const saleLabel = publicationType === "lead_package" ? "LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD";
+            const saleLabel = isPackage ? "SPECIAL LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD — one service";
             if (!window.confirm("Publish this customer request?\n\nSale type: " + saleLabel +
-              "\nService: " + categoryValue + (publicationType === "lead_package" ? "\nIncluded services: " + selectedServices.join(", ") : "") +
+              "\nService: " + categoryValue + (isPackage ? "\nIncluded services: " + selectedServices.join(", ") : "") +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
               "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
               "\n\nOnly continue after verifying the customer's details.")) return;
@@ -2052,13 +2041,13 @@
               p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
               p_latitude: latitude, p_longitude: longitude
             };
-            const { data: leadId, error: publishError } = publicationType === "lead_package"
+            const { data: leadId, error: publishError } = isPackage
               ? await db.rpc("admin_publish_service_request_package", { ...publishArgs, p_package_services: selectedServices })
               : await db.rpc("admin_publish_service_request", publishArgs);
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
               serviceRequestsEditing = false;
-              message("serviceRequestsMessage", (publicationType === "lead_package" ? "Lead Package published successfully. One buyer can purchase the entire project. Lead ID: " : "Request published successfully. Lead ID: ") + leadId, "success");
+              message("serviceRequestsMessage", (isPackage ? "Special Lead Package published successfully. One buyer can purchase the entire project. Lead ID: " : "Regular Lead published successfully. Lead ID: ") + leadId, "success");
               await loadServiceRequests(); await loadAdminLeads(); await loadLeads();
             } catch (e) {
               feedback.textContent = "Could not publish request: " + (e.message || "Unknown error");
