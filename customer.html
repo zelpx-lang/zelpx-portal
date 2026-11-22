@@ -906,49 +906,41 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     // Explicitly obtain the OAuth URL and navigate to it. This is more reliable
     // in Android in-app browsers than relying on the SDK's automatic redirect.
     async function signInCustomerWithProvider(provider, buttonId) {
-      const buttons = ["googleSignInButton", "facebookSignInButton"].map(id => $(id)).filter(Boolean);
+      if (typeof saveSphereDraftBeforeAuth === "function") saveSphereDraftBeforeAuth();
+      const buttons = ["googleSignInButton", "facebookSignInButton"].map(id => $(id));
+      buttons.forEach(button => { button.disabled = true; });
       const button = $(buttonId);
-      if (!button) return;
-
+      const originalText = button.textContent.trim();
+      button.lastChild.textContent = provider === "google" ? " Connecting to Google..." : " Connecting to Facebook...";
+      clearMessage("message");
       try {
-        buttons.forEach(item => { item.disabled = true; });
-        button.textContent = provider === "google" ? "Connecting to Google..." : "Connecting to Facebook...";
-        clearMessage("message");
-
-        if (typeof saveSphereDraftBeforeAuth === "function") {
-          try { saveSphereDraftBeforeAuth(); } catch (draftError) {
-            console.warn("Could not preserve pending service selection before OAuth:", draftError);
-          }
-        }
-
         if (landingServices.length || landingService || landingZip) {
+          // localStorage survives mobile OAuth hand-offs more reliably than sessionStorage.
           localStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() }));
         }
         const oauthMarker = JSON.stringify({ portal: "customer", at: Date.now() });
+        // Persist in localStorage as well: mobile Google OAuth may return in a new browser context.
         localStorage.setItem("zelpx.oauth.pending", oauthMarker);
         sessionStorage.setItem("zelpx.oauth.pending", oauthMarker);
-
         const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
+            // Supabase may fall back to the configured Site URL (homepage); its OAuth
+            // hand-off handler routes the authenticated customer back to this portal.
             redirectTo: new URL("/", window.location.origin).toString(),
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
         if (error) throw error;
       } catch (error) {
-        console.error("Customer social sign-in failed:", provider, error);
-        try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
-        try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
-        try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
+        sessionStorage.removeItem("zelpx.oauth.pending");
+        localStorage.removeItem("zelpx.oauth.pending");
+        localStorage.removeItem("zelpx.sphere.auth.pending");
         showMessage("message", error.message || "Social sign-in could not be started. Please try again.", "error");
+        button.lastChild.textContent = " " + (provider === "google" ? "Continue with Google" : "Continue with Facebook");
         buttons.forEach(item => { item.disabled = false; });
-        button.textContent = provider === "google" ? "Continue with Google" : "Continue with Facebook";
       }
     }
-
-    $("googleSignInButton").addEventListener("click", () => signInCustomerWithProvider("google", "googleSignInButton"));
-    $("facebookSignInButton").addEventListener("click", () => signInCustomerWithProvider("facebook", "facebookSignInButton"));
 
     $("forgotPasswordLink").addEventListener("click", (event) => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
 
