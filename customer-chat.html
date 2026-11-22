@@ -664,10 +664,6 @@
         </div>
         <p id="serviceZipStatus" class="subtitle">Enter a US ZIP code to look up city, state and approximate location.</p>
 
-        <label for="description">Additional details (optional)</label>
-        <textarea id="description"
-                  placeholder="Add anything else the contractor should know (optional)..."></textarea>
-
         <label for="preferredTime">Preferred Date and Time</label>
         <input id="preferredTime" type="datetime-local">
 
@@ -1438,14 +1434,14 @@
           service_zip_code: $("serviceZip").value.trim(),
           service_latitude: Number($("serviceZip").dataset.latitude) || null,
           service_longitude: Number($("serviceZip").dataset.longitude) || null,
-          description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails() + ($("description").value.trim() ? "\n\nADDITIONAL CUSTOMER NOTES\n" + $("description").value.trim() : ""),
+          description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null
         };
 
         if (!request.service_type || !request.property_address || !request.service_city ||
             !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code) ||
             !request.service_type) {
-          throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code and description.");
+          throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code.");
         }
 
         const { error } = await db
