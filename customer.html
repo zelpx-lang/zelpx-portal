@@ -1125,8 +1125,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         await callCustomerPhoneApi("/api/customer-phone/verify-code", { phone, code });
         $("customerPhoneVerificationCode").value = "";
         const { data } = await db.auth.getSession();
-        if (data.session?.user) await loadCustomerProfile(data.session.user);
-        showMessage("customerPhoneVerificationMessage", "Phone number successfully verified.", "success");
+        if (!data.session?.user) throw new Error("Your session expired. Please sign in again.");
+        await loadCustomerProfile(data.session.user);
+        const savedPhone = normalizeCustomerPhone($("customerPhone").value);
+        if (savedPhone !== phone || !window.zelpxCustomerPhoneVerified) {
+          throw new Error("The SMS code was accepted, but the new number is not showing as saved in your profile. Please try again or contact support.");
+        }
+        $("customerVerificationPhone").value = phone;
+        showMessage("customerPhoneVerificationMessage", "New phone number saved and verified successfully.", "success");
       } catch (error) {
         showMessage("customerPhoneVerificationMessage", error.message || "The SMS code could not be verified.", "error");
       } finally { button.disabled = false; button.textContent = "Verify Phone Number"; }
