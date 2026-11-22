@@ -2248,7 +2248,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 
         const { data, error } = await db
           .from("service_requests")
-          .select("id, lead_id, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
+          .select("id, lead_id, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
           .eq("user_id", session.user.id)
           .is("hidden_at", null)
           .order("created_at", { ascending: false });
@@ -2298,7 +2298,9 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
           card.dataset.requestStatus = String(request.status || "").toLocaleLowerCase();
 
           const title = document.createElement("strong");
-          title.textContent = request.service_type;
+          const isCustomerPackage = request.request_type === "lead_package";
+          const customerRequestTitle = isCustomerPackage ? "Multi-Service Home Project" : (request.service_type || "Service request");
+          title.textContent = customerRequestTitle;
 
           const status = document.createElement("span");
           status.className = "status";
@@ -2325,11 +2327,19 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
           summaryText.className = "request-summary-text";
           const summaryTitle = document.createElement("strong");
           summaryTitle.className = "request-summary-title";
-          summaryTitle.textContent = request.service_type || "Service request";
+          summaryTitle.textContent = customerRequestTitle;
           const summaryDate = document.createElement("small");
           summaryDate.className = "request-summary-date";
           summaryDate.textContent = request.created_at ? "Order placed " + new Date(request.created_at).toLocaleString([], { dateStyle:"medium", timeStyle:"short" }) : "Order date unavailable";
-          summaryText.append(summaryTitle, summaryDate);
+          summaryText.append(summaryTitle);
+          if (isCustomerPackage) {
+            const packageBadge = document.createElement("span");
+            packageBadge.className = "status";
+            packageBadge.textContent = "Package Lead";
+            packageBadge.style.cssText = "display:inline-flex;width:max-content;margin-top:6px;background:#e8f5ec;color:#167653;border:1px solid #cce8d5;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800";
+            summaryText.append(packageBadge);
+          }
+          summaryText.append(summaryDate);
           const unreadCountForRequest = request.lead_id ? (unreadByLead.get(request.lead_id) || 0) : 0;
           card.dataset.unreadCount = String(unreadCountForRequest);
           const unreadBell = document.createElement("span");
