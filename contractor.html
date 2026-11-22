@@ -826,12 +826,22 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
   const $ = (id) => document.getElementById(id);
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
+  let contractorOpeningTimer = null;
+  // Match the customer portal exactly: show the opening screen for 2 seconds.
   function showContractorOpening() {
     const screen = $("zelpxAccountOpening");
-    if (screen) screen.classList.add("is-visible");
+    if (!screen) return;
+    if (contractorOpeningTimer) window.clearTimeout(contractorOpeningTimer);
+    screen.classList.add("is-visible");
+    contractorOpeningTimer = window.setTimeout(() => {
+      screen.classList.remove("is-visible");
+      contractorOpeningTimer = null;
+    }, 2000);
   }
   function hideContractorOpening() {
     const screen = $("zelpxAccountOpening");
+    if (contractorOpeningTimer) window.clearTimeout(contractorOpeningTimer);
+    contractorOpeningTimer = null;
     if (screen) screen.classList.remove("is-visible");
   }
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
@@ -876,7 +886,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
 
   async function signInContractorWithProvider(provider, buttonId) {
-    showContractorOpening();
     try { if (!db || !db.auth || !db.functions) initClient(); }
     catch (clientError) { return message("authMessage", clientError.message, "error"); }
     const buttonIds = ["contractorGoogleSignInButton", "contractorFacebookSignInButton"];
@@ -906,7 +915,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
   async function signIn() {
     clearMessage("authMessage");
-    showContractorOpening();
     try { if (!db || !db.auth || !db.functions) initClient(); }
     catch (clientError) { return message("authMessage", clientError.message, "error"); }
     const email = $("authEmail").value.trim(), password = $("authPassword").value;
@@ -1191,7 +1199,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     // when an administrator already had an active session during page startup.
     if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
     else if (adminChangeChannel) { db.removeChannel(adminChangeChannel); adminChangeChannel=null; }
-    hideContractorOpening();
   }
   async function syncSignupContractorDocuments(user){
     const m=user?.user_metadata||{};
@@ -3375,6 +3382,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
   async function start() {
+    showContractorOpening();
     wireEvents();
     try {
       initClient();
