@@ -1158,19 +1158,13 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     if (userError) throw userError;
     if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
     currentUser = user; $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
-    // Keep the sign-in screen in place while account data loads. Reveal the dashboard
-    // only when it is ready, avoiding a brief flash of a half-loaded/empty portal.
-    await loadAccount();
-    if (!isAdmin && currentContractor) {
-      try {
-        await syncSignupContractorDocuments(user);
-        await syncSignupCompanyStateLicenses(user);
-        await syncSignupContractorServiceCategories(user);
-        await syncSignupProfessionQualifications(user);
-      } catch (documentError) {
-        message("appMessage", "Your account is open, but your license or insurance details could not be synchronized: " + (documentError.message || "Please try again from My Company."), "error");
-      }
-    }
+    // Resolve the account role first. Once authorization is known, show the
+    // dashboard immediately; profile details and marketplace data hydrate after.
+    const { data: roleProfile, error: roleProfileError } = await db.from("profiles")
+      .select("id,full_name,phone,role,avatar_url").eq("id", user.id).maybeSingle();
+    if (roleProfileError) throw roleProfileError;
+    currentProfile = roleProfile;
+    isAdmin = roleProfile?.role === "admin";
     if (IS_ADMIN_PORTAL && !isAdmin) {
       await db.auth.signOut();
       currentUser = null;
@@ -1185,9 +1179,23 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
-    // Show the authenticated dashboard as soon as the account and access checks pass.
+    // Hide the callback loader and reveal the authenticated dashboard now,
+    // rather than waiting for every profile/settings query to finish.
+    $("welcomeTitle").textContent = "Contractor dashboard";
+    $("accountLine").textContent = user.email || "";
+    hide($("authView")); hide($("oauthReturnLoading")); show($("appView")); show($("topUser"));
+    await loadAccount(roleProfile);
+    if (!isAdmin && currentContractor) {
+      try {
+        await syncSignupContractorDocuments(user);
+        await syncSignupCompanyStateLicenses(user);
+        await syncSignupContractorServiceCategories(user);
+        await syncSignupProfessionQualifications(user);
+      } catch (documentError) {
+        message("appMessage", "Your account is open, but your license or insurance details could not be synchronized: " + (documentError.message || "Please try again from My Company."), "error");
+      }
+    }
     // Marketplace data loads afterward so a slow/failed leads query cannot block sign-in.
-    hide($("authView")); show($("appView")); show($("topUser"));
     try {
       await Promise.allSettled([loadCategories(), loadLeads(), loadPurchases()]);
     } catch (dashboardLoadError) {
@@ -1334,16 +1342,19 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     additionalStateLicenses.push({state_code,license_number,license_type,document_file,expiration_date,review_status:"pending"});
     renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
   });
-  async function loadAccount() {
-    // Fetch the independent identity and contractor records concurrently to
-    // reduce the time spent restoring the dashboard after an OAuth callback.
-    const [profileResult, contractorResult] = await Promise.all([
-      db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle(),
-      db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle()
-    ]);
-    if (profileResult.error) throw profileResult.error;
-    if (contractorResult.error) throw contractorResult.error;
-    const profile = profileResult.data, contractor = contractorResult.data;
+  async function loadAccount(preloadedProfile = null) {
+    // The role/profile has already been checked on the OAuth return path.
+    // Avoid a second profile round trip there; regular refreshes still fetch it.
+    let profile = preloadedProfile;
+    if (!profile) {
+      const { data, error } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
+      if (error) throw error;
+      profile = data;
+    }
+    const { data: contractor, error: contractorError } = await db.from("contractors")
+      .select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status")
+      .eq("user_id", currentUser.id).maybeSingle();
+    if (contractorError) throw contractorError;
     currentProfile = profile; isAdmin = profile?.role === "admin";
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
