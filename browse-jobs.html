@@ -276,7 +276,9 @@ main.wrap{width:min(800px,calc(100% - 32px))}
        ctx.beginPath();ctx.arc(px,py,radius+(isPackage?1.2:0),0,Math.PI*2);
        ctx.fillStyle=isPackage?"#ffc08a":"#d9c8ff";ctx.shadowColor=isPackage?"#ff8c54":"#ad8cff";ctx.shadowBlur=isPackage?13:6;ctx.fill();ctx.shadowBlur=0;
        if(p.id===selectedJobId){ctx.beginPath();ctx.arc(px,py,9,0,Math.PI*2);ctx.strokeStyle="#fff4d6";ctx.lineWidth=1.5;ctx.stroke();}
-       galaxyHitTargets.push({x:px,y:py,r:Math.max(8,radius+5),item:p});
+       const hitX=cx+x*Math.cos(galaxyAngle)-y*Math.sin(galaxyAngle);
+       const hitY=cy+x*Math.sin(galaxyAngle)+y*Math.cos(galaxyAngle);
+       galaxyHitTargets.push({x:hitX,y:hitY,r:Math.max(8,radius+5),item:p});
      }
      ctx.restore();
      // bright core
