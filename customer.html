@@ -1361,25 +1361,12 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
         questions.forEach(([labelText, options]) => {
           const label = document.createElement("label"); label.textContent = labelText;
-          if (service === "Carpentry" && labelText === "Work needed") {
-            const group = document.createElement("div");
-            group.dataset.jobQuestion = labelText;
-            group.dataset.jobService = service;
-            group.style.cssText = "display:grid;grid-template-columns:1fr;gap:10px;margin:8px 0 16px;";
-            ["Cabinet work","Framing","Trim/baseboards","Doors","Shelving","Deck repair","Other"].forEach(value => {
-              const choice = document.createElement("label");
-              choice.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--customer-line);border-radius:12px;font-weight:600;";
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox"; checkbox.value = value;
-              checkbox.style.cssText = "width:20px;height:20px;min-width:20px;accent-color:var(--customer-orange);";
-              choice.append(checkbox, document.createTextNode(value));
-              group.append(choice);
-            });
-            const hint = document.createElement("small");
-            hint.className = "subtitle"; hint.textContent = "Select all that apply.";
-            section.append(label, hint, group);
-            return;
-          }
+          const multiChoiceLabels = new Set([
+            "Work needed","Work area","Cabinet work","Countertop","Flooring type","Cleaning focus",
+            "Walls, ceilings, trim?","Mowing, edging, fertilizing?","System","Issue or installation",
+            "Project type","Surface","Item types","Describe tasks","Location of wood rot"
+          ]);
+          const isMultiChoice = multiChoiceLabels.has(labelText) || (service === "Carpentry" && labelText === "Work needed");
           let input;
           if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = labelText.toLowerCase().includes("sq ft") ? "1" : "any"; input.inputMode = "decimal"; input.placeholder = labelText.toLowerCase().includes("sq ft") ? "Enter square feet (sq ft)" : "Enter amount"; }
           else if (options === "Describe") {
@@ -1396,6 +1383,50 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
             (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"]).forEach(value => {
               const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option);
             });
+          }
+          else if (isMultiChoice) {
+            const values = (service === "Carpentry" && labelText === "Work needed")
+              ? ["Cabinet work","Framing","Trim/baseboards","Doors","Shelving","Deck repair","Other"]
+              : options.split(", ");
+            const wrap = document.createElement("div");
+            wrap.dataset.jobQuestion = labelText; wrap.dataset.jobService = service;
+            wrap.dataset.multiChoice = "true"; wrap.dataset.selectedValues = "[]";
+            const trigger = document.createElement("button");
+            trigger.type = "button"; trigger.className = "secondary";
+            trigger.textContent = "Choose one or more";
+            trigger.style.cssText = "width:100%;text-align:left;min-height:50px;margin-top:6px;";
+            trigger.addEventListener("click", () => {
+              const overlay = document.createElement("div");
+              overlay.style.cssText = "position:fixed;inset:0;z-index:100000;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;";
+              const dialog = document.createElement("div");
+              dialog.setAttribute("role","dialog"); dialog.setAttribute("aria-modal","true");
+              dialog.style.cssText = "width:min(100%,520px);max-height:min(80vh,720px);overflow:auto;background:#fffdfa;color:#211f1c;border-radius:22px;padding:20px;box-shadow:0 18px 60px #0005;";
+              const title = document.createElement("h3"); title.textContent = labelText; title.style.marginTop="0";
+              const hint = document.createElement("p"); hint.className="subtitle"; hint.textContent="Select all that apply.";
+              const choices = document.createElement("div"); choices.style.cssText="display:grid;gap:9px;";
+              const selected = new Set(JSON.parse(wrap.dataset.selectedValues || "[]"));
+              values.filter(v=>v.toLowerCase()!=="all").forEach(value=>{
+                const row=document.createElement("label");
+                row.style.cssText="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--customer-line);border-radius:12px;";
+                const cb=document.createElement("input"); cb.type="checkbox"; cb.value=value; cb.checked=selected.has(value);
+                cb.style.cssText="width:21px;height:21px;min-width:21px;accent-color:var(--customer-orange);";
+                row.append(cb,document.createTextNode(value)); choices.append(row);
+              });
+              const actions=document.createElement("div"); actions.style.cssText="display:flex;gap:10px;margin-top:18px;";
+              const done=document.createElement("button"); done.type="button"; done.textContent="Done"; done.style.flex="1";
+              done.addEventListener("click",()=>{
+                const picked=[...choices.querySelectorAll('input[type="checkbox"]:checked')].map(cb=>cb.value);
+                wrap.dataset.selectedValues=JSON.stringify(picked);
+                trigger.textContent=picked.length?picked.join(", "):"Choose one or more";
+                overlay.remove();
+              });
+              const cancel=document.createElement("button"); cancel.type="button"; cancel.className="secondary"; cancel.textContent="Cancel";
+              cancel.addEventListener("click",()=>overlay.remove());
+              actions.append(cancel,done); dialog.append(title,hint,choices,actions); overlay.append(dialog);
+              overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove();});
+              document.body.append(overlay);
+            });
+            wrap.append(trigger); label.append(wrap); section.append(label); return;
           }
           else { input = document.createElement("select"); const first = document.createElement("option"); first.value = ""; first.textContent = "Select / not sure"; input.append(first); options.split(", ").forEach(value => { const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option); }); }
           input.dataset.jobQuestion = labelText;
@@ -1682,8 +1713,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           currentService = service;
           lines.push("\n" + currentService);
         }
-        const answer = input.matches("div[data-job-question]")
-          ? [...input.querySelectorAll('input[type="checkbox"]:checked')].map(item => item.value).join(", ")
+        const answer = input.dataset.multiChoice === "true"
+          ? JSON.parse(input.dataset.selectedValues || "[]").join(", ")
           : input.value.trim();
         lines.push(input.dataset.jobQuestion + ": " + (answer || "Not provided"));
       });
