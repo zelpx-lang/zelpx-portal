@@ -2209,6 +2209,25 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         );
 
         await loadRequests();
+
+        // Take the customer straight to the new order and open its details,
+        // so the cancellation option is immediately visible after posting.
+        customerUnreadOnly = false;
+        applyRequestFilters();
+        document.querySelectorAll(".dashboard-page").forEach(page => {
+          page.hidden = page.id !== "dashboardPage-requests";
+        });
+        document.querySelectorAll(".dashboard-menu-button").forEach(item => {
+          const active = item.dataset.dashboardPage === "requests";
+          item.classList.toggle("active", active);
+          if (active) item.setAttribute("aria-current", "page");
+          else item.removeAttribute("aria-current");
+        });
+        const newestRequest = $("requestsList").querySelector("[data-request-card='1']");
+        const newestRequestSummary = newestRequest?.querySelector(".request-summary");
+        if (newestRequestSummary) newestRequestSummary.click();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
         // The selected sphere work is now attached to the submitted request.
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
 
