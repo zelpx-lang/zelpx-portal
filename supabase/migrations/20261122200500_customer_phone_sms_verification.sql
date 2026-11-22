@@ -45,3 +45,5 @@ before update of customer_live_confirmed_at
 on public.service_requests
 for each row
 execute function private.require_verified_customer_phone();
+
+revoke all on function private.require_verified_customer_phone() from public, anon, authenticated;
