@@ -215,7 +215,7 @@ function playServiceLimitSound(){
     if(playback&&typeof playback.catch==="function")playback.catch(()=>playFallbackErrorSound());
   }catch(_){playFallbackErrorSound();}
 }
-function showServiceLimitNotice(){playServiceLimitSound();limitNotice.hidden=false;limitOk.focus();}
+function showServiceLimitNotice(message="You can select up to 5 services. Remove one selected service before choosing another.",title="ZELPX — Service selection"){const text= document.getElementById("serviceLimitText"),heading=document.getElementById("serviceLimitTitle");if(text)text.textContent=message;if(heading)heading.textContent=title;playServiceLimitSound();limitNotice.hidden=false;limitOk.focus();}
 function hideServiceLimitNotice(){limitNotice.hidden=true;}
 limitOk.addEventListener("click",hideServiceLimitNotice);
 limitClose.addEventListener("click",hideServiceLimitNotice);
@@ -527,7 +527,7 @@ function renderSelectedSphereServices(){
     else localStorage.removeItem("zelpx.pendingSphereRequest.v1");
   } catch (_) {}
   if(selectedSphereServices.length===1){
-    alert("A Lead Package must include at least 2 services. Please select one more service.");
+    showServiceLimitNotice("A Multi-Service Package needs at least 2 services. You have selected 1 service. Please choose one more service to continue.","ZELPX — Multi-Service Package");
     return;
   }
   if(selectedSphereServices.length>=2){
