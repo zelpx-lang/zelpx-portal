@@ -1154,8 +1154,14 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
-    await loadCategories(); await loadLeads(); await loadPurchases();
+    // Show the authenticated dashboard as soon as the account and access checks pass.
+    // Marketplace data loads afterward so a slow/failed leads query cannot block sign-in.
     hide($("authView")); show($("appView")); show($("topUser"));
+    try {
+      await Promise.allSettled([loadCategories(), loadLeads(), loadPurchases()]);
+    } catch (dashboardLoadError) {
+      message("appMessage", "You are signed in, but some dashboard data could not load. Use Refresh Leads and try again.", "error");
+    }
     if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
     if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
     if (IS_ADMIN_PORTAL && isAdmin) switchTab("adminPanel");
