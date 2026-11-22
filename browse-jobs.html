@@ -153,34 +153,16 @@ main.wrap{width:min(800px,calc(100% - 32px))}
 }
 
 
-/* ZELPX JOB GALAXY — fixed-scale rotating universe, canvas-rendered jobs */
-.galaxy-shell{margin:2px 0 16px;padding:20px 18px 16px;border:1px solid #2d263f;border-radius:26px;background:linear-gradient(145deg,#100e20,#171326 55%,#211629);box-shadow:0 20px 65px #1a112b30;overflow:hidden;color:#fff}
-.galaxy-topline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.galaxy-kicker{font-size:12px;font-weight:950;letter-spacing:.19em;color:#ff9b69}
-.galaxy-topline h2{margin:5px 0 3px;font-size:clamp(23px,3vw,30px);letter-spacing:-.04em;color:#fff}
-.galaxy-topline p{margin:0;color:#c5bbd2;font-size:15px}
-.galaxy-live{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:99px;background:#183c36;color:#8ff0c2;font-size:11px;font-weight:900;letter-spacing:.1em}
-.galaxy-live i{width:8px;height:8px;border-radius:50%;background:#42e5a2;box-shadow:0 0 0 4px #42e5a220}
-.galaxy-stage{height:clamp(540px,66vw,760px);min-height:540px;position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate;overflow:hidden;border-radius:20px;background:radial-gradient(ellipse at 50% 48%,#29203e 0%,#171329 48%,#0b0a17 100%)}
-#galaxyCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:pan-y}
-.galaxy-center-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#fff7e9;font-size:clamp(20px,3vw,34px);font-weight:950;letter-spacing:.22em;text-shadow:0 0 16px #ff9a67,0 0 40px #f36b38;z-index:2}
-.galaxy-caption{position:absolute;bottom:14px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:3px;z-index:3;color:#d9cce6;pointer-events:none;text-shadow:0 1px 8px #090714}
-.galaxy-caption strong{font-size:16px;color:#fff}
-.galaxy-caption span{font-size:10px;font-weight:850;letter-spacing:.17em}
-.galaxy-selected{margin:12px auto 2px;max-width:680px;padding:18px 20px;border:1px solid #684c61;border-radius:18px;background:linear-gradient(140deg,#282039,#191629);color:#fff;box-shadow:0 8px 28px #08061150}
-.galaxy-selected h3{margin:0 0 4px;font-size:21px;color:#fff}
-.galaxy-selected .selected-meta{color:#d1c3d9;font-size:15px;margin-bottom:10px}
-.galaxy-selected .selected-price{font-size:25px;font-weight:950;color:#ffb17f}
-.galaxy-selected .selected-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
-.galaxy-selected .selected-actions a{color:#ffab7d;font-weight:850;text-decoration:none}
-.galaxy-selected .close-job{background:#30263d;border-color:#66516d;color:#fff}
-.view-switch{display:flex;justify-content:center;gap:8px;margin:0 0 14px}
-.view-mode{min-height:44px;padding:0 18px;border:1px solid #ded3c8;border-radius:999px;background:#fffefa;color:#4c4038;font-weight:800;cursor:pointer}
-.view-mode.active{background:#211b18;border-color:#211b18;color:#fff}
-@media(max-width:640px){.galaxy-shell{padding:15px 10px 13px;border-radius:20px}.galaxy-stage{height:560px;min-height:560px}.galaxy-topline h2{font-size:22px}.galaxy-selected .selected-actions{align-items:stretch;flex-direction:column}}
-@media(max-width:420px){.galaxy-stage{height:510px;min-height:510px}}
-@media(prefers-reduced-motion:reduce){#galaxyCanvas{cursor:pointer}}
 
+/* Compact readable lead list */
+.view-switch{display:none}
+.job h2{font-size:17px}
+.job-summary-meta{font-size:13px}
+.price{font-size:20px}
+.open-label{font-size:12px}
+.details{font-size:13px}
+.job-details p{font-size:13px}
+@media(max-width:640px){.job h2{font-size:16px}.job-summary-meta{font-size:12px}.price{font-size:18px}}
 </style>
 </head>
 <body>
@@ -193,18 +175,9 @@ main.wrap{width:min(800px,calc(100% - 32px))}
 <button class="refresh" id="refreshBtn" type="button">↻ Refresh</button>
 </section>
 <div class="meta"><span id="resultCount">Loading available jobs…</span><span class="live">Live list · updates every 30 sec</span></div>
-<section class="galaxy-shell" id="jobGalaxy" aria-label="Interactive live jobs sphere">
-  <div class="galaxy-topline"><div><span class="galaxy-kicker">ZELPX LIVE GALAXY</span><h2>Explore new opportunities</h2><p>Tap a glowing job to see its details.</p></div><span class="galaxy-live"><i></i> LIVE</span></div>
-  <div class="galaxy-stage" id="galaxyStage">
-    <canvas id="galaxyCanvas" aria-label="Rotating galaxy showing every available job as a star. Select a star to view that job."></canvas>
-    <div class="galaxy-center-mark">ZELPX</div>
-    <div class="galaxy-caption"><strong id="galaxyCount">Loading all available jobs…</strong><span>SELECT ANY STAR TO EXPLORE A JOB</span></div>
-  </div>
-  <div class="galaxy-selected hidden" id="galaxySelected" aria-live="polite"></div>
-</section>
 <div class="view-switch" role="group" aria-label="Job display mode">
-  <button type="button" id="sphereViewBtn" class="view-mode active" aria-pressed="true">✦ Sphere view</button>
-  <button type="button" id="listViewBtn" class="view-mode" aria-pressed="false">☷ List view</button>
+  <button type="button" id="sphereViewBtn" class="view-mode" aria-pressed="false">Sphere view</button>
+  <button type="button" id="listViewBtn" class="view-mode active" aria-pressed="true">List view</button>
 </div>
 <section class="list hidden" id="jobsList" aria-live="polite"><div class="state">Loading available jobs…</div></section>
 <div class="note">Public listings show structured job information such as work area, measurements, materials, and selected options. Customer names, phone numbers, email addresses, street addresses, and free-text notes or descriptions are kept private.</div>
@@ -219,113 +192,14 @@ main.wrap{width:min(800px,calc(100% - 32px))}
  let rows=[],busy=false,activeView="sphere",selectedJobId=null;
  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
- let galaxyFrame=0,galaxyAngle=0,galaxyPoints=[],galaxyHitTargets=[],galaxyCanvasReady=false;
- function setupGalaxyCanvas(){
-   const canvas=document.getElementById("galaxyCanvas");
-   if(!canvas||galaxyCanvasReady)return;
-   galaxyCanvasReady=true;
-   const ctx=canvas.getContext("2d");
-   const resize=()=>{
-     const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
-     canvas.width=Math.max(1,Math.round(rect.width*dpr));canvas.height=Math.max(1,Math.round(rect.height*dpr));
-     ctx.setTransform(dpr,0,0,dpr,0,0);
-   };
-   resize();
-   const draw=()=>{
-     const w=canvas.clientWidth,h=canvas.clientHeight,cx=w/2,cy=h/2;
-     ctx.clearRect(0,0,w,h);
-     const bg=ctx.createRadialGradient(cx,cy,5,cx,cy,Math.max(w,h)*.62);
-     bg.addColorStop(0,"#302342");bg.addColorStop(.48,"#17142b");bg.addColorStop(1,"#090916");
-     ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-     // distant stars are decorative; each job below is a separate mapped particle.
-     for(let s=0;s<170;s++){
-       const x=((s*7919)%997)/997*w,y=((s*3571)%991)/991*h;
-       ctx.globalAlpha=.22+((s*13)%70)/100;ctx.fillStyle="#fff4e9";ctx.fillRect(x,y,1.1,1.1);
-     }
-     ctx.globalAlpha=1;
-     const maxR=Math.min(w*.43,h*.39),arms=4;
-     // soft galactic nebula
-     const nebula=ctx.createRadialGradient(cx,cy,8,cx,cy,maxR);
-     nebula.addColorStop(0,"#ffbd8c33");nebula.addColorStop(.25,"#bc78c52a");nebula.addColorStop(.68,"#7448a01c");nebula.addColorStop(1,"transparent");
-     ctx.fillStyle=nebula;ctx.beginPath();ctx.arc(cx,cy,maxR,0,Math.PI*2);ctx.fill();
-     // spiral arms, rotating continuously regardless of number of orders
-     ctx.save();ctx.translate(cx,cy);ctx.rotate(galaxyAngle);
-     for(let arm=0;arm<arms;arm++){
-       ctx.beginPath();
-       for(let t=0;t<240;t++){
-         const p=t/239,r=8+p*maxR,a=arm*Math.PI*2/arms+p* Math.PI*4.2;
-         const x=Math.cos(a)*r,y=Math.sin(a)*r*.69;
-         if(t===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-       }
-       ctx.strokeStyle=arm%2?"#d59ad044":"#ffad804d";ctx.lineWidth=2;ctx.stroke();
-     }
-     // jobs are distributed deterministically along the spiral arms. Canvas keeps
-     // thousands of jobs lightweight: one particle per job, no DOM card explosion.
-     galaxyHitTargets=[];
-     const total=galaxyPoints.length;
-     for(let i=0;i<total;i++){
-       const p=galaxyPoints[i],arm=i%arms,rank=Math.floor(i/arms);
-       const normalized=total>1?rank/Math.max(1,Math.ceil(total/arms)-1):.15;
-       const r=20+Math.sqrt(normalized)*maxR;
-       const a=arm*Math.PI*2/arms+normalized*Math.PI*4.2;
-       const wobble=1+Math.sin(i*12.9898)*.018;
-       const x=Math.cos(a)*r*wobble,y=Math.sin(a)*r*.69*wobble;
-       const px=cx+x,py=cy+y;
-       const isPackage=p.lead_type==="lead_package";
-       const radius=isPackage?3.4:2.1;
-       ctx.beginPath();ctx.arc(px,py,radius+(isPackage?1.2:0),0,Math.PI*2);
-       ctx.fillStyle=isPackage?"#ffc08a":"#d9c8ff";ctx.shadowColor=isPackage?"#ff8c54":"#ad8cff";ctx.shadowBlur=isPackage?13:6;ctx.fill();ctx.shadowBlur=0;
-       if(p.id===selectedJobId){ctx.beginPath();ctx.arc(px,py,9,0,Math.PI*2);ctx.strokeStyle="#fff4d6";ctx.lineWidth=1.5;ctx.stroke();}
-       const hitX=cx+x*Math.cos(galaxyAngle)-y*Math.sin(galaxyAngle);
-       const hitY=cy+x*Math.sin(galaxyAngle)+y*Math.cos(galaxyAngle);
-       galaxyHitTargets.push({x:hitX,y:hitY,r:Math.max(8,radius+5),item:p});
-     }
-     ctx.restore();
-     // bright core
-     const core=ctx.createRadialGradient(cx,cy,1,cx,cy,Math.max(34,maxR*.16));
-     core.addColorStop(0,"#fff8df");core.addColorStop(.13,"#ffd3a0");core.addColorStop(.34,"#ff9a69aa");core.addColorStop(1,"transparent");
-     ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,Math.max(34,maxR*.16),0,Math.PI*2);ctx.fill();
-     ctx.globalAlpha=1;
-     galaxyAngle+=.0018;
-     galaxyFrame=requestAnimationFrame(draw);
-   };
-   const selectAt=e=>{
-     const rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
-     let nearest=null,best=24;
-     for(const hit of galaxyHitTargets){const d=Math.hypot(hit.x-x,hit.y-y);if(d<best){best=d;nearest=hit;}}
-     if(nearest)showGalaxyJob(nearest.item);
-   };
-   canvas.addEventListener("click",selectAt);
-   if(window.ResizeObserver){new ResizeObserver(resize).observe(canvas);}else window.addEventListener("resize",resize);
-   draw();
- }
- function renderGalaxy(items){
-   galaxyPoints=items.slice();
-   setupGalaxyCanvas();
-   galaxyCount.textContent=items.length.toLocaleString("en-US")+" "+(items.length===1?"job":"jobs")+" across the galaxy";
-   if(!items.length){galaxySelected.classList.add("hidden");}
-   else if(selectedJobId && items.some(x=>x.id===selectedJobId)){showGalaxyJob(items.find(x=>x.id===selectedJobId));}
-   else showGalaxyJob(items[0]);
- }
- function showGalaxyJob(item){
-   if(!item)return;
-   selectedJobId=item.id;
-   const isPackage=item.lead_type==="lead_package";
-   const services=Array.isArray(item.package_services)?item.package_services:[];
-   const area=[item.service_city,item.service_state].filter(Boolean).join(", ");
-   galaxySelected.classList.remove("hidden");
-   galaxySelected.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><span class="galaxy-kicker">'+(isPackage?"MULTI-SERVICE PACKAGE":"NEW OPPORTUNITY")+'</span><h3>'+esc(isPackage?"Lead Package":item.service_category||"Home service")+'</h3><div class="selected-meta">ZIP '+esc(item.zip_code||"Not specified")+(area?" · "+esc(area):"")+(isPackage?" · "+services.length+" services":"")+'</div></div><div class="selected-price">'+money(item.price_cents)+'</div></div><div class="selected-actions"><a href="/contractor">Sign in / Create account to view and buy →</a><button type="button" class="close-job" id="galaxyClearSelection">Close</button></div>';
-   document.getElementById("galaxyClearSelection").addEventListener("click",()=>{galaxySelected.classList.add("hidden");selectedJobId=null;});
- }
  function setView(view){
-   activeView=view;
-   const sphere=view==="sphere";
-   document.getElementById("jobGalaxy").classList.toggle("hidden",!sphere);
-   list.classList.toggle("hidden",sphere);
-   sphereViewBtn.classList.toggle("active",sphere);
-   listViewBtn.classList.toggle("active",!sphere);
-   sphereViewBtn.setAttribute("aria-pressed",String(sphere));
-   listViewBtn.setAttribute("aria-pressed",String(!sphere));
+   const sphere=false;
+   document.getElementById("jobGalaxy")?.classList.add("hidden");
+   list.classList.remove("hidden");
+   sphereViewBtn.classList.remove("active");
+   listViewBtn.classList.add("active");
+   sphereViewBtn.setAttribute("aria-pressed","false");
+   listViewBtn.setAttribute("aria-pressed","true");
  }
  function render(){
    const z=zip.value.trim(),cat=category.value;
