@@ -2007,6 +2007,12 @@
           const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
           const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
+          publicationTypeSelect.addEventListener("change", () => {
+            const isPackage = publicationTypeSelect.value === "lead_package";
+            priceLabel.textContent = isPackage ? "Lead Package price (USD)" : "Lead price (USD)";
+            price.placeholder = isPackage ? "150.00" : "50.00";
+            publish.textContent = isPackage ? "Verify and publish Lead Package" : "Verify and publish as lead";
+          });
           publish.addEventListener("click", async () => {
             const categoryValue = category.value, zipValue = zip.value.trim(), cityValue = city.value.trim(), stateValue = state.value.trim().toUpperCase(), priceValue = Number(price.value), publicationType = publicationTypeSelect.value;
             if (!categoryValue) { feedback.textContent = "Choose a service category."; feedback.className = "message error"; return; }
