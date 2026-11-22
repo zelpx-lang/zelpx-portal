@@ -340,6 +340,46 @@
     }
     body.admin-mode .brand::after { background:#c17a58; }
     body.admin-mode .pill:not(.sold):not(.available) { background:#f1e8df; color:#76513e; }
+
+    /* Stronger neutral-first admin palette across nav tiles and task cards */
+    body.admin-mode .admin-page-nav button,
+    body.admin-mode .admin-nav a,
+    body.admin-mode .admin-nav button,
+    body.admin-mode .nav-card,
+    body.admin-mode .work-queue a,
+    body.admin-mode .work-queue button,
+    body.admin-mode .task-card,
+    body.admin-mode .queue-card,
+    body.admin-mode [role="button"] {
+      background:#eee9e1 !important;
+      background-image:none !important;
+      color:#302c27 !important;
+      border-color:#ddd5ca !important;
+      box-shadow:none !important;
+    }
+    body.admin-mode .admin-page-nav button:hover,
+    body.admin-mode .admin-nav a:hover,
+    body.admin-mode .admin-nav button:hover,
+    body.admin-mode .nav-card:hover,
+    body.admin-mode .work-queue a:hover,
+    body.admin-mode .work-queue button:hover,
+    body.admin-mode .task-card:hover,
+    body.admin-mode .queue-card:hover,
+    body.admin-mode [role="button"]:hover {
+      background:#e5ded4 !important;
+      color:#25211d !important;
+    }
+    body.admin-mode .admin-page-nav button.active,
+    body.admin-mode .admin-nav .active,
+    body.admin-mode .nav-card.active,
+    body.admin-mode .task-card.active,
+    body.admin-mode .queue-card.active {
+      background:#d9c9b9 !important;
+      color:#29231e !important;
+      border-color:#cdb9a6 !important;
+    }
+    body.admin-mode .admin-page-nav button:first-child,
+    body.admin-mode .admin-nav a:first-child { background:#e7e1d8 !important; }
 </style>
 </head>
 <body class="admin-mode">
