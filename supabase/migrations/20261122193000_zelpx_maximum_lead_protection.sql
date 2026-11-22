@@ -164,6 +164,50 @@ begin
 end;
 $function$;
 
+create or replace function private.force_service_request_protection_fields()
+returns trigger language plpgsql security definer set search_path='pg_catalog','public','auth','private'
+as $function$
+begin
+ if tg_op='INSERT' then
+  new.protection_required:=true;
+  -- Confirmation is recorded by an authenticated, ownership-checked RPC after submission.
+  new.customer_live_confirmed_at:=null;
+  new.customer_live_confirmation_version:=null;
+ elsif new.protection_required is distinct from old.protection_required
+   and new.protection_required=false
+   and not exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin') then
+  raise exception 'Only an administrator can change lead protection enforcement.';
+ end if;
+ return new;
+end;
+$function$;
+
+drop trigger if exists service_request_force_protection_fields on public.service_requests;
+create trigger service_request_force_protection_fields
+before insert or update of protection_required on public.service_requests
+for each row execute function private.force_service_request_protection_fields();
+
+create or replace function public.confirm_own_service_request(p_request_id uuid)
+returns jsonb language plpgsql security definer set search_path=''
+as $function$
+declare v_user_email_confirmed boolean;
+begin
+ if auth.uid() is null then raise exception 'You must be signed in.'; end if;
+ select (u.email_confirmed_at is not null) into v_user_email_confirmed from auth.users u where u.id=auth.uid();
+ if not coalesce(v_user_email_confirmed,false) then raise exception 'Verify your email before confirming this service request.'; end if;
+ update public.service_requests
+ set customer_live_confirmed_at=now(),customer_live_confirmation_version='2026-11-22-v1'
+ where id=p_request_id and user_id=auth.uid() and status='new' and lead_id is null
+   and commercial_sharing_consent_at is not null
+   and coalesce(trim(commercial_sharing_consent_version),'')<>'';
+ if not found then raise exception 'Request not found, already processed, or commercial sharing consent is missing.'; end if;
+ return jsonb_build_object('success',true,'confirmed_at',now());
+end;
+$function$;
+
+revoke all on function public.confirm_own_service_request(uuid) from public,anon;
+grant execute on function public.confirm_own_service_request(uuid) to authenticated;
+
 create or replace function private.enforce_service_request_protection()
 returns trigger language plpgsql security definer set search_path='pg_catalog','public','auth','private'
 as $function$
