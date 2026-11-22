@@ -1488,7 +1488,7 @@
   }
   async function buyLead(lead, button) {
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
-    if (!window.confirm("Buy " + purchaseLabel + " for " + money(lead.price_cents) + "?\\n\\nThe amount will be deducted from your ZELPX credit balance.")) return;
+    if (!window.confirm("Buy " + purchaseLabel + " for " + money(lead.price_cents) + "?\n\nThe amount will be deducted from your ZELPX credit balance.")) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
