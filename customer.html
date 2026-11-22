@@ -928,18 +928,14 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         localStorage.setItem("zelpx.oauth.pending", oauthMarker);
         sessionStorage.setItem("zelpx.oauth.pending", oauthMarker);
 
-        const { data, error } = await db.auth.signInWithOAuth({
+        const { error } = await db.auth.signInWithOAuth({
           provider,
           options: {
             redirectTo: new URL("/", window.location.origin).toString(),
-            skipBrowserRedirect: true,
             ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
           }
         });
-
         if (error) throw error;
-        if (!data || !data.url) throw new Error("The sign-in provider did not return an authorization URL.");
-        window.location.assign(data.url);
       } catch (error) {
         console.error("Customer social sign-in failed:", provider, error);
         try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
