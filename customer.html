@@ -2198,6 +2198,9 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
         $("serviceState").value = "";
+        window.zelpxCommercialSharingAccepted = false;
+        $("commercialSharingConsent").checked = false;
+        $("commercialTermsAccept").disabled = true;
 
         showMessage(
           "requestMessage",
