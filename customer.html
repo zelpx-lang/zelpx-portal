@@ -1256,6 +1256,19 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       } finally { button.disabled = false; button.textContent = "Send SMS Code"; }
     });
 
+    $("customerPhoneNewNumber").addEventListener("input", () => {
+      const entered = $("customerPhoneNewNumber").value.trim().replace(/[\\s().-]/g, "");
+      const verified = window.zelpxCustomerVerifiedPhone || "";
+      const matches = Boolean(verified && entered === verified);
+      window.zelpxCustomerPhoneVerified = matches;
+      $("customerPhoneVerificationBadge").textContent = matches ? "Verified" : "Not verified";
+      $("customerPhoneVerificationBadge").style.background = matches ? "#eaf7f0" : "#fff0e8";
+      $("customerPhoneVerificationBadge").style.color = matches ? "#176b43" : "#c2410c";
+      $("customerPhoneVerificationStatus").textContent = matches
+        ? "This number has been verified by SMS. You can submit service requests."
+        : "This number is not yet verified. Send an SMS code and confirm it before submitting requests.";
+    });
+
     $("customerPhoneVerifyCode").addEventListener("click", async () => {
       const button = $("customerPhoneVerifyCode");
       const phone = $("customerPhoneNewNumber").value.trim().replace(/[\s().-]/g, "");
@@ -1280,6 +1293,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         $("customerPhoneVerificationMessage").textContent = "Phone number verified and saved to your profile.";
         $("customerPhoneVerificationMessage").className = "message success";
         window.zelpxCustomerPhoneVerified = true;
+        window.zelpxCustomerVerifiedPhone = phone;
         originalProfileValues.phone = phone;
       } catch (error) {
         message.textContent = error.message || "The code could not be verified.";
@@ -1314,6 +1328,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
       const phoneVerified = Boolean(data.phone_verified_at && data.phone_verified_number && data.phone_verified_number === data.phone);
       window.zelpxCustomerPhoneVerified = phoneVerified;
+      window.zelpxCustomerVerifiedPhone = phoneVerified ? data.phone : "";
       $("customerPhoneNewNumber").value = data.phone || user.user_metadata?.phone || "";
       $("customerPhoneVerificationBadge").textContent = phoneVerified ? "Verified" : "Not verified";
       $("customerPhoneVerificationBadge").style.background = phoneVerified ? "#eaf7f0" : "#fff0e8";
@@ -2277,10 +2292,12 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           .eq("id", session.user.id)
           .maybeSingle();
         if (phoneProfileError) throw phoneProfileError;
+        const requestedPhone = $("customerPhoneNewNumber").value.trim().replace(/[\\s().-]/g, "");
         if (!phoneProfile?.phone_verified_at || !phoneProfile?.phone_verified_number ||
-            phoneProfile.phone_verified_number !== phoneProfile.phone) {
+            phoneProfile.phone_verified_number !== phoneProfile.phone ||
+            requestedPhone !== phoneProfile.phone) {
           window.zelpxCustomerPhoneVerified = false;
-          throw new Error("Verify your phone number by SMS in My Profile before submitting a service request.");
+          throw new Error("Verify the current phone number by SMS in My Profile before submitting a service request.");
         }
         window.zelpxCustomerPhoneVerified = true;
 
