@@ -1772,6 +1772,22 @@
       removedServicesRestoreList.replaceChildren();
       const services = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
       const removedServices = Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [];
+      // Keep the mobile viewport fixed while either list is rebuilt.
+      // Capture the scroll position before changing the DOM, then counter browser
+      // scroll anchoring/focus adjustments for several animation frames.
+      const preserveReviewViewport = (scrollY, previousBehavior, previousAnchor) => {
+        let passes = 0;
+        const restorePosition = () => {
+          window.scrollTo(0, scrollY);
+          passes += 1;
+          if (passes < 8) requestAnimationFrame(restorePosition);
+          else {
+            document.documentElement.style.scrollBehavior = previousBehavior;
+            document.documentElement.style.overflowAnchor = previousAnchor;
+          }
+        };
+        requestAnimationFrame(restorePosition);
+      };
       services.forEach((service, index) => {
         const pill = document.createElement("button");
         pill.type = "button";
@@ -1786,7 +1802,11 @@
         pill.append(name, removeMark);
         pill.addEventListener("pointerdown", event => event.preventDefault());
         pill.addEventListener("click", () => {
-          const reviewAnchor = selectedServicesReview.getBoundingClientRect().top;
+          const keepScrollY = window.scrollY;
+          const previousBehavior = document.documentElement.style.scrollBehavior;
+          const previousAnchor = document.documentElement.style.overflowAnchor;
+          document.documentElement.style.scrollBehavior = "auto";
+          document.documentElement.style.overflowAnchor = "none";
           if (document.activeElement && document.activeElement !== document.body) {
             document.activeElement.blur();
           }
@@ -1795,20 +1815,7 @@
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
-          // Rebuilding detail cards changes document height. Keep the review
-          // card at the same viewport position on mobile, even when browser
-          // focus handling tries to scroll after the tapped button is removed.
-          let viewportPasses = 0;
-          const stabilizeViewport = () => {
-            window.scrollTo(0, keepScrollY);
-            viewportPasses += 1;
-            if (viewportPasses < 8) requestAnimationFrame(stabilizeViewport);
-            else {
-              document.documentElement.style.scrollBehavior = previousBehavior;
-              document.documentElement.style.overflowAnchor = previousAnchor;
-            }
-          };
-          requestAnimationFrame(stabilizeViewport);
+          preserveReviewViewport(keepScrollY, previousBehavior, previousAnchor);
         });
         selectedServicesReviewList.appendChild(pill);
       });
@@ -1836,24 +1843,7 @@
           saveSphereDraft();
           renderSelectedServicesReview();
           renderServiceDetails();
-          // Rebuilding detail cards changes document height. Keep the review
-          // card at the same viewport position on mobile, even when browser
-          // focus handling tries to scroll after the tapped button is removed.
-          const restoreViewport = () => {
-            const nextTop = selectedServicesReview.getBoundingClientRect().top;
-            const delta = nextTop - reviewAnchor;
-            if (Math.abs(delta) > 1) window.scrollBy(0, delta);
-          };
-          const previousAnchorAfterRestore = document.documentElement.style.overflowAnchor;
-          document.documentElement.style.overflowAnchor = "none";
-          let viewportPasses = 0;
-          const stabilizeViewport = () => {
-            restoreViewport();
-            viewportPasses += 1;
-            if (viewportPasses < 4) requestAnimationFrame(stabilizeViewport);
-            else document.documentElement.style.overflowAnchor = previousAnchorAfterRestore;
-          };
-          requestAnimationFrame(stabilizeViewport);
+          preserveReviewViewport(keepScrollY, previousBehavior, previousAnchor);
         });
         removedServicesRestoreList.appendChild(restore);
       });
