@@ -2345,11 +2345,17 @@
                 const { error: keepError } = await db.rpc("keep_own_service_request", { p_request_id: request.id });
                 if (keepError) throw keepError;
                 keepButton.textContent = "Kept";
+                const deleteButton = retention.querySelector(".request-delete-button");
+                if (deleteButton) deleteButton.remove();
+                const keptNote = document.createElement("small");
+                keptNote.textContent = "This request is saved permanently and cannot be deleted.";
+                retention.append(keptNote);
               } catch (error) {
                 keepButton.disabled = false;
                 window.alert(error.message || "Could not keep this request.");
               }
             });
+            if (!request.retention_kept_at) {
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
             deleteButton.className = "request-delete-button";
@@ -2368,7 +2374,14 @@
                 deleteButton.textContent = "Delete";
               }
             });
-            retention.append(keepButton, deleteButton);
+            retention.append(keepButton);
+            if (!request.retention_kept_at) retention.append(deleteButton);
+            else {
+              const keptNote = document.createElement("small");
+              keptNote.textContent = "This request is saved permanently and cannot be deleted.";
+              retention.append(keptNote);
+            }
+            }
           } else {
             const waitMessage = document.createElement("small");
             const remainingDays = Math.max(1, Math.ceil((tenDaysMs - ageMs) / (24 * 60 * 60 * 1000)));
