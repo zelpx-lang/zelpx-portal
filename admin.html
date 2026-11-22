@@ -2027,11 +2027,11 @@
             }
             const customerName = profile.full_name || "Unavailable";
             const saleLabel = publicationType === "lead_package" ? "LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD";
-            if (!window.confirm("Publish this customer request?\\n\\nSale type: " + saleLabel +
-              "\\nService: " + categoryValue + (publicationType === "lead_package" ? "\\nIncluded services: " + selectedServices.join(", ") : "") +
-              "\\nCustomer: " + customerName + "\\nAddress: " + (request.property_address || "Missing") +
-              "\\nZIP: " + zipValue + "\\nCity: " + cityValue + ", " + stateValue + "\\nPrice: $" + priceValue.toFixed(2) +
-              "\\n\\nOnly continue after verifying the customer's details.")) return;
+            if (!window.confirm("Publish this customer request?\n\nSale type: " + saleLabel +
+              "\nService: " + categoryValue + (publicationType === "lead_package" ? "\nIncluded services: " + selectedServices.join(", ") : "") +
+              "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
+              "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
+              "\n\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
               // Resolve ZIP coordinates before publishing so contractor radius filtering can work.
