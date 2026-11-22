@@ -1660,7 +1660,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           throw new Error("Please log in before submitting a request.");
         }
 
-        await verifyCustomerStreetAddress();
+        const verifiedAddress = await verifyCustomerStreetAddress();
 
         const isSpherePackage = sphereDraft.source === "sphere";
         if (isSpherePackage && requestedServices.length < 2) {
@@ -1674,8 +1674,9 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
           service_city: $("serviceCity").value.trim(),
           service_state: $("serviceState").value.trim().toUpperCase(),
           service_zip_code: $("serviceZip").value.trim(),
-          service_latitude: Number($("serviceZip").dataset.latitude) || null,
-          service_longitude: Number($("serviceZip").dataset.longitude) || null,
+          // Use the matched street-address coordinates, not the ZIP centroid.
+          service_latitude: Number(verifiedAddress.latitude) || null,
+          service_longitude: Number(verifiedAddress.longitude) || null,
           description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null
         };
