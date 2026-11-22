@@ -2009,13 +2009,23 @@
         const card = document.createElement("article"); card.className = "lead";
         const heading = document.createElement("div"); heading.className = "leadhead";
         const titleWrap = document.createElement("div");
-        const title = document.createElement("h3"); title.textContent = request.service_type || "Home service request";
+        const title = document.createElement("h3");
+        title.textContent = isPackage ? "Multi-Service Home Project" : (request.service_type || "Home service request");
         const meta = document.createElement("p"); meta.className = "muted";
         meta.textContent = "Submitted: " + (request.created_at ? new Date(request.created_at).toLocaleString() : "Unknown date");
         titleWrap.append(title, meta);
+        const headingBadges = document.createElement("div");
+        headingBadges.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;";
+        if (isPackage) {
+          const packageBadge = document.createElement("span");
+          packageBadge.className = "pill package-pill";
+          packageBadge.textContent = "Package Lead";
+          headingBadges.append(packageBadge);
+        }
         const status = document.createElement("span"); status.className = "pill";
         status.textContent = request.lead_id || request.status === "published" ? "Published" : (request.status || "Unknown");
-        heading.append(titleWrap, status); card.append(heading);
+        headingBadges.append(status);
+        heading.append(titleWrap, headingBadges); card.append(heading);
 
         const profile = profilesById[request.user_id] || {};
         const addressParts = [request.property_address, request.service_city, request.service_state, request.service_zip_code].filter(v => v && String(v).trim());
