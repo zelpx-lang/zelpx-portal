@@ -2020,7 +2020,7 @@
     clearMessage("serviceRequestsMessage");
     try {
       const { data: requests, error } = await db.from("service_requests")
-        .select("id,user_id,request_type,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
+        .select("id,user_id,request_type,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at,customer_live_confirmed_at,customer_live_confirmation_version,commercial_sharing_consent_at,protection_required")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
       const requestIds = (requests || []).map(request => request.id);
@@ -2180,6 +2180,14 @@
           checkedAt.textContent = "Checked: " + new Date(verification.checked_at).toLocaleString();
           verificationBox.append(checkedAt);
         }
+        const liveConfirmation = document.createElement("p");
+        liveConfirmation.style.fontWeight = "700";
+        liveConfirmation.style.color = request.customer_live_confirmed_at ? "#147d55" : "#a15c00";
+        liveConfirmation.textContent = "Customer live-contact confirmation: " + (request.customer_live_confirmed_at ? "Confirmed" : "Not confirmed");
+        verificationBox.append(liveConfirmation);
+        const smsNote = document.createElement("p"); smsNote.className = "muted";
+        smsNote.textContent = "SMS OTP status: not configured; email confirmation and customer live-contact confirmation are checked separately.";
+        verificationBox.append(smsNote);
         card.append(verificationBox);
 
         if (request.lead_id || request.status === "published") {
