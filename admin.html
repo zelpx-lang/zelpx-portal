@@ -1136,19 +1136,19 @@
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
     if (!data?.length) { list.textContent = "No leads created yet."; return; }
     const wrap = document.createElement("div"); wrap.className = "tablewrap";
     const table = document.createElement("table"), thead = document.createElement("thead"), headerRow = document.createElement("tr");
-    ["Type / Category","Included services","ZIP","Urgency","Price","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
+    ["Type / Category","Included services","ZIP","Urgency","Lead price","Project value","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
     thead.append(headerRow); table.append(thead); const body = document.createElement("tbody");
     data.forEach(lead => {
       const tr = document.createElement("tr");
       const packageType = lead.lead_type === "lead_package";
       const typeLabel = packageType ? "Multi-Service Home Project" : (lead.service_category || "Regular Lead");
       const includedServices = packageType && Array.isArray(lead.package_services) ? lead.package_services.join(", ") : "—";
-      [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
+      [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),packageType && lead.project_value_cents != null ? money(lead.project_value_cents) : "—",lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
       body.append(tr);
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
@@ -2203,6 +2203,23 @@
             packagePriceGuidance.textContent = "This price is for one service only.";
           }
           priceWrap.append(packagePriceGuidance);
+          let projectValueInput = null;
+          if (isPackage) {
+            const projectValueWrap = document.createElement("div");
+            const projectValueLabel = document.createElement("label");
+            projectValueLabel.textContent = "Estimated total project value (USD) — optional";
+            projectValueInput = document.createElement("input");
+            projectValueInput.type = "number"; projectValueInput.min = "0"; projectValueInput.step = "0.01";
+            projectValueInput.placeholder = "e.g. 12500.00";
+            projectValueInput.inputMode = "decimal";
+            projectValueInput.setAttribute("aria-label", "Estimated total project value in US dollars");
+            projectValueLabel.append(projectValueInput);
+            const valueNote = document.createElement("small");
+            valueNote.className = "muted";
+            valueNote.textContent = "This is the estimated value of the customer's entire project, not the fee a contractor pays to buy this lead.";
+            projectValueWrap.append(projectValueLabel, valueNote);
+            fields.append(projectValueWrap);
+          }
           publish.textContent = isPackage ? "Verify and publish Special Lead Package" : "Verify and publish Regular Lead";
           publish.addEventListener("click", async () => {
             if (!isAdmin) { feedback.textContent = "Only an administrator can set the lead price and publish this request."; feedback.className = "message error"; return; }
@@ -2217,12 +2234,20 @@
               feedback.textContent = "A Lead Package requires at least two customer-selected services.";
               feedback.className = "message error"; return;
             }
+            const projectValue = isPackage && projectValueInput && projectValueInput.value.trim() !== ""
+              ? Number(projectValueInput.value) : null;
+            if (projectValue !== null && (!Number.isFinite(projectValue) || projectValue < 0 ||
+                Math.round(projectValue * 100) !== projectValue * 100)) {
+              feedback.textContent = "Enter a valid estimated project value with no more than 2 decimal places.";
+              feedback.className = "message error"; return;
+            }
             const customerName = profile.full_name || "Unavailable";
             const saleLabel = isPackage ? "SPECIAL LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD — one service";
             if (!window.confirm("Publish this customer request?\n\nSale type: " + saleLabel +
               "\nService: " + (isPackage ? "Multi-Service Home Project" : categoryValue) + (isPackage ? "\nIncluded services: " + selectedServices.join(", ") : "") +
               "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
-              "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nPrice: $" + priceValue.toFixed(2) +
+              "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nLead purchase price: $" + priceValue.toFixed(2) +
+              (isPackage && projectValue !== null ? "\nEstimated total project value: $" + projectValue.toFixed(2) : "") +
               "\n\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
@@ -2242,7 +2267,7 @@
               p_latitude: latitude, p_longitude: longitude
             };
             const { data: leadId, error: publishError } = isPackage
-              ? await db.rpc("admin_publish_service_request_package", { ...publishArgs, p_package_services: selectedServices })
+              ? await db.rpc("admin_publish_service_request_package", { ...publishArgs, p_package_services: selectedServices, p_project_value_cents: projectValue === null ? null : Math.round(projectValue * 100) })
               : await db.rpc("admin_publish_service_request", publishArgs);
               if (publishError) throw publishError;
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
