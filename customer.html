@@ -2241,8 +2241,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         if (error) throw error;
         const { error: confirmationError } = await db.rpc("confirm_own_service_request", {
-          p_request_id: createdRequest.id,
-          p_customer_attested: $("customerLiveConfirmation").checked === true
+          p_request_id: createdRequest.id
         });
         if (confirmationError) throw confirmationError;
 
