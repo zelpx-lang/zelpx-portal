@@ -1469,10 +1469,11 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
     const urlSphereDraft = {
       service: landingParams.get("service") || "",
       zip: landingParams.get("zip") || "",
-      services: (landingParams.get("services") || "").split("|").map(value => value.trim()).filter(Boolean)
+      source: landingParams.get("source") === "sphere" ? "sphere" : "",
+      services: (landingParams.get("source") === "sphere" ? (landingParams.get("services") || "") : "").split("|").map(value => value.trim()).filter(Boolean)
     };
     let sphereDraft = null;
-    const hasSphereUrlData = Boolean(urlSphereDraft.service || urlSphereDraft.zip || urlSphereDraft.services.length);
+    const hasSphereUrlData = urlSphereDraft.source === "sphere" && urlSphereDraft.services.length > 0;
     let sphereAuthPending = false;
     try {
       const pendingAuth = JSON.parse(
@@ -1504,7 +1505,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       const params = new URLSearchParams(window.location.search);
       const services = (params.get("services") || "").split("|").map(value => value.trim()).filter(Boolean);
       if (params.get("service") || params.get("zip") || services.length) {
-        sphereDraft = { service: params.get("service") || landingService, zip: params.get("zip") || landingZip, services: services.length ? services : landingServices, removedServices: Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [] };
+        sphereDraft = { service: params.get("service") || landingService, zip: params.get("zip") || landingZip, source: params.get("source") === "sphere" ? "sphere" : sphereDraft.source || "", services: params.get("source") === "sphere" ? (services.length ? services : landingServices) : [], removedServices: Array.isArray(sphereDraft.removedServices) ? sphereDraft.removedServices : [] };
         try { localStorage.setItem(SPHERE_DRAFT_KEY, JSON.stringify(sphereDraft)); } catch (_) {}
       }
     }
@@ -1591,7 +1592,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
       button.textContent = "Submitting...";
 
       try {
-        const requestedServices = Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
+        const requestedServices = sphereDraft.source === "sphere" && Array.isArray(sphereDraft.services) ? sphereDraft.services : [];
         if (requestedServices.length && !$("confirmSelectedServices").checked) {
           // Restore the confirmation automatically if the page was refreshed mid-draft.
           $("confirmSelectedServices").checked = true;
@@ -1612,8 +1613,13 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
 
         await verifyCustomerStreetAddress();
 
+        const isSpherePackage = sphereDraft.source === "sphere";
+        if (isSpherePackage && requestedServices.length < 2) {
+          throw new Error("A Special Lead Package must include at least two services. Please return to the sphere and select at least two.");
+        }
         const request = {
           user_id: session.user.id,
+          request_type: isSpherePackage ? "lead_package" : "regular",
           service_type: $("serviceType").value,
           property_address: $("propertyAddress").value.trim(),
           service_city: $("serviceCity").value.trim(),
@@ -1638,7 +1644,7 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         if (error) throw error;
 
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
-        sphereDraft = { service: "", zip: "", services: [] };
+        sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
         $("serviceState").dataset.manualState = "false";
 
