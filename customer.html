@@ -1361,15 +1361,25 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
         const questions = serviceDetailQuestions[service] || [["Describe the work","Describe"],["Approximate size or quantity","Describe"]];
         questions.forEach(([labelText, options]) => {
           const label = document.createElement("label"); label.textContent = labelText;
-          const multiChoiceLabels = new Set([
-            "Work needed","Work area","Cabinet work","Countertop","Flooring type","Cleaning focus",
-            "Walls, ceilings, trim?","Mowing, edging, fertilizing?","System","Issue or installation",
-            "Project type","Surface","Item types","Describe tasks","Location of wood rot"
+          // Default every service-detail option list to popup multi-select.
+          // Keep inherently exclusive questions (yes/no, frequency, urgency, install-vs-replace) as single-select.
+          const singleChoiceLabels = new Set([
+            "Remove old tile?","Subfloor/wall repair needed?","Inside oven/fridge?","Pets?",
+            "After-hours access?","Replace tub/shower?","Replace vanity/toilet?","Demolition required?",
+            "Remove existing floor?","Stairs included?","Subfloor repair?","Remove old carpet?","Stairs?",
+            "Remove existing grass/turf?","Base preparation needed?","Remove old infill?","Replace damaged wood?",
+            "Painting or sealing needed?","Remove existing cabinets?","Who supplies cabinets/materials?",
+            "Materials supplied by","Turf/material supplied by","New infill supplied by","Who supplies the materials?",
+            "Frequency","Cleaning frequency","Property empty?","Urgency","Is water shut off?",
+            "New installation or repair?","Install or replace?","Repair or replacement?","Number of coats",
+            "Stories","Number of stories","Move distance","Packing needed?","Stairs/elevator?",
+            "Remove existing flooring?","Underlayment needed?","Ceiling included?","Haul away debris?",
+            "Debris removal needed?","Existing turf removal?","Who supplies turf/materials?"
           ]);
-          const isMultiChoice = multiChoiceLabels.has(labelText) || (service === "Carpentry" && labelText === "Work needed");
+          const isMultiChoice = !singleChoiceLabels.has(labelText);
           let input;
           if (options === "number") { input = document.createElement("input"); input.type = "number"; input.min = "0"; input.step = labelText.toLowerCase().includes("sq ft") ? "1" : "any"; input.inputMode = "decimal"; input.placeholder = labelText.toLowerCase().includes("sq ft") ? "Enter square feet (sq ft)" : "Enter amount"; }
-          else if (options === "Describe") {
+          else if (isMultiChoice) {
             const presets = {
               "Appliance/plumbing/electrical changes?": ["No changes", "Plumbing changes", "Electrical changes", "Appliance installation", "Several changes", "Not sure"],
               "Leak or damage?": ["Active leak", "Missing or damaged shingles", "Storm damage", "Sagging roof", "No visible damage", "Inspection only", "Not sure"],
@@ -1378,15 +1388,8 @@ html.zelpx-oauth-pending body::after{content:"ZELPX\\A Opening your account...";
               "Describe the service": ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"],
               "Approximate size or quantity": ["Small job", "Medium job", "Large job", "Several items / areas", "Not sure"]
             };
-            input = document.createElement("select");
-            const first = document.createElement("option"); first.value = ""; first.textContent = "Choose an option"; input.append(first);
-            (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"]).forEach(value => {
-              const option = document.createElement("option"); option.value = value; option.textContent = value; input.append(option);
-            });
-          }
-          else if (isMultiChoice) {
-            const values = (service === "Carpentry" && labelText === "Work needed")
-              ? ["Cabinet work","Framing","Trim/baseboards","Doors","Shelving","Deck repair","Other"]
+            const values = options === "Describe"
+              ? (presets[labelText] || ["Repair", "Installation", "Replacement", "Maintenance", "Inspection", "Other / not sure"])
               : options.split(", ");
             const wrap = document.createElement("div");
             wrap.dataset.jobQuestion = labelText; wrap.dataset.jobService = service;
