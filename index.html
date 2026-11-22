@@ -69,6 +69,12 @@ footer{padding:34px 0;border-top:1px solid var(--line);color:var(--muted);font-s
 .xp-limit-ok:focus-visible{outline:2px solid #e46b3b;outline-offset:3px}
 @keyframes zelpxAlertIn{from{opacity:0;transform:translateY(7px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:420px){.xp-limit-content{padding:22px 17px}.xp-limit-window{width:min(390px,100%)}}
+
+/* Keep mobile taps clean while preserving keyboard focus visibility. */
+*{-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){outline:none}
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
 </style>
 <script>
 /* Prevent a brief homepage flash when Supabase falls back to the Site URL after OAuth. */
