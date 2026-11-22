@@ -558,7 +558,47 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
 #selectedServicesReviewList .selected-service-pill:hover:not(:disabled){background:#fff7f2;color:var(--customer-ink);box-shadow:none}
 #selectedServicesReviewList .selected-service-pill .remove-mark{flex:0 0 auto;color:#e47b50;font-size:23px;font-weight:500;line-height:1}
 #selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:12px;font-weight:750;line-height:1.5}
-#confirmSelectedServices{width:22px;height:22px;accent-color:var(--customer-orange);flex:0 0 auto;margin:3px 0 0}</style>
+#confirmSelectedServices{width:22px;height:22px;accent-color:var(--customer-orange);flex:0 0 auto;margin:3px 0 0}
+/* ZELPX customer portal — softer, tighter mobile dashboard */
+:root{--customer-line:#eee4dc;--customer-soft:#fff3eb;--customer-orange:#e97843;--customer-orange-dark:#cf6032;--customer-ink:#302923;--customer-muted:#81766d}
+body{background:#f8f5f1;color:var(--customer-ink)}
+.container{max-width:680px;padding:24px 26px;background:#fffefa;border:1px solid #f0e8e0;border-radius:22px;box-shadow:0 10px 34px -28px #59402d66}
+.dashboard-topbar{padding:8px 0 13px;margin-bottom:8px;background:rgba(255,254,250,.96)}
+.dashboard-topbar h1{font-size:22px;letter-spacing:-.45px}
+.top-logout-button{min-height:40px;border-radius:13px;background:#fffaf6;color:#76675c;border-color:#eee2d8;padding:8px 14px}
+label{margin:11px 0 5px;font-size:12px;letter-spacing:.035em;color:#776d64}
+#serviceDetails.request-card,#selectedServicesReview.request-card{padding:16px 17px;margin-top:10px;border:1px solid #f0e5dc;border-radius:18px;background:linear-gradient(155deg,#fff 0%,#fffaf6 100%);box-shadow:0 5px 18px -17px #79543d55}
+#serviceDetails>strong{display:block;margin:0 0 12px;font-size:17px;letter-spacing:-.2px}
+#serviceDetails .job-detail-service{padding:11px 0!important;border-bottom:1px solid #f1e9e2!important}
+#serviceDetails .job-detail-service:last-child{border-bottom:0!important;padding-bottom:2px!important}
+#serviceDetails .job-detail-service h3{margin:0 0 9px!important;font-size:16px!important;line-height:1.3;color:#342b25}
+#serviceDetails label{margin:9px 0 4px;font-size:11px;line-height:1.35;letter-spacing:.045em;color:#82776e}
+#serviceDetails .job-choice-trigger{min-height:43px!important;margin:4px 0 5px!important;padding:9px 13px!important;border:1px solid #ead8cb!important;border-radius:12px!important;background:#fffaf6!important;color:#493b31!important;font-size:14px!important;font-weight:600!important;box-shadow:0 1px 2px #6b46300a!important}
+#serviceDetails .job-choice-trigger::after{color:#d17a50;font-size:17px}
+#serviceDetails .job-choice-trigger:hover:not(:disabled){background:#fff3eb!important;border-color:#e7b99f!important}
+input,select,textarea{border-color:#e9dfd6;border-radius:12px;background:#fffdfa}
+input,select{min-height:43px;padding:10px 12px}
+textarea{min-height:100px}
+.request-card{border-radius:16px;border-color:#eee5dd;box-shadow:0 5px 18px -18px #60432e55}
+button{border-radius:13px;box-shadow:0 3px 10px #df774022}
+button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 13px #df77402b}
+.secondary-button,.top-logout-button,.secondary{background:#fffaf6;color:#79695e;border:1px solid #eee1d7;box-shadow:none}
+.dashboard-menu{gap:8px;margin:14px 0 17px}
+.dashboard-menu-button{min-height:44px;padding:9px 10px;border-radius:12px;background:#fffdfa;border-color:#eee4dc;font-size:13px}
+.dashboard-menu-button.active{background:#fff0e7;color:#b95c32;border-color:#f0cbb7;box-shadow:none}
+@media(max-width:600px){
+ body{padding:8px 7px}
+ .container{margin:5px auto;padding:16px 13px;border-radius:18px}
+ .dashboard-topbar h1{font-size:19px}
+ #serviceDetails.request-card,#selectedServicesReview.request-card{padding:13px 13px;border-radius:15px}
+ #serviceDetails .job-detail-service{padding:9px 0!important}
+ #serviceDetails .job-detail-service h3{font-size:15px!important;margin-bottom:7px!important}
+ #serviceDetails .job-choice-trigger{min-height:41px!important;padding:8px 11px!important;font-size:13px!important}
+ #serviceDetails label{margin-top:8px;font-size:10.5px}
+ .dashboard-menu{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 15px}
+ .dashboard-menu-button{min-height:42px;padding:8px 5px;text-align:center;font-size:12px;line-height:1.2}
+}
+</style>
 </head>
 
 <body>
