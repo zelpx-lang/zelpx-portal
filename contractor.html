@@ -1335,14 +1335,19 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
   });
   async function loadAccount() {
-    const { data: profile, error: profileError } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
-    if (profileError) throw profileError;
+    // Fetch the independent identity and contractor records concurrently to
+    // reduce the time spent restoring the dashboard after an OAuth callback.
+    const [profileResult, contractorResult] = await Promise.all([
+      db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle(),
+      db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle()
+    ]);
+    if (profileResult.error) throw profileResult.error;
+    if (contractorResult.error) throw contractorResult.error;
+    const profile = profileResult.data, contractor = contractorResult.data;
     currentProfile = profile; isAdmin = profile?.role === "admin";
     $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
-    const { data: contractor, error: contractorError } = await db.from("contractors").select("id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status").eq("user_id", currentUser.id).maybeSingle();
-    if (contractorError) throw contractorError;
     currentContractor = contractor;
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
@@ -1417,9 +1422,16 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
         : "";
       companySaveStatus.className = pendingCompanyChanges ? "message" : "message hidden";
     }
-    await loadContractorServiceCategories();
-    await loadProfessionQualifications();
-    await loadContractorChangeRequests();
+    // These profile sections are independent; load them concurrently rather
+    // than serially blocking the post-login dashboard.
+    const profileSections = await Promise.allSettled([
+      loadContractorServiceCategories(),
+      loadProfessionQualifications(),
+      loadContractorChangeRequests()
+    ]);
+    profileSections.forEach((result, index) => {
+      if (result.status === "rejected") console.warn("Contractor profile section failed to load:", index, result.reason);
+    });
 
   }
   $("contractorAvatarFile").addEventListener("change", async (event) => {
