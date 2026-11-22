@@ -501,6 +501,33 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   }
 }
 
+
+/* Keep Android tap/focus feedback on social sign-in buttons within ZELPX orange palette */
+.social-auth-button{
+  -webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;appearance:none;
+  outline:none;
+  user-select:none;-webkit-user-select:none;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.social-auth-button:active,
+.social-auth-button:focus,
+.social-auth-button:focus:not(:focus-visible){
+  background:#fff8f3!important;
+  border-color:#e97843!important;
+  color:#202124!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+.social-auth-button:focus-visible{
+  background:#fff8f3!important;
+  border-color:#e97843!important;
+  outline:2px solid #e97843!important;
+  outline-offset:3px!important;
+  box-shadow:0 0 0 3px #fce5d8!important;
+}
+.social-auth-button:disabled{background:#fff!important;border-color:#e8ddd4!important;opacity:.65}
+
 </style>
 </head>
 <body>
