@@ -1461,11 +1461,21 @@
     function renderServiceDetails() {
       const panel = $("serviceDetails");
       panel.replaceChildren();
-      const heading = document.createElement("strong"); heading.textContent = "Job details"; panel.append(heading);
-      const sphereServices = sphereDraft && sphereDraft.source === "sphere" && Array.isArray(sphereDraft.services)
+      const isSpherePackage = Boolean(sphereDraft && sphereDraft.source === "sphere");
+      const sphereServices = isSpherePackage && Array.isArray(sphereDraft.services)
         ? [...new Set(sphereDraft.services.map(value => String(value || "").trim()).filter(Boolean))]
         : [];
-      const servicesToRender = sphereServices.length ? sphereServices : [$("serviceType").value].filter(Boolean);
+      // In a sphere package, Job details must mirror only the services that
+      // remain selected. Never fall back to the hidden primary serviceType.
+      const servicesToRender = isSpherePackage
+        ? sphereServices
+        : [$("serviceType").value].filter(Boolean);
+      if (isSpherePackage && servicesToRender.length === 0) {
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      const heading = document.createElement("strong"); heading.textContent = "Job details"; panel.append(heading);
       if (!servicesToRender.length) {
         const empty = document.createElement("p"); empty.className = "subtitle";
         empty.textContent = "Choose a service to see the questions that help contractors estimate the job.";
