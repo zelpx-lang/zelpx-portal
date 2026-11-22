@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
         : "SMS could not be sent. Check the number and try again.";
       return sendJson(res, response.status === 429 ? 429 : 502, { error: safeMessage });
     }
-    return sendJson(res, 200, { success: true, status: result.status || "pending", user_id: user.id });
+    return sendJson(res, 200, { success: true, status: result.status || "pending" });
   } catch (error) {
     const status = /sign in|session/i.test(error.message) ? 401 : /not configured/i.test(error.message) ? 503 : 500;
     return sendJson(res, status, { error: error.message || "Could not start phone verification." });
