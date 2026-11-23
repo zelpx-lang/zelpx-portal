@@ -187,26 +187,13 @@ main.wrap{width:min(800px,calc(100% - 32px))}
  const URL="https://zsrnjkndgbchfxibxiyd.supabase.co";
  const KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
  const list=document.getElementById("jobsList"),zip=document.getElementById("zipFilter"),category=document.getElementById("categoryFilter"),count=document.getElementById("resultCount");
- const galaxyNodes=document.getElementById("galaxyNodes"),galaxyCount=document.getElementById("galaxyCount"),galaxySelected=document.getElementById("galaxySelected");
- const sphereViewBtn=document.getElementById("sphereViewBtn"),listViewBtn=document.getElementById("listViewBtn");
- let rows=[],busy=false,activeView="sphere",selectedJobId=null;
+ let rows=[],busy=false;
  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const money=c=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format((Number(c)||0)/100);
- function setView(view){
-   const sphere=false;
-   document.getElementById("jobGalaxy")?.classList.add("hidden");
-   list.classList.remove("hidden");
-   sphereViewBtn.classList.remove("active");
-   listViewBtn.classList.add("active");
-   sphereViewBtn.setAttribute("aria-pressed","false");
-   listViewBtn.setAttribute("aria-pressed","true");
- }
  function render(){
    const z=zip.value.trim(),cat=category.value;
    const filtered=rows.filter(x=>(!z||String(x.zip_code||"").startsWith(z))&&(!cat||(cat==="__lead_package__"?x.lead_type==="lead_package":x.service_category===cat)));
    count.textContent=filtered.length+" available "+(filtered.length===1?"job":"jobs");
-   galaxyCount.textContent=filtered.length+" "+(filtered.length===1?"opportunity":"opportunities");
-   renderGalaxy(filtered);
    if(!filtered.length){list.innerHTML='<div class="state">No available jobs match these filters.</div>';return;}
    list.innerHTML=filtered.map(x=>{
      const place=[x.service_city,x.service_state].filter(Boolean).join(", ");
@@ -260,9 +247,6 @@ main.wrap{width:min(800px,calc(100% - 32px))}
    finally{busy=false;}
  }
  zip.addEventListener("input",render);category.addEventListener("change",render);
- sphereViewBtn.addEventListener("click",()=>setView("sphere"));
- listViewBtn.addEventListener("click",()=>setView("list"));
- window.addEventListener("resize",()=>{if(activeView==="sphere")render();});
  document.getElementById("refreshBtn").addEventListener("click",load);
  load();setInterval(load,30000);
 })();
