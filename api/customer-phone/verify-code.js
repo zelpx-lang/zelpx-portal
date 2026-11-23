@@ -1,5 +1,5 @@
 "use strict";
-const { sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, requireActiveCustomer, ensurePhoneAvailable, saveVerifiedPhone } = require("../../lib/customer-phone");
+const { sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, requireActiveCustomer, ensurePhoneAvailable, saveVerifiedPhone, saveRequestSmsProof } = require("../../lib/customer-phone");
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." });
   try {
@@ -14,6 +14,7 @@ module.exports = async function handler(req, res) {
     const result = await twilioPost("https://verify.twilio.com/v2/Services/" + encodeURIComponent(config.serviceSid) + "/VerificationCheck", config, { To: phone, Code: code });
     if (result.status !== "approved") return sendJson(res, 400, { error: "The SMS code is incorrect or expired. Request a new code and try again." });
     await saveVerifiedPhone(user.id, phone, config);
+    if (body.purpose === "request_submission") await saveRequestSmsProof(user.id, phone, config);
     return sendJson(res, 200, { success: true, verified: true, phone });
   } catch (error) {
     const status = error.status === 429 ? 429 : (error.status && error.status < 500 ? 400 : 503);
