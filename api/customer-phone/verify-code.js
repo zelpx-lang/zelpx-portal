@@ -1,5 +1,5 @@
 "use strict";
-const { sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, saveVerifiedPhone } = require("../../lib/customer-phone");
+const { sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, requireActiveCustomer, saveVerifiedPhone } = require("../../lib/customer-phone");
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." });
   try {
@@ -9,6 +9,7 @@ module.exports = async function handler(req, res) {
     const code = String(body.code || "").trim();
     if (!phone || !/^\d{6}$/.test(code)) return sendJson(res, 400, { error: "Enter a valid phone number and the 6-digit SMS code." });
     const config = twilioConfig();
+    await requireActiveCustomer(user.id, config);
     const result = await twilioPost("https://verify.twilio.com/v2/Services/" + encodeURIComponent(config.serviceSid) + "/VerificationCheck", config, { To: phone, Code: code });
     if (result.status !== "approved") return sendJson(res, 400, { error: "The SMS code is incorrect or expired. Request a new code and try again." });
     await saveVerifiedPhone(user.id, phone, config);
