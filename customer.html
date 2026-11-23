@@ -1241,11 +1241,26 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
     function normalizeCustomerPhone(value) {
       const raw = String(value || "").trim();
-      const digits = raw.replace(/\\D/g, "");
-      if (raw.startsWith("+") && digits.length >= 10 && digits.length <= 15) return "+" + digits;
+      const digits = raw.replace(/\D/g, "");
+      if (raw.startsWith("+") && digits.length >= 8 && digits.length <= 15) return "+" + digits;
       if (digits.length === 10) return "+1" + digits;
       if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
-      throw new Error("Enter a valid phone number with country code. US numbers can use 10 digits.");
+      return "";
+    }
+
+    async function callCustomerPhoneApi(path, payload) {
+      const { data, error } = await db.auth.getSession();
+      if (error) throw error;
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Please sign in again.");
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Phone verification service is unavailable.");
+      return result;
     }
 
     $("sendCustomerPhoneOtpButton").addEventListener("click", async () => {
@@ -1253,16 +1268,13 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       const status = $("customerPhoneVerificationStatus");
       button.disabled = true;
       try {
-        const { data: sessionData, error: sessionError } = await db.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!sessionData.session) throw new Error("Please sign in again.");
         const phone = normalizeCustomerPhone($("customerPhone").value);
-        const { error } = await db.auth.updateUser({ phone });
-        if (error) throw error;
+        if (!phone) throw new Error("Enter a valid phone number. US numbers can use 10 digits.");
+        await callCustomerPhoneApi("/api/customer-phone/send-code", { phone });
         pendingCustomerPhoneOtp = phone;
         $("customerPhoneOtpEntry").classList.remove("hidden");
-        status.textContent = "A verification code was requested. Enter the 6-digit code sent by SMS.";
-        showMessage("profileMessage", "SMS code requested. Check your phone.", "success");
+        status.textContent = "A 6-digit code was sent to " + phone + ". Enter it below.";
+        showMessage("profileMessage", "SMS code sent. Check your phone.", "success");
       } catch (error) {
         status.textContent = error.message || "Could not send the SMS code.";
         showMessage("profileMessage", status.textContent, "error");
@@ -1285,15 +1297,13 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       }
       button.disabled = true;
       try {
-        const { data, error } = await db.auth.verifyOtp({
+        await callCustomerPhoneApi("/api/customer-phone/verify-code", {
           phone: pendingCustomerPhoneOtp,
-          token,
-          type: "phone_change"
+          code: token
         });
-        if (error) throw error;
-        if (!data?.session) throw new Error("Phone verification did not return an active session. Please sign in again.");
-        const { error: syncError } = await db.functions.invoke("sync-customer-phone-verification");
-        if (syncError) throw new Error(syncError.message || "The phone was verified but could not be saved to your ZELPX profile. Please contact support.");
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session?.user) throw new Error("Your session expired. Please sign in again.");
         pendingCustomerPhoneOtp = "";
         $("customerPhoneOtp").value = "";
         $("customerPhoneOtpEntry").classList.add("hidden");
