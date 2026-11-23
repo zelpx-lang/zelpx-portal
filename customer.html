@@ -2819,6 +2819,20 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         return;
       }
 
+      // A sphere/package choice is only a temporary, unsubmitted draft.
+      // Clear it on logout so the next login starts with a fresh request.
+      // Submitted service requests are stored in the database and are not touched.
+      try {
+        localStorage.removeItem(SPHERE_DRAFT_KEY);
+        localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY);
+        localStorage.removeItem("zelpx.sphere.auth.pending");
+        localStorage.removeItem("zelpx.oauth.pending");
+        sessionStorage.removeItem("zelpx.sphere.auth.pending");
+        sessionStorage.removeItem("zelpx.oauth.pending");
+      } catch (draftCleanupError) {
+        console.warn("Could not clear the temporary customer service selection:", draftCleanupError);
+      }
+
       // Return customers directly to the public ZELPX homepage after logout.
       window.location.replace("/");
     });
