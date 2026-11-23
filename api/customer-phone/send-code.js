@@ -16,6 +16,13 @@ module.exports = async function handler(req, res) {
     );
     return sendJson(res, 200, { success: true, message: "Verification code sent." });
   } catch (error) {
+    if (Number(error.code) === 60203) {
+      return sendJson(res, 429, {
+        error: "Too many SMS attempts. Please wait 10 minutes before trying again.",
+        code: "SMS_MAX_SEND_ATTEMPTS",
+        retry_after_seconds: 600
+      });
+    }
     const status = error.status === 429 ? 429 : (error.status && error.status < 500 ? 400 : 503);
     return sendJson(res, status, { error: error.message || "Could not send verification code." });
   }
