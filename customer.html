@@ -1426,7 +1426,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         let profile;
         try {
           const { data, error } = await db.from("profiles")
-            .select("role").eq("id", session.user.id).maybeSingle();
+            .select("role,customer_account_status,customer_block_reason").eq("id", session.user.id).maybeSingle();
           if (error) throw error;
           profile = data;
         } catch (profileError) {
@@ -1434,6 +1434,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           $("dashboardView").classList.add("hidden");
           $("authView").classList.remove("hidden");
           showMessage("message", "Could not verify account permissions. Please sign in again.", "error");
+          if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
+          return;
+        }
+        if (profile?.role === "customer" && profile.customer_account_status === "blocked") {
+          await db.auth.signOut();
+          $("dashboardView").classList.add("hidden");
+          $("authView").classList.remove("hidden");
+          showMessage("message", "This customer account is temporarily suspended by ZELPX fraud protection. Please contact support for review.", "error");
           if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
           return;
         }
