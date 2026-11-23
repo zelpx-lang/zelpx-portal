@@ -2054,6 +2054,11 @@
         const { data: profiles, error: profilesError } = await db.rpc("admin_get_customer_profiles", { p_user_ids: userIds });
         if (profilesError) console.warn("Could not load customer profile details:", profilesError.message);
         else (profiles || []).forEach(p => { profilesById[p.user_id] = p; });
+        const { data: accountRows, error: accountError } = await db.from("profiles")
+          .select("id,customer_account_status,customer_block_reason,customer_blocked_at")
+          .in("id", userIds);
+        if (accountError) console.warn("Could not load customer account protection status:", accountError.message);
+        else (accountRows || []).forEach(p => { profilesById[p.id] = { ...(profilesById[p.id] || {}), ...p }; });
       }
 
       const searchTerm = ($("requestSearch")?.value || "").trim().toLowerCase();
@@ -2122,6 +2127,34 @@
           const p = document.createElement("p"), strong = document.createElement("strong");
           strong.textContent = label + ": "; p.append(strong, document.createTextNode(String(value))); card.append(p);
         });
+        const accountStatus = profile.customer_account_status || "active";
+        const accountLine = document.createElement("p");
+        accountLine.style.fontWeight = "700";
+        accountLine.style.color = accountStatus === "blocked" ? "#b42318" : "#147d55";
+        accountLine.textContent = "Customer account: " + accountStatus.toUpperCase() +
+          (profile.customer_block_reason ? " — " + profile.customer_block_reason : "");
+        card.append(accountLine);
+        if (accountStatus === "blocked") {
+          const unblock = document.createElement("button");
+          unblock.type = "button"; unblock.className = "secondary";
+          unblock.textContent = "Unblock customer account";
+          unblock.addEventListener("click", async () => {
+            unblock.disabled = true;
+            try {
+              const { data, error } = await db.rpc("admin_set_customer_account_status", {
+                p_user_id: request.user_id, p_status: "active", p_reason: null
+              });
+              if (error) throw error;
+              if (data !== true) throw new Error("The customer account was not updated.");
+              message("serviceRequestsMessage", "Customer account unblocked. Review the request again before publishing.", "success");
+              await loadServiceRequests();
+            } catch (error) {
+              message("serviceRequestsMessage", error.message || "Could not unblock customer account.", "error");
+              unblock.disabled = false;
+            }
+          });
+          card.append(unblock);
+        }
         const description = document.createElement("p"); description.style.whiteSpace = "pre-wrap";
         description.textContent = request.description || "No description provided."; card.append(description);
         if (selectedServices.length) {
@@ -2185,6 +2218,10 @@
         if (request.lead_id || request.status === "published") {
           const note = document.createElement("p"); note.className = "message success";
           note.textContent = "This request has already been published. Lead ID: " + (request.lead_id || "recorded");
+          card.append(note);
+        } else if (profile.customer_account_status === "blocked") {
+          const note = document.createElement("p"); note.className = "message error";
+          note.textContent = "Publishing is paused because this customer account was automatically blocked by fraud protection. Review the account and unblock it before publishing.";
           card.append(note);
         } else if (request.status !== "new") {
           const note = document.createElement("p"); note.className = "message";
