@@ -2282,13 +2282,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           throw new Error("Your customer account is temporarily suspended. Please contact ZELPX support.");
         }
         const savedPhone = normalizeCustomerPhone(customerProfile.phone || "");
-        const phoneIsVerified = Boolean(
-          customerProfile.phone_verified_at &&
-          customerProfile.phone_verified_number &&
-          normalizeCustomerPhone(customerProfile.phone_verified_number) === savedPhone
-        );
+        if (!savedPhone) {
+          throw new Error("Add a phone number to your customer profile before submitting a service request.");
+        }
 
-        if (!phoneIsVerified) {
+        // Every service request requires a fresh SMS confirmation, even if the
+        // account phone was verified previously. The code is sent only to the
+        // phone number currently saved on this customer's own profile.
+        const requestPhoneConfirmed = window.zelpxRequestOtpVerifiedForPhone === savedPhone;
+        if (!requestPhoneConfirmed) {
           const { data: otpSessionData, error: otpSessionError } = await db.auth.getSession();
           if (otpSessionError) throw otpSessionError;
           const accessToken = otpSessionData.session?.access_token;
@@ -2375,6 +2377,9 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         if (error) throw error;
 
+        // Consume the one-request SMS confirmation after the order is saved.
+        window.zelpxRequestOtpVerifiedForPhone = "";
+        window.zelpxPendingRequestPhone = "";
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
         try { localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY); } catch (_) {}
         customerRequestIntent = null;
@@ -3218,7 +3223,12 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         modal.hidden = true;
         document.body.classList.remove("zelpx-modal-open");
       };
-      document.getElementById("requestPhoneOtpCancel").addEventListener("click", close);
+      document.getElementById("requestPhoneOtpCancel").addEventListener("click", () => {
+        window.zelpxRequestOtpVerifiedForPhone = "";
+        window.zelpxPendingRequestPhone = "";
+        codeInput.value = "";
+        close();
+      });
 
       async function sendRequestOtp() {
         const phone = window.zelpxPendingRequestPhone;
@@ -3266,10 +3276,13 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok || !result.verified) throw new Error(result.error || "The code could not be verified.");
+          const verifiedPhone = normalizeCustomerPhone(window.zelpxPendingRequestPhone || "");
+          if (!verifiedPhone) throw new Error("The verified phone number is missing. Please submit the request again.");
+          window.zelpxRequestOtpVerifiedForPhone = verifiedPhone;
           close();
           window.zelpxPendingRequestPhone = "";
           codeInput.value = "";
-          showMessage("requestMessage", "Phone verified. Your service request is being submitted…", "success");
+          showMessage("requestMessage", "Phone confirmed. Your service request is being submitted…", "success");
           document.getElementById("requestForm").requestSubmit();
         } catch (error) {
           message.textContent = error.message || "The code could not be verified. Please try again.";
