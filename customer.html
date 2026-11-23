@@ -2299,7 +2299,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           const sendResponse = await fetch("/api/customer-phone/send-code", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken },
-            body: JSON.stringify({ phone: savedPhone })
+            body: JSON.stringify({ phone: savedPhone, purpose: "request_submission" })
           });
           const sendResult = await sendResponse.json().catch(() => ({}));
           if (!sendResponse.ok) throw new Error(sendResult.error || "Could not send the SMS verification code.");
@@ -3272,7 +3272,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           const response = await fetch("/api/customer-phone/verify-code", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken },
-            body: JSON.stringify({ phone: window.zelpxPendingRequestPhone, code })
+            body: JSON.stringify({ phone: window.zelpxPendingRequestPhone, code, purpose: "request_submission" })
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok || !result.verified) throw new Error(result.error || "The code could not be verified.");
