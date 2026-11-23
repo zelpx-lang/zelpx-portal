@@ -1073,6 +1073,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       button.disabled = true; button.textContent = "Verifying...";
       try {
         await callCustomerPhoneApi("/api/customer-phone/verify-code", { phone, code });
+        window.zelpxProfileSaveSmsVerified = true;
+        window.zelpxProfileSaveSmsPhone = phone;
         $("customerPhoneVerificationCode").value = "";
         const { data } = await db.auth.getSession();
         if (!data.session?.user) throw new Error("Your session expired. Please sign in again.");
@@ -1345,6 +1347,9 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
     requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
+      // Every profile save requires a fresh SMS verification during this edit session.
+      window.zelpxProfileSaveSmsVerified = false;
+      window.zelpxProfileSaveSmsPhone = "";
       originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
       profileNameInput.readOnly = false;
       profilePhoneInput.readOnly = false;
@@ -1355,6 +1360,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     });
 
     cancelProfileUpdateButton.addEventListener("click", () => {
+      window.zelpxProfileSaveSmsVerified = false;
+      window.zelpxProfileSaveSmsPhone = "";
       profileNameInput.value = originalProfileValues.fullName;
       profilePhoneInput.value = originalProfileValues.phone;
       profileNameInput.readOnly = true;
@@ -1375,8 +1382,17 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         showMessage("profileMessage", "Please enter your full name.", "error");
         return;
       }
-      if (!phone || phone.replace(/\D/g, "").length < 7) {
+      let normalizedPhone = "";
+      try { normalizedPhone = normalizeCustomerPhone(phone); }
+      catch (_) {
         showMessage("profileMessage", "Please enter a valid phone number.", "error");
+        return;
+      }
+      if (!window.zelpxProfileSaveSmsVerified ||
+          normalizeCustomerPhone(window.zelpxProfileSaveSmsPhone || "") !== normalizedPhone) {
+        showMessage("profileMessage", "SMS verification is required before saving your profile. Send the code to this phone number and verify it first.", "error");
+        $("sendCustomerPhoneCodeButton").scrollIntoView({ behavior: "smooth", block: "center" });
+        $("customerPhoneVerificationCode").focus();
         return;
       }
 
@@ -1388,19 +1404,22 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         const user = sessionData.session?.user;
         if (!user) throw new Error("Please log in again.");
 
+        // Phone is written only by the SMS verification endpoint after Twilio approves the code.
         const { error } = await db
           .from("profiles")
-          .update({ full_name: fullName, phone })
+          .update({ full_name: fullName })
           .eq("id", user.id);
         if (error) throw error;
 
         const { error: metadataError } = await db.auth.updateUser({
-          data: { full_name: fullName, phone, account_type: "customer" }
+          data: { full_name: fullName, account_type: "customer" }
         });
         if (metadataError) throw metadataError;
 
-        originalProfileValues = { fullName, phone };
-        showMessage("profileMessage", "Your profile changes have been saved successfully.", "success");
+        originalProfileValues = { fullName, phone: normalizedPhone };
+        window.zelpxProfileSaveSmsVerified = false;
+        window.zelpxProfileSaveSmsPhone = "";
+        showMessage("profileMessage", "Your profile changes have been saved successfully. Phone number verified by SMS.", "success");
         profileNameInput.readOnly = true;
         profilePhoneInput.readOnly = true;
         requestProfileUpdateButton.classList.remove("hidden");
