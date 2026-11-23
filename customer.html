@@ -814,6 +814,17 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
+        <div class="request-card" id="customerPhoneVerificationPanel" style="margin:14px 0">
+          <strong>Phone verification</strong>
+          <p id="customerPhoneVerificationStatus" class="subtitle" aria-live="polite">Checking verification status…</p>
+          <button id="sendCustomerPhoneOtpButton" type="button">Send SMS verification code</button>
+          <div id="customerPhoneOtpEntry" class="hidden" style="margin-top:12px">
+            <label for="customerPhoneOtp">6-digit SMS code</label>
+            <input id="customerPhoneOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter code">
+            <button id="verifyCustomerPhoneOtpButton" type="button">Verify phone number</button>
+          </div>
+        </div>
+        <div id="customerAccountStatusNotice" class="message hidden" role="status"></div>
         <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
         <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
         <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
@@ -1199,7 +1210,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       clearMessage("profileMessage");
       const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role,avatar_url")
+        .select("full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number,customer_account_status,customer_block_reason")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -1210,9 +1221,93 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      const verified = Boolean(data.phone_verified_at && data.phone_verified_number === data.phone);
+      $("customerPhoneVerificationStatus").textContent = verified
+        ? "Verified by SMS. You can submit service requests."
+        : "Not verified. Verify your phone by SMS before submitting a service request.";
+      $("sendCustomerPhoneOtpButton").textContent = verified ? "Resend SMS code" : "Send SMS verification code";
+      $("customerPhoneOtpEntry").classList.add("hidden");
+      const blocked = data.customer_account_status === "blocked";
+      $("customerAccountStatusNotice").classList.toggle("hidden", !blocked);
+      if (blocked) {
+        $("customerAccountStatusNotice").textContent = "Your account is temporarily suspended by ZELPX fraud protection. " + (data.customer_block_reason || "Please contact support for review.");
+        $("customerAccountStatusNotice").className = "message error";
+      }
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
+
+    let pendingCustomerPhoneOtp = "";
+
+    function normalizeCustomerPhone(value) {
+      const raw = String(value || "").trim();
+      const digits = raw.replace(/\\D/g, "");
+      if (raw.startsWith("+") && digits.length >= 10 && digits.length <= 15) return "+" + digits;
+      if (digits.length === 10) return "+1" + digits;
+      if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+      throw new Error("Enter a valid phone number with country code. US numbers can use 10 digits.");
+    }
+
+    $("sendCustomerPhoneOtpButton").addEventListener("click", async () => {
+      const button = $("sendCustomerPhoneOtpButton");
+      const status = $("customerPhoneVerificationStatus");
+      button.disabled = true;
+      try {
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) throw new Error("Please sign in again.");
+        const phone = normalizeCustomerPhone($("customerPhone").value);
+        const { error } = await db.auth.updateUser({ phone });
+        if (error) throw error;
+        pendingCustomerPhoneOtp = phone;
+        $("customerPhoneOtpEntry").classList.remove("hidden");
+        status.textContent = "A verification code was requested. Enter the 6-digit code sent by SMS.";
+        showMessage("profileMessage", "SMS code requested. Check your phone.", "success");
+      } catch (error) {
+        status.textContent = error.message || "Could not send the SMS code.";
+        showMessage("profileMessage", status.textContent, "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $("verifyCustomerPhoneOtpButton").addEventListener("click", async () => {
+      const button = $("verifyCustomerPhoneOtpButton");
+      const status = $("customerPhoneVerificationStatus");
+      const token = $("customerPhoneOtp").value.trim();
+      if (!pendingCustomerPhoneOtp) {
+        showMessage("profileMessage", "Request a new SMS code first.", "error");
+        return;
+      }
+      if (!/^[0-9]{6}$/.test(token)) {
+        showMessage("profileMessage", "Enter the 6-digit code from your SMS.", "error");
+        return;
+      }
+      button.disabled = true;
+      try {
+        const { data, error } = await db.auth.verifyOtp({
+          phone: pendingCustomerPhoneOtp,
+          token,
+          type: "phone_change"
+        });
+        if (error) throw error;
+        if (!data?.session) throw new Error("Phone verification did not return an active session. Please sign in again.");
+        const { error: syncError } = await db.functions.invoke("sync-customer-phone-verification");
+        if (syncError) throw new Error(syncError.message || "The phone was verified but could not be saved to your ZELPX profile. Please contact support.");
+        pendingCustomerPhoneOtp = "";
+        $("customerPhoneOtp").value = "";
+        $("customerPhoneOtpEntry").classList.add("hidden");
+        status.textContent = "Verified by SMS. You can submit service requests.";
+        $("sendCustomerPhoneOtpButton").textContent = "Resend SMS code";
+        showMessage("profileMessage", "Your phone number has been verified successfully.", "success");
+        await loadCustomerProfile(data.user);
+      } catch (error) {
+        status.textContent = error.message || "The code could not be verified.";
+        showMessage("profileMessage", status.textContent, "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     $("customerAvatarFile").addEventListener("change", async (event) => {
       const file = event.target.files && event.target.files[0]; if (!file) return;
