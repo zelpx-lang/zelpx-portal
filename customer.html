@@ -2363,9 +2363,13 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         return;
       }
 
-      // A phone number is verified once in My Profile. The database check
-      // below is authoritative, so do not send a new SMS challenge for every
-      // service request; this avoids blocking repeat orders and Twilio limits.
+      // Require a fresh SMS verification at the final Submit step for every new request.
+      if (!window.zelpxSubmitPhoneVerified) {
+        await startSubmitPhoneOtp();
+        return;
+      }
+      // Consume this verification so it cannot authorize another request.
+      window.zelpxSubmitPhoneVerified = false;
       const button = $("requestButton");
       button.disabled = true;
       button.textContent = "Submitting...";
