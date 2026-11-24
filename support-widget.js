@@ -24,9 +24,9 @@
     .zxs-message.user{align-self:flex-end;background:linear-gradient(135deg,#ff8153,#ed5538);color:#fff;border-bottom-right-radius:5px}
     .zxs-message.typing{color:#aebbc5;font-style:italic}
     .zxs-compose{flex:0 0 auto;padding:13px 14px max(14px,env(safe-area-inset-bottom));background:#151f28;border-top:1px solid #293641}
-    .zxs-compose form{display:flex;align-items:flex-end;gap:9px;background:#202c36;border:1px solid #34434f;border-radius:17px;padding:7px 7px 7px 13px;transition:border-color .2s}
+    .zxs-compose form{display:flex;align-items:center;gap:9px;background:#202c36;border:1px solid #34434f;border-radius:17px;padding:7px 7px 7px 13px;transition:border-color .2s}
     .zxs-compose form:focus-within{border-color:#ff8153}
-    .zxs-compose textarea{flex:1;min-width:0;max-height:112px;min-height:40px;resize:none;border:0;outline:0;background:transparent;color:#f5f7f9;font:13px/1.5 Inter,system-ui,sans-serif;padding:10px 0}
+    .zxs-compose textarea{display:block;flex:1;min-width:0;width:100%;height:40px;max-height:112px;min-height:40px;resize:none;overflow-y:auto;box-sizing:border-box;align-self:center;vertical-align:middle;border:0;outline:0;background:transparent;color:#f5f7f9;font:13px/1.5 Inter,system-ui,sans-serif;padding:10px 0;margin:0}
     .zxs-compose textarea::placeholder{color:#8796a3}
     .zxs-send{flex:0 0 40px;width:40px;height:40px;border:0;border-radius:12px;background:linear-gradient(135deg,#ff8758,#f45135);color:#fff;display:grid;place-items:center;cursor:pointer}
     .zxs-send:disabled{opacity:.45;cursor:default}.zxs-send svg{width:18px;height:18px}
