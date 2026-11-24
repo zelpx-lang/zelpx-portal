@@ -2875,6 +2875,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     $("requestSort").addEventListener("change", applyRequestFilters);
     $("refreshButton").addEventListener("click", loadRequests);
     $("logoutButton").addEventListener("click", async () => {
+      // A deliberate logout ends the unfinished customer selection.
+      // Keep drafts only during the OAuth sign-in handoff, never across logout.
+      try {
+        localStorage.removeItem("zelpx.pendingSphereRequest.v1");
+        localStorage.removeItem("zelpx.pendingCustomerRequest.v1");
+        localStorage.removeItem("zelpx.sphere.auth.pending");
+        sessionStorage.removeItem("zelpx.sphere.auth.pending");
+      } catch (_) {}
       // Sign out only this browser session; do not revoke other active sessions.
       const { error } = await db.auth.signOut({ scope: "local" });
 
