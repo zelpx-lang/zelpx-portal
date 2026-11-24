@@ -23,6 +23,14 @@
     {
       "source": "/browse-jobs",
       "destination": "/browse-jobs.html"
+    },
+    {
+      "source": "/map-view",
+      "destination": "/map-view.html"
+    },
+    {
+      "source": "/map-view/",
+      "destination": "/map-view.html"
     }
   ],
   "headers": [
