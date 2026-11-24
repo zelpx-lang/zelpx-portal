@@ -4,6 +4,7 @@
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const FUNCTION_URL = SUPABASE_URL + "/functions/v1/ai-public-support";
+  const VOICE_URL = SUPABASE_URL + "/functions/v1/zelpx-voice";
   const style = document.createElement("style");
   style.textContent = `
     #zelpx-ai-support-launcher{position:fixed;right:22px;bottom:22px;z-index:99990;border:0;border-radius:999px;background:#FF6B3D;color:#FFFFFF;min-height:56px;padding:0 22px;font:650 14px/1 Arial,sans-serif;letter-spacing:.1px;box-shadow:0 8px 24px #FF6B3D40;cursor:pointer;transition:transform .18s,box-shadow .18s}
@@ -48,36 +49,35 @@
   document.body.append(launcher,panel);
   const status=panel.querySelector(".zxs-status");
   const orb=panel.querySelector(".zxs-orb"),wave=panel.querySelector(".zxs-wave"),stageHint=panel.querySelector(".zxs-stage-hint");
-  let history=[],recognition=null,listening=false,busy=false;
+  let history=[],recognition=null,listening=false,busy=false,voiceAudio=null,voiceObjectUrl=null;
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   const speechSupported=!!SpeechRecognition;
 
-  function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
-  function chooseVoice(){
-    if(!("speechSynthesis" in window))return null;
-    const voices=window.speechSynthesis.getVoices();
-    if(!voices.length)return null;
-    const english=voices.filter(v=>/^en(-|_)/i.test(v.lang));
-    const preferredNames=/jenny|aria|samantha|ava|zira|susan|michelle|sara|karen|female|google us english/i;
-    return english.find(v=>preferredNames.test(v.name)&&/^en(-|_)US/i.test(v.lang))
-      ||english.find(v=>preferredNames.test(v.name))
-      ||english.find(v=>/^en(-|_)US/i.test(v.lang))
-      ||english[0]||voices[0];
-  }
-  function speak(text){
-    if(!("speechSynthesis" in window)||!text)return;
+  function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();if(voiceAudio){voiceAudio.pause();voiceAudio.src="";voiceAudio=null;}if(voiceObjectUrl){URL.revokeObjectURL(voiceObjectUrl);voiceObjectUrl=null;}orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
+  async function speak(text){
+    if(!text)return;
     stopSpeaking();
-    const utterance=new SpeechSynthesisUtterance(text);
-    utterance.lang="en-US";
-    utterance.rate=0.94;
-    utterance.pitch=1.08;
-    utterance.volume=1;
-    const voice=chooseVoice();
-    if(voice)utterance.voice=voice;
-    utterance.onstart=()=>{status.textContent="ZELPX is speaking…";stageHint.textContent="Listening to ZELPX";};
-    utterance.onend=()=>{stageHint.textContent="Tap the microphone and speak";status.textContent="Tap the microphone whenever you're ready to talk.";};
-    utterance.onerror=()=>{stageHint.textContent="Tap the microphone and speak";status.textContent="Tap the microphone to continue.";};
-    window.speechSynthesis.speak(utterance);
+    status.textContent="ZELPX is preparing a natural voice…";
+    stageHint.textContent="Preparing voice…";
+    try{
+      const response=await fetch(VOICE_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY},body:JSON.stringify({text})});
+      if(!response.ok){
+        const detail=await response.json().catch(()=>({}));
+        throw new Error(detail.error||"Natural voice is temporarily unavailable.");
+      }
+      const audioBlob=await response.blob();
+      if(!audioBlob.size)throw new Error("The voice service returned empty audio.");
+      voiceObjectUrl=URL.createObjectURL(audioBlob);
+      voiceAudio=new Audio(voiceObjectUrl);
+      voiceAudio.onplay=()=>{status.textContent="ZELPX is speaking…";stageHint.textContent="Listening to ZELPX";};
+      voiceAudio.onended=()=>{if(voiceObjectUrl){URL.revokeObjectURL(voiceObjectUrl);voiceObjectUrl=null;}voiceAudio=null;stageHint.textContent="Tap the microphone and speak";status.textContent="Tap the microphone whenever you're ready to talk.";};
+      voiceAudio.onerror=()=>{status.textContent="Couldn't play the voice response. Tap the microphone to try again.";stageHint.textContent="Tap the microphone and speak";};
+      await voiceAudio.play();
+    }catch(error){
+      console.error("ZELPX Cartesia voice error:",error);
+      status.textContent=error.message||"Natural voice is unavailable. Please try again.";
+      stageHint.textContent="Voice service needs attention";
+    }
   }
   if("speechSynthesis" in window){
     window.speechSynthesis.onvoiceschanged=()=>{chooseVoice();};
