@@ -26,22 +26,8 @@
     .zxs-orb.listening::after{animation:zxs-ring 1.8s ease-out 0.45s infinite}
     .zxs-wave{display:none}
     .zxs-stage-hint{margin-top:3px;color:#c5c7ce;font-size:12px}
-    .zxs-messages{padding:14px 14px 8px;overflow:auto;flex:1;background:#101114}
-    .zxs-bubble{max-width:90%;padding:11px 13px;border-radius:16px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55}
-    .zxs-bubble.ai{background:#202228;border:1px solid #2d3038;color:#eceef2;border-bottom-left-radius:5px}.zxs-bubble.user{background:#f97332;color:#fff;margin-left:auto;border-bottom-right-radius:5px}
-    .zxs-status{padding:7px 15px 8px;color:#8f939d;font-size:11px;background:#101114}
-    .zxs-tools{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 11px;gap:8px;background:#101114}
-    .zxs-tools button{border:0;background:transparent;color:#aeb1ba;font-size:11px;cursor:pointer}
-    .zxs-tools .zxs-voice-toggle{font-weight:650;color:#ff9866;background:#24252b;border:1px solid #363840;border-radius:20px;padding:7px 11px}
-    .zxs-compose{padding:12px;border-top:1px solid #292b31;display:flex;gap:8px;align-items:center;background:#17181d}
-    .zxs-compose textarea{min-width:0;flex:1;resize:none;height:46px;max-height:110px;padding:13px 14px;border:1px solid #363941;border-radius:14px;font:13px ui-sans-serif,system-ui,sans-serif;background:#22242a;color:#fff;outline:none}
-    .zxs-compose textarea::placeholder{color:#858994}.zxs-compose textarea:focus{border-color:#f97332;box-shadow:0 0 0 3px #f9733218}
-    .zxs-compose button{border:0;border-radius:14px;background:#f97332;color:#fff;min-height:46px;font-weight:650;cursor:pointer;transition:filter .15s}
-    .zxs-compose button:hover{filter:brightness(1.08)}
-    .zxs-compose .zxs-mic{display:none}
-    .zxs-compose .zxs-mic.listening{background:#b93d32;border-color:#ef766b;box-shadow:0 0 0 4px #d94a3326;animation:zxs-pulse 1.2s infinite}
-    .zxs-compose .zxs-send{padding:0 15px}
-    .zxs-compose button:disabled{opacity:.5;cursor:wait}
+    .zxs-messages,.zxs-tools,.zxs-compose{display:none}
+    .zxs-status{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 20px;color:#c5c7ce;font-size:13px;background:#101114;min-height:110px}
     @keyframes zxs-pulse{50%{box-shadow:0 0 0 8px #c8322410}}
     @keyframes zxs-orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 7px #f9733212,0 10px 32px #f9733240}50%{transform:scale(1.06);box-shadow:0 0 0 14px #f9733209,0 12px 42px #f9733260}}
     @keyframes zxs-ring{0%{transform:scale(.82);opacity:.8}100%{transform:scale(1.55);opacity:0}}
@@ -56,24 +42,19 @@
   panel.id="zelpx-ai-support-panel";panel.setAttribute("aria-label","Ask ZELPX AI Support");
   panel.innerHTML=`
     <div class="zxs-head"><div class="zxs-brand"><div class="zxs-logo">✦</div><div><strong>Ask ZELPX</strong><small>Your home project assistant</small></div></div><button type="button" aria-label="Close chat">×</button></div>
-    <div class="zxs-voice-stage"><div class="zxs-stage-label">VOICE ASSISTANT</div><div class="zxs-orb-wrap"><div class="zxs-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="zxs-orb" type="button" aria-label="Start voice input" title="Tap to speak"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div><div class="zxs-stage-hint">Tap the microphone below and speak</div></div>
-    <div class="zxs-messages" aria-live="polite"><div class="zxs-bubble ai">Hi! Welcome to ZELPX 👋 Ask me about finding a pro, home services, posting a request, or becoming a contractor. You can speak or type — no account needed.</div></div>
-    <div class="zxs-status">Ready when you are.</div>
-    <div class="zxs-tools"><button class="zxs-voice-toggle" type="button" aria-pressed="true">🔊 Voice replies: On</button><button class="zxs-new-chat" type="button">New chat ↻</button></div>
-    <form class="zxs-compose"><textarea maxlength="2000" rows="1" placeholder="Type a message…" aria-label="Your question"></textarea><button class="zxs-mic" type="button" aria-label="Start voice input" title="Speak">🎙</button><button class="zxs-send" type="submit">Send</button></form>
+    <div class="zxs-voice-stage"><div class="zxs-stage-label">VOICE ASSISTANT</div><div class="zxs-orb-wrap"><div class="zxs-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="zxs-orb" type="button" aria-label="Start voice input" title="Tap to speak"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div><div class="zxs-stage-hint">Tap the microphone and speak</div></div>
+    <div class="zxs-status">Tap the microphone to start a voice conversation.</div>
   `;
   document.body.append(launcher,panel);
-  const messagesEl=panel.querySelector(".zxs-messages"),status=panel.querySelector(".zxs-status");
-  const form=panel.querySelector("form"),input=panel.querySelector("textarea"),send=panel.querySelector(".zxs-send"),mic=panel.querySelector(".zxs-mic");
-  const voiceToggle=panel.querySelector(".zxs-voice-toggle");
+  const status=panel.querySelector(".zxs-status");
   const orb=panel.querySelector(".zxs-orb"),wave=panel.querySelector(".zxs-wave"),stageHint=panel.querySelector(".zxs-stage-hint");
-  let history=[],voiceReplies=true,recognition=null,listening=false,lastReply="";
+  let history=[],recognition=null,listening=false,busy=false;
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   const speechSupported=!!SpeechRecognition;
-  function bubble(content,role){const el=document.createElement("div");el.className="zxs-bubble "+(role==="assistant"?"ai":"user");el.textContent=content;messagesEl.appendChild(el);messagesEl.scrollTop=messagesEl.scrollHeight;}
+
   function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
   function speak(text){
-    if(!voiceReplies||!("speechSynthesis" in window)||!text)return;
+    if(!("speechSynthesis" in window)||!text)return;
     stopSpeaking();const utterance=new SpeechSynthesisUtterance(text);
     const lang=(navigator.language||"en-US");utterance.lang=lang;utterance.rate=1;utterance.pitch=1;
     const voices=window.speechSynthesis.getVoices();
@@ -82,42 +63,37 @@
     if(voice)utterance.voice=voice;
     window.speechSynthesis.speak(utterance);
   }
-  function stopListening(){if(recognition){try{recognition.stop();}catch(_){}}listening=false;mic.classList.remove("listening");mic.setAttribute("aria-label","Start voice input");mic.textContent="🎙";orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
+  function stopListening(){if(recognition){try{recognition.stop();}catch(_){}}listening=false;orb.classList.remove("listening");wave.classList.remove("active");orb.setAttribute("aria-label","Start voice input");stageHint.textContent="Tap the microphone and speak";}
   function startListening(){
     if(!speechSupported){status.textContent="Voice input is not supported in this browser. Try Chrome on Android or type your question.";return;}
     stopSpeaking();
     try{
       recognition=new SpeechRecognition();recognition.lang=navigator.language||"en-US";recognition.interimResults=true;recognition.continuous=false;
-      recognition.onstart=()=>{listening=true;mic.classList.add("listening");mic.setAttribute("aria-label","Stop voice input");mic.textContent="■";orb.classList.add("listening");wave.classList.add("active");stageHint.textContent="Listening… speak now";status.textContent="Listening… Speak now."; };
+      recognition.onstart=()=>{listening=true;orb.classList.add("listening");wave.classList.add("active");orb.setAttribute("aria-label","Stop voice input");stageHint.textContent="Listening… speak now";status.textContent="Listening… Speak now."; };
       recognition.onresult=event=>{
         let finalText="",interim="";
         for(let i=event.resultIndex;i<event.results.length;i++){const transcript=event.results[i][0].transcript;if(event.results[i].isFinal)finalText+=transcript;else interim+=transcript;}
-        input.value=finalText||interim;
-        if(finalText.trim()){input.value=finalText.trim();stopListening();form.requestSubmit();}
+        if(interim)status.textContent=interim;
+        if(finalText.trim()){stopListening();processMessage(finalText.trim());}
       };
       recognition.onerror=event=>{stopListening();status.textContent=event.error==="not-allowed"?"Microphone permission is blocked. Allow microphone access in your browser settings.":"Couldn't hear that clearly. Tap the microphone and try again.";};
-      recognition.onend=()=>{if(listening){listening=false;mic.classList.remove("listening");mic.textContent="🎙";mic.setAttribute("aria-label","Start voice input");if(input.value.trim())status.textContent="Tap Send or speak again.";else status.textContent="Tap the microphone and speak your question.";}}
+      recognition.onend=()=>{if(listening){listening=false;orb.classList.remove("listening");wave.classList.remove("active");orb.setAttribute("aria-label","Start voice input");status.textContent="Tap the microphone and speak your question.";}}
       recognition.start();
     }catch(_){stopListening();status.textContent="Couldn't start the microphone. Check browser permissions and try again.";}
   }
-  function toggle(open){panel.classList.toggle("open",open);launcher.setAttribute("aria-expanded",String(open));launcher.textContent=open?"Close chat":"💬 Ask ZELPX";if(open)setTimeout(()=>input.focus(),30);else{stopListening();stopSpeaking();}}
+  function toggle(open){panel.classList.toggle("open",open);launcher.setAttribute("aria-expanded",String(open));launcher.textContent=open?"Close chat":"💬 Ask ZELPX";if(open){status.textContent="Tap the microphone to start a voice conversation.";}else{stopListening();stopSpeaking();}}
   launcher.addEventListener("click",()=>toggle(!panel.classList.contains("open")));
   panel.querySelector(".zxs-head button").addEventListener("click",()=>toggle(false));
-  panel.querySelector(".zxs-new-chat").addEventListener("click",()=>{stopListening();stopSpeaking();history=[];messagesEl.replaceChildren();bubble("Hi again! What would you like to know about ZELPX?","assistant");status.textContent="New chat · No sign-in required";input.focus();});
-  voiceToggle.addEventListener("click",()=>{voiceReplies=!voiceReplies;voiceToggle.textContent=voiceReplies?"🔊 Voice replies: On":"🔇 Voice replies: Off";stageHint.textContent=voiceReplies?"Voice answers are on":"Voice answers are off";voiceToggle.setAttribute("aria-pressed",String(voiceReplies));if(!voiceReplies)stopSpeaking();});
-  mic.addEventListener("click",()=>{if(listening)stopListening();else startListening();});
   orb.addEventListener("click",()=>{if(listening)stopListening();else startListening();});
-  form.addEventListener("submit",async event=>{
-    event.preventDefault();const message=input.value.trim();if(!message||send.disabled)return;
-    stopListening();stopSpeaking();bubble(message,"user");input.value="";send.disabled=true;send.textContent="…";status.textContent="ZELPX is preparing an answer…";
+  async function processMessage(message){if(!message||busy)return;busy=true;
+    stopListening();stopSpeaking();status.textContent="ZELPX is preparing your answer…";stageHint.textContent="Thinking…";
     try{
       const response=await fetch(FUNCTION_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY},body:JSON.stringify({message,history:history.slice(-10)})});
       const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"The assistant is temporarily unavailable. Please try again.");
       const reply=String(data.reply||"").trim();if(!reply)throw new Error("I couldn't prepare an answer. Please try again.");
-      history.push({role:"user",content:message},{role:"assistant",content:reply});history=history.slice(-12);lastReply=reply;bubble(reply,"assistant");status.textContent=voiceReplies?"ZELPX AI · Speaking the answer":"ZELPX AI · General information";stageHint.textContent=voiceReplies?"ZELPX is answering…":"Answer received";speak(reply);
-    }catch(error){bubble(error.message||"Something went wrong. Please try again.","assistant");status.textContent="We couldn't send your message.";}
-    finally{send.disabled=false;send.textContent="Send";input.focus();}
-  });
-  input.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();form.requestSubmit();}});
-  if(!speechSupported){mic.title="Voice input may not be supported in this browser";mic.style.opacity=".65";}
+      history.push({role:"user",content:message},{role:"assistant",content:reply});history=history.slice(-12);status.textContent="ZELPX is speaking…";stageHint.textContent="ZELPX is answering…";speak(reply);
+    }catch(error){status.textContent=error.message||"Something went wrong. Please try again.";stageHint.textContent="Tap the microphone to try again";}
+    finally{busy=false;}
+  }
+  if(!speechSupported){status.textContent="Voice input is not supported in this browser. Please use Chrome on Android or a supported browser.";orb.disabled=true;orb.style.opacity=".5";}
 })();
