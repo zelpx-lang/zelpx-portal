@@ -1489,8 +1489,36 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         try {
           await loadCustomerProfile(session.user);
         } catch (profileError) {
-          showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
+          showMessage("profileMessage", profileError.message || "Your profile could not be loaded. Please contact ZELPX support.", "error");
+          if (openingScreen) openingScreen.classList.remove("is-visible");
+          return;
         }
+
+        // Until Twilio confirms the number, expose only the profile's SMS verification controls.
+        if (!window.zelpxCustomerPhoneVerified) {
+          const homeGrid = document.querySelector(".dashboard-home-grid");
+          if (homeGrid) homeGrid.hidden = true;
+          document.querySelectorAll(".dashboard-menu-button, .dashboard-home-card").forEach(button => {
+            if (button.dataset.dashboardPage !== "profile") button.hidden = true;
+          });
+          document.querySelectorAll(".dashboard-page").forEach(page => {
+            page.hidden = page.id !== "dashboardPage-profile";
+          });
+          const profilePanel = document.querySelector("#dashboardPage-profile .profile-panel");
+          if (profilePanel) {
+            const photoTools = profilePanel.querySelector(".profile-photo-tools");
+            if (photoTools) photoTools.hidden = true;
+            const fullNameLabel = profilePanel.querySelector('label[for="customerFullName"]');
+            if (fullNameLabel) fullNameLabel.hidden = true;
+            const fullNameInput = $("customerFullName");
+            if (fullNameInput) fullNameInput.hidden = true;
+            const phoneStatus = $("customerPhoneVerificationStatus");
+            if (phoneStatus) phoneStatus.textContent = "Phone verification is required before you can use any ZELPX account feature. Verify your number by SMS below.";
+          }
+          if (openingScreen) openingScreen.classList.remove("is-visible");
+          return;
+        }
+
         await loadRequests(session);
         if (openingScreen) openingScreen.classList.remove("is-visible");
         // Keep an unsubmitted sphere package draft through login and page refresh.
