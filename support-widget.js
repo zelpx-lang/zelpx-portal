@@ -53,19 +53,38 @@
   const speechSupported=!!SpeechRecognition;
 
   function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
+  function chooseVoice(){
+    if(!("speechSynthesis" in window))return null;
+    const voices=window.speechSynthesis.getVoices();
+    if(!voices.length)return null;
+    const english=voices.filter(v=>/^en(-|_)/i.test(v.lang));
+    const preferredNames=/jenny|aria|samantha|ava|zira|susan|michelle|sara|karen|female|google us english/i;
+    return english.find(v=>preferredNames.test(v.name)&&/^en(-|_)US/i.test(v.lang))
+      ||english.find(v=>preferredNames.test(v.name))
+      ||english.find(v=>/^en(-|_)US/i.test(v.lang))
+      ||english[0]||voices[0];
+  }
   function speak(text){
     if(!("speechSynthesis" in window)||!text)return;
-    stopSpeaking();const utterance=new SpeechSynthesisUtterance(text);
-    const lang=(navigator.language||"en-US");utterance.lang=lang;utterance.rate=1;utterance.pitch=1;
-    const voices=window.speechSynthesis.getVoices();
-    const base=lang.toLowerCase().split("-")[0];
-    const voice=voices.find(v=>v.lang.toLowerCase()===lang.toLowerCase())||voices.find(v=>v.lang.toLowerCase().startsWith(base));
+    stopSpeaking();
+    const utterance=new SpeechSynthesisUtterance(text);
+    utterance.lang="en-US";
+    utterance.rate=0.94;
+    utterance.pitch=1.08;
+    utterance.volume=1;
+    const voice=chooseVoice();
     if(voice)utterance.voice=voice;
+    utterance.onstart=()=>{status.textContent="ZELPX is speaking…";stageHint.textContent="Listening to ZELPX";};
+    utterance.onend=()=>{stageHint.textContent="Tap the microphone and speak";status.textContent="Tap the microphone whenever you're ready to talk.";};
+    utterance.onerror=()=>{stageHint.textContent="Tap the microphone and speak";status.textContent="Tap the microphone to continue.";};
     window.speechSynthesis.speak(utterance);
+  }
+  if("speechSynthesis" in window){
+    window.speechSynthesis.onvoiceschanged=()=>{chooseVoice();};
   }
   function stopListening(){if(recognition){try{recognition.stop();}catch(_){}}listening=false;orb.classList.remove("listening");wave.classList.remove("active");orb.setAttribute("aria-label","Start voice input");stageHint.textContent="Tap the microphone and speak";}
   function startListening(){
-    if(!speechSupported){status.textContent="Voice input is not supported in this browser. Try Chrome on Android or type your question.";return;}
+    if(!speechSupported){status.textContent="Voice input is not supported in this browser. Please open ZELPX in Chrome on Android or another supported browser.";return;}
     stopSpeaking();
     try{
       recognition=new SpeechRecognition();recognition.lang=navigator.language||"en-US";recognition.interimResults=true;recognition.continuous=false;
@@ -95,5 +114,5 @@
     }catch(error){status.textContent=error.message||"Something went wrong. Please try again.";stageHint.textContent="Tap the microphone to try again";}
     finally{busy=false;}
   }
-  if(!speechSupported){status.textContent="Voice input is not supported in this browser. Please use Chrome on Android or a supported browser.";orb.disabled=true;orb.style.opacity=".5";}
+  if(!speechSupported){status.textContent="Voice input is not supported in this browser. Please open ZELPX in Chrome on Android or another supported browser.";orb.disabled=true;orb.style.opacity=".5";}
 })();
