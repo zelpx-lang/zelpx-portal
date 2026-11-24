@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171717"><title>ZELPX Map View</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{--orange:#ff6a2b;--ink:#171717;--paper:#f6f2ec;--line:#e8dfd3;--muted:#777168}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial}
+header{height:64px;background:var(--ink);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:12px}
+.brand{font-weight:900;letter-spacing:.22em}.brand i{color:var(--orange);font-style:normal}
+header a,header button{color:white;text-decoration:none;border:1px solid #555;background:#292929;border-radius:999px;padding:9px 14px;font-weight:700}
+main{max-width:1500px;margin:auto;padding:14px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar input,.toolbar select{min-height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px 12px;color:var(--ink);font:inherit}
+.toolbar input{flex:1;min-width:170px}.toolbar select{min-width:160px}
+.action{border:0;border-radius:999px;background:var(--orange);color:white;font-weight:800;padding:11px 18px;min-height:42px}
+.status{color:var(--muted);font-size:13px;margin-left:auto}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:12px;height:calc(100dvh - 150px);min-height:480px}
+#map{height:100%;min-height:480px;border-radius:18px;border:1px solid var(--line);overflow:hidden;background:#e9e5dc}
+.side{background:#fffdfa;border:1px solid var(--line);border-radius:18px;overflow:auto;padding:12px}
+.side h2{font-size:18px;margin:2px 0 4px}.hint{font-size:12px;color:var(--muted);margin:0 0 10px}
+.lead{border:1px solid var(--line);border-radius:14px;padding:12px;margin:9px 0;cursor:pointer}
+.lead.active{border-color:var(--orange);box-shadow:0 0 0 2px #ff6a2b22}
+.lead strong{font-size:15px}.price{float:right;color:#c24e1e;font-weight:900}.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.pin{background:var(--orange);color:white;border:2px solid white;border-radius:20px;padding:5px 9px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px #0004;font-size:12px}
+.leaflet-popup-content-wrapper{border-radius:13px}.popup-title{font-weight:800}.popup-meta{color:#6f6a62;font-size:12px}
+.empty{padding:22px 10px;text-align:center;color:var(--muted)}
+@media(max-width:800px){main{padding:9px}.layout{display:flex;flex-direction:column;height:calc(100dvh - 142px);min-height:0;gap:8px}#map{height:55%;min-height:270px;flex:0 0 55%}.side{flex:1;min-height:0}.status{width:100%;margin-left:0}.toolbar{gap:7px}.toolbar input{flex-basis:100%}.toolbar select{flex:1;min-width:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">ZELPX<i>.</i> <span style="font-size:11px;letter-spacing:.08em;color:#bbb">MAP VIEW</span></div><a href="/contractor">← Contractor portal</a></header>
+<main>
+<div class="toolbar">
+<input id="search" type="search" placeholder="Search service, ZIP or details…">
+<select id="category"><option value="">All services</option></select>
+<select id="status"><option value="available">Available leads</option><option value="all">All visible leads</option></select>
+<button class="action" id="refresh">Refresh map</button>
+<span class="status" id="statusText">Checking your account…</span>
+</div>
+<div class="layout"><div id="map" aria-label="Approximate map of available leads"></div>
+<aside class="side"><h2>New leads near you</h2><p class="hint">Pins show approximate ZIP-area locations only. Exact street addresses and house coordinates are never requested or displayed on this page.</p><div id="leadList"><div class="empty">Loading leads…</div></div></aside></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(()=>{"use strict";
+const URL="https://zsrnjkndgbchfxibxiyd.supabase.co",KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+const $=id=>document.getElementById(id);let db,map,markers=[],leads=[],zipCache=new Map(),timer=null;
+const money=c=>"$"+(Number(c||0)/100).toFixed(0);
+function setStatus(t){$("statusText").textContent=t}
+function initMap(){map=L.map("map",{zoomControl:true}).setView([45.63,-122.65],10);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:'&copy; OpenStreetMap contributors'}).addTo(map)}
+async function zipPoint(zip,state){const key=String(zip||"").trim();if(!/^\d{5}$/.test(key))return null;if(zipCache.has(key))return zipCache.get(key);try{const r=await fetch("https://api.zippopotam.us/us/"+key);if(!r.ok)return null;const j=await r.json(),p=j.places?.[0];if(!p)return null;const point=[Number(p.latitude),Number(p.longitude)];if(!point.every(Number.isFinite))return null;zipCache.set(key,point);return point}catch(_){return null}}
+function clearPins(){markers.forEach(m=>map.removeLayer(m));markers=[]}
+function visible(){const q=$("search").value.trim().toLowerCase(),cat=$("category").value,st=$("status").value;return leads.filter(x=>(st==="all"||x.status==="available")&&(!cat||x.service_category===cat)&&(!q||[x.service_category,x.zip_code,x.description,x.urgency].join(" ").toLowerCase().includes(q)))}
+function selectLead(id){document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===id));const l=leads.find(x=>x.id===id);if(l){const m=markers.find(x=>x.options.leadId===id);if(m){map.setView(m.getLatLng(),Math.max(map.getZoom(),12));m.openPopup()}}}
+async function render(){
+ const rows=visible();clearPins();$("leadList").replaceChildren();
+ if(!rows.length){$("leadList").innerHTML='<div class="empty">No matching leads right now.</div>';setStatus("0 leads shown");return}
+ let mapped=0;
+ for(const lead of rows){
+  const card=document.createElement("article");card.className="lead";card.dataset.id=lead.id;
+  const title=document.createElement("strong");title.textContent=lead.service_category||"Home service";
+  const price=document.createElement("span");price.className="price";price.textContent=money(lead.price_cents);
+  const meta=document.createElement("div");meta.className="meta";meta.textContent=(lead.zip_code||"ZIP unavailable")+" · "+(lead.urgency||"Standard");
+  const desc=document.createElement("div");desc.className="meta";desc.textContent=(lead.description||"Service request").slice(0,110);
+  card.append(title,price,meta,desc);card.addEventListener("click",()=>selectLead(lead.id));$("leadList").append(card);
+  const pt=await zipPoint(lead.zip_code,lead.service_state);if(!pt)continue;
+  // ZIP centroid only: never read street address or customer coordinates.
+  const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id}).addTo(map);
+  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate ZIP area · '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+'</div><b>'+money(lead.price_cents)+'</b>');
+  marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
+  markers.push(marker);mapped++;
+ }
+ if(mapped){const group=L.featureGroup(markers);map.fitBounds(group.getBounds().pad(.18),{maxZoom:12});}
+ setStatus(rows.length+" leads · "+mapped+" map pins");
+}
+async function load(){
+ $("refresh").disabled=true;setStatus("Updating…");
+ try{
+  const {data:{session},error:se}=await db.auth.getSession();if(se)throw se;if(!session){location.replace("/contractor");return}
+  const {data:profile,error:pe}=await db.from("profiles").select("id,role").eq("id",session.user.id).maybeSingle();if(pe)throw pe;
+  if(!["contractor","admin"].includes(profile?.role)){location.replace("/contractor");return}
+  if(profile.role==="contractor"){const {data:c,error:ce}=await db.from("contractors").select("id").eq("user_id",session.user.id).maybeSingle();if(ce)throw ce;if(!c){setStatus("Contractor profile not found");return}}
+  const {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at",{ascending:false}).limit(100);
+  if(error)throw error;leads=data||[];
+  const cats=[...new Set(leads.map(x=>x.service_category).filter(Boolean))].sort();const old=$("category").value;$("category").replaceChildren(new Option("All services",""));cats.forEach(c=>$("category").add(new Option(c,c)));$("category").value=cats.includes(old)?old:"";
+  await render();if(!timer)timer=setInterval(load,45000);
+ }catch(e){setStatus("Could not load leads: "+(e.message||""));$("leadList").innerHTML='<div class="empty">Please sign in to your contractor account and try again.</div>'}
+ finally{$("refresh").disabled=false}
+}
+function start(){if(!window.supabase||!window.L){setStatus("Map libraries did not load. Refresh this page.");return}db=window.supabase.createClient(URL,KEY);initMap();$("refresh").addEventListener("click",load);$("search").addEventListener("input",render);$("category").addEventListener("change",render);$("status").addEventListener("change",render);load()}
+start();
+})();
+</script>
+</body></html>
