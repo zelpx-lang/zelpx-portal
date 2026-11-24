@@ -1217,9 +1217,25 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     }
 
     const PROFILE_AVATAR_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-  function getOwnProfilePhotoPath(url, userId) {
-    if (!url) return null;
-    try { const marker = "/storage/v1/object/public/profile-photos/"; const pathname = new URL(url).pathname; const index = pathname.indexOf(marker); if (index < 0) return null; const path = decodeURIComponent(pathname.slice(index + marker.length)); return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null; } catch (_) { return null; }
+  async function cleanupOwnProfilePhotos(userId, keepFileName = null) {
+    const bucket = db.storage.from("profile-photos");
+    const obsoletePaths = [];
+    const pageSize = 100;
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await bucket.list(userId, { limit: pageSize, offset });
+      if (error) throw new Error("Could not check old profile photos: " + error.message);
+      const rows = data || [];
+      for (const item of rows) {
+        if (!item.name || (item.id == null && item.metadata == null)) continue;
+        if (/^avatar(?:-|$)/i.test(item.name) && item.name !== keepFileName) obsoletePaths.push(userId + "/" + item.name);
+      }
+      if (rows.length < pageSize) break;
+    }
+    for (let i = 0; i < obsoletePaths.length; i += 100) {
+      const { error } = await bucket.remove(obsoletePaths.slice(i, i + 100));
+      if (error) throw new Error("The new profile photo is saved, but an old photo could not be deleted: " + error.message);
+    }
+    return obsoletePaths.length;
   }
 
   $("customerAvatarFile").addEventListener("change", async (event) => {
@@ -1230,19 +1246,17 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 10 MB or smaller.");
       const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
       const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
-      const previousUrl = $("customerAvatarPreview").dataset.currentUrl || "";
-      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-      const path = user.id + "/avatar-" + Date.now() + "." + ext;
-      const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+      const path = user.id + "/avatar";
+      const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: true, contentType: file.type, cacheControl: "0" });
       if (uploadError) throw uploadError;
       const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
-      const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
-      if (saveError) { await db.storage.from("profile-photos").remove([path]); throw saveError; }
-      $("customerAvatarPreview").src = publicData.publicUrl; $("customerAvatarPreview").dataset.currentUrl = publicData.publicUrl; $("removeCustomerAvatarButton").hidden = false;
+      const photoUrl = publicData.publicUrl + "?v=" + Date.now();
+      const { error: saveError } = await db.from("profiles").update({ avatar_url: photoUrl }).eq("id", user.id);
+      if (saveError) throw saveError;
+      $("customerAvatarPreview").src = photoUrl; $("customerAvatarPreview").dataset.currentUrl = photoUrl; $("removeCustomerAvatarButton").hidden = false;
       
-      status.textContent = "Photo saved. It will appear in contractors’ chat notifications.";
-      const oldPath = getOwnProfilePhotoPath(previousUrl, user.id);
-      if (oldPath && oldPath !== path) await db.storage.from("profile-photos").remove([oldPath]);
+      await cleanupOwnProfilePhotos(user.id, "avatar");
+      status.textContent = "Photo saved. Your previous profile photo was replaced and deleted.";
     } catch (error) { status.textContent = error.message || "Could not upload photo."; }
     finally { event.target.value = ""; }
   });
@@ -1253,13 +1267,11 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     try {
       const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
       const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
-      const oldUrl = $("customerAvatarPreview").dataset.currentUrl || "";
       const { error } = await db.from("profiles").update({ avatar_url: null }).eq("id", user.id); if (error) throw error;
       $("customerAvatarPreview").src = PROFILE_AVATAR_FALLBACK; $("customerAvatarPreview").dataset.currentUrl = ""; button.hidden = true;
       
-      const oldPath = getOwnProfilePhotoPath(oldUrl, user.id);
-      if (oldPath) { const { error: removeError } = await db.storage.from("profile-photos").remove([oldPath]); if (removeError) console.warn("Profile photo reference cleared, but stored image cleanup failed:", removeError.message); }
-      status.textContent = "Profile photo removed.";
+      await cleanupOwnProfilePhotos(user.id);
+      status.textContent = "Profile photo removed. Stored profile photo files were deleted.";
     } catch (error) { status.textContent = error.message || "Could not remove photo."; }
     finally { button.disabled = false; }
   });
