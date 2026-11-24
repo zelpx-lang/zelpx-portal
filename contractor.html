@@ -1163,7 +1163,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     // Resolve the account role first. Once authorization is known, show the
     // dashboard immediately; profile details and marketplace data hydrate after.
     const { data: roleProfile, error: roleProfileError } = await db.from("profiles")
-      .select("id,full_name,phone,role,avatar_url").eq("id", user.id).maybeSingle();
+      .select("id,full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number").eq("id", user.id).maybeSingle();
     if (roleProfileError) throw roleProfileError;
     currentProfile = roleProfile;
     isAdmin = roleProfile?.role === "admin";
@@ -1181,6 +1181,27 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
+    const phoneDigits = value => String(value || "").replace(/\\D/g, "");
+    const phoneVerified = Boolean(roleProfile?.phone_verified_at &&
+      phoneDigits(roleProfile.phone).length >= 10 &&
+      phoneDigits(roleProfile.phone) === phoneDigits(roleProfile.phone_verified_number));
+    if (!IS_ADMIN_PORTAL && !phoneVerified) {
+      hide($("appView")); hide($("authView")); hide($("topUser")); hide($("oauthReturnLoading"));
+      let gate = $("zelpxPhoneVerificationGate");
+      if (!gate) {
+        gate = document.createElement("main");
+        gate.id = "zelpxPhoneVerificationGate";
+        gate.style.cssText = "max-width:620px;margin:10vh auto;padding:28px;background:#fffdfa;border:1px solid #e7e0d5;border-radius:22px;box-shadow:0 18px 45px #3b2a1a18;text-align:center";
+        gate.innerHTML = '<div style="font-size:13px;font-weight:800;letter-spacing:.16em;color:#c6531e">ZELPX ACCOUNT SECURITY</div><h1 style="margin:12px 0">Verify your phone number</h1><p style="color:#6f6a62">SMS verification is required before opening the contractor portal, adding wallet funds, purchasing leads, or using other account features.</p><a href="/customer.html?verify=phone" style="display:inline-block;margin:14px 0;padding:13px 22px;border-radius:999px;background:#ff6a2b;color:white;text-decoration:none;font-weight:800">Open SMS Verification</a><p style="font-size:13px;color:#6f6a62">After verification, return to the Contractor Portal and sign in again.</p><button id="zelpxPhoneGateLogout" type="button" style="background:#15171c;color:white;border:0;border-radius:999px;padding:11px 20px">Sign Out</button>';
+        document.body.append(gate);
+        $("zelpxPhoneGateLogout").addEventListener("click", async () => { await db.auth.signOut(); window.location.reload(); });
+      } else {
+        show(gate);
+      }
+      return;
+    }
+    const existingGate = $("zelpxPhoneVerificationGate");
+    if (existingGate) existingGate.remove();
     // Hide the callback loader and reveal the authenticated dashboard now,
     // rather than waiting for every profile/settings query to finish.
     $("welcomeTitle").textContent = "Contractor dashboard";
