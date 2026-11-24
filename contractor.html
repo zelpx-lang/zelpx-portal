@@ -1803,9 +1803,10 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
 
   function contractorPhoneIsVerified(profile=currentProfile) {
     const digits = value => String(value || "").replace(/\D/g, "");
-    return !!(profile?.role === "contractor" && profile.phone_verified_at &&
+    return !!(profile?.phone_verified_at &&
       digits(profile.phone).length >= 10 &&
-      digits(profile.phone) === digits(profile.phone_verified_number));
+      digits(profile.phone) === digits(profile.phone_verified_number) &&
+      !!currentContractor?.id);
   }
   function renderContractorPhoneVerification() {
     const status=$("contractorPhoneVerificationStatus"),button=$("verifyContractorPhoneBtn");
