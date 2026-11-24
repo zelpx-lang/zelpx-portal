@@ -2441,7 +2441,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       claimHeading.textContent = "Lead protection";
       const claimHelp = document.createElement("p");
       claimHelp.className = "muted";
-      claimHelp.textContent = "Report a fake, duplicate, or invalid lead within 72 hours of purchase. Approved refunds are returned as ZELPX Credits.";
+      claimHelp.textContent = "Request a refund within 72 hours of purchase. Explain exactly what happened; your complaint is sent directly to the ZELPX administrator for review. Approved refunds are returned as ZELPX Credits."
       claimHelp.style.margin = "6px 0 10px";
       claimBox.append(claimHeading, claimHelp);
       const claimReason = document.createElement("select");
@@ -2453,14 +2453,16 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         ["unable_to_reach","Unable to reach customer"],["other","Other"]
       ].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;claimReason.append(option);});
       const claimDetails = document.createElement("textarea");
-      claimDetails.rows = 2;
-      claimDetails.placeholder = "Explain what happened (optional)";
+      claimDetails.rows = 4;
+      claimDetails.required = true;
+      claimDetails.maxLength = 2000;
+      claimDetails.placeholder = "Required: explain why this lead deserves a refund and what happened…";
       claimDetails.setAttribute("aria-label","Details about the lead complaint");
       const claimFeedback = document.createElement("div");
       claimFeedback.className = "message hidden";
       const claimButton = document.createElement("button");
       claimButton.type = "button";
-      claimButton.textContent = "Report lead";
+      claimButton.textContent = "Request Refund";
       claimButton.style.marginTop = "8px";
       claimBox.append(claimReason, claimDetails, claimButton, claimFeedback);
       details.append(claimBox);
@@ -2484,7 +2486,8 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         } catch(e){claimFeedback.textContent="Could not check claim status: "+(e.message||"");claimFeedback.className="message error";}
       })();
       claimButton.addEventListener("click",async()=>{
-        if(!window.confirm("Submit this lead protection complaint? You can submit only one complaint for each purchase."))return;
+        if(claimDetails.value.trim().length<10){claimFeedback.textContent="Please explain the problem in at least 10 characters.";claimFeedback.className="message error";return;}
+        if(!window.confirm("Send this refund request and explanation to the ZELPX administrator? Only one request is allowed per purchase."))return;
         claimButton.disabled=true;claimButton.textContent="Submitting…";
         try{
           const {data:claimId,error}=await db.rpc("submit_lead_protection_claim",{
@@ -2492,11 +2495,11 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           });
           if(error)throw error;
           if(!claimId)throw new Error("The server did not confirm the complaint.");
-          claimFeedback.textContent="Your complaint was submitted. Claim ID: "+claimId+". ZELPX will review it under the 72-hour protection policy.";
+          claimFeedback.textContent="Your refund request was sent directly to the ZELPX administrator. Request ID: "+claimId+". You can check the decision here.";
           claimFeedback.className="message success";
           claimReason.disabled=true;claimDetails.disabled=true;claimButton.textContent="Complaint submitted";
         }catch(e){
-          claimButton.disabled=false;claimButton.textContent="Report lead";
+          claimButton.disabled=false;claimButton.textContent="Request Refund";
           claimFeedback.textContent=e.message||"Could not submit the complaint.";
           claimFeedback.className="message error";
         }
