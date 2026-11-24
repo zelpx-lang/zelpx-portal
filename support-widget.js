@@ -31,7 +31,7 @@
     .zxs-send{flex:0 0 40px;width:40px;height:40px;border:0;border-radius:12px;background:linear-gradient(135deg,#ff8758,#f45135);color:#fff;display:grid;place-items:center;cursor:pointer}
     .zxs-send:disabled{opacity:.45;cursor:default}.zxs-send svg{width:18px;height:18px}
     .zxs-footnote{text-align:center;color:#73818d;font-size:10px;margin-top:8px}
-    @media(max-width:480px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:min(720px,calc(100dvh - 98px));border-radius:22px}}
+    @media(max-width:600px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{inset:0;width:100vw;height:100dvh;max-height:100dvh;border:0;border-radius:0;padding-bottom:env(safe-area-inset-bottom)}.zxs-head{padding:14px 16px}.zxs-welcome{padding:14px 16px 6px}.zxs-messages{padding:12px 14px 18px;gap:14px}.zxs-message{max-width:92%;font-size:15px;padding:12px 14px}.zxs-compose{padding:10px 12px max(12px,env(safe-area-inset-bottom))}.zxs-compose form{border-radius:18px;padding:6px 6px 6px 14px}.zxs-compose textarea{font-size:16px;min-height:46px;height:46px;max-height:120px;padding:12px 0}.zxs-send{width:46px;height:46px;flex-basis:46px;border-radius:14px}.zxs-footnote{font-size:10px}}
     @media(prefers-reduced-motion:reduce){#zelpx-ai-support-panel *,#zelpx-ai-support-launcher{animation:none!important;transition:none!important}}
   `;
   document.head.appendChild(style);
@@ -79,15 +79,23 @@
     messagesEl.scrollTop=messagesEl.scrollHeight;
     return node;
   }
+  function syncKeyboardViewport(){
+    if(window.innerWidth>600||!window.visualViewport)return;
+    const vv=window.visualViewport;
+    panel.style.height=vv.height+"px";
+    panel.style.top=vv.offsetTop+"px";
+  }
+  if(window.visualViewport){window.visualViewport.addEventListener("resize",syncKeyboardViewport);window.visualViewport.addEventListener("scroll",syncKeyboardViewport);}
   function toggle(open){
     panel.classList.toggle("open",open);
+    if(open)syncKeyboardViewport();else{panel.style.height="";panel.style.top="";}
     launcher.setAttribute("aria-expanded",String(open));
     launcher.textContent=open?"Close chat":"💬 Chat with ZELPX";
     if(open)setTimeout(()=>input.focus(),80);
   }
   function resizeInput(){
     input.style.height="auto";
-    input.style.height=Math.min(input.scrollHeight,112)+"px";
+    input.style.height=Math.max(window.innerWidth<=600?46:40,Math.min(input.scrollHeight,120))+"px";
     sendButton.disabled=busy||!input.value.trim();
   }
   input.addEventListener("input",resizeInput);
