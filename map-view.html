@@ -83,8 +83,17 @@ async function load(){
   const {data:profile,error:pe}=await db.from("profiles").select("id,role").eq("id",session.user.id).maybeSingle();if(pe)throw pe;
   if(!["contractor","admin"].includes(profile?.role)){location.replace("/contractor");return}
   if(profile.role==="contractor"){const {data:c,error:ce}=await db.from("contractors").select("id").eq("user_id",session.user.id).maybeSingle();if(ce)throw ce;if(!c){setStatus("Contractor profile not found");return}}
-  const {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at",{ascending:false}).limit(100);
-  if(error)throw error;leads=data||[];
+  let {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at",{ascending:false}).limit(100);
+  // RLS can return an empty array (not an error) when a contractor has no category access yet.
+  // In that case use the safe public preview view, which exposes ZIP/service/price only.
+  if(error || !data?.length){
+    const preview=await db.from("public_available_leads")
+      .select("id,service_category,zip_code,service_state,price_cents,created_at,urgency")
+      .order("created_at",{ascending:false}).limit(100);
+    if(preview.error)throw error||preview.error;
+    data=(preview.data||[]).map(x=>({...x,description:"",status:"available",previewOnly:true}));
+  }
+  leads=data||[];
   const cats=[...new Set(leads.map(x=>x.service_category).filter(Boolean))].sort();const old=$("category").value;$("category").replaceChildren(new Option("All services",""));cats.forEach(c=>$("category").add(new Option(c,c)));$("category").value=cats.includes(old)?old:"";
   await render();if(!timer)timer=setInterval(load,45000);
  }catch(e){setStatus("Could not load leads: "+(e.message||""));$("leadList").innerHTML='<div class="empty">Please sign in to your contractor account and try again.</div>'}
