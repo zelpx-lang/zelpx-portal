@@ -1746,7 +1746,9 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       .eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
     const digits = value => String(value || "").replace(/\D/g, "");
-    if (profile?.role !== "contractor") throw new Error("Contractor account required.");
+    const {data: contractorAccount,error: contractorAccountError}=await db.from("contractors").select("id").eq("user_id",currentUser.id).maybeSingle();
+    if(contractorAccountError)throw contractorAccountError;
+    if(!contractorAccount)throw new Error("Contractor account required.");
     if (profile.phone_verified_at && digits(profile.phone).length >= 10 &&
         digits(profile.phone) === digits(profile.phone_verified_number)) return true;
 
