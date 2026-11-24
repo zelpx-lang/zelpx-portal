@@ -759,13 +759,12 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
           </div>
         </div>
       </div>
-      <div class="actions"><button id="saveCompanyBtn" type="button" aria-busy="false">Save company details</button></div>
-      <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
       <section class="lead" id="contractorPhoneVerificationCard">
-        <h3>Account phone verification</h3>
-        <p>Verify your mobile number once to confirm your contractor account. Your SMS confirmation is saved separately and will remain verified when you save company details or update your profile. After verification, wallet credits and lead purchases are enabled without another SMS prompt.</p>
+        <h3>Verify phone number & update account</h3>
+        <p>Save your company information and confirm your contractor account in one step. If your phone is not verified yet, we will send an SMS code. After it is verified, future company updates are saved without asking for another SMS code.</p>
         <div id="contractorPhoneVerificationStatus" class="message" role="status" aria-live="polite">Checking phone verification…</div>
-        <div class="actions"><button id="verifyContractorPhoneBtn" type="button">Verify phone number</button></div>
+        <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="verifyContractorPhoneBtn" type="button" aria-busy="false">Verify phone number & update account</button></div>
       </section>
     </section>
 
@@ -1816,15 +1815,16 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     if(contractorPhoneIsVerified()){
       status.className="message success";
       status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". You can add credits and purchase leads.";
-      button.textContent="Phone verified";button.disabled=true;
+      status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". Company updates can now be saved without another SMS code.";
+      button.textContent="Save company & account updates";button.disabled=false;
     }else{
       status.className="message error";
-      status.textContent="Phone not verified. Verify your mobile number here before adding credits or purchasing leads.";
-      button.textContent="Verify phone number";button.disabled=false;
+      status.textContent="Phone not verified. Verify your number to save company updates, add wallet credits, and purchase leads.";
+      button.textContent="Verify phone number & update account";button.disabled=false;
     }
   }
   async function verifyContractorPhoneFromAccount(){
-    const button=$("verifyContractorPhoneBtn");setBusy(button,true,"Verifying…");
+    const button=$("verifyContractorPhoneBtn");
     try{
       const verified=await ensureContractorPhoneVerified();
       if(!verified)return;
@@ -1832,9 +1832,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       if(error)throw error;
       currentContractor={...(currentContractor||{}),...data};
       renderContractorPhoneVerification();
-      message("appMessage","Your contractor phone number is verified. Wallet top-ups and lead purchases are now enabled.","success");
-    }catch(e){message("appMessage",e.message||"Could not verify your phone number.","error");}
-    finally{setBusy(button,false);renderContractorPhoneVerification();}
+      await saveCompany(button);
+      renderContractorPhoneVerification();
+    }catch(e){
+      message("appMessage",e.message||"Could not verify your phone number or update your account.","error");
+      renderContractorPhoneVerification();
+    }
   }
   async function addCredits() {
     clearMessage("appMessage");
@@ -2717,10 +2720,9 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     }
   }
 
-  async function saveCompany() {
-    const saveButton = $("saveCompanyBtn");
+  async function saveCompany(saveButton = $("verifyContractorPhoneBtn")) {
     const saveStatus = $("companySaveStatus");
-    const originalButtonText = "Save company details";
+    const originalButtonText = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
     if (saveButton.disabled) return;
     saveButton.disabled = true;
     saveButton.textContent = "Saving…";
@@ -2896,7 +2898,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     } finally {
       saveButton.disabled = false;
       saveButton.setAttribute("aria-busy", "false");
-      if (!saved) saveButton.textContent = "Save company details";
+      if (!saved) saveButton.textContent = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
     }
   }
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
@@ -3561,8 +3563,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("refreshContractorChangesBtn").addEventListener("click",loadContractorChangeRequests);
     $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
-    $("saveCompanyBtn").addEventListener("click", saveCompany);
-    $("saveServiceRadiusBtn").addEventListener("click", saveServiceRadius);
+     $("saveServiceRadiusBtn").addEventListener("click", saveServiceRadius);
     $("professionSearch").addEventListener("input",renderProfessionOptions);
     $("clearProfileProfessionsBtn").addEventListener("click",()=>{
       selectedProfessionIds.clear();
