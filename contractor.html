@@ -1,4 +1,1518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15171c">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://zsrnjkndgbchfxibxiyd.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="//zsrnjkndgbchfxibxiyd.supabase.co">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" type="image/svg+xml">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ZELPX">
+  <title>ZELPX Contractor Portal</title>
+  <meta name="description" content="ZELPX contractor lead marketplace">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --navy:#202b3c; --blue:#2563eb; --bg:#f5f6f8; --line:#e2e6ec; --muted:#687386; --green:#147d55; --red:#b42318; --page-width:1120px; --radius:14px; --ink:#202b3c; }
+    * { box-sizing:border-box; }
+    html { -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 Arial,Helvetica,sans-serif; overflow-wrap:break-word; }
+    button,input,select,textarea { font:inherit; }
+    button { min-height:44px; border:0; border-radius:9px; padding:11px 16px; background:var(--blue); color:white; font-weight:700; font-size:14px; cursor:pointer; touch-action:manipulation; }
+    button.secondary { background:#e8eef5; color:var(--navy); }
+    button.danger { background:#fff0ef; color:var(--red); }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    input,select,textarea { display:block; width:100%; min-width:0; min-height:44px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#172b43; font-size:16px; }
+    input:focus,select:focus,textarea:focus,button:focus-visible { outline:3px solid #8fc5f1; outline-offset:2px; }
+    textarea { min-height:180px; resize:vertical; }
+    .top { position:relative; background:var(--navy); color:white; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+    .brand { font-size:23px; font-weight:800; letter-spacing:2px; }
+    .top small { color:#cbd5e1; }
+    #topUser { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    #userEmail { overflow-wrap:anywhere; }
+    main { width:min(100% - 36px,var(--page-width)); margin:28px auto; }
+    .card { min-width:0; background:white; border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:18px; box-shadow:0 4px 16px #10243a0a; }
+    h1,h2,h3 { margin:0 0 12px; line-height:1.25; overflow-wrap:anywhere; }
+    h1 { font-size:clamp(22px,3vw,28px); } h2 { font-size:21px; } h3 { font-size:17px; }
+    p { color:var(--muted); }
+    label { display:block; font-weight:700; margin:12px 0 5px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .grid > div { min-width:0; }
+    .actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:16px; }
+    .actions > button { max-width:100%; }
+    .hidden { display:none!important; } .muted { color:var(--muted); }
+    #oauthReturnLoading{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;margin:0;padding:24px;border:0;border-radius:0;background:radial-gradient(ellipse at center,#fff8f1 0%,#f7f3ec 62%,#f4f1eb 100%);color:#171717;text-align:center;box-shadow:none}
+    #oauthReturnLoading.hidden{display:none!important}
+    #oauthReturnLoading .splash-inner{display:flex;flex-direction:column;align-items:center;gap:12px}
+    #oauthReturnLoading .splash-brand{font-size:27px;font-weight:900;letter-spacing:4px;color:#171717}
+    #oauthReturnLoading .splash-brand span{color:#f46b2b}
+    #oauthReturnLoading .splash-caption{font-size:15px;font-weight:750;letter-spacing:.7px;color:#252525}
+    #oauthReturnLoading .splash-spinner{width:22px;height:22px;border:3px solid #f1d9ca;border-top-color:#f46b2b;border-radius:50%;animation:zelpxAuthSpin .8s linear infinite;margin-top:10px}
+    /* Prevent the login form from flashing before Supabase restores an existing OAuth session. */
+    body.auth-pending #authView { display:none!important; }
+    .message { padding:11px 13px; border-radius:9px; margin:12px 0; background:#eef4fb; color:#24425f; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .message.error { background:#fff0ef; color:var(--red); } .message.success { background:#eaf7f0; color:var(--green); }
+    .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; position:relative; }
+    .tabs button { flex:0 0 auto; } .tabs button.active { background:var(--navy); }
+    #availablePanel > h2 { margin-bottom:6px; }
+    #availablePanel > p { margin-top:0; }
+    .statrow { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .stat { min-width:0; background:#f6f9fc; border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .stat strong { display:block; font-size:clamp(20px,3vw,24px); overflow-wrap:anywhere; }
+    .tablewrap { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { width:100%; border-collapse:collapse; min-width:650px; }
+    th,td { text-align:left; padding:11px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { font-size:12px; text-transform:uppercase; color:var(--muted); }
+    .pill { display:inline-block; padding:4px 10px; border-radius:20px; background:#edf3f9; font-size:12px; font-weight:700; margin-top:8px; }
+    .pill.sold { background:#fff0ef; color:var(--red); } .pill.available { background:#eaf7f0; color:var(--green); }
+    .lead { min-width:0; border:1px solid var(--line); border-radius:14px; padding:19px; margin:12px 0; background:#fff; box-shadow:0 3px 12px #202b3c0a; transition:border-color .18s,box-shadow .18s,transform .18s; }
+    .lead:hover { border-color:#b8c8df; box-shadow:0 8px 22px #202b3c12; transform:translateY(-1px); }
+    .lead h3 { color:var(--ink); }
+    .lead-controls { display:grid; grid-template-columns:minmax(220px,2fr) minmax(150px,1fr) minmax(130px,1fr); gap:10px; margin:18px 0 12px; padding:14px; background:#f8fafc; border:1px solid var(--line); border-radius:12px; }
+    .lead-controls input,.lead-controls select { background:#fff; }
+    .lead-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; }
+    .lead-count { font-size:13px; color:var(--muted); font-weight:700; }
+    .lead-badges { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-top:8px; }
+    .pill.urgent { background:#fff1e8; color:#b54708; }
+    .lead-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-top:1px solid #edf0f4; margin-top:16px; padding-top:14px; }
+    .lead-footer button { min-width:132px; }
+    .lead-date { font-size:12px; color:var(--muted); }
+    .lead-price-label { font-size:11px; color:var(--muted); text-align:right; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+    .leadhead { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .leadhead > * { min-width:0; } .price { flex:0 0 auto; font-weight:800; font-size:19px; white-space:nowrap; }
+    .contactbox { min-width:0; background:#f2f8f5; border:1px solid #cce8d8; border-radius:9px; padding:14px; margin-top:12px; }
+    .contactbox p { margin:5px 0; color:#24425f; overflow-wrap:anywhere; }
+    .footer { font-size:12px; color:var(--muted); text-align:center; padding:22px 16px; }
+    .chatbox { min-width:0; border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:14px; background:#fbfdff; }
+    .chatmessages { max-height:min(42vh,360px); overflow-y:auto; padding:10px; background:#f6f9fc; border:1px solid var(--line); border-radius:8px; }
+    .chatbubble { padding:9px 11px; border-radius:9px; margin:8px 0; max-width:88%; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .chatbubble.contractor { margin-left:auto; background:#dceeff; } .chatbubble.customer { margin-right:auto; background:#e9edf2; }
+    .chatmeta { font-size:11px; color:var(--muted); margin-top:4px; }
+    .chatform { display:flex; gap:8px; align-items:flex-end; margin-top:10px; } .chatform textarea { min-height:70px; flex:1; } .chatform button { flex:0 0 auto; }
+    #creditAmount { max-width:100%; }
+    @media(max-width:700px) {
+      body { font-size:16px; } .top { padding:13px 16px; align-items:flex-start; } .brand { font-size:21px; }
+      #topUser { justify-content:flex-end; max-width:62%; } #userEmail { font-size:12px; }
+      #logoutBtn { min-height:40px; padding:9px 12px; } main { width:calc(100% - 24px); margin:16px auto; }
+      .card { padding:16px; margin-bottom:14px; border-radius:12px; } .grid,.statrow { grid-template-columns:1fr; gap:10px; }
+      .statrow { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; } .stat { padding:10px 8px; }
+      .stat strong { font-size:19px; } .stat span { font-size:12px; line-height:1.25; display:block; }
+      .actions { gap:8px; } .actions > button { flex:1 1 100%; width:100%; }
+      .actions > div { max-width:none!important; width:100%; flex:1 1 100%!important; }
+      .tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-bottom:12px; }
+      .tabs button { width:100%; padding:10px 8px; min-height:44px; } .lead { padding:15px; } .leadhead { gap:8px; }
+      .lead-controls { grid-template-columns:1fr; gap:8px; padding:11px; } .lead-footer { align-items:stretch; } .lead-footer button { width:100%; }
+      .price { font-size:17px; } .chatform { flex-direction:column; align-items:stretch; } .chatform button { width:100%; }
+      .chatbubble { max-width:96%; } .tablewrap { margin-left:-2px; width:calc(100% + 4px); } textarea { min-height:150px; }
+    }
+    @media(max-width:380px) { .top { flex-direction:column; } #topUser { max-width:100%; width:100%; justify-content:space-between; }
+      .statrow { grid-template-columns:1fr; } .stat { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+      .stat strong { font-size:20px; } .leadhead { flex-direction:column; } .price { white-space:normal; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+    /* ===== ZELPX redesign v2: warm paper + ink + orange ===== */
+    :root { --navy:#15171c; --ink:#15171c; --blue:#ff6a2b; --bg:#f6f2ec; --line:#e7e0d5; --muted:#6f6a62; --green:#0f8a5f; --red:#c2321f; --radius:20px; --page-width:1080px; --accent-soft:#fff0e8; }
+    body { font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; letter-spacing:-.005em; }
+    h1,h2,h3 { letter-spacing:-.02em; }
+    button { border-radius:999px; padding:11px 22px; background:var(--blue); color:#fff; transition:transform .15s,box-shadow .15s,background .15s; box-shadow:0 6px 16px #ff6a2b33; }
+    button:hover:not(:disabled) { transform:translateY(-1px); background:#f25a1a; }
+    button.secondary { background:#fff; color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+    button.secondary:hover:not(:disabled) { background:#faf7f2; }
+    button.danger { background:#fff0ee; color:var(--red); box-shadow:none; }
+    input,select,textarea { border:1.5px solid var(--line); border-radius:14px; background:#fffdfa; color:var(--ink); }
+    input:focus,select:focus,textarea:focus,button:focus-visible { outline:3px solid #ffc9b0; outline-offset:2px; border-color:var(--blue); }
+    .top { background:var(--ink); padding:18px 28px; border-radius:0 0 28px 28px; }
+    .brand { font-size:24px; letter-spacing:.28em; color:#fff; }
+    .brand::after { content:""; display:inline-block; width:9px; height:9px; margin-left:8px; border-radius:50%; background:var(--blue); vertical-align:middle; }
+    .top small { color:#a9a49b; letter-spacing:.04em; }
+    .card { background:#fffdfa; border:1px solid var(--line); box-shadow:0 1px 0 #fff inset,0 18px 40px -24px #3b2a1a40; }
+    p { color:var(--muted); }
+    label { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:#58534b; }
+    .stat { background:#fff; border:1px solid var(--line); border-radius:18px; padding:16px 18px; }
+    .stat .muted { font-size:12px; text-transform:uppercase; letter-spacing:.07em; }
+    .stat strong { font-size:clamp(24px,3.4vw,32px); letter-spacing:-.03em; margin-top:4px; }
+    .statrow .stat:first-child { background:var(--ink); border-color:var(--ink); color:#fff; }
+    .statrow .stat:first-child .muted { color:#a9a49b; }
+    .tabs { background:#ece6dc; padding:5px; border-radius:999px; display:inline-flex; gap:2px; max-width:100%; }
+    .tabs button { background:transparent; color:#5d584f; box-shadow:none; padding:10px 20px; }
+    .tabs button:hover:not(:disabled) { background:#e3dccf; transform:none; }
+    .tabs button.active { background:#fff; color:var(--ink); box-shadow:0 2px 8px #3b2a1a22; }
+    .lead { border-radius:22px; border:1px solid var(--line); background:#fff; padding:22px; box-shadow:0 12px 30px -22px #3b2a1a55; position:relative; overflow:hidden; }
+    .lead::before { content:""; position:absolute; left:0; top:22px; bottom:22px; width:4px; border-radius:0 4px 4px 0; background:var(--blue); }
+    .lead:hover { border-color:#e0cdb8; box-shadow:0 20px 40px -24px #3b2a1a66; }
+    .lead h3 { font-size:19px; margin-bottom:4px; }
+    .leadhead { align-items:center; }
+    .price { background:var(--accent-soft); color:#c2410c; padding:6px 14px; border-radius:999px; font-size:20px; }
+    .lead-price-label { margin-bottom:6px; }
+    .lead .muted { font-size:14px; }
+    .lead > h3:not(:first-child) { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#8a847a; margin:14px 0 4px!important; }
+    .lead > p { margin:0; color:#3a3731; font-size:16px; }
+    .lead-badges { margin:12px 0 0; }
+    .pill { border-radius:999px; background:#f1ece3; color:#5d584f; margin-top:0; padding:5px 12px; }
+    .pill.available { background:#e3f5ec; color:var(--green); } .pill.sold { background:#fdebe8; color:var(--red); } .pill.urgent { background:#fff0e8; color:#c2410c; }
+    .lead-footer { border-top:1px dashed #e4dccf; margin-top:18px; }
+    .lead-controls { background:#f6f2ec; border:0; border-radius:18px; }
+    .lead-controls input,.lead-controls select { background:#fff; }
+    .contactbox { background:#eef8f2; border:1px solid #cfe9db; border-radius:16px; }
+    .message { border-radius:14px; background:#f3efe8; color:#3a3731; }
+    .chatbox,.chatmessages { background:#faf7f2; border-radius:16px; }
+    .chatbubble.contractor { background:#ffe3d3; } .chatbubble.customer { background:#ece6dc; }
+    th { letter-spacing:.07em; }
+    @media(max-width:700px) { .top { padding:14px 16px; border-radius:0 0 22px 22px; } .tabs { display:grid; border-radius:22px; } .tabs button { padding:10px 6px; } .lead { padding:18px 16px 18px 18px; } }
+    @media(max-width:700px) { .statrow { grid-template-columns:1fr!important; gap:8px!important; } .stat { display:flex!important; justify-content:space-between; align-items:center; padding:12px 16px!important; } .stat .muted { display:block; margin:0; } .stat strong { font-size:22px!important; margin:0; } }
+    /* ===== dashboard header polish ===== */
+    .dashboard-intro { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:5px 2px 16px; }
+    .dashboard-intro-copy { min-width:0; }
+    .dashboard-eyebrow { display:inline-block; color:#c6531e; font-size:10px; font-weight:800; letter-spacing:.16em; margin-bottom:7px; }
+    .dashboard-intro h1 { margin:0 0 3px; }
+    .dashboard-intro #accountLine { margin:0; font-size:14px; }
+    .dashboard-mark { width:54px; height:54px; flex:0 0 54px; border-radius:17px; background:#fff0e8; display:flex; align-items:flex-end; justify-content:center; gap:4px; padding:13px; border:1px solid #f6d7c7; }
+    .dashboard-mark span { display:block; width:6px; border-radius:5px 5px 2px 2px; background:#ff6a2b; }
+    .dashboard-mark span:nth-child(1) { height:13px; opacity:.55; }
+    .dashboard-mark span:nth-child(2) { height:21px; }
+    .dashboard-mark span:nth-child(3) { height:16px; opacity:.75; }
+    @media(max-width:380px) { .dashboard-mark { width:44px; height:44px; flex-basis:44px; border-radius:14px; padding:10px; } }
+    /* ===== compact contractor change request list ===== */
+    #contractorOwnChangesList { display:flex; flex-direction:column; gap:8px; }
+    #contractorOwnChangesList .lead {
+      display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+      gap:2px 10px; width:100%; min-width:0; margin:0; padding:11px 13px 10px 16px;
+      min-height:0; border-radius:14px; background:#fffdfa; box-shadow:none;
+    }
+    #contractorOwnChangesList .lead::before { display:none; }
+    #contractorOwnChangesList .lead h3 {
+      grid-column:1; grid-row:1; min-width:0; margin:0 0 2px;
+      font-size:14px; line-height:1.3; overflow-wrap:anywhere;
+    }
+    #contractorOwnChangesList .lead > p.muted {
+      grid-column:1; grid-row:2; margin:0; font-size:11px; line-height:1.3;
+      overflow-wrap:anywhere;
+    }
+    #contractorOwnChangesList .lead > button {
+      grid-column:2; grid-row:1 / span 2; position:static!important;
+      align-self:center; min-height:34px; padding:5px 8px!important;
+      font-size:12px!important; white-space:nowrap;
+    }
+    #contractorOwnChangesList .lead > section { grid-column:1/-1; }
+    @media(max-width:700px) {
+      #contractorOwnChangesList .lead { padding:10px 11px 10px 14px; }
+      #contractorOwnChangesList .lead h3 { font-size:13px; }
+      #contractorOwnChangesList .lead > p.muted { font-size:10px; }
+      #contractorOwnChangesList .lead > button { font-size:12px!important; }
+    }
 
+    /* ===== compact leads v3 ===== */
+    main { margin:18px auto; }
+    .card { padding:18px; margin-bottom:12px; }
+    h1 { font-size:clamp(20px,2.6vw,24px); margin-bottom:2px; }
+    #appView > .card > p#accountLine { margin:0 0 12px; font-size:14px; }
+    .statrow { gap:8px; }
+    .stat { padding:10px 14px; border-radius:14px; }
+    .stat strong { font-size:clamp(20px,2.8vw,24px); }
+    #contractorPushSection { padding:10px 14px!important; margin:10px 0!important; border-radius:14px; box-shadow:none; }
+    #contractorPushSection::before { display:none; }
+    #contractorPushSection h2 { font-size:13px; margin:0 0 2px; text-transform:uppercase; letter-spacing:.06em; color:#58534b; }
+    #contractorPushSection p { margin:0; font-size:13px; }
+    #appView .actions { margin-top:8px; }
+    #appView .actions + p.muted { font-size:12px; margin:8px 0 0; }
+    .tabs { margin-bottom:10px; }
+    .tabs button { min-height:38px; padding:8px 18px; }
+    #availablePanel { padding:16px; }
+    #availablePanel > h2 { font-size:19px; margin-bottom:2px; }
+    #availablePanel > p { font-size:14px; margin:0 0 8px; }
+    .lead-controls { padding:8px; gap:8px; margin:10px 0 6px; border-radius:14px; }
+    .lead-controls input,.lead-controls select { min-height:40px; padding:8px 12px; font-size:15px; }
+    .lead-toolbar { margin:6px 0; } .lead-toolbar button { min-height:36px; padding:6px 16px; }
+
+    #leadsList .lead { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-rows:auto auto auto; column-gap:14px; row-gap:4px; align-items:center; padding:12px 16px 12px 18px; margin:8px 0; border-radius:16px; box-shadow:0 8px 20px -18px #3b2a1a66; }
+    #leadsList .lead::before { top:12px; bottom:12px; width:3px; }
+    #leadsList .leadhead,#leadsList .lead-footer { display:contents; }
+    #leadsList .leadhead > div:first-child { grid-column:1; grid-row:1; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; min-width:0; }
+    #leadsList .lead h3 { font-size:16px; margin:0; }
+    #leadsList .lead .muted { font-size:13px; }
+    #leadsList .leadhead > div:last-child { grid-column:2; grid-row:1; display:flex; align-items:center; gap:8px; }
+    #leadsList .lead-price-label { display:none; }
+    #leadsList .price { font-size:16px; padding:4px 12px; }
+    #leadsList .lead-badges { grid-column:1; grid-row:2; margin:0; gap:5px; }
+    #leadsList .pill { padding:2px 9px; font-size:11px; }
+    #leadsList .lead > h3:not(:first-child) { display:none; }
+    #leadsList .lead > p { grid-column:1/-1; grid-row:3; margin:2px 0 0; font-size:14px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal!important; }
+    #leadsList .lead-footer button { grid-column:3; grid-row:1 / span 2; min-width:0; min-height:38px; padding:8px 18px; font-size:13px; }
+    #leadsList .lead-date { font-size:12px; }
+    #leadsList .lead-date:first-child { grid-column:2; grid-row:2; justify-self:end; white-space:nowrap; }
+    #leadsList .lead-date:last-child:not(:first-child) { grid-column:3; grid-row:1; justify-self:end; white-space:nowrap; }
+    #leadsList .lead-footer > .lead-date:first-child:empty { display:none; }
+
+    @media(max-width:700px) {
+      main { margin:12px auto; } .card { padding:14px; }
+      .statrow { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:6px!important; }
+      .stat { display:block!important; padding:8px 10px!important; } .stat .muted { font-size:11px!important; letter-spacing:0; text-transform:none; line-height:1.2; }
+      .stat strong { font-size:18px!important; margin-top:2px; }
+      .tabs { display:flex!important; width:100%; } .tabs button { flex:1 1 0; padding:8px 4px; font-size:13px; }
+      #availablePanel { padding:12px; }
+      #leadsList .lead { grid-template-columns:minmax(0,1fr) auto; padding:11px 12px 11px 15px; }
+      #leadsList .leadhead > div:last-child { grid-column:2; grid-row:1; justify-self:end; }
+      #leadsList .lead-badges { grid-column:1/-1; grid-row:2; }
+      #leadsList .lead > p { grid-row:3; }
+      #leadsList .lead-date:first-child { grid-column:1; grid-row:4; justify-self:start; }
+      #leadsList .lead-footer button { grid-column:2; grid-row:4; justify-self:end; width:auto; padding:7px 18px; }
+      #leadsList .lead-date:last-child:not(:first-child) { grid-column:2; grid-row:4; }
+    }
+  
+    /* Compact expandable lead rows */
+    /* My purchases uses the same compact expandable list as customer requests. */
+    #purchasesList > .purchase-row { display:block; margin:0; padding:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; box-shadow:none; }
+    #purchasesList > .purchase-row:last-child { border-bottom:0; }
+    #purchasesList .purchase-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--ink); box-shadow:none; text-align:left; }
+    #purchasesList .purchase-summary:hover { background:#faf4ed; box-shadow:none; transform:none; }
+    #purchasesList .purchase-summary-text { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
+    #purchasesList .purchase-summary-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #purchasesList .purchase-summary-date { color:#82776d; font-size:11px; font-weight:500; line-height:1.3; }
+    #purchasesList .purchase-chevron { flex:0 0 auto; color:var(--muted); font-size:16px; }
+    #purchasesList .purchase-unread { flex:0 0 auto; color:#c2410c; font-size:13px; font-weight:800; }
+    #purchasesList .purchase-unread.has-unread { padding:4px 7px; border-radius:999px; background:#fff0e8; }
+    #purchasesList .purchase-details { padding:10px; border-top:1px solid var(--line); }
+    #purchasesList .purchase-details > p { margin:7px 0; font-size:13px; line-height:1.5; color:var(--muted); overflow-wrap:anywhere; }
+    #purchasesList .purchase-chat-button { min-height:40px; padding:8px 14px; font-size:13px; }
+    #purchasesList .purchase-retention-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    #purchasesList .purchase-retention-actions small { color:var(--muted); font-size:12px; }
+
+    #purchasesList .contactbox { margin-top:10px; }
+    @media(max-width:700px) { #purchasesList .purchase-summary { min-height:46px; padding:8px; } #purchasesList .purchase-details { padding:9px 8px 12px; } }
+    /* ZELPX available jobs — refreshed orange marketplace cards */
+    #availablePanel { background:#fff; border:1px solid #f0e5dc; border-radius:20px; }
+    #availablePanel > h2 { font-size:21px; font-weight:800; letter-spacing:-.02em; }
+    #availablePanel > p { color:#71675e; line-height:1.5; }
+    .lead-controls { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap:9px; padding:12px; background:#fff8f3; border:1px solid #f3e3d7; border-radius:16px; }
+    .lead-controls input,.lead-controls select { min-height:44px; border:1px solid #eaded4; border-radius:11px; background:#fff; }
+    .lead-toolbar { margin:10px 2px 12px; }
+    .lead-count { color:#75695f; font-size:13px; font-weight:700; }
+    #leadsList .lead.lead-compact { display:block; position:relative; overflow:hidden; margin:10px 0; padding:0; border:1px solid #eee2d8; border-radius:17px; background:#fff; box-shadow:0 5px 18px -15px #6b3b1e80; transition:border-color .18s,box-shadow .18s,transform .18s; }
+    #leadsList .lead.lead-compact::before { top:0; bottom:0; left:0; width:4px; border-radius:0; background:#f36b2b; }
+    #leadsList .lead.lead-compact.lead-package-card { border:2px solid #e9a06f; background:linear-gradient(180deg,#fffaf5,#fff); }
+    #leadsList .lead-details .package-pill { background:#fff0e4!important; color:#a84d20!important; border-color:#edc7aa!important; }
+    .lead-package-services { margin:8px 0 14px; padding-left:20px; display:grid; gap:6px; }
+    #leadsList .lead.lead-compact:hover { border-color:#f2b18e; box-shadow:0 12px 25px -18px #a64e2080; transform:translateY(-1px); }
+    #leadsList .lead-summary { width:100%; min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px 12px 20px; border:0; border-radius:16px; background:transparent; color:#29251f; box-shadow:none; text-align:left; }
+    #leadsList .lead-summary:hover:not(:disabled) { background:#fff8f3; color:#29251f; box-shadow:none; transform:none; }
+    #leadsList .lead-summary-main { display:flex; min-width:0; flex-direction:column; gap:4px; }
+    #leadsList .lead-summary-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#29251f; font-size:16px; font-weight:800; letter-spacing:-.01em; }
+    #leadsList .lead-summary-zip { color:#81766d; font-size:12px; font-weight:600; }
+    #leadsList .lead-summary-side { display:flex; align-items:center; gap:13px; flex:0 0 auto; }
+    #leadsList .lead-summary-price { color:#c44d16; background:#fff0e7; border:1px solid #ffdfcc; border-radius:10px; padding:7px 11px; font-size:15px; font-weight:850; white-space:nowrap; }
+    #leadsList .lead-summary-chevron { color:#b65a2a; font-size:19px; line-height:1; }
+    #leadsList .lead-details { padding:0 17px 15px 20px; border-top:1px solid #f2e9e2; background:linear-gradient(180deg,#fff 0%,#fffdfa 100%); }
+    #leadsList .lead-details .lead-badges { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0; }
+    #leadsList .lead-details .pill { padding:5px 10px; border-radius:999px; font-size:11px; font-weight:750; }
+    #leadsList .lead-details-label { margin:10px 0 5px!important; color:#8b7d72!important; font-size:10px!important; font-weight:800; text-transform:uppercase; letter-spacing:.09em; }
+    #leadsList .lead-details-description { margin:0; color:#39332d; font-size:14px; line-height:1.6; white-space:pre-wrap; }
+    #leadsList .lead-details .lead-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:13px; padding-top:12px; border-top:1px solid #f0e7df; }
+    #leadsList .lead-details .lead-date { color:#85796f; font-size:12px; }
+    #leadsList .lead-details .lead-footer button { min-height:42px; padding:9px 18px; border-radius:11px; background:#f36b2b; color:#fff; font-size:13px; font-weight:800; box-shadow:0 5px 12px -7px #b74c1b; }
+    #leadsList .lead-details .lead-footer button:hover:not(:disabled) { background:#dc571c; }
+    @media(max-width:700px) {
+      #availablePanel { padding:12px; border-radius:16px; }
+      .lead-controls { grid-template-columns:1fr; padding:10px; }
+      #leadsList .lead-summary { min-height:64px; padding:11px 12px 11px 17px; gap:8px; }
+      #leadsList .lead-summary-title { font-size:15px; }
+      #leadsList .lead-summary-side { gap:8px; }
+      #leadsList .lead-summary-price { padding:6px 9px; font-size:14px; }
+      #leadsList .lead-details { padding:0 12px 13px 17px; }
+      #leadsList .lead-details .lead-footer { align-items:flex-start; flex-direction:column; }
+      #leadsList .lead-details .lead-footer button { width:100%; }
+    }
+    .password-field { position:relative; width:100%; }
+    .password-field input { width:100%; padding-right:52px; }
+    .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
+    .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
+    .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
+
+/* Incoming chat toast — pinned to the lower-right corner on phones */
+.zelpx-chat-toast{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:99999;width:min( min(340px,calc(100vw - 28px)),340px);padding:13px 15px;border:1px solid #f2c5aa;border-left:4px solid #f36b2b;border-radius:14px;background:#fffefa;color:#29251f;box-shadow:0 12px 34px #21170f30;font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;animation:zelpxToastIn .22s ease-out;pointer-events:none}
+.zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
+
+    .social-auth { margin-top:18px; display:grid; gap:10px; }
+    .social-auth-divider { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; font-weight:700; }
+    .social-auth-divider::before,.social-auth-divider::after { content:""; height:1px; flex:1; background:var(--line); }
+    .social-auth-button { width:100%; min-height:48px; margin:0; display:flex; align-items:center; justify-content:center; gap:11px; border:1px solid #d9d4cc; border-radius:999px; background:#fff; color:#202124; box-shadow:none; font-size:14px; font-weight:700; }
+    .social-auth-button:hover:not(:disabled) { background:#fff8f3; border-color:#f0783c; color:#202124; box-shadow:none; }
+    .social-google-mark { font:800 21px/1 Arial,sans-serif; color:#4285f4; }
+    .social-facebook-mark { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#1877f2; color:#fff; font:700 17px/20px Arial,sans-serif; }
+    .social-auth-button:disabled { opacity:.6; cursor:wait; }
+
+    /* Branded purchase confirmation for contractor lead and package purchases */
+    .zelpx-confirm-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(12,20,30,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .zelpx-confirm-dialog{width:min(100%,430px);overflow:hidden;border:1px solid rgba(255,255,255,.75);border-radius:22px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:zelpxModalIn .2s ease-out}
+    .zelpx-confirm-top{padding:25px 25px 18px;background:linear-gradient(135deg,#fff7ed,#fff);text-align:center}
+    .zelpx-confirm-icon{width:58px;height:58px;margin:0 auto 13px;border-radius:18px;display:grid;place-items:center;background:#ffead5;color:#c45a12;font-size:28px;font-weight:800}
+    .zelpx-confirm-title{margin:0;color:#182638;font-size:22px;line-height:1.25;font-weight:800}
+    .zelpx-confirm-body{padding:20px 25px 8px;text-align:center;color:#536174;font-size:15px;line-height:1.55}
+    .zelpx-confirm-price{display:block;margin:7px 0 4px;color:#c45a12;font-size:32px;font-weight:800;letter-spacing:-.7px}
+    .zelpx-confirm-note{margin:8px 0 0;color:#778294;font-size:13px}
+    .zelpx-confirm-actions{display:flex;gap:12px;padding:22px 25px 25px}
+    .zelpx-confirm-actions button{flex:1;min-height:48px;border-radius:12px;font-weight:750;cursor:pointer}
+    .zelpx-confirm-cancel{border:1px solid #d9e0e8;background:#fff;color:#435064}
+    .zelpx-confirm-buy{border:1px solid #d96519;background:linear-gradient(135deg,#f28a32,#d96519);color:#fff;box-shadow:0 5px 14px rgba(217,101,25,.22)}
+    .zelpx-confirm-actions button:focus-visible{outline:3px solid #f7b77e;outline-offset:3px}
+    @keyframes zelpxModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @media(max-width:480px){.zelpx-confirm-overlay{padding:16px}.zelpx-confirm-dialog{border-radius:19px}.zelpx-confirm-top{padding:22px 18px 15px}.zelpx-confirm-body{padding:17px 20px 5px}.zelpx-confirm-actions{padding:18px 20px 21px}}
+
+
+/* ===== ZELPX contractor dashboard: match customer portal visual language ===== */
+:root{
+  --navy:#302923;--ink:#302923;--blue:#e97843;--bg:#f8f5f1;
+  --line:#eee4dc;--muted:#81766d;--accent-soft:#fff3eb;
+}
+html{scroll-padding-bottom:100px}
+body{background:radial-gradient(ellipse at 50% -12%,#ffe4d5 0,transparent 42%),#f8f5f1;color:#302923}
+.top{
+  position:relative;justify-content:center;min-height:82px;padding:17px 150px;
+  background:#fffefa;color:#302923;border-radius:0;box-shadow:0 1px 0 #eee4dc;
+}
+.top>div:first-child{text-align:center}
+.brand{color:#302923;font-size:27px;letter-spacing:.28em}
+.brand::after{background:#e97843}
+.top small{display:none}
+#topUser{position:absolute;right:20px;top:50%;transform:translateY(-50%)}
+#userEmail{color:#81766d;font-size:12px}
+#logoutBtn{background:#fffaf6;color:#76675c;border:1px solid #eee2d8;box-shadow:none;border-radius:14px}
+#appView>.card:first-child{
+  overflow:hidden;padding:18px 20px;border-radius:0 0 24px 24px;
+  background:#fffefa;border-color:#f0e8e0;
+}
+#appView>.card:first-child .dashboard-intro{
+  margin:-18px -20px 16px;padding:26px 22px 24px;
+  min-height:150px;border-radius:0 0 28px 28px;
+  background:linear-gradient(112deg,#4a2418 0%,#8e3e1e 58%,#e97843 100%);
+  color:#fff;box-shadow:0 12px 28px -18px #7a351d88;
+}
+#appView>.card:first-child .dashboard-eyebrow{color:#f8d6c4}
+#appView>.card:first-child .dashboard-intro h1{color:#fff;font-size:clamp(23px,4vw,29px)}
+#appView>.card:first-child #accountLine{color:#f7e5db}
+#appView>.card:first-child .dashboard-mark{background:#fff3eb;border-color:#f6d7c7}
+#appView>.card:first-child .stat{background:#fff;border-color:#eee4dc;color:#302923}
+#appView>.card:first-child .statrow .stat:first-child{background:#fff8f3;border-color:#f0d9cb;color:#302923}
+#appView>.card:first-child .statrow .stat:first-child .muted{color:#81766d}
+#appView>.card:first-child .stat .muted{color:#81766d}
+#appView>.card:first-child .message{border-radius:14px}
+.card{background:#fffefa;border-color:#eee4dc;box-shadow:0 10px 34px -28px #59402d66}
+.lead,.stat,.chatbox,.chatmessages{border-color:#eee4dc}
+input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
+.tabs button.active{background:#e97843;color:#fff}
+.tabs button{border-radius:999px}
+@media(max-width:700px){
+  body{padding-bottom:94px}
+  .top{min-height:72px;padding:13px 112px}
+  .brand{font-size:24px}
+  #topUser{right:10px;gap:0}
+  #userEmail{display:none}
+  #logoutBtn{min-height:38px;padding:8px 12px;font-size:12px}
+  main{margin:10px auto 24px!important;padding-bottom:8px}
+  #appView>.card:first-child{padding:14px 14px 16px;border-radius:0 0 22px 22px}
+  #appView>.card:first-child .dashboard-intro{
+    margin:-14px -14px 13px;padding:24px 18px 22px;min-height:132px;
+    border-radius:0 0 24px 24px
+  }
+  #appView>.card:first-child .dashboard-intro h1{font-size:24px}
+  #appView>.card:first-child .dashboard-mark{width:46px;height:46px;flex-basis:46px}
+  #appView>.card:first-child .statrow{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  #appView>.card:first-child .stat{display:block!important;padding:9px 8px!important;border-radius:13px}
+  #appView>.card:first-child .stat .muted{font-size:10px!important;line-height:1.2}
+  #appView>.card:first-child .stat strong{font-size:18px!important;margin-top:3px}
+  .tabs{
+    position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));
+    z-index:1000;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:4px;margin:0!important;padding:8px 7px;
+    border:1px solid #eee4dc;border-radius:22px;background:rgba(255,254,250,.97);
+    box-shadow:0 8px 30px #49301f20;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)
+  }
+  .tabs button{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    min-width:0;min-height:58px;padding:6px 3px!important;border-radius:15px;
+    background:transparent;color:#766b62;font-size:11px;line-height:1.2;
+    white-space:normal;box-shadow:none
+  }
+  .tabs button::before{font-size:20px;line-height:1.1;font-weight:500}
+  .tabs button[data-tab="availablePanel"]::before{content:"⌕"}
+  .tabs button[data-tab="purchasesPanel"]::before{content:"▤"}
+  .tabs button[data-tab="companyPanel"]::before{content:"♙"}
+  .tabs button.active{background:#fff0e8;color:#b9562d;border:1px solid #f1d3c3;box-shadow:none}
+  .tabs button:hover:not(:disabled){background:#fff6f0;color:#b9562d;transform:none;box-shadow:none}
+  .tabs button.active:hover{background:#fff0e8}
+  #adminTabBtn{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){.tabs button{transition:none!important}}
+
+
+/* Put contractor logout in the same dashboard-banner position as customer portal */
+.top{justify-content:center!important;padding:17px 16px!important;min-height:82px}
+#topUser.contractor-dashboard-logout{
+  position:static!important;transform:none!important;
+  display:flex;align-items:center;justify-content:flex-end;flex:0 0 auto;
+  margin-left:auto;gap:0;
+}
+#topUser.contractor-dashboard-logout.hidden{display:none!important}
+#topUser.contractor-dashboard-logout #userEmail{display:none}
+#topUser.contractor-dashboard-logout #logoutBtn{
+  width:auto;min-width:112px;min-height:48px;margin:0;padding:10px 18px;
+  border:1px solid #f3d8c9;border-radius:999px;
+  background:#fffaf6;color:#76675c;font-size:15px;font-weight:750;
+  box-shadow:0 4px 12px #3a1c101c;white-space:nowrap
+}
+#topUser.contractor-dashboard-logout #logoutBtn:hover:not(:disabled){
+  background:#fff0e8;color:#a94c25;transform:translateY(-1px);box-shadow:0 5px 14px #3a1c1022
+}
+@media(max-width:700px){
+  .top{padding:13px 16px!important;min-height:72px}
+  #appView>.card:first-child .dashboard-intro{gap:12px}
+  #topUser.contractor-dashboard-logout #logoutBtn{min-width:96px;min-height:44px;padding:9px 14px;font-size:14px}
+}
+
+
+/* Critical mobile flex fix: reserve a real text column beside the logout button */
+#appView>.card:first-child .dashboard-intro{
+  display:flex!important;flex-direction:row!important;align-items:center!important;
+  justify-content:space-between!important;width:100%;min-width:0
+}
+#appView>.card:first-child .dashboard-intro-copy{
+  display:block!important;flex:1 1 0%!important;width:0!important;min-width:0!important;
+  max-width:none!important
+}
+#appView>.card:first-child .dashboard-intro-copy h1,
+#appView>.card:first-child .dashboard-intro-copy p{
+  max-width:100%;word-break:normal!important;overflow-wrap:normal!important
+}
+#appView>.card:first-child #topUser.contractor-dashboard-logout{
+  display:flex!important;flex:0 0 auto!important;width:auto!important;
+  max-width:none!important;min-width:0!important;margin-left:12px!important
+}
+@media(max-width:700px){
+  #appView>.card:first-child .dashboard-intro{gap:10px!important}
+  #appView>.card:first-child .dashboard-intro-copy h1{font-size:clamp(21px,5vw,25px)!important;line-height:1.2}
+  #appView>.card:first-child #topUser.contractor-dashboard-logout #logoutBtn{min-width:94px}
+}
+
+
+/* Full-bleed dashboard hero: span the entire screen, not the inset card */
+#appView>.card:first-child{overflow:visible!important}
+#appView>.card:first-child .dashboard-intro{
+  position:relative!important;left:50%!important;transform:translateX(-50%)!important;
+  width:100vw!important;max-width:100vw!important;box-sizing:border-box!important;
+  margin:0 0 16px!important;padding:26px max(22px,calc((100vw - 1120px)/2)) 24px!important;
+  border-radius:0 0 28px 28px!important
+}
+@media(max-width:700px){
+  #appView>.card:first-child{padding-top:0!important}
+  #appView>.card:first-child .dashboard-intro{
+    width:100vw!important;max-width:100vw!important;
+    margin:0 0 16px!important;padding:24px 22px 22px!important;
+    border-radius:0 0 26px 26px!important;min-height:148px
+  }
+}
+
+
+/* Keep Android tap/focus feedback on social sign-in buttons within ZELPX orange palette */
+.social-auth-button{
+  -webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;appearance:none;
+  outline:none;
+  user-select:none;-webkit-user-select:none;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.social-auth-button:active,
+.social-auth-button:focus,
+.social-auth-button:focus:not(:focus-visible){
+  background:#fff8f3!important;
+  border-color:#e97843!important;
+  color:#202124!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+.social-auth-button:focus-visible{
+  background:#fff8f3!important;
+  border-color:#e97843!important;
+  outline:2px solid #e97843!important;
+  outline-offset:3px!important;
+  box-shadow:0 0 0 3px #fce5d8!important;
+}
+.social-auth-button:disabled{background:#fff!important;border-color:#e8ddd4!important;opacity:.65}
+
+</style>
+</head>
+<body class="auth-pending">
+<header class="top">
+  <div><div class="brand">ZELPX</div><small>Contractor Lead Portal</small></div>
+</header>
+<main>
+  <section id="oauthReturnLoading" class="hidden" role="status" aria-live="polite">
+    <div class="splash-inner">
+      <div class="splash-brand">ZELPX<span>.</span></div>
+      <div class="splash-caption">Opening your account</div>
+      <span class="splash-spinner" aria-hidden="true"></span>
+    </div>
+  </section>
+  <style>@keyframes zelpxAuthSpin{to{transform:rotate(360deg)}}</style>
+  <section id="authView" class="card">
+    <h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
+    <div id="authMessage" class="message hidden"></div>
+    <div class="grid">
+      <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com" required></div>
+      <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+    </div>
+    <div id="signupFields" class="grid hidden">
+      <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
+      <div id="signupCompanyNameField"><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
+      <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
+      <div id="signupStreetAddressField"><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
+      <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
+      <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
+      <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
+      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
+      <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
+        <h3>Choose your work before creating your account</h3>
+        <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
+        <label for="signupWorkRole">Work status</label><select id="signupWorkRole"><option value="independent">Independent contractor / business</option><option value="employee">Worker looking for employment</option></select>
+        <div id="signupLicenseChoice">
+          <label for="hasLicense">Do you have the required current license / registration / trade credential?</label><p class="muted" style="font-size:12px;margin:4px 0 8px">Select Yes or No. License details appear only when you select Yes. No document upload is required.</p>
+          <select id="hasLicense" required aria-label="Do you have a current business license?"><option value="" selected disabled>Select Yes or No</option><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+        <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
+        <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state first, then choose the services you offer.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Your selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen work types will appear here.</span></div></div>
+        <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
+          <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
+          <label id="signupConditionalAckLabel" class="hidden"><input id="signupConditionalAck" type="checkbox"> I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.</label>
+          <label id="signupUnverifiedAckLabel" class="hidden"><input id="signupUnverifiedAck" type="checkbox"> I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.</label>
+          <label id="signupReadAgreeLabel" style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-weight:700;line-height:1.45">
+            <input id="signupReadAgree" type="checkbox" required style="width:22px;height:22px;min-width:22px;margin:2px 0 0;accent-color:#f0783c">
+            <span>I have read and agree to the licensing requirements and work-scope restrictions shown above. I will only perform work I am legally authorized to do.</span>
+          </label>
+        </div>
+      </div>
+      <div id="signupLicenseFields" class="grid hidden" style="grid-column:1/-1">
+        <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div id="signupCompanyLicenseReviewStatus" role="status" aria-live="polite" style="grid-column:1/-1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-size:13px">License review status will appear here after registration.</div>
+        <div><label for="licenseState">Issuing state</label><select id="licenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber">License number</label><input id="licenseNumber" autocomplete="off"></div>
+        <div><label for="licenseType">License type / classification</label><input id="licenseType" placeholder="Trade / license classification"></div>
+        <div><label for="licenseExpirationDate">License expiration date</label><input id="licenseExpirationDate" type="date"></div>
+        <h3 style="grid-column:1/-1;margin:8px 0 0">License in state 2 (optional)</h3>
+        <div><label for="licenseState2">Second issuing state</label><select id="licenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+        <div><label for="licenseNumber2">Second license number</label><input id="licenseNumber2" autocomplete="off"></div>
+        <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
+      </div>
+      <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
+        <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
+        <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
+        <div><label for="signupHasInsuranceCertificate">Do you have business insurance?</label><select id="signupHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div id="signupInsuranceAgencyWrap" class="hidden"><label for="signupInsuranceAgency">Insurance company name</label><input id="signupInsuranceAgency" autocomplete="organization"></div>
+        <div id="signupInsurancePhoneWrap" class="hidden"><label for="signupInsurancePhone">Insurance company phone number</label><input id="signupInsurancePhone" type="tel" autocomplete="tel"></div>
+        <div id="signupInsurancePolicyWrap" class="hidden"><label for="signupInsurancePolicyNumber">Insurance policy number</label><input id="signupInsurancePolicyNumber" autocomplete="off"></div>
+        <div id="signupInsuranceExpirationWrap" class="hidden"><label for="signupInsuranceExpiration">Insurance expiration date</label><input id="signupInsuranceExpiration" type="date"></div>
+      </div>
+      <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
+    </div>
+    <div class="actions">
+      <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button>
+      <a id="forgotPasswordLink" href="/contractor-forgot-password.html" style="align-self:center">Forgot password?</a>
+      <button id="signupBtn" type="button" class="hidden">Create account</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
+    </div>
+    <div id="contractorSocialAuth" class="social-auth" aria-label="Other sign-in options">
+      <div class="social-auth-divider"><span>Or continue with</span></div>
+      <button id="contractorGoogleSignInButton" class="social-auth-button" type="button">
+        <span class="social-google-mark" aria-hidden="true">G</span>
+        Continue with Google
+      </button>
+      <button id="contractorFacebookSignInButton" class="social-auth-button" type="button">
+        <span class="social-facebook-mark" aria-hidden="true">f</span>
+        Continue with Facebook
+      </button>
+    </div>
+    <p class="muted">By creating an account, you agree to use customer information only for the specific service request and in accordance with applicable law.</p>
+  </section>
+
+  <section id="appView" class="hidden">
+    <div class="card">
+      <div class="dashboard-intro">
+        <div class="dashboard-intro-copy">
+          <span class="dashboard-eyebrow">YOUR BUSINESS. YOUR NEXT JOB.</span>
+          <h1 id="welcomeTitle">Contractor dashboard</h1>
+          <p id="accountLine">Your ZELPX account</p>
+        </div>
+        <div id="topUser" class="hidden contractor-dashboard-logout"><span id="userEmail"></span><button id="logoutBtn" type="button">Log Out</button></div>
+      </div>
+      <div class="statrow">
+        <div class="stat"><span class="muted">Credit balance</span><strong id="walletBalance">$0.00</strong></div>
+        <div class="stat"><span class="muted">Available leads</span><strong id="availableCount">0</strong></div>
+        <div class="stat"><span class="muted">Purchased leads</span><strong id="purchaseCount">0</strong></div>
+      </div>
+      <section class="lead" id="contractorPushSection">
+        <h2>Background lead alerts</h2>
+        <p>Lead notifications are configured automatically when browser permission has been granted. No manual setup button is required.</p>
+      </section>
+      <div class="actions" style="align-items:end">
+        <div style="max-width:220px;flex:1"><label for="creditAmount">Add credits (USD)</label><input id="creditAmount" type="number" min="10" max="10000" step="0.01" value="50" inputmode="decimal"></div>
+        <button id="addCreditsBtn" type="button">Add Credits</button><button id="refreshBalanceBtn" type="button" class="secondary">Refresh balance</button>
+      </div>
+      <p class="muted">Minimum $10 · Maximum $10,000. Payments are processed securely by Stripe. Credits are added after Stripe confirms payment.</p>
+      <div id="appMessage" class="message hidden"></div>
+    </div>
+    <nav class="tabs">
+      <button class="active" data-tab="availablePanel">All leads</button><button data-tab="purchasesPanel">My purchases</button>
+      <button data-tab="companyPanel">My company</button><button id="adminTabBtn" data-tab="adminPanel" class="hidden">Admin <span id="adminPendingBadge" style="display:none;background:#d94820;color:#fff;border-radius:999px;padding:2px 7px;font-size:12px;margin-left:5px">0</span></button>
+    </nav>
+    <section id="availablePanel" class="card">
+      <h2>Find your next job</h2><p>Browse service requests in your market. Customer contact details remain private until you purchase an available lead.</p>
+      <div class="lead-controls" aria-label="Lead filters">
+        <input id="leadSearch" type="search" placeholder="Search service or work details…" aria-label="Search leads">
+        <input id="leadZipFilter" type="search" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code…" aria-label="Filter leads by ZIP code">
+        <select id="leadCategoryFilter" aria-label="Filter by service category"><option value="">All services (full catalog)</option></select>
+        <select id="leadStatusFilter" aria-label="Filter by lead status"><option value="all" selected>All statuses</option><option value="available">Available leads</option><option value="sold">Sold leads</option></select>
+      </div>
+      <div class="lead-toolbar"><span id="leadResultsCount" class="lead-count">Loading leads…</span><button id="refreshLeadsBtn" class="secondary" type="button">Refresh leads</button></div>
+      <div id="leadsList"><p class="muted">Loading leads…</p></div>
+    </section>
+    <section id="purchasesPanel" class="card hidden">
+      <h2>My purchases</h2><p>Customer contact details are shown here only for leads purchased by your contractor account.</p>
+      <div id="purchasesList"><p class="muted">Loading purchases…</p></div>
+    </section>
+    <section id="companyPanel" class="card hidden">
+      <h2>My company</h2>
+      <section class="lead">
+        <h3>My change requests</h3>
+        <p>Changes to company details, services, and work types stay pending until an administrator reviews them.</p>
+        <div id="contractorOwnChangesList"><p class="muted">Loading your requests…</p></div>
+      </section>
+      <div style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="contractorAvatarPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="contractorAvatarFile">Profile photo for chat notifications</label><input id="contractorAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><button id="removeContractorAvatarButton" type="button" class="secondary-button" style="width:auto;min-height:36px;margin:8px 0 0;padding:8px 14px;font-size:13px" hidden>Remove profile photo</button><small id="contractorAvatarStatus" class="muted">Upload a photo so customers can recognize you in message notifications. Max 10 MB.</small></div></div>
+      <div class="grid">
+        <div><label for="profileFullName">Your name</label><input id="profileFullName"></div>
+        <div><label for="profilePhone">Phone</label><input id="profilePhone"></div>
+        <div id="profileCompanyNameField"><label for="profileCompany">Company name</label><input id="profileCompany"></div>
+        <div id="profileCompanyEmailField"><label for="profileCompanyEmail">Company email</label><input id="profileCompanyEmail" type="email"></div>
+        <div><label for="profileServiceAddress">Business street address</label><input id="profileServiceAddress" autocomplete="street-address"></div>
+        <p id="contractorAddressVerificationStatus" class="muted" style="grid-column:1/-1">Business address is checked when you save your company profile.</p>
+        <div><label for="profileServiceZip">Business ZIP code</label><input id="profileServiceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code"></div>
+        <div><label for="profileServiceCity">City</label><input id="profileServiceCity" autocomplete="address-level2"></div>
+        <div><label for="profileServiceState">State</label><select id="profileServiceState" autocomplete="address-level1"><option value="">Select state</option></select></div>
+        <div><label for="profileServiceRadius">Service radius</label><div style="display:flex;gap:10px;align-items:stretch"><select id="profileServiceRadius" style="flex:1;min-width:0"><option value="10">10 miles</option><option value="25">25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><button id="saveServiceRadiusBtn" type="button" class="secondary" style="white-space:nowrap;flex:0 0 auto">Save radius</button></div><small class="muted">Only available leads within this distance of your Business ZIP code will be shown. Save the radius separately without resubmitting your company profile.</small><div id="serviceRadiusSaveStatus" class="message hidden" role="status" aria-live="polite"></div></div>
+        <div id="professionComplianceSection" style="grid-column:1/-1;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffaf5;margin-top:8px">
+          <h3 style="margin:0 0 5px">Work types & license requirements</h3>
+          <div class="grid">
+            <div><label for="professionState">State where you will work</label><select id="professionState"></select></div>
+            <div><label for="professionWorkRole">Your work status</label><select id="professionWorkRole"><option value="independent">Independent contractor</option></select></div>
+            <div id="professionLicenseFilter"><label for="profileHasLicense">Do you have a current license?</label><p class="muted" style="font-size:12px;margin:4px 0 8px">Select Yes or No. Your license details appear only when you select Yes. No document upload is required.</p><select id="profileHasLicense" aria-label="Do you have a current business license?"><option value="" disabled selected>Select Yes or No</option><option value="no">No</option><option value="yes">Yes</option></select>
+              <div id="profileNoLicenseAckWrap" class="hidden" style="margin-top:9px;padding:10px 12px;border:1px solid #f3b18f;border-radius:10px;background:#fff8f2">
+                <label style="display:flex;align-items:flex-start;gap:9px;margin:0;font-size:13px;font-weight:600;line-height:1.4"><input id="profileNoLicenseAck" type="checkbox" style="width:18px;min-height:18px;height:18px;margin:1px 0 0;flex:0 0 18px;accent-color:#ff6a2b">I confirm I will only accept jobs that don't require a license in my state.</label>
+              </div>
+            </div>
+          </div>
+          <label for="professionSearch">FIND A PROFESSION</label><input id="professionSearch" type="search" placeholder="Search electrician, tile installer, cleaner…">
+          <div id="professionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearProfileProfessionsBtn" type="button" style="background:#ff6a2b;color:#fff;min-height:44px;padding:10px 20px;font-size:13px">Clear selected services</button></div>
+          <div id="selectedProfileServicesPanel" style="margin-top:12px;padding:12px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2">
+            <strong style="display:block;font-size:14px;margin-bottom:8px">Selected services</strong>
+            <div id="selectedProfileServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">No services selected.</span></div>
+          </div>
+          <div id="professionComplianceSummary" class="message" role="status" aria-live="polite" style="display:none"></div>
+          <!-- Per-profession credential cards removed. License details are entered once in Business license above. -->
+        </div>
+        <div style="grid-column:1/-1"><label><input id="profileLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
+        <div id="profileLicenseFields" class="grid hidden" style="grid-column:1/-1">
+          <h3 style="grid-column:1/-1;margin:0">License in state 1</h3>
+          <div id="profileCompanyLicenseReviewStatus" role="status" aria-live="polite" style="grid-column:1/-1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fffaf5;font-size:13px">Company license review status: loading…</div>
+          <div><label for="profileLicenseState">Issuing state</label><select id="profileLicenseState"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
+          <div><label for="profileLicenseNumber">License number</label><input id="profileLicenseNumber"></div>
+          <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
+          <input id="profileCompanyLicenseFile" type="hidden" aria-hidden="true">
+          <div><label for="profileCompanyLicenseExpiry">Expiration date (if applicable)</label><input id="profileCompanyLicenseExpiry" type="date"></div>
+        <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
+          <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
+          <button id="addLicenseStateBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">＋ Add another state</button>
+          <small class="muted" style="display:block;margin-top:6px">Additional state licenses are submitted for administrator review before they can be used for licensed leads.</small>
+        </div>
+        <div id="additionalLicenseStateModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="additionalLicenseModalTitle" style="position:fixed;inset:0;z-index:10000;background:rgba(20,18,15,.55);display:flex;align-items:center;justify-content:center;padding:18px">
+          <div style="width:min(100%,430px);background:#fffdfa;border:1px solid #e8e1d6;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.22)">
+            <h3 id="additionalLicenseModalTitle" style="margin:0 0 14px">Add another state license</h3>
+            <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
+            <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
+            <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
+            <input id="additionalLicenseFile" type="hidden" aria-hidden="true">
+            <label for="additionalLicenseExpiry" style="display:block;margin-top:12px">Expiration date (if applicable)</label><input id="additionalLicenseExpiry" type="date">
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+              <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
+              <button id="saveAdditionalLicenseBtn" type="button">Add state</button>
+            </div>
+            <div id="additionalLicenseModalMessage" class="message hidden" role="status"></div>
+          </div>
+        </div>
+        <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
+          <h3>Business insurance</h3>
+          <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
+          <div class="grid">
+            <div><label for="profileHasInsuranceCertificate">Do you have business insurance?</label><select id="profileHasInsuranceCertificate"><option value="no">No</option><option value="yes">Yes</option></select></div>
+            <div id="profileInsuranceAgencyWrap" class="hidden"><label for="profileInsuranceAgency">Insurance company name</label><input id="profileInsuranceAgency" autocomplete="organization"></div>
+            <div id="profileInsurancePhoneWrap" class="hidden"><label for="profileInsurancePhone">Insurance company phone number</label><input id="profileInsurancePhone" type="tel" autocomplete="tel"></div>
+            <div id="profileInsurancePolicyWrap" class="hidden"><label for="profileInsurancePolicyNumber">Insurance policy number</label><input id="profileInsurancePolicyNumber" autocomplete="off"></div>
+            <div id="profileInsuranceExpirationWrap" class="hidden"><label for="profileInsuranceExpiration">Insurance expiration date</label><input id="profileInsuranceExpiration" type="date"></div>
+          </div>
+        </div>
+      </div>
+      <section class="lead" id="contractorPhoneVerificationCard">
+        <h3>Verify phone number & update account</h3>
+        <p>Every company or profile update requires a new SMS confirmation. Your changes are saved only after you enter the latest code successfully. A confirmed account can add wallet credits and purchase leads.</p>
+        <div id="contractorPhoneVerificationStatus" class="message" role="status" aria-live="polite">Checking phone verification…</div>
+        <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="verifyContractorPhoneBtn" type="button" aria-busy="false">Verify phone number & update account</button></div>
+      </section>
+    </section>
+
+    <section id="adminPanel" class="card hidden">
+      <section class="lead" id="adminLeadProtectionSection">
+        <h2>Lead Protection & Refunds</h2>
+        <p>Review contractor complaints submitted within 72 hours. Approved refunds return ZELPX Credits to the contractor wallet.</p>
+        <div class="actions"><button id="refreshLeadProtectionBtn" type="button" class="secondary">Refresh claims</button></div>
+        <div id="leadProtectionAdminMessage" class="message hidden"></div>
+        <div id="leadProtectionClaimsList"><p class="muted">Load claims to review.</p></div>
+      </section>
+<section class="lead" id="adminContractorReviewSection"><h2>Contractor services & license verification</h2><p>Review selected services, professions, work state, license number, type and expiration. Verify license numbers against the official state registry before approving each profession.</p><div class="grid" style="margin:12px 0"><div><label for="adminContractorSearch">Find contractor by name or business</label><input id="adminContractorSearch" type="search" placeholder="Search person, company, email or phone" autocomplete="off"></div><div style="display:flex;align-items:end;gap:10px"><button id="refreshContractorReviewBtn" type="button" class="secondary">Refresh contractors</button><span id="adminContractorSearchCount" class="muted" aria-live="polite"></span></div></div><div id="adminContractorReviewMessage" class="message hidden"></div><div id="adminContractorReviewList">Loading contractors…</div></section><section class="lead" id="contractorChangeReviewSection">
+        <h2>Contractor profile change requests</h2>
+        <p>Review and approve contractor profile, service category, and profession changes. Pending changes do not become active until approved.</p>
+        <div class="actions"><button id="refreshContractorChangesBtn" type="button" class="secondary">Refresh change requests</button></div>
+        <div id="contractorChangesMessage" class="message hidden"></div>
+        <div id="contractorChangesList"><p class="muted">Loading change requests…</p></div>
+      </section>
+      <section class="lead" id="adminChatsSection">
+        <h2>All customer conversations</h2>
+        <p>Administrator-only, read-only overview of conversations and messages.</p>
+        <div class="actions"><button id="refreshAdminChatsBtn" type="button" class="secondary">Refresh conversations</button></div>
+        <div id="adminChatsMessage" class="message hidden"></div>
+        <div id="adminChatsList"><p class="muted">Loading conversations…</p></div>
+      </section>
+      <section class="lead">
+        <h2>Customer service requests</h2>
+        <p>Review customer requests. Verify the customer's details and location before publishing a request as a contractor lead. Publishing is always manual.</p>
+        <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh requests</button></div>
+        <div id="serviceRequestsMessage" class="message hidden"></div>
+        <div id="serviceRequestsList"><p class="muted">Loading customer requests…</p></div>
+      </section>
+
+      <h2>Admin — create a lead</h2>
+      <p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p>
+      <div id="adminMessage" class="message hidden"></div>
+      <form id="leadForm">
+        <h3>Lead information</h3>
+        <div class="grid">
+          <div><label for="leadCategory">Service category</label><select id="leadCategory" required><option value="">Loading categories…</option></select></div>
+          <div><label for="leadZip">ZIP code</label><input id="leadZip" inputmode="numeric" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" placeholder="e.g. 97201" autocomplete="postal-code" required><small id="leadZipLookup" class="muted">Enter a 5-digit ZIP to fill city and state automatically.</small></div>
+          <div><label for="leadUrgency">Urgency</label><select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
+          <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" placeholder="50.00" required></div>
+        </div>
+        <label for="leadDescription">Work Details — Подробности и объём работ</label>
+        <textarea id="leadDescription" placeholder="Enter work details: installation, repair, renovation, measurements, materials, demolition, and other details. Do not enter customer contact information here."></textarea>
+        <h3 style="margin-top:24px">Customer contact information</h3><p class="muted">These details are kept private until a contractor purchases the lead.</p>
+        <div class="grid">
+          <div><label for="customerName">Customer full name</label><input id="customerName" autocomplete="name" required></div>
+          <div><label for="customerPhone">Customer phone</label><input id="customerPhone" type="tel" autocomplete="tel" required></div>
+          <div><label for="customerEmail">Customer email (optional)</label><input id="customerEmail" type="email" autocomplete="email"></div>
+          <div><label for="customerStreet">Street address</label><input id="customerStreet" autocomplete="street-address" required></div>
+          <div><label for="customerCity">City</label><input id="customerCity" autocomplete="address-level2" required></div>
+          <div><label for="customerState">State</label><input id="customerState" autocomplete="address-level1" placeholder="e.g. OR" required></div>
+        </div>
+        <div class="actions">
+          <button id="createLeadBtn" type="submit">Create lead</button><button id="reloadCategoriesBtn" class="secondary" type="button">Reload categories</button>
+          <button id="refreshAdminBtn" class="secondary" type="button">Refresh lead list</button>
+        </div>
+      </form>
+      <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
+    </section>
+  </section>
+</main>
+<div class="footer">ZELPX — contractor lead marketplace</div>
+
+  <script src="/zelpx-push.js"></script>
+<script>
+(() => {
+  "use strict";
+  const IS_ADMIN_PORTAL = window.location.pathname.endsWith("/admin.html");
+  const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+  const $ = (id) => document.getElementById(id);
+  const show = (el) => el.classList.remove("hidden");
+  const hide = (el) => el.classList.add("hidden");
+  const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
+  let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
+  let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
+
+  function message(id, text, type) {
+    const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
+  }
+  function clearMessage(id) { hide($(id)); $(id).textContent = ""; }
+  function setBusy(button, busy, label) {
+    button.disabled = busy;
+    if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
+    else if (button.dataset.oldText) { button.textContent = button.dataset.oldText; delete button.dataset.oldText; }
+  }
+  function addCell(row, value) { const td = document.createElement("td"); td.textContent = String(value ?? ""); row.append(td); }
+  function initClient() {
+    if (!window.supabase || typeof window.supabase.createClient !== "function") {
+      throw new Error("The secure sign-in service did not load. Please refresh the page. If it continues, contact support.");
+    }
+    if (!db || !db.auth || !db.functions) {
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+    if (!db || !db.auth || !db.functions) {
+      db = null;
+      throw new Error("The secure sign-in service could not initialize. Please refresh the page and try again.");
+    }
+    window.zelpxDb = db;
+    return db;
+  }
+  function setSignupMode(enabled) {
+    signupMode = enabled;
+    enabled ? show($("signupFields")) : hide($("signupFields"));
+    enabled ? hide($("loginBtn")) : show($("loginBtn"));
+    enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
+    enabled ? hide($("signupBtn")) : hide($("signupBtn"));
+    enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
+    enabled ? hide($("contractorSocialAuth")) : show($("contractorSocialAuth"));
+    $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
+    if (enabled) loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error"));
+  }
+  $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/contractor-forgot-password.html"; });
+
+  async function signInContractorWithProvider(provider, buttonId) {
+    const button = $(buttonId);
+    const buttons = ["contractorGoogleSignInButton", "contractorFacebookSignInButton"]
+      .map(id => $(id)).filter(Boolean);
+    const setButtonLabel = (label) => {
+      const textNodes = Array.from(button.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+      const textNode = textNodes[textNodes.length - 1];
+      if (textNode) textNode.textContent = " " + label;
+      else button.append(document.createTextNode(" " + label));
+    };
+    try {
+      if (!db || !db.auth || !db.functions) initClient();
+      if (!button || typeof db.auth.signInWithOAuth !== "function") {
+        throw new Error("Google sign-in is temporarily unavailable. Please refresh and try again.");
+      }
+      buttons.forEach(item => { item.disabled = true; });
+      setButtonLabel(provider === "google" ? "Connecting to Google..." : "Connecting to Facebook...");
+      clearMessage("authMessage");
+
+      // Mark this as a contractor OAuth flow so the callback returns to this portal.
+      const oauthMarker = JSON.stringify({ portal: "contractor", at: Date.now() });
+      try { localStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+      try { sessionStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+
+      const { data, error } = await db.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: new URL("/contractor", window.location.origin).toString(),
+          skipBrowserRedirect: true,
+          ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
+        }
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error("Google sign-in did not return a redirect URL. Please try again.");
+      // Navigate explicitly after Supabase returns the provider URL. This avoids
+      // relying on an automatic redirect inside the SDK on mobile browsers.
+      window.location.assign(data.url);
+    } catch (error) {
+      console.error("Contractor social sign-in failed:", provider, error);
+      try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+      try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+      message("authMessage", error?.message || "Social sign-in could not be started. Please try again.", "error");
+      buttons.forEach(item => { item.disabled = false; });
+      setButtonLabel(provider === "google" ? "Continue with Google" : "Continue with Facebook");
+    }
+  }
+  $("contractorGoogleSignInButton").addEventListener("click", () => signInContractorWithProvider("google", "contractorGoogleSignInButton"));
+  $("contractorFacebookSignInButton").addEventListener("click", () => signInContractorWithProvider("facebook", "contractorFacebookSignInButton"));
+
+  async function signIn() {
+    clearMessage("authMessage");
+    try { if (!db || !db.auth || !db.functions) initClient(); }
+    catch (clientError) { return message("authMessage", clientError.message, "error"); }
+    const email = $("authEmail").value.trim(), password = $("authPassword").value;
+    if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
+    setBusy($("loginBtn"), true, "Signing in…");
+    show($("oauthReturnLoading"));
+    try {
+      // Authenticate first, then loadApp checks the trusted profiles.role value
+      // before revealing the contractor dashboard. Admins are immediately signed out.
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await loadApp();
+    }
+    catch (e) { hide($("oauthReturnLoading")); message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
+  }
+  let signupProfessionCatalog=[], signupSelectedProfessionIds=new Set(), signupRuleRows=[];
+  let signupServiceCatalog=[], signupCategoryMapRows=[], signupSelectedCategoryIds=new Set();
+  async function loadRoleEligibilityRules(state,role){
+    if(!/^[A-Z]{2}$/.test(state))return [];
+    // Use the canonical state rules table. state_profession_eligibility is
+    // currently unpopulated, so it must never be treated as the source of truth.
+    const {data,error}=await db.from("state_profession_rules")
+      .select("profession_id,requirement_status,rule_summary,license_name,licensing_authority,official_source_url,verified_on,jurisdiction_level")
+      .eq("state_code",state).eq("jurisdiction_level","state");
+    if(error)throw error;
+    return (data||[]).map(item=>{
+      const status=item.requirement_status||"unverified";
+      let eligibility_status="local_review_required";
+      if(status==="not_required")eligibility_status="allowed_no_individual_license";
+      else if(status==="required")eligibility_status=role==="employee"?"individual_trade_credential_required":"contractor_license_or_registration_required";
+      else if(status==="conditional")eligibility_status="conditional";
+      else if(status==="local_only")eligibility_status="local_review_required";
+      return {profession_id:item.profession_id,requirement_status:status,rule_summary:item.rule_summary||"No verified profession-specific rule is available. Do not assume this work is license-free.",licensing_authority:item.licensing_authority,official_source_url:item.official_source_url,verified_on:item.verified_on,eligibility_status,license_name:item.license_name};
+    });
+  }
+  function updateSignupSelectedServices(){
+    const list=$("signupSelectedServicesList"),count=$("signupSelectedServicesCount");
+    if(!list||!count)return;
+    const selected=signupServiceCatalog.filter(c=>signupSelectedCategoryIds.has(c.id));
+    count.textContent=selected.length+" selected";
+    list.replaceChildren();
+    if(!selected.length){const empty=document.createElement("span");empty.className="muted";empty.style.fontSize="13px";empty.textContent="No services selected yet. Choose work types from the list above.";list.append(empty);return;}
+    selected.forEach(c=>{
+      const chip=document.createElement("span");
+      chip.textContent=c.name;
+      chip.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f4c3a8;border-radius:999px;background:#fff;color:#713b20;font-size:12px;font-weight:600";
+      list.append(chip);
+    });
+  }
+  function renderSignupProfessionOptions(){
+    updateSignupSelectedServices();
+    const root=$("signupProfessionOptions");root.replaceChildren();
+    if(!signupServiceCatalog.length){root.textContent="No service categories are currently available. Please refresh and try again.";return;}
+    const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
+    const role=$("signupWorkRole")?.value||"independent";
+    const licenseChoice=$("hasLicense")?.value||"";
+    // Workers looking for employment do not need a business-license Yes/No
+    // filter. They may select work types, while individual credentials and
+    // employer supervision are reviewed separately for each selected profession.
+    const visibleCategories=signupServiceCatalog.filter(category=>{
+      const map=signupCategoryMapRows.find(x=>x.category_id===category.id);
+      const rule=map?.mapping_status==="mapped"&&map.profession_id
+        ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
+        : null;
+      const status=rule?.requirement_status||"unverified";
+      const eligible=role==="employee" || licenseChoice==="yes" ||
+        (licenseChoice==="no" && status==="not_required");
+      return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
+    });
+    if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
+      root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;
+    }
+    if(!visibleCategories.length){root.textContent="No service categories match your license status and work role.";return;}
+    const groups=new Map();
+    visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
+    [...groups.entries()].forEach(([group,cats])=>{
+      const heading=document.createElement("div");heading.textContent=group;heading.style.cssText="grid-column:1/-1;font-weight:800;margin:10px 0 2px;color:var(--muted)";root.append(heading);
+      cats.forEach(c=>{
+        const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
+        const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedCategoryIds.has(c.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
+        cb.addEventListener("change",()=>{if(cb.checked)signupSelectedCategoryIds.add(c.id);else signupSelectedCategoryIds.delete(c.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
+        const name=document.createElement("span");name.textContent=c.name;name.style.flex="1";
+        label.append(cb,name);root.append(label);
+      });
+    });
+  }
+  async function loadSignupWorkTypes(){
+    const {data:states,error:statesError}=await db.from("us_states").select("state_code,state_name").eq("is_active",true).order("state_name");
+    if(statesError)throw statesError;
+    const stateSelect=$("serviceState"),previousState=stateSelect.value;
+    stateSelect.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select state";stateSelect.append(placeholder);
+    (states||[]).forEach(x=>{const o=document.createElement("option");o.value=x.state_code;o.textContent=x.state_name;stateSelect.append(o);});
+    if(previousState)stateSelect.value=previousState;
+    const [professionsResult,categoriesResult,mapsResult]=await Promise.all([
+      db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
+      db.from("service_categories").select("id,name,slug").eq("is_active",true).order("name"),
+      db.from("service_category_profession_map").select("category_id,profession_id,mapping_status,mapping_note")
+    ]);
+    if(professionsResult.error)throw professionsResult.error;
+    if(categoriesResult.error)throw categoriesResult.error;
+    if(mapsResult.error)throw mapsResult.error;
+    signupProfessionCatalog=professionsResult.data||[];
+    signupServiceCatalog=categoriesResult.data||[];
+    signupCategoryMapRows=mapsResult.data||[];
+    await refreshSignupProfessionRules();
+  }
+  async function refreshSignupProfessionRules(){
+    const state=$("serviceState").value.trim().toUpperCase(),root=$("signupProfessionRules");
+    root.replaceChildren();
+    signupRuleRows=[];
+    // Fail closed: never leave a previously loaded profession list visible if
+    // the current state's licensing rules cannot be retrieved.
+    const optionsRoot=$("signupProfessionOptions");
+    optionsRoot.replaceChildren();
+    if(!/^[A-Z]{2}$/.test(state)){
+      renderSignupProfessionOptions();
+      root.textContent="Select your state first. No professions are shown until state rules can be checked.";
+      return;
+    }
+    try {
+      signupRuleRows=await loadRoleEligibilityRules(state,$("signupWorkRole").value);
+    } catch(error) {
+      signupSelectedProfessionIds.clear();
+      optionsRoot.textContent="Could not verify licensing rules. Profession choices are temporarily hidden. Please retry.";
+      throw error;
+    }
+    const selectedMaps=signupCategoryMapRows.filter(m=>signupSelectedCategoryIds.has(m.category_id)&&m.mapping_status==="mapped"&&m.profession_id);
+    signupSelectedProfessionIds=new Set(selectedMaps.map(m=>m.profession_id));
+    renderSignupProfessionOptions();
+    const employee=$("signupWorkRole").value==="employee";
+    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
+    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
+    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
+    if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
+    let conditional=false,unverified=false,required=false;
+    signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)).forEach(p=>{
+      const r=signupRuleRows.find(x=>x.profession_id===p.id),status=r?.requirement_status||"unverified";
+      if(status==="required")required=true;if(status==="conditional")conditional=true;if(status==="unverified"||status==="local_only")unverified=true;
+      const row=document.createElement("div");row.style.margin="7px 0";
+      const strong=document.createElement("strong");strong.textContent=p.profession_name+": ";
+      const stateLabel=document.createElement("span");stateLabel.textContent=({required:"INDIVIDUAL LICENSE / REGISTRATION REQUIRED",conditional:"EMPLOYER LICENSE / SUPERVISION OR SCOPE REVIEW",not_required:"NO INDIVIDUAL STATE TRADE LICENSE IDENTIFIED FOR THIS LIMITED SCOPE — OTHER STATE, LOCAL, BUSINESS OR TASK-SPECIFIC REQUIREMENTS MAY STILL APPLY",local_only:"LOCAL / PROFESSION-SPECIFIC REVIEW REQUIRED",unverified:"NOT YET VERIFIED"})[status]||"NOT YET VERIFIED";
+      const detail=document.createElement("div");detail.style.fontSize="12px";detail.textContent=r?.rule_summary||"No verified rule. Do not assume this work is license-free.";
+      row.append(strong,stateLabel,detail);
+      if(r?.licensing_authority){const authority=document.createElement("div");authority.style.cssText="font-size:12px;color:var(--muted);margin-top:5px";authority.textContent="Licensing authority: "+r.licensing_authority;row.append(authority);}
+      root.append(row);
+    });
+    const hasUnmappedSelected=[...signupSelectedCategoryIds].some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
+    if(hasUnmappedSelected)unverified=true;
+    $("signupConditionalAckLabel").classList.toggle("hidden",!conditional);
+    $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified);
+    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
+    if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent=employee?"At least one selected work type requires an individual trade license or certificate. You may register as a worker, but you must add and verify the required credential in your profile before performing that regulated work.":"At least one selected profession requires a current business license or contractor registration. Enter the business license details below to continue.";root.append(p);}
+    $("signupConditionalAckLabel").querySelector("input").nextSibling.textContent=employee?" I will only perform this work under an appropriately licensed employer and required supervision.":" I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.";
+    $("signupUnverifiedAckLabel").querySelector("input").nextSibling.textContent=employee?" I will verify individual credentials and employer requirements before performing work not yet verified in ZELPX.":" I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.";
+  }
+  async function signUp() {
+    clearMessage("authMessage");
+    const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
+    const signupRole=$("signupWorkRole").value;
+    const companyName = signupRole==="employee" ? fullName : $("companyName").value.trim();
+    const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
+    if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.");
+    const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
+    const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim(), licenseExpirationDate = $("licenseExpirationDate").value;
+    const licenseNumber2=$("licenseNumber2").value.trim(),licenseState2=$("licenseState2").value.trim().toUpperCase(),licenseType2=$("licenseType2").value.trim();
+    const selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
+    // Unverified scopes may register without claiming they are license-free.
+    // The acknowledgement below keeps the account pending; credential-required
+    // scopes are still blocked by explicitlyRequiredWithoutLicense, and lead access
+    // remains unavailable until the profession qualification is approved.
+    const requiredSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="required");
+    const individualCredentialSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.eligibility_status==="individual_trade_credential_required");
+    const conditionalSignup=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status==="conditional");
+    const unverifiedSignup=selectedSignup.filter(p=>!signupRuleRows.find(r=>r.profession_id===p.id)||["unverified","local_only"].includes(signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status));
+    // Block only scopes explicitly classified as requiring a credential.
+    // Employees may register for employer-supervised scopes without a personal
+    // contractor license; their employer must hold the required business license.
+    // Unverified/local-review scopes may register as pending, but server-side lead
+    // purchasing remains blocked until a qualification is verified.
+    const explicitlyRequiredWithoutLicense=selectedSignup.filter(p=>{
+      const rule=signupRuleRows.find(r=>r.profession_id===p.id);
+      if(!rule)return false; // no rule: keep account registration pending, never grant job access
+      if(rule.eligibility_status==="individual_trade_credential_required")return true;
+      if(signupRole==="independent" && ["contractor_license_or_registration_required","employer_license_and_supervision","conditional"].includes(rule.eligibility_status))return true;
+      return false;
+    });
+    if(!selectedServiceCategoryIds.length)return message("authMessage","Select at least one service before creating your account.","error");
+    if(signupRole==="independent"&&!hasLicense && explicitlyRequiredWithoutLicense.length){
+      const names=explicitlyRequiredWithoutLicense.map(p=>p.profession_name).join(", ");
+      return message("authMessage","A current license or trade credential is required for: "+names+". You cannot register to offer this work without the required credential. Remove these professions or provide your license details and upload the document.","error");
+    }
+    if(signupRole==="independent"&&(requiredSignup.length||conditionalSignup.length)){
+      if(!hasLicense||!licenseNumber||!licenseState||!licenseType)return message("authMessage","A selected profession requires a license or contractor registration. Enter its number, issuing state and type, or remove that profession.","error");
+    }
+    if(conditionalSignup.length&&!$("signupConditionalAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will only work under an appropriately licensed employer and follow required supervision.":"Confirm that you will obtain any required contractor license, registration, permits, or supervision before accepting this work.","error");
+    const selectedUnmappedCategory=selectedServiceCategoryIds.some(id=>{const m=signupCategoryMapRows.find(x=>x.category_id===id);return !m||m.mapping_status!=="mapped"||!m.profession_id;});
+    if((unverifiedSignup.length||selectedUnmappedCategory)&&!$("signupUnverifiedAck").checked)return message("authMessage",signupRole==="employee"?"Confirm that you will verify individual credentials and employer requirements before performing unreviewed work.":"Confirm that you will verify unreviewed state requirements before offering this work.","error");
+    if (!email || !password || !fullName || !phone || (signupRole==="independent"&&(!companyName||!serviceAddress)) || !serviceCity || !serviceState || !/^[0-9]{5}$/.test(serviceZip)) return message("authMessage", signupRole==="employee" ? "Complete your name, phone, city, state where you want to work, and a valid 5-digit ZIP code." : "Complete your name, phone, company name, business street address, city, state, and a valid 5-digit ZIP code.", "error");
+    if (signupRole==="independent"&&!$("hasLicense").value) return message("authMessage", "Please select whether your business has a current license or registration.", "error");
+    if (hasLicense && (!licenseNumber || !licenseState || !licenseType || !licenseExpirationDate)) return message("authMessage", "Enter the license state, number, type, and expiration date.", "error");
+    if (hasLicense && new Date(licenseExpirationDate+"T00:00:00") < new Date(new Date().toDateString())) return message("authMessage", "The license expiration date must be today or later.", "error");
+    if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
+    if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
+    const hasInsuranceCertificate=$("signupHasInsuranceCertificate").value==="yes";
+    const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
+    const insuranceAgentPhone=$("signupInsurancePhone").value.trim();
+    const insurancePolicyNumber=$("signupInsurancePolicyNumber").value.trim();
+    const insuranceExpiration=$("signupInsuranceExpiration").value;
+    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceAgencyName || !insuranceAgentPhone || !insurancePolicyNumber)) return message("authMessage","Enter the insurance company name, company phone number, policy number, and expiration date.","error");
+    if(signupRole==="independent" && hasInsuranceCertificate && (!insuranceExpiration || new Date(insuranceExpiration+"T23:59:59")<new Date())) return message("authMessage","Your insurance policy has expired. Enter a current insurance policy expiration date.","error");
+    if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
+    setBusy($("signupBtn"), true, "Creating account…");
+    try {
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+          license_expiration_date: hasLicense ? licenseExpirationDate : null,
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+      if (error) throw error;
+      if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
+      else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
+    } catch (e) {
+      // Supabase Auth rejects an existing email; the profiles unique index rejects a duplicate phone.
+      // Keep the original server error available for cases that do not match either condition.
+      const errorCode = String(e?.code || e?.status || "").toLowerCase();
+      const errorText = [e?.message, e?.details, e?.hint, e?.error_description]
+        .filter(Boolean).join(" ");
+      const duplicatePhone = /profiles_phone_unique/i.test(errorText) ||
+        (/duplicate key|unique constraint|already exists/i.test(errorText) && /phone/i.test(errorText));
+      const duplicateEmail = /email_exists|user_already_exists|user_already_registered/i.test(errorCode) ||
+        /already registered|user already exists|email.*already.*(use|registered|exists)|already.*email/i.test(errorText);
+
+      if (duplicatePhone) {
+        message("authMessage", "Этот номер телефона уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой номер.", "error");
+      } else if (duplicateEmail) {
+        message("authMessage", "Этот email уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой email.", "error");
+      } else {
+        message("authMessage", errorText || "Не удалось создать аккаунт. Попробуйте еще раз.", "error");
+      }
+    } finally { setBusy($("signupBtn"), false); }
+  }
+  async function loadApp() {
+    const { data: { user }, error: userError } = await db.auth.getUser();
+    if (userError) throw userError;
+    if (!user) { show($("authView")); hide($("appView")); hide($("topUser")); return; }
+    currentUser = user; $("userEmail").textContent = user.email || ""; clearMessage("authMessage");
+    // Resolve the account role first. Once authorization is known, show the
+    // dashboard immediately; profile details and marketplace data hydrate after.
+    const { data: roleProfile, error: roleProfileError } = await db.from("profiles")
+      .select("id,full_name,phone,role,avatar_url").eq("id", user.id).maybeSingle();
+    if (roleProfileError) throw roleProfileError;
+    currentProfile = roleProfile;
+    isAdmin = roleProfile?.role === "admin";
+    if (IS_ADMIN_PORTAL && !isAdmin) {
+      await db.auth.signOut();
+      currentUser = null;
+      hide($("appView")); hide($("topUser")); show($("authView"));
+      message("authMessage", "This account does not have administrator access.", "error");
+      return;
+    }
+    if (!IS_ADMIN_PORTAL && isAdmin) {
+      await db.auth.signOut();
+      currentUser = null; currentProfile = null; currentContractor = null; currentWallet = null; isAdmin = false;
+      hide($("appView")); hide($("topUser")); show($("authView"));
+      message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
+      return;
+    }
+    // Hide the callback loader and reveal the authenticated dashboard now,
+    // rather than waiting for every profile/settings query to finish.
+    $("welcomeTitle").textContent = "Contractor dashboard";
+    $("accountLine").textContent = user.email || "";
+    hide($("authView")); hide($("oauthReturnLoading")); show($("appView")); show($("topUser"));
+    await loadAccount(roleProfile);
+    if (!isAdmin && currentContractor) {
+      try {
+        await syncSignupContractorDocuments(user);
+        await syncSignupCompanyStateLicenses(user);
+        await syncSignupContractorServiceCategories(user);
+        await syncSignupProfessionQualifications(user);
+      } catch (documentError) {
+        message("appMessage", "Your account is open, but your license or insurance details could not be synchronized: " + (documentError.message || "Please try again from My Company."), "error");
+      }
+    }
+    // Marketplace data loads afterward so a slow/failed leads query cannot block sign-in.
+    try {
+      await Promise.allSettled([loadCategories(), loadLeads(), loadPurchases()]);
+    } catch (dashboardLoadError) {
+      message("appMessage", "You are signed in, but some dashboard data could not load. Use Refresh Leads and try again.", "error");
+    }
+    if (isAdmin) { await loadAdminLeads(); await loadServiceRequests(); await loadAdminChats(); }
+    if (typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, isAdmin ? "admin" : "contractor");
+    if (IS_ADMIN_PORTAL && isAdmin) switchTab("adminPanel");
+    // Start the admin approval listener after every successful login, not only
+    // when an administrator already had an active session during page startup.
+    if (IS_ADMIN_PORTAL && isAdmin) startAdminChangeNotifications();
+    else if (adminChangeChannel) { db.removeChannel(adminChangeChannel); adminChangeChannel=null; }
+  }
+  async function syncSignupContractorDocuments(user){
+    const m=user?.user_metadata||{};
+    if(!currentContractor)return;
+    const update={
+      has_license:m.has_license===true,
+      license_expiration_date:m.has_license===true?(m.license_expiration_date||null):null,
+      license_number:m.has_license===true?(m.license_number||null):null,
+      license_state:m.has_license===true?(m.license_state||null):null,
+      license_type:m.has_license===true?(m.license_type||null):null,
+      license_number_2:m.has_license===true?(m.license_number_2||null):null,
+      license_state_2:m.has_license===true?(m.license_state_2||null):null,
+      license_type_2:m.has_license===true?(m.license_type_2||null):null,
+      insurance_agency_name:m.zelpx_signup_work_role==="independent"?(m.insurance_agency_name||null):null,
+      insurance_agent_phone:m.zelpx_signup_work_role==="independent"?(m.insurance_agent_phone||null):null,
+      insurance_policy_number:m.zelpx_signup_work_role==="independent"?(m.insurance_policy_number||null):null,
+      insurance_expiration_date:m.zelpx_signup_work_role==="independent"?(m.insurance_expiration_date||null):null,
+      has_insurance_certificate:currentContractor.has_insurance_certificate===true
+    };
+    const {error}=await db.from("contractors").update(update).eq("id",currentContractor.id);
+    if(error)throw error;
+    currentContractor={...currentContractor,...update};
+    const {error:metadataError}=await db.auth.updateUser({data:{license_number:update.license_number,license_state:update.license_state,license_type:update.license_type,license_number_2:update.license_number_2,license_state_2:update.license_state_2,license_type_2:update.license_type_2,insurance_agency_name:update.insurance_agency_name,insurance_agent_phone:update.insurance_agent_phone,insurance_policy_number:update.insurance_policy_number,insurance_expiration_date:update.insurance_expiration_date}});
+    if(metadataError)throw metadataError;
+  }
+
+  async function syncSignupCompanyStateLicenses(user){
+    const m=user?.user_metadata||{};
+    if(!currentContractor||m.has_license!==true||m.zelpx_signup_company_license_synced===true)return;
+    const expiration=String(m.license_expiration_date||'').trim();
+    const entries=[
+      {state:String(m.license_state||'').toUpperCase(),number:String(m.license_number||'').trim(),type:String(m.license_type||'').trim()},
+      {state:String(m.license_state_2||'').toUpperCase(),number:String(m.license_number_2||'').trim(),type:String(m.license_type_2||'').trim()}
+    ].filter(x=>x.state&&x.number&&x.type);
+    if(!entries.length)return;
+    if(!expiration)throw new Error('Your company license expiration date is missing. Update it in My Company before license review.');
+    const {data:existing,error:existingError}=await db.from('contractor_state_licenses').select('state_code').eq('contractor_id',currentContractor.id);
+    if(existingError)throw existingError;
+    const existingStates=new Set((existing||[]).map(x=>String(x.state_code||'').toUpperCase()));
+    for(const license of entries){
+      if(existingStates.has(license.state))continue;
+      const {error}=await db.rpc('zelpx_submit_company_state_license',{
+        p_state_code:license.state,p_license_number:license.number,p_license_type:license.type,
+        p_document_path:null,p_expiration_date:expiration
+      });
+      if(error)throw error;
+      existingStates.add(license.state);
+    }
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_company_license_synced:true}});
+    if(metadataError)throw metadataError;
+  }
+  async function syncSignupContractorServiceCategories(user){
+    // Signup categories must not become active before an administrator approves
+    // the profession selection. Categories are rebuilt from approved professions.
+    const metadata=user?.user_metadata||{};
+    if(!Array.isArray(metadata.zelpx_signup_service_category_ids)||!metadata.zelpx_signup_service_category_ids.length)return;
+    const {error}=await db.auth.updateUser({data:{zelpx_signup_service_category_ids:null}});
+    if(error)throw error;
+  }
+
+  async function syncSignupProfessionQualifications(user){
+    const m=user?.user_metadata||{},ids=Array.isArray(m.zelpx_signup_profession_ids)?[...new Set(m.zelpx_signup_profession_ids.filter(x=>typeof x==="string"))]:[];
+    const state=String(m.service_state||"").toUpperCase();
+    if(!ids.length||!currentContractor||! /^[A-Z]{2}$/.test(state))return;
+    const role=m.zelpx_signup_work_role==="employee"?"employee":"independent";
+    const rules=await loadRoleEligibilityRules(state,role);
+    const items=ids.map(profession_id=>{
+      const rule=rules.find(x=>x.profession_id===profession_id);
+      const requires=rule?.requirement_status==="required"||rule?.requirement_status==="conditional";
+      return {profession_id,license_required_at_registration:requires,verification_status:requires?"not_submitted":rule?.requirement_status==="not_required"?"not_required":"pending"};
+    });
+    const {error}=await db.rpc("submit_contractor_change_request",{
+      p_type:"profession_qualifications",
+      p_changes:{state_code:state,work_role:role,items}
+    });
+    if(error)throw error;
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_profession_ids:null}});
+    if(metadataError)console.warn("Could not clear one-time signup profession metadata:",metadataError.message);
+  }
+
+  let additionalStateLicenses = [];
+  async function renderAdditionalStateLicenses(){
+    const list=$("additionalLicenseStatesList"); if(!list)return;
+    list.replaceChildren();
+    if(!additionalStateLicenses.length){list.textContent="No additional state licenses added.";return;}
+    for(const item of additionalStateLicenses){
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;margin:5px 0;border:1px solid var(--line);border-radius:10px;background:#fffdfa";
+      const label=document.createElement("span");
+      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review")+" · Number submitted for admin review";
+      row.append(label);list.append(row);
+    }
+  }
+  async function loadAdditionalStateLicenses(pendingDraft, contractor){
+    if(!currentContractor)return;
+    const {data,error}=await db.from("contractor_state_licenses").select("state_code,license_number,license_type,review_status,document_path,expiration_date").eq("contractor_id",currentContractor.id).order("state_code");
+    if(error)throw error;
+    const map=new Map();
+    (data||[]).forEach(x=>map.set(x.state_code,{...x}));
+    if(contractor?.license_state_2 && contractor?.license_number_2 && contractor?.license_type_2 && !map.has(contractor.license_state_2)){
+      map.set(contractor.license_state_2,{state_code:contractor.license_state_2,license_number:contractor.license_number_2,license_type:contractor.license_type_2,review_status:"pending",document_path:null});
+    }
+    (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{if(x.state_code)map.set(x.state_code,{...x,review_status:"pending"});});
+    additionalStateLicenses=[...map.values()];
+    const primary=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(contractor?.license_state||"").toUpperCase());
+    const primaryExpiry=$("profileCompanyLicenseExpiry");
+    if(primaryExpiry)primaryExpiry.value=primary?.expiration_date||"";
+    const primaryFile=$("profileCompanyLicenseFile");
+    if(primaryFile){primaryFile.dataset.existingPath=primary?.document_path||"";primaryFile.dataset.existingState=primary?.state_code||"";}
+    renderAdditionalStateLicenses();
+  }
+  function openAdditionalLicenseModal(){
+    const select=$("additionalLicenseState"), source=$("profileLicenseState");
+    select.replaceChildren(new Option("Choose state",""));
+    [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
+    const used=new Set([ $("profileLicenseState").value, ...additionalStateLicenses.map(x=>x.state_code) ].filter(Boolean));
+    [...select.options].forEach(o=>{if(used.has(o.value))o.disabled=true;});
+    $("additionalLicenseNumber").value="";$("additionalLicenseType").value="";$("additionalLicenseFile").value="";$("additionalLicenseExpiry").value="";
+    $("additionalLicenseModalMessage").className="message hidden";
+    $("additionalLicenseStateModal").classList.remove("hidden");
+  }
+  $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
+  $("cancelAdditionalLicenseBtn").addEventListener("click",()=>$("additionalLicenseStateModal").classList.add("hidden"));
+  $("saveAdditionalLicenseBtn").addEventListener("click",()=>{
+    const state_code=$("additionalLicenseState").value;
+    const license_number=$("additionalLicenseNumber").value.trim();
+    const license_type=$("additionalLicenseType").value.trim();
+    const document_file=null;
+    const expiration_date=$("additionalLicenseExpiry").value||null;
+    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
+    // No document upload is required for additional state licenses.
+    additionalStateLicenses.push({state_code,license_number,license_type,document_file,expiration_date,review_status:"pending"});
+    renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
+  });
+  async function loadAccount(preloadedProfile = null) {
+    // The role/profile has already been checked on the OAuth return path.
+    // Avoid a second profile round trip there; regular refreshes still fetch it.
+    let profile = preloadedProfile;
+    if (!profile) {
+      const { data, error } = await db.from("profiles").select("id,full_name,phone,role,avatar_url").eq("id", currentUser.id).maybeSingle();
+      if (error) throw error;
+      profile = data;
+    }
+    const { data: contractor, error: contractorError } = await db.from("contractors")
+      .select("id,company_name,email,verification_status,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number,service_address,service_city,service_state,service_zip_code,service_radius_miles,service_latitude,service_longitude,lead_email_notifications,has_license,license_number,license_state,license_type,license_number_2,license_state_2,license_type_2,license_expiration_date,license_review_status,insurance_agency_name,insurance_agent_phone,insurance_policy_number,insurance_expiration_date,insurance_review_status")
+      .eq("user_id", currentUser.id).maybeSingle();
+    if (contractorError) throw contractorError;
+    currentProfile = profile; isAdmin = profile?.role === "admin";
+    $("welcomeTitle").textContent = isAdmin ? "ZELPX Admin & Contractor Dashboard" : "Contractor dashboard";
+    $("accountLine").textContent = currentUser.email || "";
+    if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
+    currentContractor = contractor;
+    if (contractor) {
+      const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
+      if (walletError) throw walletError; currentWallet = wallet;
+    } else currentWallet = null;
+    $("walletBalance").textContent = money(currentWallet?.balance_cents || 0);
+
+    // Show the latest submitted profile draft after refresh; active values remain unchanged until admin approval.
+    let pendingCompanyChanges = null;
+    const { data: pendingCompanyRequest, error: pendingCompanyError } = await db
+      .from("contractor_change_requests")
+      .select("requested_changes,created_at")
+      .eq("user_id", currentUser.id)
+      .eq("request_type", "company_profile")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (pendingCompanyError) console.warn("Could not load pending company profile changes:", pendingCompanyError.message);
+    else pendingCompanyChanges = pendingCompanyRequest?.requested_changes || null;
+    const draft = pendingCompanyChanges || {};
+    const draftValue = (key, activeValue) =>
+      Object.prototype.hasOwnProperty.call(draft, key) ? (draft[key] ?? "") : (activeValue ?? "");
+
+    currentProfile={...(currentProfile||{}),...(profile||{})};
+    $("profileFullName").value = profile?.full_name || "";
+    $("profilePhone").value = profile?.phone || "";
+    renderContractorPhoneVerification();
+    $("contractorAvatarPreview").src = profile?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+    $("profileCompany").value = contractor?.company_name || "";
+    $("profileCompanyEmail").value = contractor?.email || "";
+    $("profileServiceAddress").value = contractor?.service_address || "";
+    $("profileServiceCity").value = contractor?.service_city || "";
+    const { data: profileStates, error: profileStatesError } = await db.from("us_states").select("state_code,state_name").eq("is_active", true).order("state_name");
+    if (profileStatesError) throw profileStatesError;
+    const profileStateSelect = $("profileServiceState");
+    profileStateSelect.replaceChildren(new Option("Select state", ""));
+    (profileStates || []).forEach(s => profileStateSelect.add(new Option(s.state_name, s.state_code)));
+    profileStateSelect.value = contractor?.service_state || "";
+    $("profileServiceZip").value = contractor?.service_zip_code || "";
+    $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
+    $("profileLeadEmailNotifications").checked = contractor?.lead_email_notifications !== false;
+    const draftHasLicense = draftValue("has_license", contractor?.has_license);
+    $("profileHasLicense").value = draftHasLicense === true ? "yes" : draftHasLicense === false ? "no" : "";
+    $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
+    $("profileLicenseState").value = draftValue("license_state", contractor?.license_state);
+    $("profileLicenseType").value = draftValue("license_type", contractor?.license_type);
+    $("profileCompanyLicenseExpiry").value = draftValue("license_expiration_date", contractor?.license_expiration_date);
+    const companyLicenseStatus=$("profileCompanyLicenseReviewStatus");
+    if(companyLicenseStatus){
+      const review=contractor?.license_review_status||"not submitted";
+      const label=review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified";
+      companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
+    }
+    await loadAdditionalStateLicenses(draft, contractor);
+    const activeWorkState=String($("professionState").value||contractor?.service_state||"").toUpperCase();
+    const activeStateLicense=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===activeWorkState);
+    if(companyLicenseStatus){
+      const review=activeStateLicense?.review_status||"not submitted";
+      companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified");
+    }
+    $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
+    $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
+    $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
+    $("profileInsurancePolicyWrap").classList.toggle("hidden",$("profileHasInsuranceCertificate").value!=="yes");
+    $("profileInsuranceAgency").value = draftValue("insurance_agency_name", contractor?.insurance_agency_name);
+    $("profileInsurancePhone").value = draftValue("insurance_agent_phone", contractor?.insurance_agent_phone);
+    $("profileInsurancePolicyNumber").value = draftValue("insurance_policy_number", contractor?.insurance_policy_number);
+    $("profileInsuranceExpiration").value = draftValue("insurance_expiration_date", contractor?.insurance_expiration_date);
+    const companySaveStatus = $("companySaveStatus");
+    if (companySaveStatus) {
+      companySaveStatus.textContent = pendingCompanyChanges
+        ? "Your submitted details are saved and shown here. They are pending administrator review; approved details remain active until approval."
+        : "";
+      companySaveStatus.className = pendingCompanyChanges ? "message" : "message hidden";
+    }
+    // These profile sections are independent; load them concurrently rather
+    // than serially blocking the post-login dashboard.
+    const profileSections = await Promise.allSettled([
+      loadContractorServiceCategories(),
+      loadProfessionQualifications(),
+      loadContractorChangeRequests()
+    ]);
+    profileSections.forEach((result, index) => {
+      if (result.status === "rejected") console.warn("Contractor profile section failed to load:", index, result.reason);
+    });
+
+  }
+  const PROFILE_AVATAR_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+  function getOwnProfilePhotoPath(url, userId) {
+    if (!url) return null;
+    try { const marker = "/storage/v1/object/public/profile-photos/"; const pathname = new URL(url).pathname; const index = pathname.indexOf(marker); if (index < 0) return null; const path = decodeURIComponent(pathname.slice(index + marker.length)); return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null; } catch (_) { return null; }
+  }
+
+  $("contractorAvatarFile").addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    const status = $("contractorAvatarStatus"); status.textContent = "Uploading photo…";
+    try {
+      if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+      if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 10 MB or smaller.");
+      const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+      const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+      const previousUrl = $("contractorAvatarPreview").dataset.currentUrl || currentProfile?.avatar_url || "";
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = user.id + "/avatar-" + Date.now() + "." + ext;
+      const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+      if (uploadError) throw uploadError;
+      const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
+      const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
+      if (saveError) { await db.storage.from("profile-photos").remove([path]); throw saveError; }
+      $("contractorAvatarPreview").src = publicData.publicUrl; $("contractorAvatarPreview").dataset.currentUrl = publicData.publicUrl; $("removeContractorAvatarButton").hidden = false;
+      if (currentProfile) currentProfile.avatar_url = publicData.publicUrl;
+      status.textContent = "Photo saved. It will appear in customers’ chat notifications.";
+      const oldPath = getOwnProfilePhotoPath(previousUrl, user.id);
+      if (oldPath && oldPath !== path) await db.storage.from("profile-photos").remove([oldPath]);
+    } catch (error) { status.textContent = error.message || "Could not upload photo."; }
+    finally { event.target.value = ""; }
+  });
+
+  $("removeContractorAvatarButton").addEventListener("click", async () => {
+    const status = $("contractorAvatarStatus"); if (!window.confirm("Remove your profile photo? Your account will use the default profile image.")) return;
+    const button = $("removeContractorAvatarButton"); button.disabled = true; status.textContent = "Removing photo…";
+    try {
+      const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+      const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+      const oldUrl = $("contractorAvatarPreview").dataset.currentUrl || currentProfile?.avatar_url || "";
+      const { error } = await db.from("profiles").update({ avatar_url: null }).eq("id", user.id); if (error) throw error;
+      $("contractorAvatarPreview").src = PROFILE_AVATAR_FALLBACK; $("contractorAvatarPreview").dataset.currentUrl = ""; button.hidden = true;
+      if (currentProfile) currentProfile.avatar_url = null;
+      const oldPath = getOwnProfilePhotoPath(oldUrl, user.id);
+      if (oldPath) { const { error: removeError } = await db.storage.from("profile-photos").remove([oldPath]); if (removeError) console.warn("Profile photo reference cleared, but stored image cleanup failed:", removeError.message); }
+      status.textContent = "Profile photo removed.";
+    } catch (error) { status.textContent = error.message || "Could not remove photo."; }
+    finally { button.disabled = false; }
+  });
 
   // Load saved service category IDs silently for lead matching. The duplicate
   // Services you provide editor was removed; contractors manage work types in
@@ -2245,17 +3759,4 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
 </script>
 
 </body>
-</html>const PROFILE_AVATAR_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-  function getOwnProfilePhotoPath(url, userId) {
-    if (!url) return null;
-    try {
-      const marker = "/storage/v1/object/public/profile-photos/";
-      const pathname = new URL(url).pathname;
-      const index = pathname.indexOf(marker);
-      if (index < 0) return null;
-      const path = decodeURIComponent(pathname.slice(index + marker.length));
-      return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null;
-    } catch (_) { return null; }
-  }
-
-  
+</html>
