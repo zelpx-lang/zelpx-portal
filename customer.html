@@ -1903,7 +1903,7 @@
       const index = pathname.indexOf(marker);
       if (index < 0) return null;
       const path = decodeURIComponent(pathname.slice(index + marker.length));
-      return path.startsWith(userId + "/") && path.includes("/avatar-") === false && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null;
+      return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null;
     } catch (_) { return null; }
   }
 
