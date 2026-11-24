@@ -1488,7 +1488,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
           return;
         }
-        if (profile?.role === "customer" && profile.customer_account_status === "blocked") {
+        if (profile?.customer_account_status === "blocked") {
           await db.auth.signOut();
           $("dashboardView").classList.add("hidden");
           $("authView").classList.remove("hidden");
@@ -2329,8 +2329,14 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           .eq("id", activeSession.user.id)
           .maybeSingle();
         if (profileError) throw profileError;
-        if (!customerProfile || customerProfile.role !== "customer") {
-          throw new Error("This account is not registered as a customer. Please sign in with your customer account.");
+        // A single authenticated account can use both portals. A contractor
+        // profile is also allowed to act as a customer; the database trigger
+        // independently verifies the contractor record and customer safeguards.
+        const hasCustomerAccess = customerProfile?.role === "customer" ||
+          (customerProfile?.role === "contractor" && Boolean((await db.from("contractors")
+            .select("id").eq("user_id", activeSession.user.id).maybeSingle()).data));
+        if (!customerProfile || !hasCustomerAccess) {
+          throw new Error("This account does not have customer or contractor access. Please contact ZELPX support.");
         }
         if (customerProfile.customer_account_status === "blocked") {
           throw new Error("Your customer account is temporarily suspended. Please contact ZELPX support.");
