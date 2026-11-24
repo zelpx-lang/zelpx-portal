@@ -1235,11 +1235,11 @@
 
   async function adminDeleteServiceRequest(request) {
     if (!isAdmin) throw new Error("Administrator access is required.");
-    const { data: purchaseRows, error: purchaseError } = request.lead_id
+    const { count: purchaseCount, error: purchaseError } = request.lead_id
       ? await db.from("lead_purchases").select("id", { count: "exact", head: true }).eq("lead_id", request.lead_id)
-      : { data: [], count: 0, error: null };
+      : { count: 0, error: null };
     if (purchaseError) throw purchaseError;
-    const hasPurchases = (purchaseRows?.length || 0) > 0;
+    const hasPurchases = (purchaseCount || 0) > 0;
     const warning = "Delete this customer request from the Incoming leads list?\n\n" +
       (request.lead_id
         ? "Its published lead will be removed from sale. " +
