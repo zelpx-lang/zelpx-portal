@@ -58,7 +58,7 @@ function selectLead(id){document.querySelectorAll(".lead").forEach(e=>e.classLis
 async function render(){
  const rows=visible();clearPins();$("leadList").replaceChildren();
  if(!rows.length){$("leadList").innerHTML='<div class="empty">No matching leads right now.</div>';setStatus("0 leads shown");return}
- let mapped=0;
+ let mapped=0;const zipPositions=new Map();
  for(const lead of rows){
   const card=document.createElement("article");card.className="lead";card.dataset.id=lead.id;
   const title=document.createElement("strong");title.textContent=lead.service_category||"Home service";
@@ -68,9 +68,13 @@ async function render(){
   card.append(title,price,meta,desc);card.addEventListener("click",()=>selectLead(lead.id));$("leadList").append(card);
   const pt=await zipPoint(lead.zip_code,lead.service_state);if(!pt)continue;
   // ZIP centroid only: never read street address or customer coordinates.
-  // Deliberately show a broad service area, never a house-level point. The map is capped at neighborhood/city scale.
+  // Same-ZIP leads get small deterministic visual offsets so every marker remains selectable.
+  const zipKey=String(lead.zip_code||"");const slot=zipPositions.get(zipKey)||0;zipPositions.set(zipKey,slot+1);
+  const angle=slot*2.399963229728653;const distance=slot===0?0:Math.min(900,115*Math.sqrt(slot));
+  const displayPt=[pt[0]+(distance/111320)*Math.cos(angle),pt[1]+(distance/(111320*Math.cos(pt[0]*Math.PI/180)))*Math.sin(angle)];
+  // The offset is only a display spread around the ZIP centroid, not a customer location.
   const area=L.circle(pt,{radius:3500,color:"#ff6a2b",weight:2,fillColor:"#ff6a2b",fillOpacity:.13,leadId:lead.id}).addTo(map);
-  const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
+  const marker=L.marker(displayPt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
   marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate service area · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b><div style="margin-top:10px"><a href="/contractor?lead='+encodeURIComponent(String(lead.id))+'" style="display:block;text-align:center;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:999px">View &amp; Buy Lead</a></div>');
   marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
   markers.push(marker,area);mapped++;
