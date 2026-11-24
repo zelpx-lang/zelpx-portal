@@ -16,15 +16,15 @@
     .zxs-head button{background:#22242a;color:#c9cbd1;border:1px solid #34363d;border-radius:11px;font-size:20px;width:36px;height:36px;cursor:pointer}
     .zxs-voice-stage{padding:22px 16px 19px;background:linear-gradient(180deg,#191a1f 0%,#141519 100%);text-align:center;border-bottom:1px solid #292b31}
     .zxs-stage-label{color:#9da1ab;font-size:10px;font-weight:700;letter-spacing:1.7px;text-transform:uppercase}
-    .zxs-orb-wrap{height:110px;display:flex;align-items:center;justify-content:center;position:relative}
-    .zxs-orb{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff9a62 0%,#f97332 52%,#d94d1a 100%);box-shadow:0 0 0 1px #ffffff16,0 10px 35px #f9733240;transition:transform .2s}
-    .zxs-orb span{font-size:28px;filter:grayscale(1) brightness(0) invert(1)}
-    .zxs-orb.listening{animation:zxs-orb-pulse 1.4s ease-in-out infinite}
-    .zxs-wave{position:absolute;display:flex;align-items:center;justify-content:center;gap:5px;height:62px;opacity:0;pointer-events:none;transition:opacity .2s}
-    .zxs-wave i{display:block;width:3px;height:9px;border-radius:5px;background:#ff9866;transform:scaleY(.5)}
-    .zxs-wave.active{opacity:1}
-    .zxs-wave.active i{animation:zxs-wave 650ms ease-in-out infinite alternate}
-    .zxs-wave i:nth-child(2n){animation-delay:120ms}.zxs-wave i:nth-child(3n){animation-delay:240ms}.zxs-wave i:nth-child(4n){animation-delay:360ms}
+    .zxs-orb-wrap{height:154px;display:flex;align-items:center;justify-content:center;position:relative;isolation:isolate}
+    .zxs-orb{appearance:none;position:relative;z-index:2;width:76px;height:76px;border:1px solid #ffb18b55;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,#ffb27f 0%,#fa783d 38%,#d94b20 100%);color:#fff;box-shadow:0 0 28px #f9733266,inset 0 2px 8px #ffffff45;cursor:pointer;transition:transform .2s,box-shadow .2s}
+    .zxs-orb::before,.zxs-orb::after{content:"";position:absolute;inset:-17px;border:1px solid #ff98665c;border-radius:50%;z-index:-1;transition:opacity .2s}
+    .zxs-orb::after{inset:-34px;border-color:#ff986638}
+    .zxs-orb svg{width:29px;height:29px;display:block;filter:drop-shadow(0 1px 2px #8d351b66)}
+    .zxs-orb.listening{transform:scale(1.04);box-shadow:0 0 0 12px #f9733217,0 0 45px #f9733290,inset 0 2px 8px #ffffff55;animation:zxs-orb-pulse 1.6s ease-in-out infinite}
+    .zxs-orb.listening::before{animation:zxs-ring 1.8s ease-out infinite}
+    .zxs-orb.listening::after{animation:zxs-ring 1.8s ease-out 0.45s infinite}
+    .zxs-wave{display:none}
     .zxs-stage-hint{margin-top:3px;color:#c5c7ce;font-size:12px}
     .zxs-messages{padding:14px 14px 8px;overflow:auto;flex:1;background:#101114}
     .zxs-bubble{max-width:90%;padding:11px 13px;border-radius:16px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55}
@@ -38,13 +38,13 @@
     .zxs-compose textarea::placeholder{color:#858994}.zxs-compose textarea:focus{border-color:#f97332;box-shadow:0 0 0 3px #f9733218}
     .zxs-compose button{border:0;border-radius:14px;background:#f97332;color:#fff;min-height:46px;font-weight:650;cursor:pointer;transition:filter .15s}
     .zxs-compose button:hover{filter:brightness(1.08)}
-    .zxs-compose .zxs-mic{width:46px;min-width:46px;padding:0;font-size:19px;border-radius:14px;background:#292b32;border:1px solid #41434c;box-shadow:none}
+    .zxs-compose .zxs-mic{display:none}
     .zxs-compose .zxs-mic.listening{background:#b93d32;border-color:#ef766b;box-shadow:0 0 0 4px #d94a3326;animation:zxs-pulse 1.2s infinite}
     .zxs-compose .zxs-send{padding:0 15px}
     .zxs-compose button:disabled{opacity:.5;cursor:wait}
     @keyframes zxs-pulse{50%{box-shadow:0 0 0 8px #c8322410}}
     @keyframes zxs-orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 7px #f9733212,0 10px 32px #f9733240}50%{transform:scale(1.06);box-shadow:0 0 0 14px #f9733209,0 12px 42px #f9733260}}
-    @keyframes zxs-wave{from{transform:scaleY(.35)}to{transform:scaleY(2.6)}}
+    @keyframes zxs-ring{0%{transform:scale(.82);opacity:.8}100%{transform:scale(1.55);opacity:0}}
     @media(max-width:480px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:min(690px,calc(100dvh - 98px));border-radius:22px}}
     @media(prefers-reduced-motion:reduce){#zelpx-ai-support-panel *,#zelpx-ai-support-launcher{animation:none!important;transition:none!important}}
   `;
@@ -56,7 +56,7 @@
   panel.id="zelpx-ai-support-panel";panel.setAttribute("aria-label","Ask ZELPX AI Support");
   panel.innerHTML=`
     <div class="zxs-head"><div class="zxs-brand"><div class="zxs-logo">✦</div><div><strong>Ask ZELPX</strong><small>Your home project assistant</small></div></div><button type="button" aria-label="Close chat">×</button></div>
-    <div class="zxs-voice-stage"><div class="zxs-stage-label">VOICE ASSISTANT</div><div class="zxs-orb-wrap"><div class="zxs-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="zxs-orb"><span>🎙</span></div></div><div class="zxs-stage-hint">Tap the microphone below and speak</div></div>
+    <div class="zxs-voice-stage"><div class="zxs-stage-label">VOICE ASSISTANT</div><div class="zxs-orb-wrap"><div class="zxs-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="zxs-orb" type="button" aria-label="Start voice input" title="Tap to speak"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div><div class="zxs-stage-hint">Tap the microphone below and speak</div></div>
     <div class="zxs-messages" aria-live="polite"><div class="zxs-bubble ai">Hi! Welcome to ZELPX 👋 Ask me about finding a pro, home services, posting a request, or becoming a contractor. You can speak or type — no account needed.</div></div>
     <div class="zxs-status">Ready when you are.</div>
     <div class="zxs-tools"><button class="zxs-voice-toggle" type="button" aria-pressed="true">🔊 Voice replies: On</button><button class="zxs-new-chat" type="button">New chat ↻</button></div>
@@ -71,7 +71,7 @@
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   const speechSupported=!!SpeechRecognition;
   function bubble(content,role){const el=document.createElement("div");el.className="zxs-bubble "+(role==="assistant"?"ai":"user");el.textContent=content;messagesEl.appendChild(el);messagesEl.scrollTop=messagesEl.scrollHeight;}
-  function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone below and speak";}
+  function stopSpeaking(){if("speechSynthesis" in window)window.speechSynthesis.cancel();orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
   function speak(text){
     if(!voiceReplies||!("speechSynthesis" in window)||!text)return;
     stopSpeaking();const utterance=new SpeechSynthesisUtterance(text);
@@ -82,7 +82,7 @@
     if(voice)utterance.voice=voice;
     window.speechSynthesis.speak(utterance);
   }
-  function stopListening(){if(recognition){try{recognition.stop();}catch(_){}}listening=false;mic.classList.remove("listening");mic.setAttribute("aria-label","Start voice input");mic.textContent="🎙";orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone below and speak";}
+  function stopListening(){if(recognition){try{recognition.stop();}catch(_){}}listening=false;mic.classList.remove("listening");mic.setAttribute("aria-label","Start voice input");mic.textContent="🎙";orb.classList.remove("listening");wave.classList.remove("active");stageHint.textContent="Tap the microphone and speak";}
   function startListening(){
     if(!speechSupported){status.textContent="Voice input is not supported in this browser. Try Chrome on Android or type your question.";return;}
     stopSpeaking();
@@ -106,6 +106,7 @@
   panel.querySelector(".zxs-new-chat").addEventListener("click",()=>{stopListening();stopSpeaking();history=[];messagesEl.replaceChildren();bubble("Hi again! What would you like to know about ZELPX?","assistant");status.textContent="New chat · No sign-in required";input.focus();});
   voiceToggle.addEventListener("click",()=>{voiceReplies=!voiceReplies;voiceToggle.textContent=voiceReplies?"🔊 Voice replies: On":"🔇 Voice replies: Off";stageHint.textContent=voiceReplies?"Voice answers are on":"Voice answers are off";voiceToggle.setAttribute("aria-pressed",String(voiceReplies));if(!voiceReplies)stopSpeaking();});
   mic.addEventListener("click",()=>{if(listening)stopListening();else startListening();});
+  orb.addEventListener("click",()=>{if(listening)stopListening();else startListening();});
   form.addEventListener("submit",async event=>{
     event.preventDefault();const message=input.value.trim();if(!message||send.disabled)return;
     stopListening();stopSpeaking();bubble(message,"user");input.value="";send.disabled=true;send.textContent="…";status.textContent="ZELPX is preparing an answer…";
