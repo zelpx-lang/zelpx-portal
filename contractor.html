@@ -659,6 +659,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       <h2>Find your next job</h2><p>Browse service requests in your market. Customer contact details remain private until you purchase an available lead.</p>
       <div class="lead-controls" aria-label="Lead filters">
         <input id="leadSearch" type="search" placeholder="Search service or work details…" aria-label="Search leads">
+        <input id="leadZipFilter" type="search" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Enter ZIP code…" aria-label="Filter leads by ZIP code">
         <select id="leadCategoryFilter" aria-label="Filter by service category"><option value="">All services (full catalog)</option></select>
         <select id="leadStatusFilter" aria-label="Filter by lead status"><option value="all" selected>All statuses</option><option value="available">Available leads</option><option value="sold">Sold leads</option></select>
       </div>
@@ -1910,6 +1911,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   }
   function renderLeads() {
     const list = $("leadsList"), query = ($("leadSearch").value || "").trim().toLowerCase();
+    const zipQuery = ($("leadZipFilter").value || "").replace(/\\D/g, "").slice(0,5);
     const category = $("leadCategoryFilter").value, statusFilter = $("leadStatusFilter").value;
     const filtered = cachedLeads.filter(lead => {
       const statusMatch = statusFilter === "all" || (statusFilter === "sold" ? lead.status !== "available" : lead.status === "available");
@@ -1919,7 +1921,9 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       // Every approved contractor can view and purchase any available lead or multi-service package, regardless of selected service categories.
       const serviceMatch = true;
       const haystack = [lead.service_category, ...(Array.isArray(lead.package_services) ? lead.package_services : []), lead.zip_code, lead.description, lead.urgency].join(" ").toLowerCase();
-      return statusMatch && categoryMatch && serviceMatch && (!query || haystack.includes(query));
+      const leadZip = String(lead.zip_code || "").replace(/\\D/g, "").slice(0,5);
+      const zipMatch = !zipQuery || leadZip.startsWith(zipQuery);
+      return statusMatch && categoryMatch && serviceMatch && zipMatch && (!query || haystack.includes(query));
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
@@ -3479,7 +3483,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     // Automatic 10-second reloads caused the lead list to flash while contractors were reading.
     // Contractors can refresh the list using the Refresh Leads button.
         $("refreshLeadsBtn").addEventListener("click", refreshLeadsForDevice);
-    $("leadSearch").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
+    $("leadSearch").addEventListener("input", renderLeads); $("leadZipFilter").addEventListener("input", renderLeads); $("leadCategoryFilter").addEventListener("change", renderLeads); $("leadStatusFilter").addEventListener("change", renderLeads);
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
