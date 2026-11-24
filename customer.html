@@ -1085,7 +1085,16 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         }
         $("customerVerificationPhone").value = phone;
         showMessage("customerPhoneVerificationMessage", "New phone number saved and verified successfully.", "success");
-        // Re-evaluate the account gate and restore the full portal after successful SMS verification.
+        // Contractors use this page only for SMS verification; return them to their own portal.
+        const verificationReturn = new URLSearchParams(window.location.search).get("return");
+        const { data: verifiedProfile, error: verifiedProfileError } = await db.from("profiles")
+          .select("role").eq("id", data.session.user.id).maybeSingle();
+        if (verifiedProfileError) throw verifiedProfileError;
+        if (verificationReturn === "contractor" && verifiedProfile?.role === "contractor") {
+          window.location.replace("/contractor.html");
+          return;
+        }
+        // Re-evaluate the customer account gate and restore the customer portal.
         window.location.reload();
       } catch (error) {
         showMessage("customerPhoneVerificationMessage", error.message || "The SMS code could not be verified.", "error");
