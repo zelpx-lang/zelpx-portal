@@ -935,16 +935,11 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     setBusy($("loginBtn"), true, "Signing in…");
     show($("oauthReturnLoading"));
     try {
-      // Contractors are checked by the access function. Admins authenticate here
-      // and are authorized below by the profiles.role === "admin" check.
-      if (!IS_ADMIN_PORTAL) {
-        const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
-          body: { email, portal: "contractor" }
-        });
-        if (accessError) throw new Error("Could not verify account permissions. Please try again.");
-        if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the contractor portal.");
-      }
-      const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp();
+      // Authenticate first, then loadApp checks the trusted profiles.role value
+      // before revealing the contractor dashboard. Admins are immediately signed out.
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await loadApp();
     }
     catch (e) { hide($("oauthReturnLoading")); message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
   }
