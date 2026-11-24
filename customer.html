@@ -1364,6 +1364,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
         await loadRequests(session);
+        startCustomerUnreadPolling();
         if (openingScreen) openingScreen.classList.remove("is-visible");
         // Keep an unsubmitted sphere package draft through login and page refresh.
         // It is cleared only after the service request is successfully inserted.
@@ -2604,7 +2605,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           unreadBell.className = "request-unread-bell" + (unreadCountForRequest ? " has-unread" : "");
           unreadBell.setAttribute("aria-label", unreadCountForRequest ? unreadCountForRequest + " unread chat messages" : "No unread messages");
           unreadBell.title = unreadCountForRequest ? "New unread contractor message — open the order to view chat" : "";
-          unreadBell.textContent = unreadCountForRequest ? "🔔" + (unreadCountForRequest > 1 ? " " + unreadCountForRequest : "") : "🔔";
+          unreadBell.textContent = unreadCountForRequest ? "🔔" + (unreadCountForRequest > 1 ? " " + unreadCountForRequest : "") : "";
           unreadBell.classList.toggle("has-unread", unreadCountForRequest > 0);
           const chevron = document.createElement("span"); chevron.className = "request-summary-chevron"; chevron.textContent = "＋";
           summary.append(summaryText, unreadBell, chevron); card.appendChild(summary);
@@ -2724,6 +2725,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
               chatButton.style.fontWeight = "800";
             }
             chatButton.dataset.openChat = "1";
+            chatButton.dataset.leadId = request.lead_id;
             const chatPanel = document.createElement("div");
             chatPanel.className = "hidden";
             chat.append(chatTitle, chatIntro, chatButton, chatPanel);
@@ -2823,6 +2825,75 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         list.textContent = "Unable to load requests: " + error.message;
       }
     }
+
+
+    let customerUnreadTimer = null;
+    async function refreshCustomerUnreadIndicators() {
+      if (document.hidden) return;
+      try {
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
+        const userId = sessionData.session?.user?.id;
+        if (!userId) return;
+        const { data: requests, error: requestsError } = await db.from("service_requests")
+          .select("lead_id").eq("user_id", userId).not("lead_id", "is", null);
+        if (requestsError) throw requestsError;
+        const leadIds = [...new Set((requests || []).map(row => row.lead_id).filter(Boolean))];
+        const unreadByLead = new Map();
+        let totalUnread = 0;
+        if (leadIds.length) {
+          const { data: conversations, error: conversationsError } = await db.from("lead_conversations")
+            .select("id,lead_id").in("lead_id", leadIds);
+          if (conversationsError) throw conversationsError;
+          const conversationIds = (conversations || []).map(row => row.id);
+          if (conversationIds.length) {
+            const { data: unreadMessages, error: unreadError } = await db.from("lead_messages")
+              .select("conversation_id").in("conversation_id", conversationIds)
+              .eq("sender_type", "contractor").is("customer_read_at", null);
+            if (unreadError) throw unreadError;
+            const leadByConversation = new Map((conversations || []).map(row => [row.id, row.lead_id]));
+            (unreadMessages || []).forEach(row => {
+              const leadId = leadByConversation.get(row.conversation_id);
+              if (leadId) unreadByLead.set(leadId, (unreadByLead.get(leadId) || 0) + 1);
+            });
+            totalUnread = (unreadMessages || []).length;
+          }
+        }
+        document.querySelectorAll("#requestsList .request-card[data-lead-id]").forEach(card => {
+          const count = unreadByLead.get(card.dataset.leadId) || 0;
+          const bell = card.querySelector(".request-unread-bell");
+          if (bell) {
+            bell.textContent = count ? "🔔" + (count > 1 ? " " + count : "") : "";
+            bell.classList.toggle("has-unread", count > 0);
+            bell.setAttribute("aria-label", count ? count + " unread chat messages" : "No unread messages");
+            bell.title = count ? "New unread contractor message — open the order to view chat" : "";
+          }
+          const chatButton = card.querySelector('button[data-open-chat="1"]');
+          if (chatButton && !chatButton.hidden && !card.querySelector(".customer-chat > div:not(.hidden)")) {
+            chatButton.textContent = count ? "🔔 New message (" + count + ") · Open chat" : "Open conversation";
+            chatButton.style.borderColor = count ? "#ff6a2b" : "";
+            chatButton.style.color = count ? "#c2410c" : "";
+            chatButton.style.fontWeight = count ? "800" : "";
+          }
+        });
+        const requestsTab = document.querySelector('[data-dashboard-page="requests"]');
+        if (requestsTab) {
+          requestsTab.textContent = totalUnread ? "🔔 My Service Requests (" + totalUnread + ")" : "My Service Requests";
+          requestsTab.setAttribute("aria-label", totalUnread ? "My Service Requests, " + totalUnread + " unread chat messages" : "My Service Requests");
+        }
+      } catch (error) {
+        console.warn("Could not refresh customer unread indicators:", error);
+      }
+    }
+    function startCustomerUnreadPolling() {
+      if (customerUnreadTimer) window.clearInterval(customerUnreadTimer);
+      if (!document.hidden) {
+        refreshCustomerUnreadIndicators();
+        customerUnreadTimer = window.setInterval(refreshCustomerUnreadIndicators, 8000);
+      }
+    }
+    document.addEventListener("visibilitychange", startCustomerUnreadPolling);
+    window.addEventListener("focus", startCustomerUnreadPolling);
 
     function applyRequestFilters() {
       const list = $("requestsList");
