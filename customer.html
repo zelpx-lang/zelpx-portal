@@ -813,17 +813,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         <label for="customerPhone">Phone Number</label>
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
-        <p class="subtitle">To change your number, choose “Edit Profile,” enter the new number in this Phone Number field, then send and verify the SMS code below. The number is saved to your account only after successful verification.</p>
-        <section id="customerPhoneVerification" class="phone-verification-panel" aria-labelledby="customerPhoneVerificationHeading">
-          <h3 id="customerPhoneVerificationHeading">Verify your phone number</h3>
-          <p id="customerPhoneVerificationStatus" class="subtitle" role="status">Phone verification is required before submitting a service request.</p>
-          <input id="customerVerificationPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" maxlength="20" hidden aria-hidden="true" tabindex="-1">
-          <button id="sendCustomerPhoneCodeButton" type="button">Send SMS Code</button>
-          <label for="customerPhoneVerificationCode">6-digit SMS code</label>
-          <input id="customerPhoneVerificationCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
-          <button id="verifyCustomerPhoneCodeButton" type="button">Verify Phone Number</button>
-          <div id="customerPhoneVerificationMessage" class="message" role="status"></div>
-        </section>
+        <p class="subtitle">Your phone number is saved to your private customer profile.</p>
         <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
         <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
         <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
@@ -1015,103 +1005,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     window.zelpxDb = db;
 
     const $ = (id) => document.getElementById(id);
-    // SMS phone verification — Twilio credentials remain server-side.
-    window.zelpxCustomerPhoneVerified = false;
-    window.zelpxCustomerVerifiedPhone = "";
-    function normalizeCustomerPhone(value) {
-      const raw = String(value || "").trim();
-      const digits = raw.replace(/\D/g, "");
-      if (raw.startsWith("+") && digits.length >= 8 && digits.length <= 15) return "+" + digits;
-      if (digits.length === 10) return "+1" + digits;
-      if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
-      throw new Error("Enter a valid phone number. US numbers can use 10 digits.");
-    }
-    async function callCustomerPhoneApi(path, payload) {
-      const { data, error } = await db.auth.getSession();
-      if (error) throw error;
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Please sign in again.");
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Phone verification service is unavailable.");
-      return result;
-    }
-
-
-    $("sendCustomerPhoneCodeButton").addEventListener("click", async () => {
-      const button = $("sendCustomerPhoneCodeButton");
-      const phone = normalizeCustomerPhone($("customerPhone").value);
-      $("customerPhoneVerificationMessage").className = "message";
-      $("customerPhoneVerificationMessage").textContent = "";
-      if (!phone) {
-        showMessage("customerPhoneVerificationMessage", "Enter a valid phone number in international format, for example +15035550123.", "error");
-        return;
-      }
-      button.disabled = true; button.textContent = "Sending...";
-      try {
-        await callCustomerPhoneApi("/api/customer-phone/send-code", { phone });
-        $("customerVerificationPhone").value = phone;
-        showMessage("customerPhoneVerificationMessage", "SMS code sent to " + phone + ". Enter the 6-digit code below.", "success");
-      } catch (error) {
-        showMessage("customerPhoneVerificationMessage", error.message || "Could not send SMS code.", "error");
-      } finally { button.disabled = false; button.textContent = "Send SMS Code"; }
-    });
-    $("verifyCustomerPhoneCodeButton").addEventListener("click", async () => {
-      const button = $("verifyCustomerPhoneCodeButton");
-      const phone = normalizeCustomerPhone($("customerPhone").value);
-      const code = $("customerPhoneVerificationCode").value.trim();
-      $("customerPhoneVerificationMessage").className = "message";
-      $("customerPhoneVerificationMessage").textContent = "";
-      if (!phone || !/^\d{6}$/.test(code)) {
-        showMessage("customerPhoneVerificationMessage", "Enter the same phone number and the 6-digit code from SMS.", "error");
-        return;
-      }
-      button.disabled = true; button.textContent = "Verifying...";
-      try {
-        await callCustomerPhoneApi("/api/customer-phone/verify-code", { phone, code });
-        window.zelpxProfileSaveSmsVerified = true;
-        window.zelpxProfileSaveSmsPhone = phone;
-        $("customerPhoneVerificationCode").value = "";
-        const { data } = await db.auth.getSession();
-        if (!data.session?.user) throw new Error("Your session expired. Please sign in again.");
-        // Read the verified account directly before running customer-portal UI logic.
-        // A contractor must return to the contractor portal, not initialize customer pages.
-        const verificationReturn = new URLSearchParams(window.location.search).get("return");
-        const { data: verifiedProfile, error: verifiedProfileError } = await db.from("profiles")
-          .select("role,phone,phone_verified_at,phone_verified_number")
-          .eq("id", data.session.user.id).maybeSingle();
-        if (verifiedProfileError) throw verifiedProfileError;
-        const digits = value => String(value || "").replace(/\D/g, "");
-        const profilePhoneVerified = Boolean(verifiedProfile?.phone_verified_at &&
-          digits(verifiedProfile.phone).length >= 10 &&
-          digits(verifiedProfile.phone) === digits(verifiedProfile.phone_verified_number));
-        if (verificationReturn === "contractor" && verifiedProfile?.role === "contractor") {
-          if (!profilePhoneVerified || digits(verifiedProfile.phone) !== digits(phone)) {
-            throw new Error("The SMS code was accepted, but the contractor profile has not yet saved this verified phone number. Please try again.");
-          }
-          showMessage("customerPhoneVerificationMessage", "Phone verified. Returning to Contractor Portal…", "success");
-          window.location.replace("/contractor.html");
-          return;
-        }
-        await loadCustomerProfile(data.session.user);
-        const savedPhone = normalizeCustomerPhone($("customerPhone").value);
-        if (savedPhone !== phone || !window.zelpxCustomerPhoneVerified) {
-          throw new Error("The SMS code was accepted, but the new number is not showing as saved in your profile. Please try again or contact support.");
-        }
-        $("customerVerificationPhone").value = phone;
-        showMessage("customerPhoneVerificationMessage", "New phone number saved and verified successfully.", "success");
-        // Re-evaluate the customer account gate and restore the customer portal.
-        window.location.reload();
-      } catch (error) {
-        showMessage("customerPhoneVerificationMessage", error.message || "The SMS code could not be verified.", "error");
-      } finally { button.disabled = false; button.textContent = "Verify Phone Number"; }
-    });
-
-
 
     let isLogin = false;
 
@@ -1304,17 +1197,12 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
     async function loadCustomerProfile(user) {
       clearMessage("profileMessage");
-      let { data, error } = await db
+      const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number")
+        .select("full_name,phone,role,avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
-      // Keep the rest of the profile usable until the additive SMS migration is applied.
-      if (error && /phone_verified_(at|number)|schema cache|column/i.test(error.message || "")) {
-        ({ data, error } = await db.from("profiles")
-          .select("full_name,phone,role,avatar_url").eq("id", user.id).maybeSingle());
-      }
       if (error) throw error;
       if (!data) {
         throw new Error("Customer profile is not ready yet. Please sign out and sign in again, or contact ZELPX support.");
@@ -1322,21 +1210,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
-      const verifiedAt = data.phone_verified_at || null;
-      const verifiedNumber = data.phone_verified_number || "";
-      const normalizeForVerification = value => String(value || "").replace(/\D/g, "");
-      window.zelpxCustomerPhoneVerified = Boolean(verifiedAt &&
-        normalizeForVerification(verifiedNumber).length >= 10 &&
-        normalizeForVerification(verifiedNumber) === normalizeForVerification(data.phone));
-      window.zelpxCustomerVerifiedPhone = window.zelpxCustomerPhoneVerified ? verifiedNumber : "";
-      const phoneStatus = $("customerPhoneVerificationStatus");
-      if (phoneStatus) phoneStatus.textContent = window.zelpxCustomerPhoneVerified
-        ? "Verified: " + verifiedNumber + ". You can submit a service request."
-        : "Not verified. Verify the mobile number by SMS before submitting a service request.";
-      const verifyPhoneInput = $("customerVerificationPhone");
-      if (verifyPhoneInput && !verifyPhoneInput.value) verifyPhoneInput.value = data.phone || user.user_metadata?.phone || "";
-      const sendCodeButton = $("sendCustomerPhoneCodeButton");
-      if (sendCodeButton) sendCodeButton.textContent = window.zelpxCustomerPhoneVerified ? "Verify a different number" : "Send SMS Code";
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
@@ -1371,9 +1244,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
     requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
-      // Every profile save requires a fresh SMS verification during this edit session.
-      window.zelpxProfileSaveSmsVerified = false;
-      window.zelpxProfileSaveSmsPhone = "";
       originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
       profileNameInput.readOnly = false;
       profilePhoneInput.readOnly = false;
@@ -1384,8 +1254,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     });
 
     cancelProfileUpdateButton.addEventListener("click", () => {
-      window.zelpxProfileSaveSmsVerified = false;
-      window.zelpxProfileSaveSmsPhone = "";
       profileNameInput.value = originalProfileValues.fullName;
       profilePhoneInput.value = originalProfileValues.phone;
       profileNameInput.readOnly = true;
@@ -1406,17 +1274,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         showMessage("profileMessage", "Please enter your full name.", "error");
         return;
       }
-      let normalizedPhone = "";
-      try { normalizedPhone = normalizeCustomerPhone(phone); }
-      catch (_) {
+      if (!phone || phone.replace(/\D/g, "").length < 7) {
         showMessage("profileMessage", "Please enter a valid phone number.", "error");
-        return;
-      }
-      if (!window.zelpxProfileSaveSmsVerified ||
-          normalizeCustomerPhone(window.zelpxProfileSaveSmsPhone || "") !== normalizedPhone) {
-        showMessage("profileMessage", "SMS verification is required before saving your profile. Send the code to this phone number and verify it first.", "error");
-        $("sendCustomerPhoneCodeButton").scrollIntoView({ behavior: "smooth", block: "center" });
-        $("customerPhoneVerificationCode").focus();
         return;
       }
 
@@ -1428,22 +1287,19 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         const user = sessionData.session?.user;
         if (!user) throw new Error("Please log in again.");
 
-        // Phone is written only by the SMS verification endpoint after Twilio approves the code.
         const { error } = await db
           .from("profiles")
-          .update({ full_name: fullName })
+          .update({ full_name: fullName, phone })
           .eq("id", user.id);
         if (error) throw error;
 
         const { error: metadataError } = await db.auth.updateUser({
-          data: { full_name: fullName, account_type: "customer" }
+          data: { full_name: fullName, phone, account_type: "customer" }
         });
         if (metadataError) throw metadataError;
 
-        originalProfileValues = { fullName, phone: normalizedPhone };
-        window.zelpxProfileSaveSmsVerified = false;
-        window.zelpxProfileSaveSmsPhone = "";
-        showMessage("profileMessage", "Your profile changes have been saved successfully. Phone number verified by SMS.", "success");
+        originalProfileValues = { fullName, phone };
+        showMessage("profileMessage", "Your profile changes have been saved successfully.", "success");
         profileNameInput.readOnly = true;
         profilePhoneInput.readOnly = true;
         requestProfileUpdateButton.classList.remove("hidden");
@@ -1477,7 +1333,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         let profile;
         try {
           const { data, error } = await db.from("profiles")
-            .select("role,customer_account_status,customer_block_reason").eq("id", session.user.id).maybeSingle();
+            .select("role").eq("id", session.user.id).maybeSingle();
           if (error) throw error;
           profile = data;
         } catch (profileError) {
@@ -1485,14 +1341,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           $("dashboardView").classList.add("hidden");
           $("authView").classList.remove("hidden");
           showMessage("message", "Could not verify account permissions. Please sign in again.", "error");
-          if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
-          return;
-        }
-        if (profile?.customer_account_status === "blocked") {
-          await db.auth.signOut();
-          $("dashboardView").classList.add("hidden");
-          $("authView").classList.remove("hidden");
-          showMessage("message", "This customer account is temporarily suspended by ZELPX fraud protection. Please contact support for review.", "error");
           if (window.ZELPXRevealOAuthPage) window.ZELPXRevealOAuthPage();
           return;
         }
@@ -1505,9 +1353,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           return;
         }
 
-        // One account may access both portals. Keep the user in the customer
-        // portal when they deliberately opened it; admin accounts are blocked above.
-
+        // Customers and contractors may use the customer portal; their roles are not changed.
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
         $("dashboardView").classList.remove("hidden");
@@ -1515,36 +1361,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         try {
           await loadCustomerProfile(session.user);
         } catch (profileError) {
-          showMessage("profileMessage", profileError.message || "Your profile could not be loaded. Please contact ZELPX support.", "error");
-          if (openingScreen) openingScreen.classList.remove("is-visible");
-          return;
+          showMessage("profileMessage", profileError.message || "Your profile could not be loaded. You can still access your customer dashboard.", "error");
         }
-
-        // Until Twilio confirms the number, expose only the profile's SMS verification controls.
-        if (!window.zelpxCustomerPhoneVerified) {
-          const homeGrid = document.querySelector(".dashboard-home-grid");
-          if (homeGrid) homeGrid.hidden = true;
-          document.querySelectorAll(".dashboard-menu-button, .dashboard-home-card").forEach(button => {
-            if (button.dataset.dashboardPage !== "profile") button.hidden = true;
-          });
-          document.querySelectorAll(".dashboard-page").forEach(page => {
-            page.hidden = page.id !== "dashboardPage-profile";
-          });
-          const profilePanel = document.querySelector("#dashboardPage-profile .profile-panel");
-          if (profilePanel) {
-            const photoTools = profilePanel.querySelector(".profile-photo-tools");
-            if (photoTools) photoTools.hidden = true;
-            const fullNameLabel = profilePanel.querySelector('label[for="customerFullName"]');
-            if (fullNameLabel) fullNameLabel.hidden = true;
-            const fullNameInput = $("customerFullName");
-            if (fullNameInput) fullNameInput.hidden = true;
-            const phoneStatus = $("customerPhoneVerificationStatus");
-            if (phoneStatus) phoneStatus.textContent = "Phone verification is required before you can use any ZELPX account feature. Verify your number by SMS below.";
-          }
-          if (openingScreen) openingScreen.classList.remove("is-visible");
-          return;
-        }
-
         await loadRequests(session);
         if (openingScreen) openingScreen.classList.remove("is-visible");
         // Keep an unsubmitted sphere package draft through login and page refresh.
@@ -2315,61 +2133,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         return;
       }
 
-      // Verify the signed-in customer profile before starting any request submission.
-      // If the phone is not verified, send an SMS and pause the submission until OTP succeeds.
-      try {
-        const { data: authData, error: authError } = await db.auth.getSession();
-        if (authError) throw authError;
-        const activeSession = authData.session;
-        if (!activeSession?.user?.id) throw new Error("Please sign in again before submitting a request.");
-
-        const { data: customerProfile, error: profileError } = await db
-          .from("profiles")
-          .select("role,phone,phone_verified_at,phone_verified_number,customer_account_status")
-          .eq("id", activeSession.user.id)
-          .maybeSingle();
-        if (profileError) throw profileError;
-        // A single authenticated account can use both portals. A contractor
-        // profile is also allowed to act as a customer; the database trigger
-        // independently verifies the contractor record and customer safeguards.
-        const hasCustomerAccess = customerProfile?.role === "customer" ||
-          (customerProfile?.role === "contractor" && Boolean((await db.from("contractors")
-            .select("id").eq("user_id", activeSession.user.id).maybeSingle()).data));
-        if (!customerProfile || !hasCustomerAccess) {
-          throw new Error("This account does not have customer or contractor access. Please contact ZELPX support.");
-        }
-        if (customerProfile.customer_account_status === "blocked") {
-          throw new Error("Your customer account is temporarily suspended. Please contact ZELPX support.");
-        }
-        let savedPhone = "";
-        try { savedPhone = normalizeCustomerPhone(customerProfile.phone || ""); } catch (_) { savedPhone = ""; }
-        const requestPhoneConfirmed = Boolean(savedPhone && window.zelpxRequestOtpVerifiedForPhone === savedPhone);
-        if (!requestPhoneConfirmed) {
-          window.zelpxPendingRequestPhone = savedPhone;
-          $("requestPhoneOtpPhone").value = savedPhone;
-          $("requestPhoneOtpNumber").textContent = savedPhone || "your mobile number";
-          $("requestPhoneOtpCode").value = "";
-          $("requestPhoneOtpMessage").textContent = savedPhone
-            ? "Sending a 6-digit verification code to your saved phone number…"
-            : "Enter your mobile number, then request a 6-digit SMS code.";
-          $("requestPhoneOtpModal").hidden = false;
-          document.body.classList.add("zelpx-modal-open");
-          if (savedPhone) {
-            try {
-              await sendRequestOtp();
-              $("requestPhoneOtpMessage").textContent = "A 6-digit verification code was sent to " + savedPhone + ".";
-            } catch (sendError) {
-              $("requestPhoneOtpMessage").textContent = sendError.message || "Could not send the SMS code. Check the number and try again.";
-            }
-          }
-          $("requestPhoneOtpPhone").focus();
-          return;
-        }
-      } catch (verificationError) {
-        showMessage("requestMessage", verificationError.message || "Customer profile could not be verified. Please sign in again.", "error");
-        return;
-      }
-
       const button = $("requestButton");
       button.disabled = true;
       button.textContent = "Submitting...";
@@ -2429,9 +2192,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
 
         if (error) throw error;
 
-        // Consume the one-request SMS confirmation after the order is saved.
-        window.zelpxRequestOtpVerifiedForPhone = "";
-        window.zelpxPendingRequestPhone = "";
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
         try { localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY); } catch (_) {}
         customerRequestIntent = null;
@@ -3059,20 +2819,6 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         return;
       }
 
-      // A sphere/package choice is only a temporary, unsubmitted draft.
-      // Clear it on logout so the next login starts with a fresh request.
-      // Submitted service requests are stored in the database and are not touched.
-      try {
-        localStorage.removeItem(SPHERE_DRAFT_KEY);
-        localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY);
-        localStorage.removeItem("zelpx.sphere.auth.pending");
-        localStorage.removeItem("zelpx.oauth.pending");
-        sessionStorage.removeItem("zelpx.sphere.auth.pending");
-        sessionStorage.removeItem("zelpx.oauth.pending");
-      } catch (draftCleanupError) {
-        console.warn("Could not clear the temporary customer service selection:", draftCleanupError);
-      }
-
       // Return customers directly to the public ZELPX homepage after logout.
       window.location.replace("/");
     });
@@ -3239,128 +2985,5 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       });
     })();
   </script>
-
-  <style>
-    #requestPhoneOtpModal[hidden]{display:none!important}
-    #requestPhoneOtpModal{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(40,27,19,.52);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-    #requestPhoneOtpModal .otp-dialog{width:min(100%,430px);padding:24px;border:1px solid #f0ded1;border-radius:22px;background:#fffefa;color:#30231e;box-shadow:0 24px 80px #26170f40}
-    #requestPhoneOtpModal h2{margin:0 0 8px;text-align:left;font-size:22px}
-    #requestPhoneOtpModal p{color:#716b62;line-height:1.5}
-    #requestPhoneOtpModal .otp-actions{display:flex;gap:10px;margin-top:14px}
-    #requestPhoneOtpModal .otp-actions button{width:50%;margin:0}
-    #requestPhoneOtpModal .otp-cancel{border:1px solid #eee1d7;background:#fffaf6;color:#79695e;box-shadow:none}
-    #requestPhoneOtpMessage{min-height:24px;font-size:13px}
-  </style>
-  <div id="requestPhoneOtpModal" hidden role="dialog" aria-modal="true" aria-labelledby="requestPhoneOtpHeading">
-    <div class="otp-dialog">
-      <p style="margin:0 0 7px;color:#c56a3b;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">ZELPX · Phone verification</p>
-      <h2 id="requestPhoneOtpHeading">Verify your phone number</h2>
-      <p>Verify your mobile number by SMS before submitting your service request.</p>
-      <label for="requestPhoneOtpPhone">Mobile phone number</label>
-      <input id="requestPhoneOtpPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+1 503 555 0123">
-      <button type="button" class="secondary-button" id="requestPhoneOtpSend" style="width:100%;margin:8px 0">Send SMS code</button>
-      <p>Enter the 6-digit code sent to <strong id="requestPhoneOtpNumber">your mobile number</strong>.</p>
-      <label for="requestPhoneOtpCode">6-digit SMS code</label>
-      <input id="requestPhoneOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter code">
-      <p id="requestPhoneOtpMessage" aria-live="polite">A verification code is required to continue.</p>
-      <div class="otp-actions">
-        <button type="button" class="otp-cancel" id="requestPhoneOtpCancel">Cancel</button>
-        <button type="button" id="requestPhoneOtpVerify">Verify & Continue</button>
-      </div>
-      <button type="button" class="secondary-button" id="requestPhoneOtpResend" style="width:100%;margin-top:10px">Resend SMS code</button>
-    </div>
-  </div>
-  <script>
-    (() => {
-      const modal = document.getElementById("requestPhoneOtpModal");
-      const codeInput = document.getElementById("requestPhoneOtpCode");
-      const message = document.getElementById("requestPhoneOtpMessage");
-      const close = () => {
-        modal.hidden = true;
-        document.body.classList.remove("zelpx-modal-open");
-      };
-      document.getElementById("requestPhoneOtpCancel").addEventListener("click", () => {
-        window.zelpxRequestOtpVerifiedForPhone = "";
-        window.zelpxPendingRequestPhone = "";
-        codeInput.value = "";
-        close();
-      });
-
-      async function sendRequestOtp() {
-        const phone = normalizeCustomerPhone(document.getElementById("requestPhoneOtpPhone").value || "");
-        window.zelpxPendingRequestPhone = phone;
-        document.getElementById("requestPhoneOtpNumber").textContent = phone;
-        const { data, error } = await db.auth.getSession();
-        if (error) throw error;
-        const accessToken = data.session?.access_token;
-        if (!accessToken) throw new Error("Please sign in again.");
-        const response = await fetch("/api/customer-phone/send-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken },
-          body: JSON.stringify({ phone })
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(result.error || "Could not resend the SMS code.");
-        message.textContent = "A new 6-digit code was sent to your phone.";
-      }
-
-      document.getElementById("requestPhoneOtpSend").addEventListener("click", async event => {
-        const button = event.currentTarget;
-        button.disabled = true;
-        button.textContent = "Sending…";
-        try { await sendRequestOtp(); }
-        catch (error) { message.textContent = error.message || "Could not send the SMS code."; }
-        finally { button.disabled = false; button.textContent = "Send SMS code"; }
-      });
-
-      document.getElementById("requestPhoneOtpResend").addEventListener("click", async event => {
-        const button = event.currentTarget;
-        button.disabled = true;
-        try { await sendRequestOtp(); }
-        catch (error) { message.textContent = error.message || "Could not resend the SMS code."; }
-        finally { button.disabled = false; }
-      });
-
-      document.getElementById("requestPhoneOtpVerify").addEventListener("click", async event => {
-        const button = event.currentTarget;
-        const code = codeInput.value.trim();
-        if (!/^[0-9]{6}$/.test(code)) {
-          message.textContent = "Enter the 6-digit code from your SMS.";
-          codeInput.focus();
-          return;
-        }
-        button.disabled = true;
-        try {
-          const { data, error } = await db.auth.getSession();
-          if (error) throw error;
-          const accessToken = data.session?.access_token;
-          if (!accessToken) throw new Error("Please sign in again.");
-          const response = await fetch("/api/customer-phone/verify-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken },
-            body: JSON.stringify({ phone: window.zelpxPendingRequestPhone, code, purpose: "request_submission" })
-          });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok || !result.verified) throw new Error(result.error || "The code could not be verified.");
-          const verifiedPhone = normalizeCustomerPhone(window.zelpxPendingRequestPhone || "");
-          if (!verifiedPhone) throw new Error("The verified phone number is missing. Please submit the request again.");
-          window.zelpxRequestOtpVerifiedForPhone = verifiedPhone;
-          close();
-          window.zelpxPendingRequestPhone = "";
-          codeInput.value = "";
-          showMessage("requestMessage", "Phone confirmed. Your service request is being submitted…", "success");
-          document.getElementById("requestForm").requestSubmit();
-        } catch (error) {
-          message.textContent = error.message || "The code could not be verified. Please try again.";
-        } finally {
-          button.disabled = false;
-        }
-      });
-      codeInput.addEventListener("keydown", event => {
-        if (event.key === "Enter") document.getElementById("requestPhoneOtpVerify").click();
-      });
-    })();
-  </script>
-
 </body>
 </html>

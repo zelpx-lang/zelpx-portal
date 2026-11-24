@@ -127,13 +127,8 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
       // Keep the same-tab marker until customer.html finishes restoring the
       // session and loading the dashboard. It controls the customer-page cover.
       localStorage.removeItem("zelpx.oauth.pending");
-      // Respect the portal explicitly selected before OAuth. A single
-      // email may use both customer and contractor portals.
-      const requestedPortal = pending.portal;
       const destination = role === "admin" ? "/admin" :
-        requestedPortal === "customer" ? "/customer" :
-        requestedPortal === "contractor" ? "/contractor" :
-        role === "contractor" ? "/contractor" : "/customer";
+        role === "contractor" && pending.portal !== "customer" ? "/contractor" : "/customer";
       window.location.replace(destination);
     } catch (_) { reveal(); }
   };

@@ -1163,7 +1163,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     // Resolve the account role first. Once authorization is known, show the
     // dashboard immediately; profile details and marketplace data hydrate after.
     const { data: roleProfile, error: roleProfileError } = await db.from("profiles")
-      .select("id,full_name,phone,role,avatar_url,phone_verified_at,phone_verified_number").eq("id", user.id).maybeSingle();
+      .select("id,full_name,phone,role,avatar_url").eq("id", user.id).maybeSingle();
     if (roleProfileError) throw roleProfileError;
     currentProfile = roleProfile;
     isAdmin = roleProfile?.role === "admin";
@@ -1181,19 +1181,6 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
-    if (!IS_ADMIN_PORTAL && !isAdmin && roleProfile?.role !== "contractor") {
-      hide($("appView")); hide($("topUser")); show($("authView"));
-      message("authMessage", "This is a customer account, not a contractor account. Sign out and use your contractor login, or register as a contractor.", "error");
-      return;
-    }
-    const phoneDigits = value => String(value || "").replace(/\D/g, "");
-    const phoneVerified = Boolean(roleProfile?.phone_verified_at &&
-      phoneDigits(roleProfile.phone).length >= 10 &&
-      phoneDigits(roleProfile.phone) === phoneDigits(roleProfile.phone_verified_number));
-    // Phone verification is required for wallet funding and lead purchases, not dashboard access.
-    window.zelpxContractorPhoneVerified = phoneVerified;
-    const existingGate = $("zelpxPhoneVerificationGate");
-    if (existingGate) existingGate.remove();
     // Hide the callback loader and reveal the authenticated dashboard now,
     // rather than waiting for every profile/settings query to finish.
     $("welcomeTitle").textContent = "Contractor dashboard";
@@ -1729,42 +1716,8 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     finally {setBusy(button,false);}
   }
 
-  async function ensureContractorPhoneVerified() {
-    if (currentProfile?.phone_verified_at &&
-        String(currentProfile.phone || "").replace(/\D/g,"").length >= 10 &&
-        String(currentProfile.phone || "").replace(/\D/g,"") === String(currentProfile.phone_verified_number || "").replace(/\D/g,"")) return true;
-    return await new Promise(resolve => {
-      const overlay=document.createElement("div");
-      overlay.id="zelpxPhoneVerificationModal";
-      overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:#15171ccc;display:flex;align-items:center;justify-content:center;padding:18px";
-      overlay.innerHTML=`
-        <section style="width:min(100%,480px);background:#fffdfa;border:1px solid #e7e0d5;border-radius:22px;padding:24px;box-shadow:0 18px 50px #0004">
-          <div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#c6531e">ZELPX ACCOUNT SECURITY</div>
-          <h2 style="margin:8px 0">Verify your phone number</h2>
-          <p style="margin:0 0 12px">SMS confirmation is required to add wallet funds or purchase leads. Your contractor dashboard remains available.</p>
-          <label for="zelpxWalletPhone">Phone number</label><input id="zelpxWalletPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123">
-          <button id="zelpxWalletSendCode" type="button" style="width:100%;margin:10px 0">Send SMS Code</button>
-          <label for="zelpxWalletSmsCode">6-digit SMS code</label><input id="zelpxWalletSmsCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456">
-          <button id="zelpxWalletVerifyCode" type="button" style="width:100%;margin:10px 0;background:#39251d">Verify Phone Number</button>
-          <p id="zelpxWalletPhoneMessage" role="status" style="min-height:24px;margin:8px 0"></p>
-          <button id="zelpxWalletCancel" type="button" class="secondary" style="width:100%">Not now</button>
-        </section>`;
-      document.body.append(overlay);
-      const phone=overlay.querySelector("#zelpxWalletPhone"),code=overlay.querySelector("#zelpxWalletSmsCode"),status=overlay.querySelector("#zelpxWalletPhoneMessage");
-      phone.value=currentProfile?.phone||"";
-      const finish=value=>{overlay.remove();resolve(value);};
-      const normalize=value=>{const raw=String(value||"").trim(),digits=raw.replace(/\D/g,"");if(raw.startsWith("+")&&digits.length>=8&&digits.length<=15)return "+"+digits;if(digits.length===10)return "+1"+digits;if(digits.length===11&&digits.startsWith("1"))return "+"+digits;throw new Error("Enter a valid phone number. US numbers can use 10 digits.");};
-      const api=async(path,payload)=>{const {data,error}=await db.auth.getSession();if(error)throw error;const token=data.session?.access_token;if(!token)throw new Error("Please sign in again.");const response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify(payload)});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||"Phone verification service is unavailable.");return result;};
-      overlay.querySelector("#zelpxWalletSendCode").addEventListener("click",async event=>{const b=event.currentTarget;try{const value=normalize(phone.value);b.disabled=true;b.textContent="Sending...";await api("/api/customer-phone/send-code",{phone:value});phone.value=value;status.textContent="SMS code sent to "+value+".";}catch(e){status.textContent=e.message||"Could not send SMS code.";}finally{b.disabled=false;b.textContent="Send SMS Code";}});
-      overlay.querySelector("#zelpxWalletVerifyCode").addEventListener("click",async event=>{const b=event.currentTarget;try{const value=normalize(phone.value),pin=code.value.trim();if(!/^\d{6}$/.test(pin))throw new Error("Enter the 6-digit code from SMS.");b.disabled=true;b.textContent="Verifying...";await api("/api/customer-phone/verify-code",{phone:value,code:pin});currentProfile={...(currentProfile||{}),phone:value,phone_verified_at:new Date().toISOString(),phone_verified_number:value};finish(true);}catch(e){status.textContent=e.message||"Could not verify phone number.";}finally{b.disabled=false;b.textContent="Verify Phone Number";}});
-      overlay.querySelector("#zelpxWalletCancel").addEventListener("click",()=>finish(false));
-      overlay.addEventListener("click",event=>{if(event.target===overlay)finish(false);});
-    });
-  }
-
   async function addCredits() {
     clearMessage("appMessage");
-    if (!await ensureContractorPhoneVerified()) return;
     if (!currentContractor || !currentWallet) return message("appMessage", "Your contractor account or credit wallet is not ready. Contact ZELPX support.", "error");
     const dollars = Number($("creditAmount").value);
     if (!Number.isFinite(dollars) || dollars < 10 || dollars > 10000 || Math.round(dollars * 100) !== dollars * 100)
@@ -1827,7 +1780,6 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   }
 
   async function buyLead(lead, button) {
-    if (!await ensureContractorPhoneVerified()) return;
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
     if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel)) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
