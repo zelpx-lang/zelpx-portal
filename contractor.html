@@ -2550,7 +2550,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
             claimFeedback.className="message success";claimButton.disabled=true;claimButton.textContent="Complaint submitted";
           }catch(e){error.textContent=e.message||"Could not submit the complaint.";error.className="message error";submit.disabled=false;submit.textContent="Submit request";cancel.disabled=false;}
         });
-        actions.append(cancel,submit);dialog.append(title,intro,reasonLabel,detailsLabel,hint,error,actions);overlay.append(dialog);document.body.append(overlay);explanation.focus();
+        actions.append(cancel,submit);dialog.append(title,intro,reasonLabel,detailsLabel,hint,error,actions);overlay.append(dialog);document.body.append(overlay);
       });
       (async()=>{
         try {
