@@ -1919,7 +1919,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   }
 
   async function buyLead(lead, button) {
-    if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service selection required","To purchase this lead, first add this service to your contractor profile in My company → Work types & license requirements.");
+    if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service not selected","This service is not selected in your contractor account. Update your account in My company → Work types & license requirements to become eligible to purchase this lead.");
     if(!contractorPhoneIsVerified())return showLeadRequirementNotice("Phone verification required","You have not verified the phone number for your contractor account. Verify it in My company → Account phone verification. After successful verification, you can purchase leads without another SMS check.");
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
     if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel)) return;
