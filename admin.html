@@ -2736,7 +2736,7 @@
         else {
           const note=document.createElement("textarea");note.rows=2;note.maxLength=2000;note.placeholder="Administrator note to record with your decision…";
           const actions=document.createElement("div");actions.className="actions";
-          for(const [decision,label] of [["approve","Approve refund"],["hold","Keep under review"],["reject","Reject request"]]){
+          for(const [decision,label] of [["approve","Approve return money"],["hold","Keep under review"],["reject","Decline return money"]]){
             const btn=document.createElement("button");btn.type="button";btn.textContent=label;if(decision==="reject")btn.className="danger";else if(decision==="hold")btn.className="secondary";
             btn.addEventListener("click",async()=>{
               if(decision!=="hold"&&!window.confirm(decision==="approve"?"Approve and return the lead price to this contractor’s ZELPX Credits wallet?":"Reject this refund request?"))return;
