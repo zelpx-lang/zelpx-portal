@@ -1737,7 +1737,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       .select("phone,phone_verified_at,phone_verified_number,role")
       .eq("id", currentUser.id).maybeSingle();
     if (profileError) throw profileError;
-    const digits = value => String(value || "").replace(/\\D/g, "");
+    const digits = value => String(value || "").replace(/\D/g, "");
     if (profile?.role !== "contractor") throw new Error("Contractor account required.");
     if (profile.phone_verified_at && digits(profile.phone).length >= 10 &&
         digits(profile.phone) === digits(profile.phone_verified_number)) return true;
@@ -1779,7 +1779,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         try {
           if(!sentPhone) throw new Error("Send an SMS code first.");
           const code=codeInput.value.trim();
-          if(!/^\\d{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
+          if(!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
           const response=await fetch("/api/customer-phone/verify-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({phone:sentPhone,code})});
           const result=await response.json().catch(()=>({}));
           if(!response.ok || !result.verified) throw new Error(result.error || "The code could not be verified.");
