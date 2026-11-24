@@ -2685,6 +2685,15 @@
   }
 
 
+  let refundBadgeTimer=null;
+  async function refreshRefundBadge(){
+    if(!isAdmin||!db)return;
+    try{
+      const {count,error}=await db.from("lead_protection_claims").select("id",{count:"exact",head:true}).in("status",["under_review","pending"]);
+      if(error)throw error;
+      const badge=$("refundRequestBadge");if(badge){badge.textContent=String(count||0);badge.classList.toggle("hidden",!count);}
+    }catch(e){console.warn("Refund request alert refresh failed:",e.message);}
+  }
   async function loadRefundRequests() {
     const list=$("refundRequestsList"); if(!list)return;
     list.textContent="Loading refund requests…";
@@ -2761,6 +2770,8 @@
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     if (tabId === "adminPanel" && isAdmin) {
+      refreshRefundBadge();
+      if(!refundBadgeTimer) refundBadgeTimer=setInterval(refreshRefundBadge,45000);
       document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.add("hidden"));
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.remove("active"));
     }
