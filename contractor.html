@@ -755,6 +755,13 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     </section>
 
     <section id="adminPanel" class="card hidden">
+      <section class="lead" id="adminLeadProtectionSection">
+        <h2>Lead Protection & Refunds</h2>
+        <p>Review contractor complaints submitted within 72 hours. Approved refunds return ZELPX Credits to the contractor wallet.</p>
+        <div class="actions"><button id="refreshLeadProtectionBtn" type="button" class="secondary">Refresh claims</button></div>
+        <div id="leadProtectionAdminMessage" class="message hidden"></div>
+        <div id="leadProtectionClaimsList"><p class="muted">Load claims to review.</p></div>
+      </section>
 <section class="lead" id="adminContractorReviewSection"><h2>Contractor services & license verification</h2><p>Review selected services, professions, work state, license number, type and expiration. Verify license numbers against the official state registry before approving each profession.</p><div class="grid" style="margin:12px 0"><div><label for="adminContractorSearch">Find contractor by name or business</label><input id="adminContractorSearch" type="search" placeholder="Search person, company, email or phone" autocomplete="off"></div><div style="display:flex;align-items:end;gap:10px"><button id="refreshContractorReviewBtn" type="button" class="secondary">Refresh contractors</button><span id="adminContractorSearchCount" class="muted" aria-live="polite"></span></div></div><div id="adminContractorReviewMessage" class="message hidden"></div><div id="adminContractorReviewList">Loading contractors…</div></section><section class="lead" id="contractorChangeReviewSection">
         <h2>Contractor profile change requests</h2>
         <p>Review and approve contractor profile, service category, and profession changes. Pending changes do not become active until approved.</p>
@@ -2419,6 +2426,73 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         retention.append(waitMessage);
       }
       details.append(retention);
+      const claimBox = document.createElement("div");
+      claimBox.className = "lead";
+      claimBox.style.cssText = "margin-top:12px;padding:14px;border-radius:14px";
+      const claimHeading = document.createElement("strong");
+      claimHeading.textContent = "Lead protection";
+      const claimHelp = document.createElement("p");
+      claimHelp.className = "muted";
+      claimHelp.textContent = "Report a fake, duplicate, or invalid lead within 72 hours of purchase. Approved refunds are returned as ZELPX Credits.";
+      claimHelp.style.margin = "6px 0 10px";
+      claimBox.append(claimHeading, claimHelp);
+      const claimReason = document.createElement("select");
+      claimReason.setAttribute("aria-label", "Reason for reporting this lead");
+      [
+        ["invalid_phone","Invalid phone number"],["customer_denies_request","Customer denies submitting request"],
+        ["wrong_person","Wrong person / contact"],["duplicate_lead","Duplicate lead"],
+        ["fake_customer","Fake customer"],["false_service_request","False service request"],
+        ["unable_to_reach","Unable to reach customer"],["other","Other"]
+      ].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;claimReason.append(option);});
+      const claimDetails = document.createElement("textarea");
+      claimDetails.rows = 2;
+      claimDetails.placeholder = "Explain what happened (optional)";
+      claimDetails.setAttribute("aria-label","Details about the lead complaint");
+      const claimFeedback = document.createElement("div");
+      claimFeedback.className = "message hidden";
+      const claimButton = document.createElement("button");
+      claimButton.type = "button";
+      claimButton.textContent = "Report lead";
+      claimButton.style.marginTop = "8px";
+      claimBox.append(claimReason, claimDetails, claimButton, claimFeedback);
+      details.append(claimBox);
+      (async()=>{
+        try {
+          const {data:existing,error:claimReadError}=await db.from("lead_protection_claims")
+            .select("id,status,reason,created_at,auto_reason").eq("purchase_id",item.id).maybeSingle();
+          if(claimReadError) throw claimReadError;
+          if(existing){
+            claimReason.disabled=true; claimDetails.disabled=true; claimButton.disabled=true;
+            claimButton.textContent=existing.status==="refunded"?"Refund issued":"Complaint submitted";
+            claimFeedback.textContent="Status: "+String(existing.status||"under review").replaceAll("_"," ")+
+              (existing.auto_reason?" — "+existing.auto_reason:"");
+            claimFeedback.className="message "+(existing.status==="refunded"?"success":"");
+          } else if(Date.now()-new Date(item.purchased_at).getTime()>72*60*60*1000){
+            claimReason.disabled=true; claimDetails.disabled=true; claimButton.disabled=true;
+            claimButton.textContent="72-hour period expired";
+            claimFeedback.textContent="The 72-hour lead protection reporting period has expired.";
+            claimFeedback.className="message";
+          }
+        } catch(e){claimFeedback.textContent="Could not check claim status: "+(e.message||"");claimFeedback.className="message error";}
+      })();
+      claimButton.addEventListener("click",async()=>{
+        if(!window.confirm("Submit this lead protection complaint? You can submit only one complaint for each purchase."))return;
+        claimButton.disabled=true;claimButton.textContent="Submitting…";
+        try{
+          const {data:claimId,error}=await db.rpc("submit_lead_protection_claim",{
+            p_purchase_id:item.id,p_reason:claimReason.value,p_details:claimDetails.value.trim()
+          });
+          if(error)throw error;
+          if(!claimId)throw new Error("The server did not confirm the complaint.");
+          claimFeedback.textContent="Your complaint was submitted. Claim ID: "+claimId+". ZELPX will review it under the 72-hour protection policy.";
+          claimFeedback.className="message success";
+          claimReason.disabled=true;claimDetails.disabled=true;claimButton.textContent="Complaint submitted";
+        }catch(e){
+          claimButton.disabled=false;claimButton.textContent="Report lead";
+          claimFeedback.textContent=e.message||"Could not submit the complaint.";
+          claimFeedback.className="message error";
+        }
+      });
       const serviceDetails = document.createElement("div"); details.append(serviceDetails);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); details.append(contactBox);
@@ -3291,11 +3365,67 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     }
   }
 
+
+  async function loadLeadProtectionClaims(){
+    const list=$("leadProtectionClaimsList"), feedback=$("leadProtectionAdminMessage");
+    if(!list)return;
+    list.textContent="Loading claims…";
+    if(feedback){feedback.className="message hidden";feedback.textContent="";}
+    try{
+      const {data:claims,error}=await db.from("lead_protection_claims")
+        .select("id,purchase_id,lead_id,contractor_id,reason,details,status,admin_note,created_at,auto_reason,auto_decision")
+        .order("created_at",{ascending:false}).limit(100);
+      if(error)throw error;
+      list.replaceChildren();
+      if(!claims?.length){list.textContent="No lead protection complaints.";return;}
+      for(const claim of claims){
+        const card=document.createElement("article");card.className="lead";
+        const title=document.createElement("h3");title.textContent=String(claim.reason||"Complaint").replaceAll("_"," ");
+        const meta=document.createElement("p");meta.className="muted";
+        meta.textContent="Status: "+claim.status+" · Submitted: "+new Date(claim.created_at).toLocaleString()+" · Purchase: "+claim.purchase_id;
+        const detail=document.createElement("p");detail.textContent=claim.details||"No additional details.";
+        card.append(title,meta,detail);
+        if(claim.auto_reason){const auto=document.createElement("p");auto.className="muted";auto.textContent="Automatic check: "+claim.auto_reason;card.append(auto);}
+        if(claim.admin_note){const note=document.createElement("p");note.textContent="Admin note: "+claim.admin_note;card.append(note);}
+        if(!["refunded","refund_rejected"].includes(claim.status)){
+          const noteInput=document.createElement("textarea");noteInput.rows=2;noteInput.placeholder="Admin note (optional)";
+          const actions=document.createElement("div");actions.className="actions";
+          for(const [decision,label] of [["approve","Approve & refund credits"],["hold","Hold for review"],["reject","Reject"]]){
+            const button=document.createElement("button");button.type="button";button.textContent=label;
+            if(decision==="reject")button.className="danger";else if(decision==="hold")button.className="secondary";
+            button.addEventListener("click",async()=>{
+              const promptText=decision==="approve"?"Approve this claim and return the full purchase price to the contractor's ZELPX Credits wallet?":decision==="reject"?"Reject this refund request?":"Keep this claim under review?";
+              if(!window.confirm(promptText))return;
+              button.disabled=true;
+              try{
+                const {data,error}=await db.rpc("admin_resolve_lead_protection_claim",{
+                  p_claim_id:claim.id,p_decision:decision,p_admin_note:noteInput.value.trim()||null
+                });
+                if(error)throw error;
+                if(!data?.success)throw new Error("The server did not confirm the decision.");
+                await loadLeadProtectionClaims();
+              }catch(e){
+                button.disabled=false;
+                if(feedback){feedback.textContent=e.message||"Could not resolve claim.";feedback.className="message error";}
+              }
+            });
+            actions.append(button);
+          }
+          card.append(noteInput,actions);
+        }
+        list.append(card);
+      }
+    }catch(e){
+      list.textContent="Could not load lead protection claims: "+(e.message||"");
+      if(feedback){feedback.textContent=e.message||"Could not load claims.";feedback.className="message error";}
+    }
+  }
+
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
     window.scrollTo({ top:0, behavior:"smooth" });
-    if (tabId === "adminPanel" && isAdmin) { loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); loadAdminContractorReviews(); if ("Notification" in window && Notification.permission==="default") Notification.requestPermission().catch(()=>{}); }
+    if (tabId === "adminPanel" && isAdmin) { loadLeadProtectionClaims(); loadServiceRequests(); loadAdminLeads(); loadContractorChangeRequests(); loadAdminContractorReviews(); if ("Notification" in window && Notification.permission==="default") Notification.requestPermission().catch(()=>{}); }
   }
   async function logout() {
     const { error } = await db.auth.signOut({ scope: "local" });
@@ -3353,6 +3483,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshRequestsBtn").addEventListener("click", loadServiceRequests); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("refreshAdminChatsBtn").addEventListener("click", loadAdminChats);
+    $("refreshLeadProtectionBtn").addEventListener("click",loadLeadProtectionClaims);
     $("refreshContractorChangesBtn").addEventListener("click",loadContractorChangeRequests);
     $("refreshContractorReviewBtn").addEventListener("click",loadAdminContractorReviews);
     $("adminContractorSearch").addEventListener("input",filterAdminContractors);
