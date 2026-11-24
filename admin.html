@@ -578,6 +578,7 @@
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
+        <button type="button" data-admin-page="adminLeadProtectionPage">Lead Protection & Refunds</button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -662,6 +663,31 @@
           <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh incoming leads</button><span id="requestCount" class="muted"></span></div>
           <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
           <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
+        </section>
+      </section>
+      <section id="adminLeadProtectionPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Lead Protection & Refunds</h2>
+          <p>Automatic refunds are limited to exact-match duplicate evidence. You can pause automation, review every claim, and manually approve, reject, or hold any case.</p>
+          <div id="leadProtectionAdminMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="statrow">
+            <div class="stat"><strong id="leadProtectionModeValue">Loading…</strong><span>Automatic mode</span></div>
+            <div class="stat"><strong id="leadProtectionOpenCount">—</strong><span>Claims needing review</span></div>
+            <div class="stat"><strong>72 hours</strong><span>Claim submission window</span></div>
+          </div>
+          <div class="actions">
+            <button id="leadProtectionToggleBtn" type="button" class="secondary">Loading automatic mode…</button>
+            <button id="leadProtectionRefreshBtn" type="button" class="secondary">Refresh claims</button>
+          </div>
+          <label for="leadProtectionAdminNote">Administrator note (applies to the selected action)</label>
+          <textarea id="leadProtectionAdminNote" rows="3" style="min-height:80px" placeholder="Reason for your decision…"></textarea>
+          <div id="leadProtectionClaimsList"><p class="muted">Loading protection claims…</p></div>
+        </section>
+        <section class="lead">
+          <h3>Recent audit log</h3>
+          <p>Every contractor submission, automatic decision, administrator override, and mode change is recorded.</p>
+          <div id="leadProtectionAuditList"><p class="muted">Loading audit history…</p></div>
         </section>
       </section>
       <section id="adminVerifyLeadPage" class="admin-page hidden">
@@ -2722,7 +2748,85 @@
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
+    if (pageId === "adminLeadProtectionPage") loadLeadProtectionAdmin().catch(e => message("leadProtectionAdminMessage", "Could not load lead protection: " + e.message, "error"));
   }
+
+  async function loadLeadProtectionAdmin() {
+    if (!isAdmin) return;
+    clearMessage("leadProtectionAdminMessage");
+    const modeResult = await db.from("lead_protection_settings").select("auto_enabled").eq("id", true).maybeSingle();
+    if (modeResult.error) throw modeResult.error;
+    const autoEnabled = modeResult.data?.auto_enabled === true;
+    $("leadProtectionModeValue").textContent = autoEnabled ? "ON" : "OFF";
+    $("leadProtectionModeValue").style.color = autoEnabled ? "var(--green)" : "var(--red)";
+    $("leadProtectionToggleBtn").textContent = autoEnabled ? "Turn automatic refunds OFF" : "Turn automatic refunds ON";
+    $("leadProtectionToggleBtn").dataset.enabled = String(autoEnabled);
+
+    const claimsResult = await db.from("lead_protection_claims")
+      .select("id,purchase_id,lead_id,contractor_id,reason,details,status,admin_note,created_at,auto_decision,auto_reason,auto_processed_at,refund_transaction_id,lead_purchases(price_cents,purchased_at),contractors(company_name),leads(service_category,zip_code)")
+      .order("created_at", { ascending: false }).limit(100);
+    if (claimsResult.error) throw claimsResult.error;
+    const claims = claimsResult.data || [];
+    $("leadProtectionOpenCount").textContent = String(claims.filter(x => ["open","under_review","refund_approved"].includes(x.status)).length);
+    const list = $("leadProtectionClaimsList");
+    list.replaceChildren();
+    if (!claims.length) {
+      const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = "No lead protection claims have been submitted."; list.append(empty);
+    }
+    for (const claim of claims) {
+      const card = document.createElement("article"); card.className = "lead";
+      const title = document.createElement("h3"); title.textContent = (claim.reason || "Claim").replaceAll("_"," ") + " — " + (claim.status || "unknown").replaceAll("_"," ");
+      const info = document.createElement("p");
+      const price = claim.lead_purchases?.price_cents;
+      info.textContent = "Company: " + (claim.contractors?.company_name || claim.contractor_id) +
+        " | Service: " + (claim.leads?.service_category || "—") + " | ZIP: " + (claim.leads?.zip_code || "—") +
+        " | Purchase: " + (typeof price === "number" ? money(price) : "—") +
+        " | Submitted: " + new Date(claim.created_at).toLocaleString();
+      const details = document.createElement("p"); details.textContent = "Details: " + (claim.details || "None provided");
+      const auto = document.createElement("p"); auto.textContent = "Automation: " + (claim.auto_decision || "Not evaluated") + (claim.auto_reason ? " — " + claim.auto_reason : "");
+      const note = document.createElement("p"); note.textContent = "Admin note: " + (claim.admin_note || "—");
+      const id = document.createElement("small"); id.className = "muted"; id.textContent = "Claim ID: " + claim.id;
+      card.append(title,info,details,auto,note,id);
+      if (!["refunded","refund_rejected"].includes(claim.status) && !claim.refund_transaction_id) {
+        const actions = document.createElement("div"); actions.className = "actions";
+        for (const [decision,label,cls] of [["approve","Approve & refund credits",""],["hold","Keep under review","secondary"],["reject","Reject claim","danger"]]) {
+          const button = document.createElement("button"); button.type = "button"; button.textContent = label; button.className = cls;
+          button.dataset.claimAction = decision; button.dataset.claimId = claim.id; actions.append(button);
+        }
+        card.append(actions);
+      }
+      list.append(card);
+    }
+
+    const auditResult = await db.from("lead_protection_audit")
+      .select("claim_id,actor_type,action,details,created_at").order("created_at",{ascending:false}).limit(50);
+    if (auditResult.error) throw auditResult.error;
+    const auditList = $("leadProtectionAuditList"); auditList.replaceChildren();
+    for (const item of auditResult.data || []) {
+      const line = document.createElement("p");
+      line.textContent = new Date(item.created_at).toLocaleString() + " | " + item.actor_type + " | " + item.action +
+        (item.claim_id ? " | Claim " + item.claim_id : "") + " | " + JSON.stringify(item.details || {});
+      auditList.append(line);
+    }
+    if (!auditResult.data?.length) { const empty=document.createElement("p"); empty.className="muted"; empty.textContent="No audit events yet."; auditList.append(empty); }
+  }
+  async function resolveLeadProtectionClaim(claimId, decision) {
+    const note = ($("leadProtectionAdminNote").value || "").trim();
+    if (decision === "reject" && !note) {
+      message("leadProtectionAdminMessage","Add an administrator note before rejecting a claim.","error"); return;
+    }
+    const labels = {approve:"issue this credit refund",hold:"keep this claim under review",reject:"reject this claim"};
+    if (!window.confirm("Are you sure you want to " + labels[decision] + "?")) return;
+    const { data, error } = await db.rpc("admin_resolve_lead_protection_claim", {
+      p_claim_id: claimId, p_decision: decision, p_admin_note: note || null
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error("The administrator action was not completed.");
+    message("leadProtectionAdminMessage", decision === "approve" ? "Refund credited to the contractor's ZELPX Credits wallet." : decision === "reject" ? "Claim rejected." : "Claim placed on hold.", "success");
+    $("leadProtectionAdminNote").value = "";
+    await loadLeadProtectionAdmin();
+  }
+
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.classList.toggle("active", button.dataset.tab === tabId));
@@ -2794,6 +2898,24 @@
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
     $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
+    $("leadProtectionRefreshBtn")?.addEventListener("click", () => loadLeadProtectionAdmin().catch(e => message("leadProtectionAdminMessage", e.message, "error")));
+    $("leadProtectionToggleBtn")?.addEventListener("click", async () => {
+      try {
+        const currentlyEnabled = $("leadProtectionToggleBtn").dataset.enabled === "true";
+        const { data, error } = await db.rpc("admin_set_lead_protection_auto", { p_enabled: !currentlyEnabled });
+        if (error) throw error;
+        if (!data?.success) throw new Error("Automatic mode was not changed.");
+        message("leadProtectionAdminMessage", "Automatic refund mode is now " + (!currentlyEnabled ? "ON" : "OFF") + ".", "success");
+        await loadLeadProtectionAdmin();
+      } catch (e) { message("leadProtectionAdminMessage", "Could not change automatic mode: " + e.message, "error"); }
+    });
+    $("leadProtectionClaimsList")?.addEventListener("click", async event => {
+      const button = event.target.closest("[data-claim-action]");
+      if (!button) return;
+      button.disabled = true;
+      try { await resolveLeadProtectionClaim(button.dataset.claimId, button.dataset.claimAction); }
+      catch (e) { message("leadProtectionAdminMessage", "Could not process administrator action: " + e.message, "error"); button.disabled = false; }
+    });
   $("refreshProfessionCredentialsBtn")?.addEventListener("click", loadPendingProfessionCredentials);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
