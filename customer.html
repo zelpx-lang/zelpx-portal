@@ -1085,7 +1085,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           .select("role,phone,phone_verified_at,phone_verified_number")
           .eq("id", data.session.user.id).maybeSingle();
         if (verifiedProfileError) throw verifiedProfileError;
-        const digits = value => String(value || "").replace(/\\D/g, "");
+        const digits = value => String(value || "").replace(/\D/g, "");
         const profilePhoneVerified = Boolean(verifiedProfile?.phone_verified_at &&
           digits(verifiedProfile.phone).length >= 10 &&
           digits(verifiedProfile.phone) === digits(verifiedProfile.phone_verified_number));
@@ -1324,7 +1324,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
       const verifiedAt = data.phone_verified_at || null;
       const verifiedNumber = data.phone_verified_number || "";
-      const normalizeForVerification = value => String(value || "").replace(/\\D/g, "");
+      const normalizeForVerification = value => String(value || "").replace(/\D/g, "");
       window.zelpxCustomerPhoneVerified = Boolean(verifiedAt &&
         normalizeForVerification(verifiedNumber).length >= 10 &&
         normalizeForVerification(verifiedNumber) === normalizeForVerification(data.phone));
