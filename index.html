@@ -128,7 +128,7 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
       // session and loading the dashboard. It controls the customer-page cover.
       localStorage.removeItem("zelpx.oauth.pending");
       const destination = role === "admin" ? "/admin" :
-        role === "contractor" && pending.portal !== "customer" ? "/contractor" : "/customer";
+        role === "contractor" ? "/contractor" : "/customer";
       window.location.replace(destination);
     } catch (_) { reveal(); }
   };
