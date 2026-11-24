@@ -1211,6 +1211,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+      $("customerAvatarPreview").dataset.currentUrl = data.avatar_url || "";
+      $("removeCustomerAvatarButton").hidden = !data.avatar_url;
       $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
     }
 
