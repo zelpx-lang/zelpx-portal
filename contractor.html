@@ -2503,69 +2503,72 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       claimHeading.textContent = "Lead protection";
       const claimHelp = document.createElement("p");
       claimHelp.className = "muted";
-      claimHelp.textContent = "Request a refund within 72 hours of purchase. Explain exactly what happened; your complaint is sent directly to the ZELPX administrator for review. Approved refunds are returned as ZELPX Credits."
+      claimHelp.textContent = "Request a refund within 72 hours of purchase. Explain exactly what happened; your complaint is sent directly to the ZELPX administrator for review. Approved refunds are returned as ZELPX Credits.";
       claimHelp.style.margin = "6px 0 10px";
       claimBox.append(claimHeading, claimHelp);
-      const claimReason = document.createElement("select");
-      claimReason.setAttribute("aria-label", "Reason for reporting this lead");
-      [
-        ["invalid_phone","Invalid phone number"],["customer_denies_request","Customer denies submitting request"],
-        ["wrong_person","Wrong person / contact"],["duplicate_lead","Duplicate lead"],
-        ["fake_customer","Fake customer"],["false_service_request","False service request"],
-        ["unable_to_reach","Unable to reach customer"],["other","Other"]
-      ].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;claimReason.append(option);});
-      const claimDetails = document.createElement("textarea");
-      claimDetails.rows = 4;
-      claimDetails.required = true;
-      claimDetails.maxLength = 2000;
-      claimDetails.placeholder = "Required: explain why this lead deserves a refund and what happened…";
-      claimDetails.setAttribute("aria-label","Details about the lead complaint");
       const claimFeedback = document.createElement("div");
       claimFeedback.className = "message hidden";
       const claimButton = document.createElement("button");
       claimButton.type = "button";
       claimButton.textContent = "Request Refund";
       claimButton.style.marginTop = "8px";
-      claimBox.append(claimReason, claimDetails, claimButton, claimFeedback);
+      claimBox.append(claimButton, claimFeedback);
       details.append(claimBox);
+
+      // Refund details are collected in a dedicated modal instead of inline fields.
+      claimButton.addEventListener("click",()=>{
+        if(claimButton.disabled)return;
+        const overlay=document.createElement("div");
+        overlay.style.cssText="position:fixed;inset:0;z-index:100700;background:rgba(25,20,16,.62);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box";
+        const dialog=document.createElement("section");
+        dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-labelledby","zelpxRefundTitle");
+        dialog.style.cssText="width:min(100%,460px);max-height:calc(100dvh - 32px);overflow:auto;background:#fffefa;color:#30231e;border-radius:20px;padding:22px;box-sizing:border-box;box-shadow:0 20px 70px #0005;font-family:inherit";
+        const title=document.createElement("h2");title.id="zelpxRefundTitle";title.textContent="Request a refund";title.style.cssText="margin:0 0 10px;font-size:25px";
+        const intro=document.createElement("p");intro.textContent="Tell us what happened with this lead. Your request will be sent to the ZELPX administrator for review. Approved refunds are returned as ZELPX Credits.";intro.style.cssText="margin:0 0 18px;color:#756b64;line-height:1.5";
+        const reasonLabel=document.createElement("label");reasonLabel.textContent="Reason for refund";reasonLabel.style.cssText="display:block;font-weight:700;margin:12px 0 7px";
+        const reason=document.createElement("select");reason.style.cssText="width:100%;box-sizing:border-box;padding:14px;border:1px solid #ded8d2;border-radius:12px;background:#fff;color:#30231e;font:inherit";
+        reasonLabel.append(reason);
+        [["invalid_phone","Invalid phone number"],["customer_denies_request","Customer denies submitting request"],["wrong_person","Wrong person / contact"],["duplicate_lead","Duplicate lead"],["fake_customer","Fake customer"],["false_service_request","False service request"],["unable_to_reach","Unable to reach customer"],["other","Other"]].forEach(([value,label])=>{const option=document.createElement("option");option.value=value;option.textContent=label;reason.append(option);});
+        const detailsLabel=document.createElement("label");detailsLabel.textContent="Explain what happened";detailsLabel.style.cssText="display:block;font-weight:700;margin:16px 0 7px";
+        const explanation=document.createElement("textarea");explanation.rows=5;explanation.maxLength=2000;explanation.required=true;explanation.placeholder="Explain why this lead deserves a refund and what happened…";explanation.style.cssText="display:block;width:100%;box-sizing:border-box;padding:14px;border:1px solid #ded8d2;border-radius:12px;background:#fff;color:#30231e;font:inherit;resize:vertical";
+        detailsLabel.append(explanation);
+        const hint=document.createElement("p");hint.textContent="Please provide at least 10 characters. Only one request is allowed per purchase.";hint.style.cssText="font-size:13px;color:#756b64;line-height:1.4";
+        const error=document.createElement("div");error.className="message hidden";error.setAttribute("role","alert");
+        const actions=document.createElement("div");actions.style.cssText="display:flex;gap:10px;margin-top:18px";
+        const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancel";cancel.style.cssText="flex:1;min-height:52px;border:1px solid #ded8d2;border-radius:12px;background:#fff;color:#30231e;font-weight:700";
+        const submit=document.createElement("button");submit.type="button";submit.textContent="Submit request";submit.style.cssText="flex:1;min-height:52px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-weight:700";
+        const close=()=>overlay.remove();cancel.addEventListener("click",close);overlay.addEventListener("click",event=>{if(event.target===overlay)close();});
+        submit.addEventListener("click",async()=>{
+          const text=explanation.value.trim();
+          if(text.length<10){error.textContent="Please explain the problem in at least 10 characters.";error.className="message error";return;}
+          submit.disabled=true;submit.textContent="Submitting…";cancel.disabled=true;
+          try{
+            const {data:claimId,error:submitError}=await db.rpc("submit_lead_protection_claim",{p_purchase_id:item.id,p_reason:reason.value,p_details:text});
+            if(submitError)throw submitError;
+            if(!claimId)throw new Error("The server did not confirm the complaint.");
+            close();claimFeedback.textContent="Your refund request was sent to the ZELPX administrator. Request ID: "+claimId+". Status: under review.";
+            claimFeedback.className="message success";claimButton.disabled=true;claimButton.textContent="Complaint submitted";
+          }catch(e){error.textContent=e.message||"Could not submit the complaint.";error.className="message error";submit.disabled=false;submit.textContent="Submit request";cancel.disabled=false;}
+        });
+        actions.append(cancel,submit);dialog.append(title,intro,reasonLabel,detailsLabel,hint,error,actions);overlay.append(dialog);document.body.append(overlay);explanation.focus();
+      });
       (async()=>{
         try {
           const {data:existing,error:claimReadError}=await db.from("lead_protection_claims")
             .select("id,status,reason,created_at,auto_reason").eq("purchase_id",item.id).maybeSingle();
           if(claimReadError) throw claimReadError;
           if(existing){
-            claimReason.disabled=true; claimDetails.disabled=true; claimButton.disabled=true;
+            claimButton.disabled=true;
             claimButton.textContent=existing.status==="refunded"?"Refund issued":"Complaint submitted";
-            claimFeedback.textContent="Status: "+String(existing.status||"under review").replaceAll("_"," ")+
-              (existing.auto_reason?" — "+existing.auto_reason:"");
+            claimFeedback.textContent="Status: "+String(existing.status||"under review").replaceAll("_"," ")+(existing.auto_reason?" — "+existing.auto_reason:"");
             claimFeedback.className="message "+(existing.status==="refunded"?"success":"");
           } else if(Date.now()-new Date(item.purchased_at).getTime()>72*60*60*1000){
-            claimReason.disabled=true; claimDetails.disabled=true; claimButton.disabled=true;
-            claimButton.textContent="72-hour period expired";
+            claimButton.disabled=true;claimButton.textContent="72-hour period expired";
             claimFeedback.textContent="The 72-hour lead protection reporting period has expired.";
             claimFeedback.className="message";
           }
         } catch(e){claimFeedback.textContent="Could not check claim status: "+(e.message||"");claimFeedback.className="message error";}
       })();
-      claimButton.addEventListener("click",async()=>{
-        if(claimDetails.value.trim().length<10){claimFeedback.textContent="Please explain the problem in at least 10 characters.";claimFeedback.className="message error";return;}
-        if(!window.confirm("Send this refund request and explanation to the ZELPX administrator? Only one request is allowed per purchase."))return;
-        claimButton.disabled=true;claimButton.textContent="Submitting…";
-        try{
-          const {data:claimId,error}=await db.rpc("submit_lead_protection_claim",{
-            p_purchase_id:item.id,p_reason:claimReason.value,p_details:claimDetails.value.trim()
-          });
-          if(error)throw error;
-          if(!claimId)throw new Error("The server did not confirm the complaint.");
-          claimFeedback.textContent="Your refund request was sent directly to the ZELPX administrator. Request ID: "+claimId+". You can check the decision here.";
-          claimFeedback.className="message success";
-          claimReason.disabled=true;claimDetails.disabled=true;claimButton.textContent="Complaint submitted";
-        }catch(e){
-          claimButton.disabled=false;claimButton.textContent="Request Refund";
-          claimFeedback.textContent=e.message||"Could not submit the complaint.";
-          claimFeedback.className="message error";
-        }
-      });
       const serviceDetails = document.createElement("div"); details.append(serviceDetails);
       const contactBox = document.createElement("div"); contactBox.className = "contactbox";
       const loading = document.createElement("p"); loading.textContent = "Loading customer contact details…"; contactBox.append(loading); details.append(contactBox);
