@@ -1225,15 +1225,61 @@
     }
   }
 
+  async function adminRemoveLeadFromMarketplace(leadId) {
+    if (!isAdmin) throw new Error("Administrator access is required.");
+    if (!leadId) return;
+    const { data, error } = await db.from("leads").update({ status: "removed" }).eq("id", leadId).select("id");
+    if (error) throw error;
+    if (!data?.length) throw new Error("The lead was not removed. Check administrator permissions.");
+  }
+
+  async function adminDeleteServiceRequest(request) {
+    if (!isAdmin) throw new Error("Administrator access is required.");
+    const { data: purchaseRows, error: purchaseError } = request.lead_id
+      ? await db.from("lead_purchases").select("id", { count: "exact", head: true }).eq("lead_id", request.lead_id)
+      : { data: [], count: 0, error: null };
+    if (purchaseError) throw purchaseError;
+    const hasPurchases = (purchaseRows?.length || 0) > 0;
+    const warning = "Delete this customer request from the Incoming leads list?\n\n" +
+      (request.lead_id
+        ? "Its published lead will be removed from sale. " +
+          (hasPurchases ? "Existing contractor purchase and payment history will be preserved." : "The lead record will be retained as removed for audit/history.")
+        : "The customer request and its automatic verification record will be deleted.") +
+      "\n\nThis action cannot be undone from the dashboard.";
+    if (!window.confirm(warning)) return false;
+
+    let previousLeadStatus = null;
+    if (request.lead_id) {
+      const { data: lead, error: leadReadError } = await db.from("leads")
+        .select("status").eq("id", request.lead_id).maybeSingle();
+      if (leadReadError) throw leadReadError;
+      previousLeadStatus = lead?.status ?? null;
+      await adminRemoveLeadFromMarketplace(request.lead_id);
+    }
+
+    try {
+      const { data: deletedRows, error: deleteError } = await db.from("service_requests")
+        .delete().eq("id", request.id).select("id");
+      if (deleteError) throw deleteError;
+      if (!deletedRows?.length) throw new Error("The request was not deleted. Confirm administrator permissions.");
+    } catch (error) {
+      if (request.lead_id && previousLeadStatus !== null) {
+        await db.from("leads").update({ status: previousLeadStatus }).eq("id", request.lead_id);
+      }
+      throw error;
+    }
+    return true;
+  }
+
   async function loadAdminLeads() {
     if (!isAdmin) return;
     const list = $("adminLeadsList"); list.textContent = "Loading leads…";
-    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services").order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await db.from("leads").select("id,service_category,zip_code,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services").neq("status", "removed").order("created_at", { ascending: false }).limit(100);
     if (error) { list.textContent = "Could not load admin leads: " + error.message; return; }
     if (!data?.length) { list.textContent = "No leads created yet."; return; }
     const wrap = document.createElement("div"); wrap.className = "tablewrap";
     const table = document.createElement("table"), thead = document.createElement("thead"), headerRow = document.createElement("tr");
-    ["Type / Category","Included services","ZIP","Urgency","Lead price","Project value","Status","Created"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
+    ["Type / Category","Included services","ZIP","Urgency","Lead price","Project value","Status","Created","Actions"].forEach(text => { const th = document.createElement("th"); th.textContent = text; headerRow.append(th); });
     thead.append(headerRow); table.append(thead); const body = document.createElement("tbody");
     data.forEach(lead => {
       const tr = document.createElement("tr");
@@ -1241,6 +1287,22 @@
       const typeLabel = packageType ? "Multi-Service Home Project" : (lead.service_category || "Regular Lead");
       const includedServices = packageType && Array.isArray(lead.package_services) ? lead.package_services.join(", ") : "—";
       [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),packageType && lead.project_value_cents != null ? money(lead.project_value_cents) : "—",lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
+      const actionCell = document.createElement("td");
+      const removeButton = document.createElement("button");
+      removeButton.type = "button"; removeButton.className = "danger"; removeButton.textContent = "Delete";
+      removeButton.addEventListener("click", async () => {
+        if (!window.confirm("Remove this lead from the marketplace? The lead record and any purchase/payment history will be retained for audit purposes.")) return;
+        setBusy(removeButton, true, "Removing…");
+        try {
+          await adminRemoveLeadFromMarketplace(lead.id);
+          tr.remove();
+          message("adminMessage", "Lead removed from the marketplace. Financial and purchase history was preserved.", "success");
+        } catch (e) {
+          setBusy(removeButton, false);
+          message("adminMessage", "Could not remove lead: " + (e.message || "Unknown error"), "error");
+        }
+      });
+      actionCell.append(removeButton); tr.append(actionCell);
       body.append(tr);
     });
     table.append(body); wrap.append(table); list.replaceChildren(wrap);
@@ -2373,6 +2435,28 @@
           });
           form.append(publish); card.append(form);
         }
+        const requestActions = document.createElement("div");
+        requestActions.className = "actions";
+        requestActions.style.cssText = "justify-content:flex-end;margin-top:14px;";
+        const deleteRequestButton = document.createElement("button");
+        deleteRequestButton.type = "button";
+        deleteRequestButton.className = "danger";
+        deleteRequestButton.textContent = "Delete request";
+        deleteRequestButton.addEventListener("click", async () => {
+          setBusy(deleteRequestButton, true, "Deleting…");
+          try {
+            const deleted = await adminDeleteServiceRequest(request);
+            if (!deleted) { setBusy(deleteRequestButton, false); return; }
+            message("serviceRequestsMessage", "Customer request deleted. Any published lead was removed from sale; existing purchase history was preserved.", "success");
+            await loadServiceRequests();
+            await loadAdminLeads();
+          } catch (e) {
+            setBusy(deleteRequestButton, false);
+            message("serviceRequestsMessage", "Could not delete request: " + (e.message || "Unknown error"), "error");
+          }
+        });
+        requestActions.append(deleteRequestButton);
+        card.append(requestActions);
         list.append(card);
       });
     } catch (e) {
