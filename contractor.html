@@ -1181,6 +1181,11 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
+    if (!IS_ADMIN_PORTAL && !isAdmin && roleProfile?.role !== "contractor") {
+      hide($("appView")); hide($("topUser")); show($("authView"));
+      message("authMessage", "This is a customer account, not a contractor account. Sign out and use your contractor login, or register as a contractor.", "error");
+      return;
+    }
     const phoneDigits = value => String(value || "").replace(/\D/g, "");
     const phoneVerified = Boolean(roleProfile?.phone_verified_at &&
       phoneDigits(roleProfile.phone).length >= 10 &&
