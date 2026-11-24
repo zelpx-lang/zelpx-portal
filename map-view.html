@@ -66,15 +66,13 @@ async function render(){
   const meta=document.createElement("div");meta.className="meta";meta.textContent=(lead.zip_code||"ZIP unavailable")+" · "+(lead.urgency||"Standard");
   const desc=document.createElement("div");desc.className="meta";desc.textContent=(lead.description||"Service request").slice(0,110);
   card.append(title,price,meta,desc);card.addEventListener("click",()=>selectLead(lead.id));$("leadList").append(card);
-  const pt=await zipPoint(lead.zip_code,lead.service_state);if(!pt)continue;
-  // ZIP centroid only: never read street address or customer coordinates.
-  // Same-ZIP leads get small deterministic visual offsets so every marker remains selectable.
-  const zipKey=String(lead.zip_code||"");const slot=zipPositions.get(zipKey)||0;zipPositions.set(zipKey,slot+1);
-  const angle=slot*2.399963229728653;const distance=slot===0?0:Math.min(6500,4200*Math.sqrt(slot));
-  const displayPt=[pt[0]+(distance/111320)*Math.cos(angle),pt[1]+(distance/(111320*Math.cos(pt[0]*Math.PI/180)))*Math.sin(angle)];
-  // The offset is only a display spread around the ZIP centroid, not a customer location.
-  const marker=L.marker(displayPt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
-  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate service area · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b><div style="margin-top:10px"><a href="/contractor?lead='+encodeURIComponent(String(lead.id))+'" style="display:block;text-align:center;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:999px">View &amp; Buy Lead</a></div>');
+  // Prefer the exact service pin entered for this lead; use ZIP centroid only when coordinates are unavailable.
+  const exactLat=Number(lead.service_latitude),exactLng=Number(lead.service_longitude);
+  const hasExact=lead.service_latitude!==null&&lead.service_latitude!==undefined&&lead.service_longitude!==null&&lead.service_longitude!==undefined&&Number.isFinite(exactLat)&&Number.isFinite(exactLng)&&Math.abs(exactLat)<=90&&Math.abs(exactLng)<=180;
+  const pt=hasExact?[exactLat,exactLng]:await zipPoint(lead.zip_code,lead.service_state);if(!pt)continue;
+  // Keep the true service coordinates as the marker location; do not substitute ZIP-centroid offsets.
+  const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
+  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Service location · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b><div style="margin-top:10px"><a href="/contractor?lead='+encodeURIComponent(String(lead.id))+'" style="display:block;text-align:center;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:999px">Buy This Lead</a></div>');
   marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
   markers.push(marker);mapped++;
  }
@@ -90,7 +88,7 @@ async function load(){
     $("leadList").innerHTML='<div class="empty">Your contractor session is not active in this tab. <a href="/contractor" style="color:#c24e1e;font-weight:800">Sign in to Contractor Portal</a>, then open Map View again.</div>';
     return;
   }
-  let {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services").order("created_at",{ascending:false}).limit(100);
+  let {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services,service_latitude,service_longitude").order("created_at",{ascending:false}).limit(100);
   // RLS can return an empty array (not an error) when a contractor has no category access yet.
   // In that case use the safe public preview view, which exposes ZIP/service/price only.
   if(error || !data?.length){
