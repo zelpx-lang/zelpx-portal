@@ -1737,7 +1737,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       const overlay=document.createElement("div");
       overlay.id="zelpxPhoneVerificationModal";
       overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:#15171ccc;display:flex;align-items:center;justify-content:center;padding:18px";
-      overlay.innerHTML=\`
+      overlay.innerHTML=`
         <section style="width:min(100%,480px);background:#fffdfa;border:1px solid #e7e0d5;border-radius:22px;padding:24px;box-shadow:0 18px 50px #0004">
           <div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#c6531e">ZELPX ACCOUNT SECURITY</div>
           <h2 style="margin:8px 0">Verify your phone number</h2>
@@ -1748,7 +1748,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
           <button id="zelpxWalletVerifyCode" type="button" style="width:100%;margin:10px 0;background:#39251d">Verify Phone Number</button>
           <p id="zelpxWalletPhoneMessage" role="status" style="min-height:24px;margin:8px 0"></p>
           <button id="zelpxWalletCancel" type="button" class="secondary" style="width:100%">Not now</button>
-        </section>\`;
+        </section>`;
       document.body.append(overlay);
       const phone=overlay.querySelector("#zelpxWalletPhone"),code=overlay.querySelector("#zelpxWalletSmsCode"),status=overlay.querySelector("#zelpxWalletPhoneMessage");
       phone.value=currentProfile?.phone||"";
