@@ -71,7 +71,7 @@ async function render(){
   // Deliberately show a broad service area, never a house-level point. The map is capped at neighborhood/city scale.
   const area=L.circle(pt,{radius:3500,color:"#ff6a2b",weight:2,fillColor:"#ff6a2b",fillOpacity:.13,leadId:lead.id}).addTo(map);
   const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
-  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate service area · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b>');
+  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate service area · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b><div style="margin-top:10px"><a href="/contractor?lead='+encodeURIComponent(String(lead.id))+'" style="display:block;text-align:center;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:999px">View &amp; Buy Lead</a></div>');
   marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
   markers.push(marker,area);mapped++;
  }
