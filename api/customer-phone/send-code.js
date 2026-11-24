@@ -1,5 +1,5 @@
 "use strict";
-const { sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, requireActiveCustomer, ensurePhoneAvailable } = require("../../lib/customer-phone");
+const { SUPABASE_URL, sendJson, normalizeE164, readJson, authenticatedUser, twilioConfig, twilioPost, requireActiveCustomer, ensurePhoneAvailable } = require("../../lib/customer-phone");
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return sendJson(res, 405, { error: "Method not allowed." });
   try {
