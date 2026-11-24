@@ -2338,7 +2338,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   async function refreshPurchaseUnreadIndicators() {
     if (!currentContractor || document.hidden) return;
     const purchasesPanel = $("purchasesPanel");
-    if (!purchasesPanel || purchasesPanel.classList.contains("hidden")) return;
+    // Keep the My purchases tab bell current even while the contractor is on another tab.
     try {
       const { data: purchases, error: purchasesError } = await db.from("lead_purchases")
         .select("lead_id").eq("contractor_id", currentContractor.id).limit(100);
