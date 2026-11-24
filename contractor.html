@@ -2576,14 +2576,11 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const chatPanel = document.createElement("div"); chatPanel.className = "chatbox hidden";
       chatButton.addEventListener("click", async () => {
         if (!chatPanel.classList.contains("hidden")) return;
-        unreadBadge.remove();
-        if (unreadCount > 0) {
-          totalUnreadPurchases = Math.max(0, totalUnreadPurchases - unreadCount);
-          updatePurchasesTab();
-        }
         if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission().catch(() => {}); } catch (_) {} }
         show(chatPanel); chatButton.hidden = true;
         await openContractorChat(item.lead_id, chatPanel);
+        // Clear the bell only after the server has recorded the messages as read.
+        await refreshPurchaseUnreadIndicators();
       });
       details.append(chatButton, chatPanel);
       const closeLeadButton = document.createElement("button");
