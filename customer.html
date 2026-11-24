@@ -2341,36 +2341,28 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         if (customerProfile.customer_account_status === "blocked") {
           throw new Error("Your customer account is temporarily suspended. Please contact ZELPX support.");
         }
-        const savedPhone = normalizeCustomerPhone(customerProfile.phone || "");
-        if (!savedPhone) {
-          throw new Error("Add a phone number to your customer profile before submitting a service request.");
-        }
-
-        // Every service request requires a fresh SMS confirmation, even if the
-        // account phone was verified previously. The code is sent only to the
-        // phone number currently saved on this customer's own profile.
-        const requestPhoneConfirmed = window.zelpxRequestOtpVerifiedForPhone === savedPhone;
+        let savedPhone = "";
+        try { savedPhone = normalizeCustomerPhone(customerProfile.phone || ""); } catch (_) { savedPhone = ""; }
+        const requestPhoneConfirmed = Boolean(savedPhone && window.zelpxRequestOtpVerifiedForPhone === savedPhone);
         if (!requestPhoneConfirmed) {
-          const { data: otpSessionData, error: otpSessionError } = await db.auth.getSession();
-          if (otpSessionError) throw otpSessionError;
-          const accessToken = otpSessionData.session?.access_token;
-          if (!accessToken) throw new Error("Please sign in again before verifying your phone.");
-
-          const sendResponse = await fetch("/api/customer-phone/send-code", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + accessToken },
-            body: JSON.stringify({ phone: savedPhone, purpose: "request_submission" })
-          });
-          const sendResult = await sendResponse.json().catch(() => ({}));
-          if (!sendResponse.ok) throw new Error(sendResult.error || "Could not send the SMS verification code.");
-
           window.zelpxPendingRequestPhone = savedPhone;
-          $("requestPhoneOtpNumber").textContent = savedPhone;
+          $("requestPhoneOtpPhone").value = savedPhone;
+          $("requestPhoneOtpNumber").textContent = savedPhone || "your mobile number";
           $("requestPhoneOtpCode").value = "";
-          $("requestPhoneOtpMessage").textContent = "A 6-digit verification code was sent to your phone.";
+          $("requestPhoneOtpMessage").textContent = savedPhone
+            ? "Sending a 6-digit verification code to your saved phone number…"
+            : "Enter your mobile number, then request a 6-digit SMS code.";
           $("requestPhoneOtpModal").hidden = false;
           document.body.classList.add("zelpx-modal-open");
-          $("requestPhoneOtpCode").focus();
+          if (savedPhone) {
+            try {
+              await sendRequestOtp();
+              $("requestPhoneOtpMessage").textContent = "A 6-digit verification code was sent to " + savedPhone + ".";
+            } catch (sendError) {
+              $("requestPhoneOtpMessage").textContent = sendError.message || "Could not send the SMS code. Check the number and try again.";
+            }
+          }
+          $("requestPhoneOtpPhone").focus();
           return;
         }
       } catch (verificationError) {
@@ -3263,7 +3255,11 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
     <div class="otp-dialog">
       <p style="margin:0 0 7px;color:#c56a3b;font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase">ZELPX · Phone verification</p>
       <h2 id="requestPhoneOtpHeading">Verify your phone number</h2>
-      <p>Before submitting your service request, enter the 6-digit code sent by SMS to <strong id="requestPhoneOtpNumber"></strong>.</p>
+      <p>Verify your mobile number by SMS before submitting your service request.</p>
+      <label for="requestPhoneOtpPhone">Mobile phone number</label>
+      <input id="requestPhoneOtpPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="+1 503 555 0123">
+      <button type="button" class="secondary-button" id="requestPhoneOtpSend" style="width:100%;margin:8px 0">Send SMS code</button>
+      <p>Enter the 6-digit code sent to <strong id="requestPhoneOtpNumber">your mobile number</strong>.</p>
       <label for="requestPhoneOtpCode">6-digit SMS code</label>
       <input id="requestPhoneOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter code">
       <p id="requestPhoneOtpMessage" aria-live="polite">A verification code is required to continue.</p>
@@ -3291,8 +3287,9 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       });
 
       async function sendRequestOtp() {
-        const phone = window.zelpxPendingRequestPhone;
-        if (!phone) throw new Error("Please submit your request again to start phone verification.");
+        const phone = normalizeCustomerPhone(document.getElementById("requestPhoneOtpPhone").value || "");
+        window.zelpxPendingRequestPhone = phone;
+        document.getElementById("requestPhoneOtpNumber").textContent = phone;
         const { data, error } = await db.auth.getSession();
         if (error) throw error;
         const accessToken = data.session?.access_token;
@@ -3306,6 +3303,15 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         if (!response.ok) throw new Error(result.error || "Could not resend the SMS code.");
         message.textContent = "A new 6-digit code was sent to your phone.";
       }
+
+      document.getElementById("requestPhoneOtpSend").addEventListener("click", async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = "Sending…";
+        try { await sendRequestOtp(); }
+        catch (error) { message.textContent = error.message || "Could not send the SMS code."; }
+        finally { button.disabled = false; button.textContent = "Send SMS code"; }
+      });
 
       document.getElementById("requestPhoneOtpResend").addEventListener("click", async event => {
         const button = event.currentTarget;
