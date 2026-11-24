@@ -1181,7 +1181,7 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       message("authMessage", "Administrator accounts can only sign in through the dedicated administrator portal.", "error");
       return;
     }
-    const phoneDigits = value => String(value || "").replace(/\\D/g, "");
+    const phoneDigits = value => String(value || "").replace(/\D/g, "");
     const phoneVerified = Boolean(roleProfile?.phone_verified_at &&
       phoneDigits(roleProfile.phone).length >= 10 &&
       phoneDigits(roleProfile.phone) === phoneDigits(roleProfile.phone_verified_number));
