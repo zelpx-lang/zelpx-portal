@@ -64,6 +64,10 @@
   const messagesEl=panel.querySelector(".zxs-messages");
   const form=panel.querySelector(".zxs-compose form");
   const input=panel.querySelector("textarea");
+  input.style.setProperty("color","#ffffff","important");
+  input.style.setProperty("-webkit-text-fill-color","#ffffff","important");
+  input.style.setProperty("caret-color","#ff8758","important");
+  input.style.setProperty("opacity","1","important");
   const sendButton=panel.querySelector(".zxs-send");
   let history=[],busy=false;
 
@@ -87,6 +91,7 @@
     sendButton.disabled=busy||!input.value.trim();
   }
   input.addEventListener("input",resizeInput);
+  input.addEventListener("focus",()=>{input.style.setProperty("color","#ffffff","important");input.style.setProperty("-webkit-text-fill-color","#ffffff","important");});
   input.addEventListener("keydown",event=>{
     if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();form.requestSubmit();}
   });
