@@ -578,6 +578,7 @@
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
+        <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -650,6 +651,16 @@
       </form>
       <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
       </section>
+      <section id="adminRefundRequestsPage" class="admin-page hidden">
+        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section class="lead">
+          <h2>Contractor refund requests</h2>
+          <p>Every request includes the contractor’s explanation and the purchased lead details. Review the complaint before approving a credit refund.</p>
+          <div class="actions"><button id="refreshRefundRequestsBtn" type="button" class="secondary">Refresh requests</button><span id="refundRequestCount" class="muted" aria-live="polite"></span></div>
+          <div id="refundRequestsMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="refundRequestsList"><p class="muted">Loading refund requests…</p></div>
+        </section>
+      </section>
       <section id="adminIncomingLeadsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
@@ -721,6 +732,7 @@
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
   }
+  $("refreshRefundRequestsBtn")?.addEventListener("click",loadRefundRequests);
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
 
   async function signIn() {
@@ -2673,6 +2685,64 @@
   }
 
 
+  async function loadRefundRequests() {
+    const list=$("refundRequestsList"); if(!list)return;
+    list.textContent="Loading refund requests…";
+    try {
+      const {data:claims,error}=await db.from("lead_protection_claims")
+        .select("id,purchase_id,lead_id,contractor_id,reason,details,status,admin_note,created_at,auto_reason")
+        .order("created_at",{ascending:false}).limit(150);
+      if(error)throw error;
+      const rows=claims||[];
+      const pending=rows.filter(x=>["under_review","pending"].includes(x.status)).length;
+      const badge=$("refundRequestBadge"); if(badge){badge.textContent=String(pending);badge.classList.toggle("hidden",pending===0);}
+      $("refundRequestCount").textContent=rows.length+" requests · "+pending+" awaiting review";
+      list.replaceChildren();
+      if(!rows.length){list.textContent="No refund requests yet.";return;}
+      const contractorIds=[...new Set(rows.map(x=>x.contractor_id).filter(Boolean))];
+      const leadIds=[...new Set(rows.map(x=>x.lead_id).filter(Boolean))];
+      const [{data:contractors,error:ce},{data:leads,error:le},{data:profiles,error:pe}]=await Promise.all([
+        contractorIds.length?db.from("contractors").select("id,user_id,company_name,email").in("id",contractorIds):Promise.resolve({data:[],error:null}),
+        leadIds.length?db.from("leads").select("id,service_category,zip_code,description,price_cents").in("id",leadIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("profiles").select("id,full_name,phone").in("id",[]):Promise.resolve({data:[],error:null})
+      ]);
+      if(ce)throw ce;if(le)throw le;
+      const contractorMap=new Map((contractors||[]).map(x=>[x.id,x]));
+      const leadMap=new Map((leads||[]).map(x=>[x.id,x]));
+      const userIds=[...new Set((contractors||[]).map(x=>x.user_id).filter(Boolean))];
+      let profileMap=new Map();
+      if(userIds.length){const pr=await db.from("profiles").select("id,full_name,phone").in("id",userIds);if(pr.error)throw pr.error;profileMap=new Map((pr.data||[]).map(x=>[x.id,x]));}
+      rows.forEach(claim=>{
+        const contractor=contractorMap.get(claim.contractor_id)||{},profile=profileMap.get(contractor.user_id)||{},lead=leadMap.get(claim.lead_id)||{};
+        const card=document.createElement("article");card.className="lead";card.style.margin="12px 0";
+        const h=document.createElement("h3");h.textContent=(lead.service_category||"Lead complaint")+" · "+(claim.status||"pending").replaceAll("_"," ").toUpperCase();
+        const meta=document.createElement("p");meta.className="muted";meta.textContent="Contractor: "+(contractor.company_name||profile.full_name||"Unknown")+" · "+(contractor.email||"")+" · "+(profile.phone||"")+" · ZIP "+(lead.zip_code||"—");
+        const date=document.createElement("p");date.className="muted";date.textContent="Submitted: "+new Date(claim.created_at).toLocaleString()+" · Purchase: "+claim.purchase_id+" · Lead: "+claim.lead_id;
+        const reason=document.createElement("p");reason.textContent="Reason: "+String(claim.reason||"").replaceAll("_"," ");
+        const details=document.createElement("div");details.style.cssText="white-space:pre-wrap;padding:12px;border-radius:12px;background:#fff8f3;border:1px solid #f1e3d8";details.textContent=claim.details||"No written explanation supplied.";
+        const leadDesc=document.createElement("p");leadDesc.className="muted";leadDesc.textContent="Lead details: "+(lead.description||"")+(lead.price_cents!=null?" · Lead price "+money(lead.price_cents):"");
+        card.append(h,meta,date,reason,details,leadDesc);
+        if(claim.auto_reason){const auto=document.createElement("p");auto.className="muted";auto.textContent="Automated review: "+claim.auto_reason;card.append(auto);}
+        if(["refunded","refund_rejected"].includes(claim.status)){const result=document.createElement("p");result.className="message "+(claim.status==="refunded"?"success":"");result.textContent=claim.status==="refunded"?"Refund issued to contractor’s ZELPX Credits wallet.":"Request rejected."+(claim.admin_note?" Admin note: "+claim.admin_note:"");card.append(result);}
+        else {
+          const note=document.createElement("textarea");note.rows=2;note.maxLength=2000;note.placeholder="Administrator note to record with your decision…";
+          const actions=document.createElement("div");actions.className="actions";
+          for(const [decision,label] of [["approve","Approve refund"],["hold","Keep under review"],["reject","Reject request"]]){
+            const btn=document.createElement("button");btn.type="button";btn.textContent=label;if(decision==="reject")btn.className="danger";else if(decision==="hold")btn.className="secondary";
+            btn.addEventListener("click",async()=>{
+              if(decision!=="hold"&&!window.confirm(decision==="approve"?"Approve and return the lead price to this contractor’s ZELPX Credits wallet?":"Reject this refund request?"))return;
+              btn.disabled=true;btn.textContent="Saving…";
+              try{const {data,error}=await db.rpc("admin_resolve_lead_protection_claim",{p_claim_id:claim.id,p_decision:decision,p_admin_note:note.value.trim()});if(error)throw error;if(!data?.success)throw new Error("The administrator decision was not confirmed.");await loadRefundRequests();}
+              catch(e){btn.disabled=false;btn.textContent=label;message("refundRequestsMessage",e.message||"Could not save decision.","error");}
+            });actions.append(btn);
+          }
+          card.append(note,actions);
+        }
+        list.append(card);
+      });
+    } catch(e){list.textContent="Could not load refund requests: "+(e.message||"Unknown error");message("refundRequestsMessage",e.message||"Could not load refund requests.","error");}
+  }
+
   function showAdminPage(pageId) {
     if (!isAdmin) return;
     document.querySelectorAll("#adminPanel .admin-page").forEach(page => page.classList.toggle("hidden", page.id !== pageId));
@@ -2684,6 +2754,7 @@
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
+    if (pageId === "adminRefundRequestsPage") loadRefundRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
