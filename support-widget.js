@@ -8,30 +8,30 @@
   style.textContent = `
     #zelpx-ai-support-launcher{position:fixed;right:22px;bottom:22px;z-index:99990;border:0;border-radius:999px;background:#FF6B3D;color:#FFFFFF;min-height:56px;padding:0 22px;font:650 14px/1 Arial,sans-serif;letter-spacing:.1px;box-shadow:0 8px 24px #FF6B3D40;cursor:pointer;transition:transform .18s,box-shadow .18s}
     #zelpx-ai-support-launcher:hover{transform:translateY(-2px);box-shadow:0 12px 30px #FF6B3D55}
-    #zelpx-ai-support-panel{position:fixed;right:22px;bottom:92px;z-index:99991;width:min(400px,calc(100vw - 28px));height:min(650px,calc(100dvh - 118px));background:#0D1015;border:1px solid #272D36;border-radius:24px;box-shadow:0 24px 70px #000000A6;display:none;overflow:hidden;font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F4F6F8}
+    #zelpx-ai-support-panel{position:fixed;right:22px;bottom:92px;z-index:99991;width:min(390px,calc(100vw - 28px));height:min(590px,calc(100dvh - 118px));background:radial-gradient(ellipse at 50% 43%,#202C3B 0%,#111923 47%,#090D13 100%);border:1px solid #344252;border-radius:30px;box-shadow:0 30px 90px #000000B8,0 0 55px #FF704D12;display:none;overflow:hidden;font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#F4F6F8}
     #zelpx-ai-support-panel.open{display:flex;flex-direction:column}#zelpx-ai-support-panel *{box-sizing:border-box}
-    .zxs-head{background:#151B23;color:#FFFFFF;padding:17px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #272D36}
-    .zxs-brand{display:flex;align-items:center;gap:11px}.zxs-logo{width:38px;height:38px;border-radius:13px;background:#FF6B3D;display:grid;place-items:center;font-size:19px;color:white;box-shadow:0 5px 16px #FF6B3D35}
-    .zxs-head strong{display:block;font-size:15px;font-weight:700;letter-spacing:-.2px}.zxs-head small{color:#AAB3C0;font-size:11px}
-    .zxs-head button{background:#222B36;color:#D4DAE2;border:1px solid #394452;border-radius:11px;font-size:20px;width:36px;height:36px;cursor:pointer}
-    .zxs-voice-stage{padding:22px 16px 19px;background:linear-gradient(180deg,#1C2530 0%,#121820 100%);text-align:center;border-bottom:1px solid #272D36}
-    .zxs-stage-label{color:#A5AFBD;font-size:10px;font-weight:700;letter-spacing:1.7px;text-transform:uppercase}
-    .zxs-orb-wrap{height:154px;display:flex;align-items:center;justify-content:center;position:relative;isolation:isolate}
-    .zxs-orb{appearance:none;position:relative;z-index:2;width:76px;height:76px;border:1px solid #FFC19A66;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,#FFC18A 0%,#FF784F 38%,#E84F32 100%);color:#FFFFFF;box-shadow:0 0 28px #FF6B3D66,inset 0 2px 8px #FFFFFFfff45;cursor:pointer;transition:transform .2s,box-shadow .2s}
-    .zxs-orb::before,.zxs-orb::after{content:"";position:absolute;inset:-17px;border:1px solid #FF9D7966;border-radius:50%;z-index:-1;transition:opacity .2s}
-    .zxs-orb::after{inset:-34px;border-color:#FF9D7940}
-    .zxs-orb svg{width:29px;height:29px;display:block;filter:drop-shadow(0 1px 2px #8F382866)}
-    .zxs-orb.listening{transform:scale(1.04);box-shadow:0 0 0 12px #FF6B3D17,0 0 45px #FF6B3D90,inset 0 2px 8px #FFFFFFfff55;animation:zxs-orb-pulse 1.6s ease-in-out infinite}
+    .zxs-head{position:relative;z-index:3;background:transparent;color:#FFFFFF;padding:23px 23px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:0}
+    .zxs-brand{display:flex;align-items:center;gap:12px}.zxs-logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(145deg,#FF986E,#F45135);display:grid;place-items:center;font-size:21px;color:white;box-shadow:0 7px 22px #FF6B3D40}
+    .zxs-head strong{display:block;font-size:16px;font-weight:700;letter-spacing:-.4px}.zxs-head small{color:#AAB8C8;font-size:11px}
+    .zxs-head button{background:#FFFFFF0D;color:#DDE5EF;border:1px solid #FFFFFF20;border-radius:50%;font-size:21px;width:38px;height:38px;cursor:pointer;backdrop-filter:blur(12px)}
+    .zxs-voice-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 18px 30px;background:transparent;text-align:center;border:0}
+    .zxs-stage-label{color:#B5C2D1;font-size:10px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase}
+    .zxs-orb-wrap{height:260px;width:100%;display:flex;align-items:center;justify-content:center;position:relative;isolation:isolate}
+    .zxs-orb{appearance:none;position:relative;z-index:2;width:104px;height:104px;border:1px solid #FFC19A80;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 25%,#FFB17E 0%,#FF784F 40%,#E84F32 100%);color:#FFFFFF;box-shadow:0 0 35px #FF6B3D55,0 15px 40px #00000055,inset 0 2px 9px #FFFFFF65;cursor:pointer;transition:transform .25s,box-shadow .25s}
+    .zxs-orb::before,.zxs-orb::after{content:"";position:absolute;inset:-25px;border:1px solid #FF9D7970;border-radius:50%;z-index:-1;transition:opacity .2s}
+    .zxs-orb::after{inset:-51px;border-color:#FF9D7945}
+    .zxs-orb svg{width:37px;height:37px;display:block;filter:drop-shadow(0 1px 2px #8F382866)}
+    .zxs-orb.listening{transform:scale(1.06);box-shadow:0 0 0 14px #FF6B3D17,0 0 65px #FF6B3D90,0 15px 40px #00000055,inset 0 2px 9px #FFFFFF75;animation:zxs-orb-pulse 1.6s ease-in-out infinite}
     .zxs-orb.listening::before{animation:zxs-ring 1.8s ease-out infinite}
-    .zxs-orb.listening::after{animation:zxs-ring 1.8s ease-out 0.45s infinite}
+    .zxs-orb.listening::after{animation:zxs-ring 1.8s ease-out .45s infinite}
     .zxs-wave{display:none}
-    .zxs-stage-hint{margin-top:3px;color:#C7D0DC;font-size:12px}
+    .zxs-stage-hint{margin-top:17px;color:#E0E7EF;font-size:14px;font-weight:500;letter-spacing:.1px}
     .zxs-messages,.zxs-tools,.zxs-compose{display:none}
-    .zxs-status{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 20px;color:#C7D0DC;font-size:13px;background:#0D1015;min-height:110px}
+    .zxs-status{flex:0 0 auto;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px 24px 29px;color:#B8C5D4;font-size:13px;background:transparent;min-height:75px}
     @keyframes zxs-pulse{50%{box-shadow:0 0 0 8px #c8322410}}
     @keyframes zxs-orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 7px #FF6B3D12,0 10px 32px #FF6B3D40}50%{transform:scale(1.06);box-shadow:0 0 0 14px #FF6B3D09,0 12px 42px #FF6B3D60}}
     @keyframes zxs-ring{0%{transform:scale(.82);opacity:.8}100%{transform:scale(1.55);opacity:0}}
-    @media(max-width:480px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:min(690px,calc(100dvh - 98px));border-radius:22px}}
+    @media(max-width:480px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:min(690px,calc(100dvh - 98px));border-radius:28px}}
     @media(prefers-reduced-motion:reduce){#zelpx-ai-support-panel *,#zelpx-ai-support-launcher{animation:none!important;transition:none!important}}
   `;
   document.head.appendChild(style);
@@ -41,9 +41,9 @@
   const panel=document.createElement("section");
   panel.id="zelpx-ai-support-panel";panel.setAttribute("aria-label","Ask ZELPX AI Support");
   panel.innerHTML=`
-    <div class="zxs-head"><div class="zxs-brand"><div class="zxs-logo">✦</div><div><strong>Ask ZELPX</strong><small>Your home project assistant</small></div></div><button type="button" aria-label="Close chat">×</button></div>
+    <div class="zxs-head"><div class="zxs-brand"><div class="zxs-logo">✦</div><div><strong>Ask ZELPX</strong><small>Your AI home assistant</small></div></div><button type="button" aria-label="Close chat">×</button></div>
     <div class="zxs-voice-stage"><div class="zxs-stage-label">VOICE ASSISTANT</div><div class="zxs-orb-wrap"><div class="zxs-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><button class="zxs-orb" type="button" aria-label="Start voice input" title="Tap to speak"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div><div class="zxs-stage-hint">Tap the microphone and speak</div></div>
-    <div class="zxs-status">Tap the microphone to start a voice conversation.</div>
+    <div class="zxs-status">Tap the microphone to talk with ZELPX.</div>
   `;
   document.body.append(launcher,panel);
   const status=panel.querySelector(".zxs-status");
