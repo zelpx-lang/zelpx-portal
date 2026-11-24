@@ -5,7 +5,7 @@
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const FUNCTION_URL = SUPABASE_URL + "/functions/v1/ai-public-support";
   const style = document.createElement("style");
-  style.textContent = \`
+  style.textContent = `
     #zelpx-ai-support-launcher{position:fixed;right:20px;bottom:20px;z-index:99990;border:0;border-radius:999px;background:#f46b2b;color:#fff;min-height:56px;padding:0 21px;font:750 15px Arial,sans-serif;box-shadow:0 8px 28px #40200f38;cursor:pointer}
     #zelpx-ai-support-panel{position:fixed;right:20px;bottom:88px;z-index:99991;width:min(390px,calc(100vw - 28px));height:min(590px,calc(100dvh - 118px));background:#fffdfa;border:1px solid #f0d8c8;border-radius:19px;box-shadow:0 18px 55px #24160f35;display:none;overflow:hidden;font:14px/1.5 Arial,sans-serif;color:#29251f}
     #zelpx-ai-support-panel.open{display:flex;flex-direction:column}#zelpx-ai-support-panel *{box-sizing:border-box}
@@ -22,20 +22,20 @@
     .zxs-compose button:disabled{opacity:.55;cursor:wait}
     .zxs-tools{display:flex;justify-content:flex-end;padding:0 12px 8px}.zxs-tools button{border:0;background:transparent;color:#a64a1b;font-size:12px;text-decoration:underline;cursor:pointer}
     @media(max-width:480px){#zelpx-ai-support-launcher{right:14px;bottom:14px}#zelpx-ai-support-panel{right:8px;bottom:78px;width:calc(100vw - 16px);height:min(590px,calc(100dvh - 98px))}}
-  \`;
+  `;
   document.head.appendChild(style);
   const launcher=document.createElement("button");
   launcher.id="zelpx-ai-support-launcher";launcher.type="button";launcher.textContent="💬 Ask ZELPX";
   launcher.setAttribute("aria-expanded","false");launcher.setAttribute("aria-controls","zelpx-ai-support-panel");
   const panel=document.createElement("section");
   panel.id="zelpx-ai-support-panel";panel.setAttribute("aria-label","Ask ZELPX AI Support");
-  panel.innerHTML=\`
+  panel.innerHTML=`
     <div class="zxs-head"><div><strong>Ask ZELPX</strong><small>Questions about home projects & our marketplace</small></div><button type="button" aria-label="Close chat">×</button></div>
     <div class="zxs-messages" aria-live="polite"><div class="zxs-bubble ai">Hi! Welcome to ZELPX 👋 You can ask me about finding a pro, home services, posting a request, or becoming a contractor. No account is needed to chat.</div></div>
     <div class="zxs-status">Chat with us without signing in.</div>
     <div class="zxs-tools"><button type="button">Start a new chat</button></div>
     <form class="zxs-compose"><textarea maxlength="2000" rows="1" placeholder="Ask your question…" aria-label="Your question"></textarea><button type="submit">Send</button></form>
-  \`;
+  `;
   document.body.append(launcher,panel);
   const messagesEl=panel.querySelector(".zxs-messages"),status=panel.querySelector(".zxs-status");
   const form=panel.querySelector("form"),input=panel.querySelector("textarea"),send=form.querySelector("button");
