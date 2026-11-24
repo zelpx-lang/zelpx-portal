@@ -1197,8 +1197,51 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
         gate = document.createElement("main");
         gate.id = "zelpxPhoneVerificationGate";
         gate.style.cssText = "max-width:620px;margin:10vh auto;padding:28px;background:#fffdfa;border:1px solid #e7e0d5;border-radius:22px;box-shadow:0 18px 45px #3b2a1a18;text-align:center";
-        gate.innerHTML = '<div style="font-size:13px;font-weight:800;letter-spacing:.16em;color:#c6531e">ZELPX ACCOUNT SECURITY</div><h1 style="margin:12px 0">Verify your phone number</h1><p style="color:#6f6a62">SMS verification is required before opening the contractor portal, adding wallet funds, purchasing leads, or using other account features.</p><a href="/customer.html?verify=phone&return=contractor" style="display:inline-block;margin:14px 0;padding:13px 22px;border-radius:999px;background:#ff6a2b;color:white;text-decoration:none;font-weight:800">Open SMS Verification</a><p style="font-size:13px;color:#6f6a62">After verification, return to the Contractor Portal and refresh the page.</p><button id="zelpxPhoneGateLogout" type="button" style="background:#15171c;color:white;border:0;border-radius:999px;padding:11px 20px">Sign Out</button>';
+        gate.innerHTML = `
+          <div style="font-size:13px;font-weight:800;letter-spacing:.16em;color:#c6531e">ZELPX ACCOUNT SECURITY</div>
+          <h1 style="margin:12px 0">Verify your phone number</h1>
+          <p style="color:#6f6a62">SMS verification is required before opening the contractor portal, adding wallet funds, or purchasing leads.</p>
+          <label for="zelpxContractorPhone" style="display:block;text-align:left;font-weight:700;margin:18px 0 6px">Phone number</label>
+          <input id="zelpxContractorPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" value="${String(roleProfile?.phone || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" style="box-sizing:border-box;width:100%;padding:14px;border:1px solid #ddd2c8;border-radius:12px;font:inherit">
+          <button id="zelpxContractorSendCode" type="button" style="display:block;width:100%;margin:12px 0;padding:13px 22px;border:0;border-radius:999px;background:#ff6a2b;color:white;font-weight:800">Send SMS Code</button>
+          <label for="zelpxContractorSmsCode" style="display:block;text-align:left;font-weight:700;margin:14px 0 6px">6-digit SMS code</label>
+          <input id="zelpxContractorSmsCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="box-sizing:border-box;width:100%;padding:14px;border:1px solid #ddd2c8;border-radius:12px;font:inherit">
+          <button id="zelpxContractorVerifyCode" type="button" style="display:block;width:100%;margin:12px 0;padding:13px 22px;border:0;border-radius:999px;background:#39251d;color:white;font-weight:800">Verify Phone Number</button>
+          <p id="zelpxContractorPhoneMessage" role="status" style="min-height:24px;color:#6f6a62"></p>
+          <button id="zelpxPhoneGateLogout" type="button" style="background:#15171c;color:white;border:0;border-radius:999px;padding:11px 20px">Sign Out</button>`;
         document.body.append(gate);
+        const phoneInput = $("zelpxContractorPhone");
+        const codeInput = $("zelpxContractorSmsCode");
+        const phoneMessage = $("zelpxContractorPhoneMessage");
+        const normalizeGatePhone = value => {
+          const raw = String(value || "").trim(), digits = raw.replace(/\D/g, "");
+          if (raw.startsWith("+") && digits.length >= 8 && digits.length <= 15) return "+" + digits;
+          if (digits.length === 10) return "+1" + digits;
+          if (digits.length === 11 && digits.startsWith("1")) return "+" + digits;
+          throw new Error("Enter a valid phone number. US numbers can use 10 digits.");
+        };
+        const callGatePhoneApi = async (path, payload) => {
+          const { data, error } = await db.auth.getSession();
+          if (error) throw error;
+          const token = data.session?.access_token;
+          if (!token) throw new Error("Please sign in again.");
+          const response = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify(payload) });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || "Phone verification service is unavailable.");
+          return result;
+        };
+        $("zelpxContractorSendCode").addEventListener("click", async () => {
+          const button = $("zelpxContractorSendCode");
+          try { const phone = normalizeGatePhone(phoneInput.value); button.disabled = true; button.textContent = "Sending..."; await callGatePhoneApi("/api/customer-phone/send-code", { phone }); phoneInput.value = phone; phoneMessage.textContent = "SMS code sent to " + phone + "."; }
+          catch (error) { phoneMessage.textContent = error.message || "Could not send SMS code."; }
+          finally { button.disabled = false; button.textContent = "Send SMS Code"; }
+        });
+        $("zelpxContractorVerifyCode").addEventListener("click", async () => {
+          const button = $("zelpxContractorVerifyCode");
+          try { const phone = normalizeGatePhone(phoneInput.value), code = codeInput.value.trim(); if (!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit code from SMS."); button.disabled = true; button.textContent = "Verifying..."; await callGatePhoneApi("/api/customer-phone/verify-code", { phone, code }); phoneMessage.textContent = "Phone verified. Opening Contractor Dashboard..."; await loadApp(); }
+          catch (error) { phoneMessage.textContent = error.message || "Could not verify phone number."; }
+          finally { button.disabled = false; button.textContent = "Verify Phone Number"; }
+        });
         $("zelpxPhoneGateLogout").addEventListener("click", async () => { await db.auth.signOut(); window.location.reload(); });
       } else {
         show(gate);
