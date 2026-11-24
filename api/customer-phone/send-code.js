@@ -9,6 +9,10 @@ module.exports = async function handler(req, res) {
     const config = twilioConfig();
     const user = await authenticatedUser(req);
     await requireActiveCustomer(user.id, config);
+    if (body.purpose === "contractor_account") {
+      const check = await fetch(SUPABASE_URL + "/rest/v1/contractors?select=id&user_id=eq." + encodeURIComponent(user.id), { headers: { Authorization: "Bearer " + config.serviceRoleKey, apikey: config.serviceRoleKey } });
+      if (!check.ok || !(await check.json().catch(() => [])).length) return sendJson(res, 403, { error: "Contractor account required." });
+    }
     await ensurePhoneAvailable(user.id, phone, config);
     await twilioPost("https://verify.twilio.com/v2/Services/" + encodeURIComponent(config.serviceSid) + "/Verifications", config, { To: phone, Channel: "sms" });
     return sendJson(res, 200, { success: true, message: "Verification code sent." });
