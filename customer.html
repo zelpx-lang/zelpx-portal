@@ -1505,14 +1505,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           return;
         }
 
-        // A contractor account must not open the customer dashboard by default.
-        // The only exception is the dedicated SMS verification handoff from the contractor gate.
-        const contractorSmsHandoff = new URLSearchParams(window.location.search).get("verify") === "phone" &&
-          new URLSearchParams(window.location.search).get("return") === "contractor";
-        if (profile?.role === "contractor" && !contractorSmsHandoff) {
-          window.location.replace("/contractor.html");
-          return;
-        }
+        // One account may access both portals. Keep the user in the customer
+        // portal when they deliberately opened it; admin accounts are blocked above.
 
         $("accountEmail").textContent = "Email: " + (session.user.email || "");
             $("authView").classList.add("hidden");
