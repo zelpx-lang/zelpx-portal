@@ -73,7 +73,7 @@ async function render(){
   const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true}).addTo(map);
   marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Approximate service area · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b>');
   marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
-  markers.push(area,marker);mapped++;
+  markers.push(marker,area);mapped++;
  }
  if(mapped){const group=L.featureGroup(markers);map.fitBounds(group.getBounds().pad(.18),{maxZoom:10});}
  setStatus(rows.length+" leads · "+mapped+" map pins");
