@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#171717"><title>ZELPX Map View</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<meta name="theme-color" content="#171717"><title>ZELPX Leads</title>
 <style>
 :root{--orange:#ff6a2b;--ink:#171717;--paper:#f6f2ec;--line:#e8dfd3;--muted:#777168}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial}
@@ -18,70 +15,54 @@ main{max-width:1500px;margin:auto;padding:14px}
 .toolbar input{flex:1;min-width:170px}.toolbar select{min-width:160px}
 .action{border:0;border-radius:999px;background:var(--orange);color:white;font-weight:800;padding:11px 18px;min-height:42px}
 .status{color:var(--muted);font-size:13px;margin-left:auto}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:12px;height:calc(100dvh - 150px);min-height:480px}
-#map{height:100%;min-height:480px;border-radius:18px;border:1px solid var(--line);overflow:hidden;background:#e9e5dc}
-.side{background:#fffdfa;border:1px solid var(--line);border-radius:18px;overflow:auto;padding:12px}
-.side h2{font-size:18px;margin:2px 0 4px}.hint{font-size:12px;color:var(--muted);margin:0 0 10px}
+.side{background:#fffdfa;border:1px solid var(--line);border-radius:18px;overflow:visible;padding:12px}
+.side h2{font-size:20px;margin:2px 0 4px}.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+.pager{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0 8px}.pager button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 16px;font:inherit;font-weight:800}.pager button:disabled{opacity:.4}.page-info{font-size:13px;color:var(--muted);font-weight:700}
 .lead{border:1px solid var(--line);border-radius:14px;padding:12px;margin:9px 0;cursor:pointer}
 .lead.active{border-color:var(--orange);box-shadow:0 0 0 2px #ff6a2b22}
 .lead strong{font-size:15px}.price{float:right;color:#c24e1e;font-weight:900}.meta{font-size:12px;color:var(--muted);margin-top:4px}
-.pin{background:var(--orange);color:white;border:2px solid white;border-radius:20px;padding:5px 9px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px #0004;font-size:12px}
-.leaflet-popup-content-wrapper{border-radius:13px}.popup-title{font-weight:800}.popup-meta{color:#6f6a62;font-size:12px}
 .empty{padding:22px 10px;text-align:center;color:var(--muted)}
-@media(max-width:800px){main{padding:9px}.layout{display:flex;flex-direction:column;height:calc(100dvh - 142px);min-height:0;gap:8px}#map{height:55%;min-height:270px;flex:0 0 55%}.side{flex:1;min-height:0}.status{width:100%;margin-left:0}.toolbar{gap:7px}.toolbar input{flex-basis:100%}.toolbar select{flex:1;min-width:0}}
+@media(max-width:800px){main{padding:9px}.status{width:100%;margin-left:0}.toolbar{gap:7px}.toolbar input{flex-basis:100%}.toolbar select{flex:1;min-width:0}.pager button{padding:9px 12px}}
 </style>
 </head>
 <body>
-<header><div class="brand">ZELPX<i>.</i> <span style="font-size:11px;letter-spacing:.08em;color:#bbb">MAP VIEW</span></div><a href="/contractor">← Contractor portal</a></header>
+<header><div class="brand">ZELPX<i>.</i> <span style="font-size:11px;letter-spacing:.08em;color:#bbb">LEAD DIRECTORY</span></div><a href="/contractor">← Contractor portal</a></header>
 <main>
 <div class="toolbar">
 <input id="search" type="search" placeholder="Search service, ZIP or details…">
 <select id="category"><option value="">All services</option></select>
 <select id="status"><option value="available">Available leads</option><option value="all">All visible leads</option></select>
-<button class="action" id="refresh">Refresh map</button>
+<button class="action" id="refresh">Refresh leads</button>
 <span class="status" id="statusText">Checking your account…</span>
 </div>
-<div class="layout"><div id="map" aria-label="Approximate map of available leads"></div>
-<aside class="side"><h2>New leads near you</h2><p class="hint">Pins show approximate ZIP-area locations only. Exact street addresses and house coordinates are never requested or displayed on this page.</p><div id="leadList"><div class="empty">Loading leads…</div></div></aside></div>
+<section class="side"><h2>Available leads</h2><p class="hint">Browse service requests. Each page shows up to 50 leads.</p><div id="leadList"><div class="empty">Loading leads…</div></div><div class="pager" id="pager"></div></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 (()=>{"use strict";
 const URL="https://zsrnjkndgbchfxibxiyd.supabase.co",KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
 const $=id=>document.getElementById(id);let db,map,markers=[],markerGroup=null,leads=[],zipCache=new Map(),timer=null;
 const money=c=>"$"+(Number(c||0)/100).toFixed(0);
 function setStatus(t){$("statusText").textContent=t}
-function initMap(){map=L.map("map",{zoomControl:true,minZoom:8,maxZoom:16,scrollWheelZoom:true,doubleClickZoom:false}).setView([45.63,-122.65],10);L.tileLayer("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",{minZoom:8,maxZoom:19,maxNativeZoom:19,attribution:'&copy; OpenStreetMap contributors, HOT style'}).addTo(map);markerGroup=L.markerClusterGroup({spiderfyOnMaxZoom:true,showCoverageOnHover:false,zoomToBoundsOnClick:true,spiderfyDistanceMultiplier:2,disableClusteringAtZoom:15});map.addLayer(markerGroup)}
-async function zipPoint(zip,state){const key=String(zip||"").trim();if(!/^\d{5}$/.test(key))return null;if(zipCache.has(key))return zipCache.get(key);try{const r=await fetch("https://api.zippopotam.us/us/"+key);if(!r.ok)return null;const j=await r.json(),p=j.places?.[0];if(!p)return null;const point=[Number(p.latitude),Number(p.longitude)];if(!point.every(Number.isFinite))return null;zipCache.set(key,point);return point}catch(_){return null}}
-function clearPins(){if(markerGroup)markerGroup.clearLayers();markers=[]}
 function visible(){const q=$("search").value.trim().toLowerCase(),cat=$("category").value,st=$("status").value;return leads.filter(x=>(st==="all"||x.status==="available")&&(!cat||x.service_category===cat)&&(!q||[x.service_category,x.zip_code,x.description,x.urgency].join(" ").toLowerCase().includes(q)))}
-function selectLead(id){document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===id));const l=leads.find(x=>x.id===id);if(l){const m=markers.find(x=>x.options.leadId===id);if(m){map.setView(m.getLatLng(),Math.min(11,Math.max(map.getZoom(),10)));m.openPopup()}}}
-async function render(){
- const rows=visible();clearPins();$("leadList").replaceChildren();
- if(!rows.length){$("leadList").innerHTML='<div class="empty">No matching leads right now.</div>';setStatus("0 leads shown");return}
- let mapped=0;const zipPositions=new Map();
- for(const lead of rows){
-  const card=document.createElement("article");card.className="lead";card.dataset.id=lead.id;
+function render(){
+ const rows=visible(),totalPages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));currentPage=Math.min(currentPage,totalPages);
+ const startIndex=(currentPage-1)*PAGE_SIZE,pageRows=rows.slice(startIndex,startIndex+PAGE_SIZE);$("leadList").replaceChildren();
+ if(!rows.length){$("leadList").innerHTML='<div class="empty">No matching leads right now.</div>';setStatus("0 leads found");$("pager").replaceChildren();return}
+ for(const lead of pageRows){
+  const card=document.createElement("article");card.className="lead";
   const title=document.createElement("strong");title.textContent=lead.service_category||"Home service";
   const price=document.createElement("span");price.className="price";price.textContent=money(lead.price_cents);
   const meta=document.createElement("div");meta.className="meta";meta.textContent=(lead.zip_code||"ZIP unavailable")+" · "+(lead.urgency||"Standard");
-  const desc=document.createElement("div");desc.className="meta";desc.textContent=(lead.description||"Service request").slice(0,110);
-  card.append(title,price,meta,desc);card.addEventListener("click",()=>selectLead(lead.id));$("leadList").append(card);
-  // Prefer the exact service pin entered for this lead; use ZIP centroid only when coordinates are unavailable.
-  const exactLat=Number(lead.service_latitude),exactLng=Number(lead.service_longitude);
-  const hasExact=lead.service_latitude!==null&&lead.service_latitude!==undefined&&lead.service_longitude!==null&&lead.service_longitude!==undefined&&Number.isFinite(exactLat)&&Number.isFinite(exactLng)&&Math.abs(exactLat)<=90&&Math.abs(exactLng)<=180;
-  const pt=hasExact?[exactLat,exactLng]:await zipPoint(lead.zip_code,lead.service_state);if(!pt)continue;
-  // Keep the true service coordinates as the marker location; do not substitute ZIP-centroid offsets.
-  const marker=L.marker(pt,{icon:L.divIcon({className:"",html:'<div class="pin">'+money(lead.price_cents)+'</div>',iconSize:null,iconAnchor:[28,16]}),leadId:lead.id,interactive:true});
-  markerGroup.addLayer(marker);
-  marker.bindPopup('<div class="popup-title">'+String(lead.service_category||"Home service").replace(/[<>&"]/g,"")+'</div><div class="popup-meta">Service location · ZIP '+String(lead.zip_code||"").replace(/[<>&"]/g,"")+' · not an exact address</div><b>'+money(lead.price_cents)+'</b><div style="margin-top:10px"><a href="/contractor?lead='+encodeURIComponent(String(lead.id))+'" style="display:block;text-align:center;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800;padding:9px 14px;border-radius:999px">Buy This Lead</a></div>');
-  marker.on("click",()=>{document.querySelectorAll(".lead").forEach(e=>e.classList.toggle("active",e.dataset.id===lead.id));const el=document.querySelector('.lead[data-id="'+CSS.escape(lead.id)+'"]');if(el)el.scrollIntoView({block:"nearest",behavior:"smooth"})});
-  markers.push(marker);mapped++;
+  const desc=document.createElement("div");desc.className="meta";desc.textContent=(lead.description||"Service request").slice(0,180);
+  const buy=document.createElement("a");buy.href="/contractor?lead="+encodeURIComponent(String(lead.id));buy.textContent="View & Buy This Lead";buy.style.cssText="display:inline-flex;margin-top:12px;padding:9px 16px;border-radius:999px;background:#ff6a2b;color:#fff;text-decoration:none;font-weight:800";
+  card.append(title,price,meta,desc,buy);$("leadList").append(card);
  }
- if(mapped){const bounds=markerGroup.getBounds();if(bounds.isValid())map.fitBounds(bounds.pad(.18),{maxZoom:10});}
- setStatus(rows.length+" leads · "+mapped+" map pins");
+ $("pager").replaceChildren();
+ const prev=document.createElement("button");prev.textContent="← Previous";prev.disabled=currentPage===1;prev.addEventListener("click",()=>{currentPage--;render();window.scrollTo({top:0,behavior:"smooth"})});
+ const info=document.createElement("span");info.className="page-info";info.textContent="Page "+currentPage+" of "+totalPages+" · "+rows.length+" leads";
+ const next=document.createElement("button");next.textContent="Next →";next.disabled=currentPage>=totalPages;next.addEventListener("click",()=>{currentPage++;render();window.scrollTo({top:0,behavior:"smooth"})});
+ $("pager").append(prev,info,next);setStatus(rows.length+" leads · showing "+(startIndex+1)+"–"+Math.min(startIndex+PAGE_SIZE,rows.length));
 }
 async function load(){
  $("refresh").disabled=true;setStatus("Updating…");
@@ -92,23 +73,23 @@ async function load(){
     $("leadList").innerHTML='<div class="empty">Your contractor session is not active in this tab. <a href="/contractor" style="color:#c24e1e;font-weight:800">Sign in to Contractor Portal</a>, then open Map View again.</div>';
     return;
   }
-  let {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services,service_latitude,service_longitude").order("created_at",{ascending:false}).limit(100);
+  let {data,error}=await db.from("leads").select("id,service_category,service_state,zip_code,description,urgency,price_cents,status,created_at,lead_type,package_services,service_latitude,service_longitude").order("created_at",{ascending:false}).limit(1000);
   // RLS can return an empty array (not an error) when a contractor has no category access yet.
   // In that case use the safe public preview view, which exposes ZIP/service/price only.
   if(error || !data?.length){
     const preview=await db.from("public_available_leads")
       .select("id,service_category,zip_code,service_state,price_cents,created_at,urgency")
-      .order("created_at",{ascending:false}).limit(100);
+      .order("created_at",{ascending:false}).limit(1000);
     if(preview.error)throw error||preview.error;
     data=(preview.data||[]).map(x=>({...x,description:"",status:"available",previewOnly:true}));
   }
   leads=data||[];
   const cats=[...new Set(leads.map(x=>x.service_category).filter(Boolean))].sort();const old=$("category").value;$("category").replaceChildren(new Option("All services",""));cats.forEach(c=>$("category").add(new Option(c,c)));$("category").value=cats.includes(old)?old:"";
-  await render();if(!timer)timer=setInterval(load,45000);
+  currentPage=1;render();if(!timer)timer=setInterval(load,45000);
  }catch(e){setStatus("Could not load leads: "+(e.message||""));$("leadList").innerHTML='<div class="empty">Please sign in to your contractor account and try again.</div>'}
  finally{$("refresh").disabled=false}
 }
-function start(){if(!window.supabase||!window.L||!L.markerClusterGroup){setStatus("Map libraries did not load. Refresh this page.");return}db=window.supabase.createClient(URL,KEY);initMap();$("refresh").addEventListener("click",load);$("search").addEventListener("input",render);$("category").addEventListener("change",render);$("status").addEventListener("change",render);load()}
+function start(){if(!window.supabase){setStatus("Lead library did not load. Refresh this page.");return}db=window.supabase.createClient(URL,KEY);$("refresh").addEventListener("click",load);$("search").addEventListener("input",()=>{currentPage=1;render()});$("category").addEventListener("change",()=>{currentPage=1;render()});$("status").addEventListener("change",()=>{currentPage=1;render()});load()}
 start();
 })();
 </script>
