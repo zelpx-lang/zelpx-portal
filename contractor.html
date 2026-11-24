@@ -1741,17 +1741,18 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     if (sessionError) throw sessionError;
     const token = sessionData.session?.access_token;
     if (!token) throw new Error("Please sign in again.");
-    const { data: profile, error: profileError } = await db.from("profiles")
+    const { data: contractorAccount, error: contractorAccountError } = await db.from("contractors")
       .select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number")
-      .from("contractors")
       .eq("user_id", currentUser.id).maybeSingle();
-    if (profileError) throw profileError;
+    if (contractorAccountError) throw contractorAccountError;
+    if (!contractorAccount) throw new Error("Contractor account required.");
     const digits = value => String(value || "").replace(/\D/g, "");
-    const {data: contractorAccount,error: contractorAccountError}=await db.from("contractors").select("id").eq("user_id",currentUser.id).maybeSingle();
-    if(contractorAccountError)throw contractorAccountError;
-    if(!contractorAccount)throw new Error("Contractor account required.");
-    if (profile.contractor_phone_verified_at && digits(profile.contractor_phone).length >= 10 &&
-        digits(profile.contractor_phone) === digits(profile.contractor_phone_verified_number)) return true;
+    if (contractorAccount.contractor_phone_verified_at &&
+        digits(contractorAccount.contractor_phone).length >= 10 &&
+        digits(contractorAccount.contractor_phone) === digits(contractorAccount.contractor_phone_verified_number)) {
+      currentContractor = { ...(currentContractor || {}), ...contractorAccount };
+      return true;
+    }
 
     return await new Promise(resolve => {
       const overlay = document.createElement("div");
@@ -1763,7 +1764,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const phoneInput=panel.querySelector("#zelpxContractorVerifyPhone");
       const codeInput=panel.querySelector("#zelpxContractorVerifyCode");
       const msg=panel.querySelector("#zelpxContractorVerifyMessage");
-      phoneInput.value=profile.contractor_phone || "";
+      phoneInput.value=contractorAccount.contractor_phone || "";
       let sentPhone="";
       const finish=value=>{overlay.remove();resolve(value);};
       panel.querySelector("#zelpxContractorCancel").onclick=()=>finish(false);
