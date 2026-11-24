@@ -1085,6 +1085,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
         }
         $("customerVerificationPhone").value = phone;
         showMessage("customerPhoneVerificationMessage", "New phone number saved and verified successfully.", "success");
+        // Re-evaluate the account gate and restore the full portal after successful SMS verification.
+        window.location.reload();
       } catch (error) {
         showMessage("customerPhoneVerificationMessage", error.message || "The SMS code could not be verified.", "error");
       } finally { button.disabled = false; button.textContent = "Verify Phone Number"; }
