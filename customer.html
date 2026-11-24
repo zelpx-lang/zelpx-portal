@@ -1,4 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f2ec">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" type="image/svg+xml">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ZELPX">
+  <title>ZELPX | Customer Portal</title>
+<script>
+/* Never let a stale OAuth marker cover the customer sign-in buttons. */
+(() => {
+  document.documentElement.classList.add("zelpx-session-check");
+  window.ZELPXRevealOAuthPage = () => {
+    document.documentElement.classList.remove("zelpx-oauth-pending");
+    try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+    try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+  };
+  document.documentElement.classList.remove("zelpx-oauth-pending");
+  try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+})();
+</script>
+<style>
 
+    /* Compact, touch-friendly service answer controls */
+    #serviceDetails .job-choice-trigger {
+      width:100%; min-height:46px; margin:5px 0 10px; padding:11px 14px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      border:1px solid #e9b69d; border-radius:12px;
+      background:#fff8f4; color:#302820; box-shadow:none;
+      font:600 15px/1.35 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      text-align:left; white-space:normal;
+    }
+    #serviceDetails .job-choice-trigger::after { content:"⌄"; color:#b85a30; font-size:19px; flex:0 0 auto; }
+    #serviceDetails .job-choice-trigger:hover:not(:disabled) {
+      transform:none; background:#fff1e9; border-color:#e47b50; color:#302820; box-shadow:none;
+    }
+    #serviceDetails .job-detail-service { padding:12px 0!important; }
+    @media(max-width:480px) {
+      #serviceDetails .job-choice-trigger { min-height:44px; padding:10px 12px; font-size:14px; border-radius:11px; }
+      #serviceDetails .job-detail-service h3 { font-size:18px; line-height:1.3; }
+      #serviceDetails label { font-size:11px; letter-spacing:.045em; }
+    }
+
+/* Remove Android/mobile blue tap highlight without removing keyboard focus. */
+*{-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[role="button"]{-webkit-tap-highlight-color:transparent}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){outline:none}
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px solid #f36b38;outline-offset:3px}
+</style>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 30px 16px;
+      min-height: 100vh;
+      background: #f4f6f9;
+      font-family: Arial, sans-serif;
+      color: #202938;
+    }
+
+    .container {
+      max-width: 620px;
+      margin: 30px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: #1769aa;
+      margin-bottom: 8px;
+    }
+
+    h1, h2 { text-align: center; }
+    h1 { font-size: 23px; }
+    h2 { font-size: 20px; margin-top: 30px; }
+
+    .subtitle {
+      text-align: center;
+      color: #667085;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd2da;
+      border-radius: 7px;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      background: white;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      margin-top: 20px;
+      border: 0;
+      border-radius: 7px;
+      background: #1769aa;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .switch {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .switch a {
+      color: #1769aa;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .message {
+      margin-top: 16px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+
+    .error {
+      display: block;
+      color: #a32121;
+      background: #fff0f0;
+    }
+
+    .success {
+      display: block;
+      color: #176b36;
+      background: #eaf8ef;
+    }
+
+    .hidden { display: none !important; }
+
+    .request-card {
+      border: 1px solid #e0e5eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 12px;
+      background: #fafbfc;
+      overflow-wrap: anywhere;
+    }
+
+    .request-card p {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      background: #eaf2fb;
+      color: #1769aa;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .section-divider {
+      border: 0;
+      border-top: 1px solid #e5e7eb;
+      margin: 30px 0;
+    }
+
+    .secondary-button { background: #667085; }
+    .dashboard-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .dashboard-topbar h1 {
+      text-align: left;
+      margin: 0;
+    }
+    .top-logout-button {
+      width: auto;
+      min-width: 112px;
+      margin: 0;
+      padding: 10px 14px;
+      background: #667085;
+      flex: 0 0 auto;
+    }
+    @media(max-width:480px) {
+      .dashboard-topbar { align-items: flex-start; }
+      .dashboard-topbar h1 { text-align: left; font-size: 20px; }
+      .top-logout-button { min-width: 96px; padding: 9px 10px; font-size: 14px; }
+    }
+
+    .customer-chat { margin-top:14px; padding:12px; border:1px solid #dce4ed; border-radius:9px; background:#fbfdff; }
+    .customer-chat-messages { max-height:280px; overflow-y:auto; padding:10px; border:1px solid #e0e5eb; border-radius:8px; background:#f6f9fc; }
+    .customer-chat-bubble { max-width:92%; margin:8px 0; padding:9px 11px; border-radius:9px; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .customer-chat-bubble.customer { margin-left:auto; background:#dceeff; }
+    .customer-chat-bubble.contractor { margin-right:auto; background:#e9edf2; }
+    .customer-chat-form { display:flex; gap:8px; align-items:flex-end; margin-top:10px; }
+    .customer-chat-form textarea { flex:1; min-height:72px; }
+    .customer-chat-form button { width:auto; margin-top:0; }
+    .customer-chat-status { margin:8px 0 0; font-size:13px; color:#667085; }
+    @media(max-width:480px) { .customer-chat-form { flex-direction:column; align-items:stretch; } .customer-chat-form button { width:100%; } }
+
+
+    @media (max-width: 480px) {
+      .container { padding: 22px 18px; }
+    }
+
+    /* ===== Customer portal: light warm orange edition ===== */
+    :root {
+      --customer-ink:#15171c;
+      --customer-orange:#ff6a2b;
+      --customer-orange-dark:#f25a1a;
+      --customer-paper:#f6f2ec;
+      --customer-line:#e7e0d5;
+      --customer-muted:#716b62;
+      --customer-soft:#fff0e8;
+    }
+    html { -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+    body {
+      padding:24px 14px;
+      background:
+        radial-gradient(ellipse at 50% -12%, #ffe4d5 0, transparent 42%),
+        var(--customer-paper);
+      color:var(--customer-ink);
+      font:16px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+      letter-spacing:-.005em;
+    }
+    .container {
+      max-width:760px;
+      margin:18px auto;
+      padding:clamp(20px,4vw,34px);
+      background:#fffdfa;
+      border:1px solid var(--customer-line);
+      border-radius:24px;
+      box-shadow:0 18px 48px -30px #3b2a1a55;
+    }
+    .logo {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:9px;
+      margin-bottom:12px;
+      color:var(--customer-ink);
+      font-size:27px;
+      font-weight:850;
+      letter-spacing:.28em;
+    }
+    .logo::after {
+      content:"";
+      display:inline-block;
+      width:9px;height:9px;
+      margin-left:-3px;
+      border-radius:50%;
+      background:var(--customer-orange);
+    }
+    h1,h2 { color:var(--customer-ink); letter-spacing:-.025em; }
+    h1 { font-size:clamp(22px,3.4vw,28px); margin:8px 0 10px; }
+    h2 { font-size:21px; margin:26px 0 12px; }
+    .subtitle { color:var(--customer-muted); line-height:1.55; }
+    label {
+      margin:16px 0 6px;
+      color:#58534b;
+      font-size:12px;
+      font-weight:750;
+      text-transform:uppercase;
+      letter-spacing:.065em;
+    }
+    input,select,textarea {
+      min-height:46px;
+      padding:12px 14px;
+      border:1.5px solid var(--customer-line);
+      border-radius:13px;
+      background:#fff;
+      color:var(--customer-ink);
+      font:inherit;
+      transition:border-color .15s,box-shadow .15s;
+    }
+    input:focus,select:focus,textarea:focus {
+      outline:3px solid #ffc9b0;
+      outline-offset:1px;
+      border-color:var(--customer-orange);
+    }
+    textarea { min-height:130px; }
+    button {
+      min-height:46px;
+      padding:12px 22px;
+      border:0;
+      border-radius:999px;
+      background:var(--customer-orange);
+      color:#fff;
+      font:700 15px/1.2 inherit;
+      box-shadow:0 6px 16px #ff6a2b33;
+      transition:transform .15s,background .15s,box-shadow .15s;
+    }
+    button:hover:not(:disabled) {
+      transform:translateY(-1px);
+      background:var(--customer-orange-dark);
+      box-shadow:0 8px 20px #ff6a2b40;
+    }
+    button:disabled { opacity:.55; box-shadow:none; }
+    .secondary-button,.top-logout-button {
+      background:#fff;
+      color:var(--customer-ink);
+      border:1px solid var(--customer-line);
+      box-shadow:none;
+    }
+    .secondary-button:hover:not(:disabled),.top-logout-button:hover:not(:disabled) {
+      background:#faf5ee;
+      box-shadow:none;
+    }
+    .switch { color:var(--customer-muted); }
+    .switch a { color:#c2410c; text-decoration:none; }
+    .switch a:hover { text-decoration:underline; }
+    .message { border-radius:13px; padding:12px 14px; }
+    .error { color:#a52a1c; background:#fff0ee; }
+    .success { color:#176b43; background:#eaf7f0; }
+    .request-card {
+      border:1px solid var(--customer-line);
+      border-radius:17px;
+      padding:17px;
+      background:#fff;
+      box-shadow:0 8px 24px -22px #3b2a1a66;
+    }
+    .request-card strong { color:var(--customer-ink); }
+    /* Compact list layout for customer service requests only. */
+    /* Customer requests: compact rows that expand to show full order and chat */
+    #requestsList > .request-card { display:block; padding:0; margin:0; border:0; border-bottom:1px solid var(--customer-line); border-radius:0; background:transparent; box-shadow:none; }
+    #requestsList .request-summary { width:100%; min-height:48px; display:flex; align-items:center; gap:9px; padding:8px 10px; border:0; border-radius:0; background:transparent; color:var(--customer-ink); box-shadow:none; text-align:left; }
+    #requestsList .request-summary:hover { background:#faf4ed; box-shadow:none; }
+    #requestsList .request-summary-text { min-width:0; flex:1; display:flex; flex-direction:column; gap:2px; }
+    #requestsList .request-summary-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; }
+    #requestsList .request-summary-date { color:var(--customer-muted); font-size:11px; font-weight:500; line-height:1.3; }
+    #requestsList .request-summary-chevron { flex:0 0 auto; color:var(--customer-muted); font-size:16px; }
+    #requestsList .request-unread-bell { flex:0 0 auto; min-width:18px; color:#a8a29e; font-size:14px; font-weight:800; white-space:nowrap; text-align:center; }
+    #requestsList .request-unread-bell.has-unread { color:#c2410c; }
+    #requestsList .request-unread-bell.has-unread { padding:4px 7px; border-radius:999px; background:#fff0e8; }
+    #requestsList .request-details { padding:8px 10px 12px; border-top:1px solid var(--customer-line); }
+    #requestsList .request-details-close { display:block; width:auto; min-width:110px; margin:12px 0 0 auto; padding:8px 18px; border:1px solid var(--customer-line); border-radius:999px; background:#fff; color:var(--customer-ink); font-size:13px; font-weight:750; }
+    #requestsList .request-details-close:hover { background:#faf4ed; }
+    #requestsList .request-details > p { margin:5px 0; font-size:12px; line-height:1.4; color:var(--customer-muted); }
+    #requestsList .request-details .request-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:8px; }
+    #requestsList .request-details .request-actions .status { margin-right:auto; font-size:10px; padding:4px 9px; }
+    #requestsList .request-details .request-actions .request-delete-button { margin:0; }
+    #requestsList .request-details .customer-chat { margin-top:8px; padding:9px; border-radius:10px; }
+    @media(max-width:600px) { #requestsList .request-summary { min-height:44px; padding:7px 8px; } #requestsList .request-details { padding:7px 8px 10px; } }
+    #requestsList > .request-card:last-child { border-bottom:0; }
+    #requestsList .request-delete-button { min-height:36px; padding:7px 13px; font-size:12px; }
+    #requestsList .customer-chat > button { min-height:40px; padding:8px 14px; font-size:13px; }
+    #requestsList .request-details .request-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    #requestsList .request-details .request-actions .status { margin-right:auto; font-size:11px; padding:5px 10px; }
+    #requestsList .request-details > p { margin:9px 0; font-size:13px; line-height:1.55; color:var(--customer-muted); overflow-wrap:anywhere; }
+    #requestsList .request-details .request-description { white-space:pre-wrap; }
+    #requestsList .request-details .request-label { color:var(--customer-ink); font-weight:750; }
+    @media(max-width:600px) { #requestsList .request-summary { min-height:48px; padding:9px 10px; } #requestsList .request-details { padding:12px 10px 14px; } }
+    .status {
+      background:var(--customer-soft);
+      color:#c2410c;
+      border-radius:999px;
+      padding:6px 12px;
+    }
+    .section-divider { border-top:1px dashed #e4dccf; margin:28px 0; }
+    .dashboard-topbar {
+      position:sticky; top:8px; z-index:30;
+      align-items:center; padding:10px 0;
+      background:rgba(255,253,250,.97);
+      border-bottom:1px solid var(--customer-line);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    }
+    .dashboard-topbar h1 { margin:0; }
+    .dashboard-topbar-actions { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+    .dashboard-home-button {
+      width:auto; min-width:94px; min-height:42px; margin:0; padding:9px 14px;
+      background:var(--customer-orange); color:#fff; border:0;
+      box-shadow:0 5px 14px #ff6a2b33; white-space:nowrap;
+    }
+    .dashboard-home-button:hover:not(:disabled) { background:var(--customer-orange-dark); }
+    .profile-panel {
+      padding:18px;
+      border:1px solid var(--customer-line);
+      border-radius:18px;
+      background:#faf7f2;
+    }
+    .profile-panel h2 { margin-top:0; }
+    .customer-chat {
+      border:1px solid var(--customer-line);
+      border-radius:17px;
+      background:#faf7f2;
+    }
+    .customer-chat-messages {
+      border:1px solid var(--customer-line);
+      border-radius:13px;
+      background:#fffdfa;
+    }
+    .customer-chat-bubble.customer { background:#ffe3d3; }
+    .customer-chat-bubble.contractor { background:#ece6dc; }
+    .customer-chat-status { color:var(--customer-muted); }
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+    }
+    .grid > div { min-width:0; }
+    .commercial-sharing-notice {
+      margin:18px 0 16px;padding:16px 17px;border:1px solid #f0d6c5;
+      border-radius:17px;background:linear-gradient(145deg,#fff8f2,#fffdfa);
+      color:var(--customer-ink);font-size:13px;line-height:1.55;
+    }
+    .commercial-sharing-notice>strong{display:block;margin-bottom:7px;font-size:15px;color:#9d421e}
+    .commercial-sharing-notice p{margin:0 0 12px;color:var(--customer-muted)}
+    .commercial-sharing-consent{display:flex;align-items:flex-start;gap:10px;margin:0!important;color:var(--customer-ink);font-size:13px;font-weight:650;letter-spacing:0!important}
+    .commercial-sharing-consent input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:var(--customer-orange)}
+    .request-cancel-button{width:auto!important;min-height:38px;margin:0 8px 8px 0;padding:8px 13px;background:#fff7f2;color:#a84220;border:1px solid #edc5b0;box-shadow:none;font-size:13px}
+    .request-cancel-button:hover:not(:disabled){background:#ffede2;color:#8e3215;box-shadow:none}
+    #requestForm > button,#authForm > button { width:100%; }
+    @media(max-width:600px) {
+      body { padding:12px 9px; }
+      .container { margin:8px auto; padding:20px 16px; border-radius:19px; }
+      .logo { font-size:24px; }
+      .grid { grid-template-columns:1fr; gap:0; }
+      .dashboard-topbar { gap:8px; }
+      .dashboard-topbar h1 { font-size:20px; }
+      .top-logout-button { min-width:88px; padding:9px 13px; font-size:13px; }
+      .profile-panel { padding:15px; }
+    }
+    .dashboard-menu {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px; margin:20px 0 22px;
+    }
+    .dashboard-menu-button {
+      width:100%; min-height:54px; margin:0; padding:11px 12px;
+      border:1px solid var(--customer-line); background:#fff;
+      color:var(--customer-ink); box-shadow:none; font-size:14px;
+      line-height:1.3; border-radius:14px;
+    }
+    .dashboard-menu-button:hover:not(:disabled) { background:#fff4ed; color:#b94717; box-shadow:none; }
+    .dashboard-menu-button.active {
+      background:var(--customer-orange); color:#fff; border-color:var(--customer-orange);
+      box-shadow:0 6px 16px #ff6a2b33;
+    }
+    .dashboard-home-grid {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px; margin:18px 0 8px;
+    }
+    .dashboard-home-card {
+      display:flex; flex-direction:column; align-items:flex-start;
+      gap:9px; min-height:150px; padding:18px;
+      border:1px solid var(--customer-line); border-radius:17px;
+      background:#fff; color:var(--customer-ink); text-align:left;
+      box-shadow:0 8px 24px -22px #3b2a1a66;
+    }
+    .dashboard-home-card:hover:not(:disabled) {
+      background:#fff8f3; border-color:#ffc5a9; color:var(--customer-ink);
+      box-shadow:0 8px 22px -16px #b9471766;
+    }
+    .dashboard-home-card strong { font-size:15px; }
+    .dashboard-home-card span:last-child {
+      color:var(--customer-muted); font-size:13px; font-weight:400; line-height:1.45;
+    }
+    .dashboard-home-icon { font-size:24px; line-height:1; }
+    .dashboard-page[hidden] { display:none !important; }
+    @media(max-width:600px) {
+      .dashboard-menu { grid-template-columns:1fr; gap:8px; margin:16px 0 20px; }
+      .dashboard-menu-button { min-height:48px; text-align:left; padding:13px 16px; }
+      .dashboard-topbar-actions { gap:6px; }
+      .dashboard-home-button { min-width:78px; padding:9px 11px; font-size:13px; }
+      .top-logout-button { min-width:78px; padding:9px 10px; font-size:13px; }
+    }
+    .requests-heading h2 { text-align:left; margin:26px 0 4px; }
+    .requests-heading .subtitle { text-align:left; margin:0 0 14px; }
+    .request-tools {
+      display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px; align-items:end; margin:14px 0 8px;
+      padding:14px; border:1px solid var(--customer-line);
+      border-radius:16px; background:#faf7f2;
+    }
+    .request-filter-field { min-width:0; }
+    .request-filter-field label { margin:0 0 6px; }
+    .request-filter-field select { width:100%; }
+    .request-results-count { color:var(--customer-muted); font-size:13px; margin:8px 2px 12px; }
+    .request-actions { display:flex; justify-content:flex-end; margin-top:14px; }
+    .request-delete-button {
+      width:auto; min-height:38px; margin:0; padding:9px 15px;
+      color:#9f2d20; background:#fff; border:1px solid #f0c8c2;
+      box-shadow:none; font-size:13px;
+    }
+    .request-delete-button:hover:not(:disabled) { color:#842018; background:#fff2ef; box-shadow:none; }
+    .request-retention-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .request-retention-actions small { color:var(--customer-muted); font-size:12px; }
+
+    @media(max-width:600px) {
+      .request-tools { grid-template-columns:1fr; }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      html { scroll-behavior:auto; }
+      *,*::before,*::after { transition-duration:.01ms!important; }
+    }
+    .service-search-wrap { position:relative; }
+    .service-suggestions { position:relative; margin-top:4px; max-height:230px; overflow-y:auto; border:1px solid #d5dce5; border-radius:8px; background:#fff; box-shadow:0 5px 15px rgba(0,0,0,.08); z-index:5; }
+    .service-suggestion { display:block; width:100%; text-align:left; background:#fff; color:#18212f; border:0; border-bottom:1px solid #edf0f4; border-radius:0; padding:12px 14px; cursor:pointer; font:inherit; }
+    .service-suggestion:hover,.service-suggestion:focus { background:#eaf2fb; }
+    .service-search-hint { color:#667085; font-size:13px; margin:6px 0 12px; }
+  
+    .social-auth { margin-top:22px; display:grid; gap:10px; }
+    .social-auth-divider { display:flex; align-items:center; gap:12px; color:var(--customer-muted); font-size:12px; font-weight:700; }
+    .social-auth-divider::before,.social-auth-divider::after { content:""; height:1px; flex:1; background:var(--customer-line); }
+    .social-auth-button { width:100%; min-height:48px; margin:0; display:flex; align-items:center; justify-content:center; gap:11px; border:1px solid #d9d4cc; border-radius:999px; background:#fff; color:#202124; box-shadow:none; font-size:14px; font-weight:700; }
+    .social-auth-button:hover:not(:disabled) { background:#faf7f2; border-color:#c9c1b6; color:#202124; box-shadow:none; }
+    .social-google-mark { font:800 21px/1 Arial,sans-serif; color:#4285f4; }
+    .social-facebook-mark { width:19px; height:19px; color:#1877f2; }
+    .social-auth-button:disabled { opacity:.6; cursor:wait; }
+    .password-field { position:relative; width:100%; }
+    .password-field input { width:100%; padding-right:52px; }
+    .password-toggle { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:38px; min-width:38px; min-height:38px; height:38px; margin:0; padding:8px; display:flex; align-items:center; justify-content:center; border:0; border-radius:50%; background:transparent; color:#716b62; box-shadow:none; cursor:pointer; }
+    .password-toggle:hover:not(:disabled) { transform:translateY(-50%); background:#fff0e8; color:#c2410c; box-shadow:none; }
+    .password-toggle:focus-visible { outline:2px solid #ff6a2b; outline-offset:2px; }
+
+/* Incoming chat toast — pinned to the lower-right corner on phones */
+.zelpx-chat-toast{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:99999;width:min( min(340px,calc(100vw - 28px)),340px);padding:13px 15px;border:1px solid #f2c5aa;border-left:4px solid #f36b2b;border-radius:14px;background:#fffefa;color:#29251f;box-shadow:0 12px 34px #21170f30;font:14px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;animation:zelpxToastIn .22s ease-out;pointer-events:none}
+.zelpx-chat-toast strong{display:block;margin-bottom:3px;color:#c44d16;font-size:12px;text-transform:uppercase;letter-spacing:.04em}.zelpx-chat-toast span{display:block;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+@keyframes zelpxToastIn{from{opacity:0;transform:translate(12px,12px)}to{opacity:1;transform:translate(0,0)}}
+
+#selectedServicesReview[hidden]{display:none!important}
+#selectedServicesReviewList{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;margin:16px 0 22px}
+#removedServicesRestore[hidden]{display:none!important}
+#removedServicesRestore{margin:4px 0 18px;padding-top:14px;border-top:1px solid var(--customer-line)}
+#removedServicesRestore .removed-services-title{display:block;margin-bottom:10px;color:var(--customer-muted);font-size:13px;font-weight:700}
+#removedServicesRestoreList{display:flex;flex-wrap:wrap;gap:8px}
+#removedServicesRestoreList .restore-service-button{width:auto;min-height:36px;margin:0;padding:7px 12px;border:1px solid #e47b50;border-radius:999px;background:#fff7f2;color:#a94318;box-shadow:none;font-size:13px}
+#removedServicesRestoreList .restore-service-button:hover:not(:disabled){background:#ffeadf;color:#8f3513;box-shadow:none}
+#selectedServicesReviewList .selected-service-pill{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:auto;max-width:100%;min-height:46px;margin:0;padding:10px 15px;border:2px solid #e47b50;border-radius:999px;background:transparent;color:var(--customer-ink);box-shadow:none;font-size:clamp(15px,3.8vw,19px);font-weight:500;line-height:1.35;text-align:left;white-space:normal;overflow-wrap:anywhere}
+#selectedServicesReviewList .selected-service-pill:hover:not(:disabled){background:#fff7f2;color:var(--customer-ink);box-shadow:none}
+#selectedServicesReviewList .selected-service-pill .remove-mark{flex:0 0 auto;color:#e47b50;font-size:23px;font-weight:500;line-height:1}
+#selectedServicesReview .review-confirm{display:flex;align-items:flex-start;gap:12px;font-weight:750;line-height:1.5}
+#confirmSelectedServices{width:22px;height:22px;accent-color:var(--customer-orange);flex:0 0 auto;margin:3px 0 0}
+/* ZELPX customer portal — softer, tighter mobile dashboard */
+:root{--customer-line:#eee4dc;--customer-soft:#fff3eb;--customer-orange:#e97843;--customer-orange-dark:#cf6032;--customer-ink:#302923;--customer-muted:#81766d}
+body{background:#f8f5f1;color:var(--customer-ink)}
+.container{max-width:680px;padding:24px 26px;background:#fffefa;border:1px solid #f0e8e0;border-radius:22px;box-shadow:0 10px 34px -28px #59402d66}
+.dashboard-topbar{padding:8px 0 13px;margin-bottom:8px;background:rgba(255,254,250,.96)}
+.dashboard-topbar h1{font-size:22px;letter-spacing:-.45px}
+.top-logout-button{min-height:40px;border-radius:13px;background:#fffaf6;color:#76675c;border-color:#eee2d8;padding:8px 14px}
+label{margin:11px 0 5px;font-size:12px;letter-spacing:.035em;color:#776d64}
+#serviceDetails.request-card,#selectedServicesReview.request-card{padding:16px 17px;margin-top:10px;border:1px solid #f0e5dc;border-radius:18px;background:linear-gradient(155deg,#fff 0%,#fffaf6 100%);box-shadow:0 5px 18px -17px #79543d55}
+#serviceDetails>strong{display:block;margin:0 0 12px;font-size:17px;letter-spacing:-.2px}
+#serviceDetails .job-detail-service{padding:11px 0!important;border-bottom:1px solid #f1e9e2!important}
+#serviceDetails .job-detail-service:last-child{border-bottom:0!important;padding-bottom:2px!important}
+#serviceDetails .job-detail-service h3{margin:0 0 9px!important;font-size:16px!important;line-height:1.3;color:#342b25}
+#serviceDetails label{margin:9px 0 4px;font-size:11px;line-height:1.35;letter-spacing:.045em;color:#82776e}
+#serviceDetails .job-choice-trigger{min-height:43px!important;margin:4px 0 5px!important;padding:9px 13px!important;border:1px solid #ead8cb!important;border-radius:12px!important;background:#fffaf6!important;color:#493b31!important;font-size:14px!important;font-weight:600!important;box-shadow:0 1px 2px #6b46300a!important}
+#serviceDetails .job-choice-trigger::after{color:#d17a50;font-size:17px}
+#serviceDetails .job-choice-trigger:hover:not(:disabled){background:#fff3eb!important;border-color:#e7b99f!important}
+input,select,textarea{border-color:#e9dfd6;border-radius:12px;background:#fffdfa}
+input,select{min-height:43px;padding:10px 12px}
+textarea{min-height:100px}
+.request-card{border-radius:16px;border-color:#eee5dd;box-shadow:0 5px 18px -18px #60432e55}
+button{border-radius:13px;box-shadow:0 3px 10px #df774022}
+button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 13px #df77402b}
+.secondary-button,.top-logout-button,.secondary{background:#fffaf6;color:#79695e;border:1px solid #eee1d7;box-shadow:none}
+.dashboard-menu{gap:8px;margin:14px 0 17px}
+.dashboard-menu-button{min-height:44px;padding:9px 10px;border-radius:12px;background:#fffdfa;border-color:#eee4dc;font-size:13px}
+.dashboard-menu-button.active{background:#fff0e7;color:#b95c32;border-color:#f0cbb7;box-shadow:none}
+@media(max-width:600px){
+ body{padding:8px 7px}
+ .container{margin:5px auto;padding:16px 13px;border-radius:18px}
+ .dashboard-topbar h1{font-size:19px}
+ #serviceDetails.request-card,#selectedServicesReview.request-card{padding:13px 13px;border-radius:15px}
+ #serviceDetails .job-detail-service{padding:9px 0!important}
+ #serviceDetails .job-detail-service h3{font-size:15px!important;margin-bottom:7px!important}
+ #serviceDetails .job-choice-trigger{min-height:41px!important;padding:8px 11px!important;font-size:13px!important}
+ #serviceDetails label{margin-top:8px;font-size:10.5px}
+ .dashboard-menu{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:12px 0 15px}
+ .dashboard-menu-button{min-height:42px;padding:8px 5px;text-align:center;font-size:12px;line-height:1.2}
+}
+
+/* Full visual refresh: ZELPX warm premium customer dashboard */
+:root{--customer-ink:#30231e;--customer-muted:#85766d;--customer-line:#f0ded1;--customer-soft:#fff0e6;--customer-orange:#ed762f;--customer-orange-dark:#ce571f}
+body{padding:0 0 28px;background:linear-gradient(180deg,#fff7f0 0,#fffaf6 260px,#f8f3ee 100%);font-family:Inter,ui-sans-serif,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--customer-ink)}
+.container{max-width:900px;min-height:100vh;margin:0 auto;padding:0 28px 42px;border:0;border-radius:0;background:transparent;box-shadow:none}
+#dashboardView{position:relative;padding-top:0}
+.dashboard-topbar{position:relative;top:auto;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 -28px 24px;padding:23px 28px 26px;background:radial-gradient(ellipse at 80% -30%,#ffb36f 0,transparent 48%),linear-gradient(115deg,#472315 0%,#7c3518 48%,#b84e1d 100%);border:0;border-radius:0 0 30px 30px;box-shadow:0 12px 28px #8e431d24;color:#fff}
+.dashboard-topbar:after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:18px;background:#fff8f2;clip-path:ellipse(55% 45% at 50% 100%);opacity:.95}
+.dashboard-topbar h1{font-size:24px;font-weight:800;letter-spacing:-.6px;color:#fff}
+.dashboard-topbar:before{content:"ZELPX";display:block;position:absolute;left:28px;top:7px;font-size:10px;letter-spacing:3px;font-weight:900;color:#ffd9bd;opacity:.9}
+.dashboard-topbar h1{padding-top:8px}
+.top-logout-button{min-height:40px;margin:0;border:1px solid #ffffff50;border-radius:999px;background:#ffffff16;color:#fff;padding:9px 17px;font-size:13px;box-shadow:none}
+.top-logout-button:hover:not(:disabled){background:#ffffff28;color:#fff}
+#dashboardView>.subtitle{margin:0 0 18px;color:#8a7568;font-size:13px;text-align:left}
+#accountEmail{font-size:12px;color:#9a887c}
+.dashboard-menu{position:sticky;bottom:10px;z-index:40;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:22px 0 18px;padding:8px;border:1px solid #f0ded2;border-radius:22px;background:#fffdfbf2;box-shadow:0 10px 35px #50301b20;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.dashboard-menu-button{display:flex;align-items:center;justify-content:center;min-height:48px;margin:0;padding:9px 7px;border:1px solid transparent;border-radius:15px;background:transparent;color:#77665b;font-size:13px;font-weight:700;line-height:1.2;box-shadow:none}
+.dashboard-menu-button:before{display:block;margin-right:7px;font-size:17px;line-height:1}
+.dashboard-menu-button[data-dashboard-page="profile"]:before{content:"♙"}
+.dashboard-menu-button[data-dashboard-page="service"]:before{content:"＋"}
+.dashboard-menu-button[data-dashboard-page="requests"]:before{content:"▤"}
+.dashboard-menu-button.active{background:linear-gradient(135deg,#fff0e4,#ffe4d2);border-color:#f4d0ba;color:#b94e20;box-shadow:inset 0 1px #fff}
+.dashboard-home-grid{gap:14px;margin:22px 0}
+.dashboard-home-card{min-height:148px;padding:19px;border:1px solid #f0e2d8;border-radius:22px;background:linear-gradient(150deg,#fff 0%,#fff8f2 100%);box-shadow:0 10px 25px -22px #6e452b88}
+.dashboard-home-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:15px;background:linear-gradient(145deg,#ffbd83,#f07836);color:#fff;font-size:23px;box-shadow:0 5px 12px #ed762f30}
+.dashboard-home-card strong{font-size:15px;letter-spacing:-.2px}
+.dashboard-home-card span:last-child{font-size:12px;line-height:1.45;color:#89786d}
+.dashboard-home-card:hover:not(:disabled){transform:translateY(-2px);border-color:#efc3a7;background:#fff9f4}
+.dashboard-page h2{text-align:left;margin:18px 0 8px;font-size:21px;letter-spacing:-.4px}
+.profile-panel,#requestForm,.request-tools{padding:22px;border:1px solid #f0e1d6;border-radius:24px;background:#fffdfa;box-shadow:0 12px 30px -26px #633d2580}
+#serviceDetails.request-card,#selectedServicesReview.request-card{margin:14px 0;padding:20px;border:1px solid #f0ded2;border-radius:22px;background:linear-gradient(145deg,#fff 0%,#fff8f2 100%);box-shadow:0 10px 28px -25px #6b412a88}
+#serviceDetails>strong{display:block;margin-bottom:16px;font-size:19px;letter-spacing:-.4px}
+#serviceDetails .job-detail-service{padding:17px 0!important;border-bottom:1px solid #f2e8e1!important}
+#serviceDetails .job-detail-service:last-child{border-bottom:0!important}
+#serviceDetails .job-detail-service h3{margin:0 0 14px!important;font-size:19px!important;font-weight:800;letter-spacing:-.35px;color:#3a2921}
+#serviceDetails label{margin:13px 0 7px;font-size:11px;font-weight:800;letter-spacing:.07em;color:#89786c}
+#serviceDetails .job-choice-trigger{min-height:48px!important;margin:4px 0 5px!important;padding:12px 15px!important;border:1px solid #e9c9b5!important;border-radius:15px!important;background:linear-gradient(120deg,#fffaf6,#fff3eb)!important;color:#514036!important;font-size:14px!important;font-weight:650!important;box-shadow:inset 0 1px #fff,0 3px 10px #7443260b!important}
+#serviceDetails .job-choice-trigger::after{color:#d66b35;font-size:20px}
+#serviceDetails .job-choice-trigger:hover:not(:disabled){background:#ffede1!important;border-color:#e9ad8d!important}
+input,select,textarea{border:1px solid #eadbd0;border-radius:14px;background:#fffdfa;color:#3a2d25}
+input:focus,select:focus,textarea:focus{outline:3px solid #ffe1cf;border-color:#e98a57}
+button{border-radius:15px;background:linear-gradient(135deg,#f58b4a,#e56a2c);box-shadow:0 6px 15px #df6c3026}
+button:hover:not(:disabled){background:linear-gradient(135deg,#f79a61,#d95d24);box-shadow:0 8px 18px #df6c3033}
+.secondary-button,.secondary,.top-logout-button{background:#fff9f4;color:#7a675b;border:1px solid #eadbd0;box-shadow:none}
+.message{border-radius:15px}
+.status{background:#fff0e5;color:#b95727}
+#requestsList{overflow:hidden;border:1px solid #f0e1d7;border-radius:20px;background:#fffdfa}
+#requestsList>.request-card{padding:5px 8px}
+#requestsList .request-summary{min-height:62px;padding:11px 13px;border-radius:13px}
+#requestsList .request-summary:hover{background:#fff6ef}
+#requestsList .request-summary-title{font-size:15px}
+#requestsList .request-details{padding:15px;border-top:1px solid #f2e7df}
+#requestsList .request-details-close{border-radius:13px}
+.customer-chat{border-color:#f0ded2;background:#fff8f2}
+.customer-chat-messages{border-color:#f0e3da;background:#fffdfa}
+.customer-chat-bubble.customer{background:#ffe8d9}
+.customer-chat-bubble.contractor{background:#f2ece6}
+@media(max-width:600px){
+ body{padding:0 0 18px}
+ .container{width:100%;margin:0 auto;padding:0 13px 30px}
+ .dashboard-topbar{margin:0 -13px 21px;padding:21px 16px 24px;border-radius:0 0 25px 25px}
+ .dashboard-topbar:before{left:17px;top:6px}
+ .dashboard-topbar h1{font-size:20px;padding-top:9px}
+ .top-logout-button{min-width:0;padding:8px 13px;font-size:12px}
+ .dashboard-menu{position:fixed;left:10px;right:10px;bottom:calc(8px + env(safe-area-inset-bottom));margin:0;padding:7px;gap:4px;border-radius:20px}
+ .dashboard-menu-button{min-height:50px;display:flex;flex-direction:column;gap:3px;padding:6px 3px;font-size:10px}
+ .dashboard-menu-button:before{margin:0;font-size:19px}
+ #dashboardView{padding-bottom:75px}
+ .dashboard-home-grid{grid-template-columns:1fr;gap:10px}
+ .dashboard-home-card{min-height:0;display:grid;grid-template-columns:48px 1fr;column-gap:12px;row-gap:3px;padding:14px 15px;border-radius:18px}
+ .dashboard-home-icon{grid-row:span 2;width:43px;height:43px}
+ .dashboard-home-card strong{align-self:end}
+ .dashboard-home-card span:last-child{align-self:start}
+ .profile-panel,#requestForm,.request-tools{padding:16px;border-radius:19px}
+ #serviceDetails.request-card,#selectedServicesReview.request-card{padding:15px 14px;border-radius:19px}
+ #serviceDetails .job-detail-service{padding:13px 0!important}
+ #serviceDetails .job-detail-service h3{font-size:17px!important}
+ #serviceDetails .job-choice-trigger{min-height:46px!important;padding:11px 13px!important;font-size:13px!important}
+ #serviceDetails label{font-size:10.5px}
+ .grid{gap:3px}
+}
+
+/* Original ZELPX account-opening screen — centered single-line message */
+#zelpxAccountOpening{position:fixed;inset:0;z-index:200000;display:none;align-items:center;justify-content:center;overflow:hidden;padding:18px;background:#f6f2ec;color:#171513;font-family:Arial,sans-serif}
+#zelpxAccountOpening.is-visible{display:flex}
+html.zelpx-session-check #zelpxAccountOpening{display:flex}
+#zelpxAccountOpening .opening-glow{position:absolute;left:50%;top:50%;width:min(92vw,680px);height:min(72vh,760px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,222,199,.68) 0%,rgba(255,235,221,.42) 35%,rgba(255,245,237,0) 72%);filter:blur(24px);animation:zelpxOpeningPulse 3.8s ease-in-out infinite}
+#zelpxAccountOpening .opening-copy{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:.18em;max-width:100%;white-space:nowrap;text-align:center;font-size:clamp(17px,4.5vw,31px);font-weight:800;letter-spacing:.14em;line-height:1.2}
+#zelpxAccountOpening .opening-brand{display:inline;font-size:1em;letter-spacing:.18em}
+#zelpxAccountOpening .opening-message{display:inline;font-size:1em;letter-spacing:.12em;font-weight:800}
+#zelpxAccountOpening .opening-dots:after{content:"...";display:inline-block;width:1.5em;text-align:left;animation:zelpxOpeningDots 1.3s steps(4,end) infinite}
+@keyframes zelpxOpeningPulse{0%,100%{opacity:.55;scale:.94}50%{opacity:.95;scale:1.06}}
+@keyframes zelpxOpeningDots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
+@media(max-width:390px){#zelpxAccountOpening .opening-copy{font-size:clamp(14px,3.7vw,17px);letter-spacing:.09em;gap:.12em}#zelpxAccountOpening .opening-brand,#zelpxAccountOpening .opening-message{letter-spacing:.08em}}
+</style>
+</head>
+
+<body>
+<div id="zelpxAccountOpening" aria-live="polite" aria-label="Opening your account">
+  <div class="opening-glow" aria-hidden="true"></div>
+  <div class="opening-copy"><span class="opening-brand">ZELPX\\A</span><span class="opening-message">Opening your account<span class="opening-dots"></span></span></div>
+</div>
+
+  <main class="container">
+    <div class="logo">ZELPX</div>
+
+    <section id="authView">
+      <h1 id="formTitle">Customer Log In</h1>
+      <p class="subtitle" id="formSubtitle">
+        Log in to access your customer account.
+      </p>
+
+      <form id="authForm">
+        <div id="nameField" class="hidden">
+          <label for="fullName">Full Name</label>
+          <input id="fullName" type="text" autocomplete="name">
+        </div>
+
+        <div id="phoneField" class="hidden">
+          <label for="phone">Phone Number</label>
+          <input id="phone" type="tel" autocomplete="tel" inputmode="tel">
+        </div>
+
+        <label for="email">Email Address</label>
+        <input id="email" type="email" autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <div class="password-field">
+          <input id="password" type="password" autocomplete="current-password" required minlength="6">
+          <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+        </div>
+
+        <button id="submitButton" type="submit">Log In</button>
+        <div id="forgotPasswordRow" class="switch"><a id="forgotPasswordLink" href="/forgot-password.html">Forgot password?</a></div>
+      </form>
+
+      <div id="message" class="message" role="status"></div>
+
+      <div class="switch">
+        <span id="switchText">Don't have an account?</span>
+        <a id="switchLink" href="#">Create Account</a>
+      </div>
+
+      <div class="social-auth" aria-label="Other sign-in options">
+        <div class="social-auth-divider"><span>Or continue with</span></div>
+        <button id="googleSignInButton" class="social-auth-button" type="button">
+          <span class="social-google-mark" aria-hidden="true">G</span>
+          Continue with Google
+        </button>
+        <button id="facebookSignInButton" class="social-auth-button" type="button">
+          <svg class="social-facebook-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.4 21v-8.2h2.75l.41-3.2H13.4V7.56c0-.93.26-1.56 1.59-1.56h1.69V3.14C16.39 3.05 15.4 3 14.24 3c-2.43 0-4.09 1.48-4.09 4.2v2.4H7.4v3.2h2.75V21h3.25Z"/></svg>
+          Continue with Facebook
+        </button>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="hidden">
+      <div class="dashboard-topbar">
+        <h1>Customer Dashboard</h1>
+        <div class="dashboard-topbar-actions">
+            <button id="logoutButton" type="button" class="top-logout-button">Log Out</button>
+        </div>
+      </div>
+      <p class="subtitle">Welcome to your ZELPX customer account.</p>
+
+      <p id="accountEmail"></p>
+      <nav class="dashboard-menu" aria-label="Customer dashboard menu">
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="profile">My Profile</button>
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="service">Request a Service</button>
+        <button type="button" class="dashboard-menu-button" data-dashboard-page="requests">My Service Requests</button>
+      </nav>
+      <div id="dashboardPage-home" class="dashboard-page">
+        <h2>Welcome to ZELPX</h2>
+        <p class="subtitle">Choose what you would like to do today.</p>
+        <div class="dashboard-home-grid">
+          <button type="button" class="dashboard-home-card" data-dashboard-page="profile">
+            <span class="dashboard-home-icon">👤</span>
+            <strong>My Profile</strong>
+            <span>View and update your contact information</span>
+          </button>
+          <button type="button" class="dashboard-home-card" data-dashboard-page="service">
+            <span class="dashboard-home-icon">＋</span>
+            <strong>Request a Service</strong>
+            <span>Tell us what work you need done</span>
+          </button>
+          <button type="button" class="dashboard-home-card" data-dashboard-page="requests">
+            <span class="dashboard-home-icon">📋</span>
+            <strong>My Service Requests</strong>
+            <span>View your submitted requests and messages</span>
+          </button>
+        </div>
+      </div>
+      
+
+      <div id="dashboardPage-profile" class="dashboard-page" hidden>
+      <section class="profile-panel" aria-labelledby="customerProfileHeading">
+        <h2 id="customerProfileHeading">My Profile</h2>
+        <div class="profile-photo-tools" style="display:flex;align-items:center;gap:14px;margin:12px 0 18px"><img id="customerAvatarPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E" alt="Your profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e7e0d5"><div><label for="customerAvatarFile">Profile photo for chat notifications</label><input id="customerAvatarFile" type="file" accept="image/jpeg,image/png,image/webp"><button id="removeCustomerAvatarButton" type="button" class="secondary-button" style="width:auto;min-height:36px;margin:8px 0 0;padding:8px 14px;font-size:13px" hidden>Remove profile photo</button><small id="customerAvatarStatus" class="subtitle">Upload a photo so contractors can recognize you in message notifications. Max 10 MB.</small></div></div>
+        <label for="customerFullName">Full Name</label>
+        <input id="customerFullName" type="text" autocomplete="name" required readonly>
+        <label for="customerPhone">Phone Number</label>
+        <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
+               placeholder="+1 (555) 555-5555" required readonly>
+        <p class="subtitle">Your phone number is saved to your private customer profile.</p>
+        <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
+        <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
+        <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
+        <div id="profileMessage" class="message" role="status"></div>
+      </section>
+      </div>
+
+      <div id="dashboardPage-service" class="dashboard-page" hidden>
+      <h2>Request a Service</h2>
+      <p class="subtitle">
+        Tell us what service you need. Our team will review your request.
+      </p>
+
+      <form id="requestForm">
+        <label for="serviceSearch">Find a service</label>
+        <div class="service-search-wrap">
+          <input id="serviceSearch" type="search" placeholder="Start typing a service, e.g. tile or painting..." autocomplete="off" aria-autocomplete="list" aria-controls="serviceSuggestions" aria-expanded="false">
+          <div id="serviceSuggestions" class="service-suggestions hidden" role="listbox"></div>
+        </div>
+        <p class="service-search-hint">Type a few letters and tap a matching service, or choose from the full list below.</p>
+        <label for="serviceType">Service Type</label>
+        <select id="serviceType" required>
+          <option value="">Select a service</option>
+          <optgroup label="Remodeling & Construction">
+            <option>Bathroom Remodeling</option><option>Kitchen Remodeling</option><option>Tile Installation</option><option>Flooring Installation</option><option>Carpet Installation</option><option>Drywall & Framing</option><option>Concrete & Foundation</option><option>Roofing</option><option>Gutters</option><option>Painting</option><option>Doors & Windows</option><option>Decks & Fences</option>
+          </optgroup>
+          <optgroup label="Home Systems">
+            <option>Plumbing</option><option>Electrical</option><option>HVAC</option><option>Water Heater</option><option>Appliance Installation</option><option>Appliance Maintenance</option><option>Carpentry</option><option>Garage Door</option><option>Insulation</option>
+          </optgroup>
+          <optgroup label="Cleaning & Maintenance">
+            <option>House Cleaning</option><option>Office Cleaning</option><option>Basement Cleaning</option><option>Deep Cleaning</option><option>Move-in / Move-out Cleaning</option><option>Post-Construction Cleaning</option><option>Window Cleaning</option><option>Carpet & Upholstery Cleaning</option><option>Pressure Washing</option><option>Handyman</option><option>Junk Removal</option>
+          </optgroup>
+          <optgroup label="Outdoor & Landscaping">
+            <option>Landscaping</option><option>Artificial Turf Installation</option><option>Lawn Care</option><option>Tree Service</option><option>Irrigation</option><option>Snow Removal</option><option>Pool Service</option>
+          </optgroup>
+          <optgroup label="Other Services"><option>Moving</option><option>Pest Control</option><option>Other</option></optgroup>
+        </select>
+        <div id="serviceDetails" class="request-card" aria-live="polite">
+          <strong>Job details</strong><p class="subtitle">Choose a service to see the questions that help contractors estimate the job.</p>
+        </div>
+        <section id="selectedServicesReview" class="request-card" hidden aria-live="polite">
+          <strong>Review your selected work</strong>
+          <p class="subtitle">These are the exact services you selected on the sphere.</p>
+          <div id="selectedServicesReviewList" aria-live="polite"></div>
+          <div id="removedServicesRestore" hidden aria-live="polite">
+            <strong class="removed-services-title">Removed services</strong>
+            <div id="removedServicesRestoreList"></div>
+          </div>
+          <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
+        </section>
+
+        <label for="propertyAddress">Property Street Address</label>
+        <input id="propertyAddress" type="text"
+               placeholder="Street address" autocomplete="street-address" required>
+
+        <div class="grid">
+          <div><label for="serviceCity">City (verified by ZIP)</label><input id="serviceCity" autocomplete="address-level2" required readonly></div>
+          <div><label for="serviceState">State (verified by ZIP)</label><select id="serviceState" autocomplete="address-level1" required disabled>
+            <option value="">Select a state</option>
+            <option value="AL">AL</option>
+            <option value="AK">AK</option>
+            <option value="AZ">AZ</option>
+            <option value="AR">AR</option>
+            <option value="CA">CA</option>
+            <option value="CO">CO</option>
+            <option value="CT">CT</option>
+            <option value="DE">DE</option>
+            <option value="FL">FL</option>
+            <option value="GA">GA</option>
+            <option value="HI">HI</option>
+            <option value="ID">ID</option>
+            <option value="IL">IL</option>
+            <option value="IN">IN</option>
+            <option value="IA">IA</option>
+            <option value="KS">KS</option>
+            <option value="KY">KY</option>
+            <option value="LA">LA</option>
+            <option value="ME">ME</option>
+            <option value="MD">MD</option>
+            <option value="MA">MA</option>
+            <option value="MI">MI</option>
+            <option value="MN">MN</option>
+            <option value="MS">MS</option>
+            <option value="MO">MO</option>
+            <option value="MT">MT</option>
+            <option value="NE">NE</option>
+            <option value="NV">NV</option>
+            <option value="NH">NH</option>
+            <option value="NJ">NJ</option>
+            <option value="NM">NM</option>
+            <option value="NY">NY</option>
+            <option value="NC">NC</option>
+            <option value="ND">ND</option>
+            <option value="OH">OH</option>
+            <option value="OK">OK</option>
+            <option value="OR">OR</option>
+            <option value="PA">PA</option>
+            <option value="RI">RI</option>
+            <option value="SC">SC</option>
+            <option value="SD">SD</option>
+            <option value="TN">TN</option>
+            <option value="TX">TX</option>
+            <option value="UT">UT</option>
+            <option value="VT">VT</option>
+            <option value="VA">VA</option>
+            <option value="WA">WA</option>
+            <option value="WV">WV</option>
+            <option value="WI">WI</option>
+            <option value="WY">WY</option>
+          </select></div>
+          <div><label for="serviceZip">ZIP Code</label><input id="serviceZip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="" autocomplete="postal-code" required></div>
+        </div>
+        <p id="serviceZipStatus" class="subtitle">Enter a US ZIP code to look up city, state and approximate location.</p>
+
+        <label for="preferredTime">Preferred Date and Time</label>
+        <input id="preferredTime" type="datetime-local">
+
+        <button id="requestButton" type="submit">
+          Submit Request
+        </button>
+      </form>
+
+      <div id="requestMessage" class="message" role="status"></div>
+
+      <hr class="section-divider">
+
+      <section class="request-card" id="customerBackgroundChatAlerts" aria-live="polite">
+        <strong>Background chat notifications</strong>
+        <p>Chat notifications are set up automatically when you open a conversation and allow notifications in your browser. No setup button is needed.</p>
+        <p id="customerBackgroundChatAlertsStatus" class="subtitle">Notification status: checking browser permission…</p>
+      </section>
+      </div>
+
+      <div id="dashboardPage-requests" class="dashboard-page" hidden>
+      <div class="requests-heading">
+        <div>
+          <h2>My Service Requests</h2>
+          <p class="subtitle">Manage your past and current requests.</p>
+        </div>
+      </div>
+      <div class="request-tools">
+        <div class="request-filter-field">
+          <label for="requestServiceFilter">Service</label>
+          <select id="requestServiceFilter">
+            <option value="">All services</option>
+          </select>
+        </div>
+        <div class="request-filter-field">
+          <label for="requestStatusFilter">Status</label>
+          <select id="requestStatusFilter">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="pending">Pending</option>
+            <option value="in progress">In progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="request-filter-field">
+          <label for="requestSort">Sort by</label>
+          <select id="requestSort">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </div>
+      </div>
+      <div id="requestResultsCount" class="request-results-count" aria-live="polite"></div>
+      <div id="requestsList">
+        <p class="subtitle">Loading your requests...</p>
+      </div>
+
+      <button id="refreshButton" type="button" class="secondary-button">
+        Refresh Requests
+      </button>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="/zelpx-push.js"></script>
+  <script>
+    const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+
+    const db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+    window.zelpxDb = db;
+
+    const $ = (id) => document.getElementById(id);
+
+    let isLogin = false;
+
+    function showMessage(elementId, text, type) {
+      const element = $(elementId);
+      element.textContent = text;
+      element.className = "message " + type;
+    }
+
+    function clearMessage(elementId) {
+      const element = $(elementId);
+      element.textContent = "";
+      element.className = "message";
+    }
+
+    function setMode(loginMode) {
+      isLogin = loginMode;
+      clearMessage("message");
+
+      $("formTitle").textContent = isLogin
+        ? "Customer Log In"
+        : "Create Customer Account";
+
+      $("formSubtitle").textContent = isLogin
+        ? "Log in to access your customer account."
+        : "Create an account to request services and communicate with contractors.";
+
+      $("nameField").classList.toggle("hidden", isLogin);
+      $("phoneField").classList.toggle("hidden", isLogin);
+      // Hidden registration fields must not block the login form's native
+      // required-field validation (notably on mobile browsers).
+      $("fullName").required = !isLogin;
+      $("phone").required = !isLogin;
+
+      $("password").autocomplete = isLogin
+        ? "current-password"
+        : "new-password";
+
+      $("submitButton").textContent = isLogin
+        ? "Log In"
+        : "Create Account";
+      $("forgotPasswordRow").classList.toggle("hidden", !isLogin);
+
+      $("switchText").textContent = isLogin
+        ? "Don't have an account?"
+        : "Already have an account?";
+
+      $("switchLink").textContent = isLogin
+        ? "Create Account"
+        : "Log In";
+    }
+
+    // Social sign-in is available only on the customer portal.
+    // Explicitly obtain the OAuth URL and navigate to it. This is more reliable
+    // in Android in-app browsers than relying on the SDK's automatic redirect.
+    async function signInCustomerWithProvider(provider, buttonId) {
+      const button = $(buttonId);
+      const buttons = ["googleSignInButton", "facebookSignInButton"].map(id => $(id)).filter(Boolean);
+      if (!button || !db || !db.auth || typeof db.auth.signInWithOAuth !== "function") {
+        showMessage("message", "Sign-in is temporarily unavailable. Please refresh the page and try again.", "error");
+        return;
+      }
+
+      const setButtonLabel = (label) => {
+        const textNodes = Array.from(button.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+        const textNode = textNodes[textNodes.length - 1];
+        if (textNode) textNode.textContent = " " + label;
+        else button.append(document.createTextNode(" " + label));
+      };
+
+      try {
+        if (typeof saveSphereDraftBeforeAuth === "function") {
+          try { saveSphereDraftBeforeAuth(); }
+          catch (draftError) { console.warn("Could not preserve pending service selection before OAuth:", draftError); }
+        }
+
+        buttons.forEach(item => { item.disabled = true; });
+        setButtonLabel(provider === "google" ? "Connecting to Google..." : "Connecting to Facebook...");
+        clearMessage("message");
+
+        if (landingServices.length || landingService || landingZip) {
+          try { localStorage.setItem("zelpx.sphere.auth.pending", JSON.stringify({ at: Date.now() })); } catch (_) {}
+        }
+        const oauthMarker = JSON.stringify({ portal: "customer", at: Date.now() });
+        try { localStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+        try { sessionStorage.setItem("zelpx.oauth.pending", oauthMarker); } catch (_) {}
+
+        const { error } = await db.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: new URL("/", window.location.origin).toString(),
+            ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {})
+          }
+        });
+        if (error) throw error;
+      } catch (error) {
+        console.error("Customer social sign-in failed:", provider, error);
+        try { sessionStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+        try { localStorage.removeItem("zelpx.oauth.pending"); } catch (_) {}
+        try { localStorage.removeItem("zelpx.sphere.auth.pending"); } catch (_) {}
+        showMessage("message", error?.message || "Social sign-in could not be started. Please try again.", "error");
+        buttons.forEach(item => { item.disabled = false; });
+        setButtonLabel(provider === "google" ? "Continue with Google" : "Continue with Facebook");
+      }
+    }
+
+    $("googleSignInButton").addEventListener("click", () => signInCustomerWithProvider("google", "googleSignInButton"));
+    $("facebookSignInButton").addEventListener("click", () => signInCustomerWithProvider("facebook", "facebookSignInButton"));
+
+    $("forgotPasswordLink").addEventListener("click", (event) => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
+
+    $("switchLink").addEventListener("click", (event) => {
+      event.preventDefault();
+      setMode(!isLogin);
+    });
+
+    // Returning users land on Log In; new users can switch to Create Account.
+    setMode(true);
+
+    $("authForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearMessage("message");
+
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const button = $("submitButton");
+
+      button.disabled = true;
+      button.textContent = isLogin ? "Logging In..." : "Creating Account...";
+
+      try {
+        if (isLogin) {
+          // Check the account role on the server before creating any auth session.
+          const { data: access, error: accessError } = await db.functions.invoke("check-portal-access", {
+            body: { email, portal: "customer" }
+          });
+          if (accessError) throw new Error("Could not verify account permissions. Please try again.");
+          if (!access?.allowed) throw new Error(access?.error || "This account cannot sign in to the customer portal.");
+          const { data, error } = await db.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          if (!data?.session || !data?.user) {
+            throw new Error("Login was accepted but no active session was returned. Please try again.");
+          }
+          // Use the session returned by signInWithPassword directly. This avoids
+          // immediately re-reading a potentially stale browser session.
+          await checkSession(data.session);
+        } else {
+          const fullName = $("fullName").value.trim();
+          const phone = $("phone").value.trim();
+
+          if (!fullName || !phone) {
+            throw new Error("Please enter your full name and phone number.");
+          }
+
+          const { data, error } = await db.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName,
+                phone: phone,
+                account_type: "customer"
+              }
+            }
+          });
+
+          if (error) throw error;
+
+          if (data.session) {
+            await checkSession();
+          } else {
+            showMessage(
+              "message",
+              "Your registration was submitted. Please check your email to confirm your account before logging in.",
+              "success"
+            );
+          }
+        }
+      } catch (error) {
+        showMessage(
+          "message",
+          error.message || "Something went wrong. Please try again.",
+          "error"
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = isLogin ? "Log In" : "Create Account";
+      }
+    });
+
+    async function loadCustomerProfile(user) {
+      clearMessage("profileMessage");
+      const { data, error } = await db
+        .from("profiles")
+        .select("full_name,phone,role,avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        throw new Error("Customer profile is not ready yet. Please sign out and sign in again, or contact ZELPX support.");
+      }
+
+      $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
+      $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+      $("customerAvatarFile").dataset.currentUrl = data.avatar_url || "";
+    }
+
+    const PROFILE_AVATAR_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+  function getOwnProfilePhotoPath(url, userId) {
+    if (!url) return null;
+    try { const marker = "/storage/v1/object/public/profile-photos/"; const pathname = new URL(url).pathname; const index = pathname.indexOf(marker); if (index < 0) return null; const path = decodeURIComponent(pathname.slice(index + marker.length)); return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null; } catch (_) { return null; }
+  }
+
+  $("customerAvatarFile").addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    const status = $("customerAvatarStatus"); status.textContent = "Uploading photo…";
+    try {
+      if (!["image/jpeg","image/png","image/webp"].includes(file.type)) throw new Error("Choose a JPG, PNG, or WebP image.");
+      if (file.size > 10 * 1024 * 1024) throw new Error("Photo must be 10 MB or smaller.");
+      const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+      const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+      const previousUrl = $("customerAvatarPreview").dataset.currentUrl || "";
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      const path = user.id + "/avatar-" + Date.now() + "." + ext;
+      const { error: uploadError } = await db.storage.from("profile-photos").upload(path, file, { upsert: false, contentType: file.type, cacheControl: "3600" });
+      if (uploadError) throw uploadError;
+      const { data: publicData } = db.storage.from("profile-photos").getPublicUrl(path);
+      const { error: saveError } = await db.from("profiles").update({ avatar_url: publicData.publicUrl }).eq("id", user.id);
+      if (saveError) { await db.storage.from("profile-photos").remove([path]); throw saveError; }
+      $("customerAvatarPreview").src = publicData.publicUrl; $("customerAvatarPreview").dataset.currentUrl = publicData.publicUrl; $("removeCustomerAvatarButton").hidden = false;
+      
+      status.textContent = "Photo saved. It will appear in contractors’ chat notifications.";
+      const oldPath = getOwnProfilePhotoPath(previousUrl, user.id);
+      if (oldPath && oldPath !== path) await db.storage.from("profile-photos").remove([oldPath]);
+    } catch (error) { status.textContent = error.message || "Could not upload photo."; }
+    finally { event.target.value = ""; }
+  });
+
+  $("removeCustomerAvatarButton").addEventListener("click", async () => {
+    const status = $("customerAvatarStatus"); if (!window.confirm("Remove your profile photo? Your account will use the default profile image.")) return;
+    const button = $("removeCustomerAvatarButton"); button.disabled = true; status.textContent = "Removing photo…";
+    try {
+      const { data: sessionData, error: sessionError } = await db.auth.getSession(); if (sessionError) throw sessionError;
+      const user = sessionData.session?.user; if (!user) throw new Error("Please sign in again.");
+      const oldUrl = $("customerAvatarPreview").dataset.currentUrl || "";
+      const { error } = await db.from("profiles").update({ avatar_url: null }).eq("id", user.id); if (error) throw error;
+      $("customerAvatarPreview").src = PROFILE_AVATAR_FALLBACK; $("customerAvatarPreview").dataset.currentUrl = ""; button.hidden = true;
+      
+      const oldPath = getOwnProfilePhotoPath(oldUrl, user.id);
+      if (oldPath) { const { error: removeError } = await db.storage.from("profile-photos").remove([oldPath]); if (removeError) console.warn("Profile photo reference cleared, but stored image cleanup failed:", removeError.message); }
+      status.textContent = "Profile photo removed.";
+    } catch (error) { status.textContent = error.message || "Could not remove photo."; }
+    finally { button.disabled = false; }
+  });
 
     const profileNameInput = $("customerFullName");
     const profilePhoneInput = $("customerPhone");
@@ -1894,17 +3156,4 @@
     })();
   </script>
 </body>
-</html>const PROFILE_AVATAR_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-  function getOwnProfilePhotoPath(url, userId) {
-    if (!url) return null;
-    try {
-      const marker = "/storage/v1/object/public/profile-photos/";
-      const pathname = new URL(url).pathname;
-      const index = pathname.indexOf(marker);
-      if (index < 0) return null;
-      const path = decodeURIComponent(pathname.slice(index + marker.length));
-      return path.startsWith(userId + "/") && path.split("/").length === 2 && path.split("/")[1].startsWith("avatar-") ? path : null;
-    } catch (_) { return null; }
-  }
-
-  
+</html>
