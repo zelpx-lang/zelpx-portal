@@ -680,12 +680,6 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
     </section>
     <section id="companyPanel" class="card hidden">
       <h2>My company</h2>
-      <section class="lead" id="contractorPhoneVerificationCard">
-        <h3>Account phone verification</h3>
-        <p>Verify your mobile number once to confirm your contractor account. After verification, you can add wallet credits and purchase leads without another SMS prompt.</p>
-        <div id="contractorPhoneVerificationStatus" class="message" role="status" aria-live="polite">Checking phone verification…</div>
-        <div class="actions"><button id="verifyContractorPhoneBtn" type="button">Verify phone number</button></div>
-      </section>
       <section class="lead">
         <h3>My change requests</h3>
         <p>Changes to company details, services, and work types stay pending until an administrator reviews them.</p>
@@ -767,6 +761,12 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
       </div>
       <div class="actions"><button id="saveCompanyBtn" type="button" aria-busy="false">Save company details</button></div>
       <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
+      <section class="lead" id="contractorPhoneVerificationCard">
+        <h3>Account phone verification</h3>
+        <p>Verify your mobile number once to confirm your contractor account. Your SMS confirmation is saved separately and will remain verified when you save company details or update your profile. After verification, wallet credits and lead purchases are enabled without another SMS prompt.</p>
+        <div id="contractorPhoneVerificationStatus" class="message" role="status" aria-live="polite">Checking phone verification…</div>
+        <div class="actions"><button id="verifyContractorPhoneBtn" type="button">Verify phone number</button></div>
+      </section>
     </section>
 
     <section id="adminPanel" class="card hidden">
