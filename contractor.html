@@ -1900,8 +1900,27 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     });
   }
 
+  function showLeadRequirementNotice(titleText, bodyText) {
+    const overlay=document.createElement("div");
+    overlay.style.cssText="position:fixed;inset:0;z-index:100600;background:#24170f99;display:flex;align-items:center;justify-content:center;padding:18px";
+    const panel=document.createElement("section");
+    panel.setAttribute("role","alertdialog");panel.setAttribute("aria-modal","true");
+    panel.style.cssText="width:min(100%,420px);background:#fffefa;border-radius:18px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005;box-sizing:border-box;font-family:inherit";
+    const title=document.createElement("h2");title.textContent=titleText;title.style.cssText="margin:0 0 12px;font-size:23px";
+    const body=document.createElement("p");body.textContent=bodyText;body.style.cssText="margin:0 0 20px;color:#655a52;line-height:1.5";
+    const actions=document.createElement("div");actions.style.cssText="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap";
+    const close=document.createElement("button");close.type="button";close.textContent="Close";close.style.cssText="padding:13px 18px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#30231e;font-weight:700";
+    const go=document.createElement("button");go.type="button";go.textContent="Go to My company";go.style.cssText="padding:13px 18px;border:0;border-radius:10px;background:#ef5b16;color:#fff;font-weight:700";
+    const dismiss=()=>overlay.remove();
+    close.addEventListener("click",dismiss);
+    go.addEventListener("click",()=>{dismiss();switchTab("companyPanel");});
+    overlay.addEventListener("click",event=>{if(event.target===overlay)dismiss();});
+    actions.append(close,go);panel.append(title,body,actions);overlay.append(panel);document.body.append(overlay);go.focus();
+  }
+
   async function buyLead(lead, button) {
-    if(!contractorPhoneIsVerified())return message("appMessage","Verify your phone number first in My company → Account phone verification.","error");
+    if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service selection required","To purchase this lead, first add this service to your contractor profile in My company → Work types & license requirements.");
+    if(!contractorPhoneIsVerified())return showLeadRequirementNotice("Phone verification required","You have not verified the phone number for your contractor account. Verify it in My company → Account phone verification. After successful verification, you can purchase leads without another SMS check.");
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
     if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel)) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
@@ -2031,6 +2050,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         const leadCategoryName = String(lead.service_category || "").toLowerCase();
         const serviceSelected = isLeadServiceSelected(lead);
         const canBuy = !lead.previewOnly && !isAdmin && serviceSelected;
+        const canOpenPurchase = !lead.previewOnly && !isAdmin;
         if (!isAdmin && !canBuy) {
           const eligibility = document.createElement("span");
           eligibility.className = "pill";
@@ -2039,8 +2059,8 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
-        buyButton.disabled = !canBuy;
-        if (canBuy) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+        buyButton.disabled = !canOpenPurchase;
+        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
