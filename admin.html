@@ -752,11 +752,28 @@
   $("forgotPasswordLink").addEventListener("click", event => { event.preventDefault(); window.location.href = "/forgot-password.html"; });
 
   async function signIn() {
-    clearMessage("authMessage"); const email = $("authEmail").value.trim(), password = $("authPassword").value;
+    clearMessage("authMessage");
+    const email = $("authEmail").value.trim(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
-    try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; await loadApp(); }
-    catch (e) { message("authMessage", e.message, "error"); } finally { setBusy($("loginBtn"), false); }
+    try {
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (!data?.user?.id) throw new Error("Sign-in succeeded, but the user session was not returned. Please try again.");
+      const { data: profile, error: profileError } = await db.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
+      if (profileError) throw new Error("Signed in, but could not verify administrator access: " + profileError.message);
+      if (profile?.role !== "admin") throw new Error("This account does not have administrator access.");
+      if (!window.location.pathname.endsWith("/admin.html")) {
+        message("authMessage", "Administrator verified. Opening administrator dashboard…", "success");
+        window.location.replace("/admin.html");
+        return;
+      }
+      await loadApp();
+    } catch (e) {
+      message("authMessage", e?.message || "Sign-in failed. Please try again.", "error");
+    } finally {
+      setBusy($("loginBtn"), false);
+    }
   }
   async function signUp() {
     clearMessage("authMessage");
