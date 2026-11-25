@@ -12,6 +12,28 @@
       } catch (_) {}
     })();
   </script>
+  <script>
+    // Capture syntax/runtime errors from the administrator portal before its main script runs.
+    window.addEventListener("error", function (event) {
+      if (!event || !event.message) return;
+      const report = "Administrator portal script error: " + event.message +
+        (event.lineno ? " (line " + event.lineno + ")" : "");
+      console.error(report, event.filename || "", event.error || "");
+      const showError = function () {
+        const panel = document.getElementById("authMessage");
+        if (panel) {
+          panel.textContent = report;
+          panel.className = "message error";
+          panel.classList.remove("hidden");
+        }
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", showError, { once: true });
+      } else {
+        showError();
+      }
+    });
+  </script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10243a">
