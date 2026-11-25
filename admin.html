@@ -3058,9 +3058,12 @@ $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedCon
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
   async function start() {
-    wireEvents();
     try {
-      initClient(); const { data: { session } } = await db.auth.getSession();
+      // Initialize Supabase before wiring the dashboard. If an unrelated
+      // dashboard control is missing, the sign-in handler must still have a client.
+      initClient();
+      wireEvents();
+      const { data: { session } } = await db.auth.getSession();
       if (session) { await loadApp(); await handlePaymentReturn(); }
       db.auth.onAuthStateChange((_event, sessionNow) => {
         if (!sessionNow) { hide($("appView")); hide($("topUser")); show($("authView")); }
