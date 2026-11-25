@@ -2535,16 +2535,21 @@
               "\n\nOnly continue after verifying the customer's details.")) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
-              // Resolve ZIP coordinates before publishing so contractor radius filtering can work.
-            const zipLookupInput = document.createElement("input");
-            zipLookupInput.value = zipValue;
-            await lookupUsZip(zipLookupInput, city, state, zipLookupNote);
-            const latitude = Number(zipLookupInput.dataset.latitude);
-            const longitude = Number(zipLookupInput.dataset.longitude);
-            if (zipLookupInput.dataset.lookedUpZip !== zipValue.slice(0, 5) ||
-                !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-              throw new Error("Could not determine coordinates for this ZIP code. Verify the ZIP and try again.");
-            }
+              // Reuse the ZIP lookup already performed when the admin entered/changed
+              // this ZIP. Only call the external ZIP service if the cached result is missing.
+              if (zip.dataset.lookedUpZip !== zipValue.slice(0, 5)) {
+                feedback.textContent = "Verifying ZIP code…";
+                feedback.className = "message";
+                await lookupUsZip(zip, city, state, zipLookupNote);
+              }
+              const latitude = Number(zip.dataset.latitude);
+              const longitude = Number(zip.dataset.longitude);
+              if (zip.dataset.lookedUpZip !== zipValue.slice(0, 5) ||
+                  !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                throw new Error("Could not determine coordinates for this ZIP code. Verify the ZIP and try again.");
+              }
+              feedback.textContent = "ZIP verified. Sending lead for publication…";
+              feedback.className = "message";
             const publishArgs = {
               p_request_id: request.id, p_zip_code: zipValue, p_city: city.value.trim(), p_state: state.value.trim().toUpperCase(),
               p_urgency: urgency.value, p_price_cents: Math.round(priceValue * 100), p_service_category: categoryValue,
