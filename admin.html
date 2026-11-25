@@ -58,17 +58,17 @@
     .hidden { display:none!important; } .muted { color:var(--muted); }
     .incoming-lead-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 7px; margin-left:7px; border-radius:999px; background:#dc2626; color:#fff; font-size:12px; font-weight:800; line-height:1; vertical-align:middle; box-shadow:0 0 0 2px #fff; }
     .incoming-lead-badge.hidden { display:none!important; }
-    .request-summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin:8px 0;border:1px solid var(--line);border-radius:14px;background:#fff;}
+    .request-summary-row{display:flex;flex-direction:column;align-items:stretch;gap:9px;padding:12px 14px;margin:8px 0;border:1px solid var(--line);border-radius:14px;background:#fff;}
     .request-summary-main{min-width:0;display:flex;flex-direction:column;gap:3px;}
     .request-summary-main strong{font-size:15px;overflow-wrap:anywhere;}
     .request-summary-main small{color:var(--muted);font-size:12px;}
-    .request-summary-row .request-open-button{min-height:36px;padding:7px 16px;flex:0 0 auto;}
+    .request-summary-row .request-open-button{min-height:42px;padding:8px 18px;align-self:flex-end;min-width:112px;}
     .request-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:#15171ccc;}
     .request-modal-backdrop.hidden{display:none!important;}
     .request-modal{width:min(760px,100%);max-height:90dvh;overflow:auto;background:#f6f2ec;border-radius:20px;padding:16px;box-shadow:0 24px 80px #0006;}
     .request-modal-head{position:sticky;top:-16px;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 14px;background:#f6f2ec;border-bottom:1px solid var(--line);}
     .request-modal-head h2{margin:0;font-size:19px;}
-    .request-modal-head button{min-height:36px;padding:7px 16px;}
+    .request-modal-head button{display:none!important;}\n    .request-modal-close-bottom{position:sticky;bottom:0;display:flex;justify-content:flex-end;padding:12px 0 2px;background:#f6f2ec;border-top:1px solid var(--line);margin-top:12px;}\n    .request-modal-close-bottom button{min-width:132px;min-height:48px;}
     .request-modal-content>.lead{margin:12px 0 0;}
     @media(max-width:700px){.request-modal-backdrop{padding:8px;align-items:flex-end}.request-modal{max-height:94dvh;border-radius:18px 18px 10px 10px;padding:12px}.request-summary-row{padding:10px 11px}.request-summary-main strong{font-size:14px}.request-summary-row .request-open-button{padding:7px 12px;font-size:12px;}}
 
@@ -2533,7 +2533,7 @@
         const modalContent = document.createElement("div"); modalContent.className = "request-modal-content";
         const detailCard = document.createElement("article"); detailCard.className = "lead";
         while (card.firstChild) detailCard.append(card.firstChild);
-        modalContent.append(detailCard); modal.append(modalHead, modalContent); backdrop.append(modal);
+        modalContent.append(detailCard);\n        const closeBar = document.createElement("div"); closeBar.className = "request-modal-close-bottom";\n        closeBar.append(closeModal);\n        modal.append(modalHead, modalContent, closeBar); backdrop.append(modal);
         const closeRequestModal = () => { backdrop.classList.add("hidden"); openDetails.focus(); };
         openDetails.addEventListener("click", () => { backdrop.classList.remove("hidden"); closeModal.focus(); });
         closeModal.addEventListener("click", closeRequestModal);
