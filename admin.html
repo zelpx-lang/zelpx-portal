@@ -1986,6 +1986,31 @@
     badge.classList.toggle("hidden", total < 1);
     badge.setAttribute("aria-label", total + " new incoming leads");
   }
+  function showPublishedRequestResult(requestId, leadId) {
+    if (!requestId || !leadId) return;
+    const summary = document.querySelector('.request-summary-row[data-request-id="' + requestId + '"]');
+    if (summary) {
+      const meta = summary.querySelector(".request-summary-main small");
+      if (meta && !/Published/i.test(meta.textContent)) meta.textContent += " · Published";
+      const bell = summary.querySelector(".request-needs-review");
+      if (bell) bell.remove();
+    }
+    const backdrop = document.querySelector('.request-modal-backdrop[data-request-id="' + requestId + '"]');
+    if (!backdrop) return;
+    const feedback = backdrop.querySelector(".request-publish-feedback");
+    const button = backdrop.querySelector(".request-publish-button");
+    const successText = "Published successfully. Lead ID: " + leadId;
+    if (feedback) {
+      feedback.textContent = successText;
+      feedback.className = "message success request-publish-feedback";
+    }
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Published ✓";
+      delete button.dataset.oldText;
+    }
+  }
+
   function announceNewServiceRequest(request) {
     if (!request?.id || seenServiceRequestIds.has(request.id)) return;
     seenServiceRequestIds.add(request.id);
@@ -2053,6 +2078,14 @@
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},payload => {
         if (!isAdmin || !currentUser) return;
         announceNewServiceRequest(payload.new || {});
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"service_requests"},payload => {
+        if (!isAdmin || !currentUser) return;
+        const updated = payload.new || {};
+        if (updated.status === "published" && updated.lead_id) {
+          showPublishedRequestResult(updated.id, updated.lead_id);
+        }
+        refreshIncomingLeadBadge();
       })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
@@ -2469,8 +2502,8 @@
           zip.addEventListener("change", () => lookupUsZip(zip, city, state, zipLookupNote));
           zip.addEventListener("blur", () => lookupUsZip(zip, city, state, zipLookupNote));
           fields.append(categoryWrap, zipWrap, cityWrap, stateWrap, urgencyWrap, priceWrap, requestTypeNote); form.append(fields);
-          const feedback = document.createElement("div"); feedback.className = "message hidden"; form.append(feedback);
-          const publish = document.createElement("button"); publish.type = "button"; publish.textContent = "Verify and publish as lead";
+          const feedback = document.createElement("div"); feedback.className = "message hidden request-publish-feedback"; form.append(feedback);
+          const publish = document.createElement("button"); publish.type = "button"; publish.className = "request-publish-button"; publish.dataset.requestId = request.id; publish.textContent = "Verify and publish as lead";
           publish.style.marginTop = "14px";
           priceLabel.textContent = isPackage ? "Lead Package total price (USD) — Admin sets price" : "Lead price (USD) — Admin sets price";
           price.placeholder = isPackage ? "Enter total package price" : "Enter lead price";
@@ -2566,13 +2599,10 @@
                 : "Regular Lead published successfully. Lead ID: ") + leadId;
               // Confirm success inside the open detail dialog immediately after the
               // database returns the new lead ID. Keep the dialog and current page in place.
-              feedback.textContent = successText;
-              feedback.className = "message success";
-              setBusy(publish, false);
-              publish.textContent = "Published ✓";
-              publish.disabled = true;
               request.lead_id = leadId;
               request.status = "published";
+              showPublishedRequestResult(request.id, leadId);
+              setBusy(publish, false);
               summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
               if (attentionBell) attentionBell.remove();
               message("serviceRequestsMessage", successText, "success");
@@ -2618,6 +2648,7 @@
         const modalAddress = [request.service_city, request.service_state, request.service_zip_code].filter(Boolean).join(", ");
         const summary = document.createElement("article");
         summary.className = "request-summary-row";
+        summary.dataset.requestId = request.id;
         const summaryMain = document.createElement("div"); summaryMain.className = "request-summary-main";
         const summaryName = document.createElement("strong"); summaryName.textContent = modalTitle;
         const summaryMeta = document.createElement("small");
@@ -2643,6 +2674,7 @@
         summary.append(openDetails);
 
         const backdrop = document.createElement("div"); backdrop.className = "request-modal-backdrop hidden";
+        backdrop.dataset.requestId = request.id;
         backdrop.setAttribute("role","presentation");
         const modal = document.createElement("section"); modal.className = "request-modal";
         modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true"); modal.setAttribute("aria-label","Incoming request details");
