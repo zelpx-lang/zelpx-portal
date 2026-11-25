@@ -539,6 +539,33 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 }
 .social-auth-button:disabled{background:#fff!important;border-color:#e8ddd4!important;opacity:.65}
 
+
+/* Selected services: one clearly visible remove control per service */
+#selectedProfileServicesList .selected-service-row{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:12px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  padding:7px 8px 7px 12px!important;margin:0!important;
+  border:1px solid #f3b18f!important;border-radius:10px!important;background:#fff!important;
+}
+#selectedProfileServicesList .selected-service-label{
+  display:block!important;flex:1 1 auto!important;min-width:0!important;
+  color:#38332e!important;font-size:13px!important;line-height:1.35!important;
+  overflow-wrap:anywhere!important;
+}
+#selectedProfileServicesList button.selected-service-remove{
+  -webkit-appearance:none!important;appearance:none!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 34px!important;width:34px!important;min-width:34px!important;max-width:34px!important;
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  margin:0!important;padding:0!important;border:1px solid #d95724!important;border-radius:50%!important;
+  background:#fff0e8!important;color:#a84216!important;font-size:24px!important;
+  font-weight:700!important;line-height:1!important;opacity:1!important;visibility:visible!important;
+  position:relative!important;float:none!important;cursor:pointer!important;box-shadow:none!important;
+}
+#selectedProfileServicesList button.selected-service-remove:focus-visible{
+  outline:3px solid #e97843!important;outline-offset:2px!important;
+}
+
 </style>
 <style>
 html.zelpx-maintenance-check body{visibility:hidden!important}
@@ -1636,12 +1663,26 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       return;
     }
     chosen.forEach(p=>{
-      const item=document.createElement("span");
+      const item=document.createElement("div");
       const status=professionVerificationById.get(p.id);
       const statusLabel=status==="verified"?"Verified":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
-      item.textContent=p.profession_name+" · "+statusLabel;
-      item.title="Credential review status: "+statusLabel;
-      item.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
+      item.className="selected-service-row";
+      const label=document.createElement("span");
+      label.className="selected-service-label";
+      label.textContent=p.profession_name+" · "+statusLabel;
+      label.title="Credential review status: "+statusLabel;
+      const remove=document.createElement("button");
+      remove.type="button";
+      remove.className="selected-service-remove";
+      remove.textContent="×";
+      remove.setAttribute("aria-label","Remove "+p.profession_name+" from selected services");
+      remove.title="Remove "+p.profession_name;
+      remove.addEventListener("click",()=>{
+        selectedProfessionIds.delete(p.id);
+        renderProfessionOptions();
+        refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));
+      });
+      item.append(label,remove);
       list.append(item);
     });
   }
