@@ -555,17 +555,25 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 #selectedProfileServicesList button.selected-service-remove{
   -webkit-appearance:none!important;appearance:none!important;
   display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  flex:0 0 34px!important;width:34px!important;min-width:34px!important;max-width:34px!important;
-  height:34px!important;min-height:34px!important;max-height:34px!important;
-  margin:0!important;padding:0!important;border:1px solid #d95724!important;border-radius:50%!important;
-  background:#fff0e8!important;color:#a84216!important;font-size:24px!important;
-  font-weight:700!important;line-height:1!important;opacity:1!important;visibility:visible!important;
+  flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;
+  height:28px!important;min-height:28px!important;max-height:28px!important;
+  margin:0!important;padding:0 0 2px!important;border:1px solid #f0c9b7!important;border-radius:50%!important;
+  background:#fffaf7!important;color:#b85a32!important;font-size:19px!important;
+  font-weight:400!important;line-height:1!important;opacity:1!important;visibility:visible!important;
   position:relative!important;float:none!important;cursor:pointer!important;box-shadow:none!important;
 }
-#selectedProfileServicesPanel .selected-service-undo{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:10px;padding:10px 12px;border:1px solid #f3b18f;border-radius:10px;
-  background:#fff0e8;color:#49352b;font-size:13px;font-weight:600;
+#selectedProfileServicesList button.selected-service-remove:hover{
+  background:#fff0e8!important;border-color:#e9a181!important;color:#99401f!important;
+}
+#selectedServiceUndoNotice.selected-service-undo{
+  position:fixed!important;left:50%!important;bottom:calc(18px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateX(-50%)!important;z-index:2147483000!important;
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  width:min( calc(100vw - 28px), 430px)!important;box-sizing:border-box!important;
+  margin:0!important;padding:12px 14px!important;border:1px solid #edc0a8!important;
+  border-radius:14px!important;background:#fffdfa!important;color:#39332e!important;
+  font-size:13px!important;font-weight:600!important;
+  box-shadow:0 10px 34px #21170f2b!important;
 }
 #selectedProfileServicesPanel .selected-service-undo-button{
   flex:0 0 auto;min-height:34px;padding:6px 14px!important;border-radius:999px!important;
@@ -1672,7 +1680,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       toast.className="selected-service-undo";
       toast.setAttribute("role","status");
       toast.setAttribute("aria-live","polite");
-      panel.append(toast);
+      document.body.append(toast);
     }
     selectedServiceUndoItem=profession;
     toast.replaceChildren();
