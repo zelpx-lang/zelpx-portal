@@ -1932,8 +1932,18 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       services: (landingParams.get("source") === "sphere" ? (landingParams.get("services") || "") : "").split("|").map(value => value.trim()).filter(Boolean),
       createdAt: Date.now()
     };
-    // Preserve a single-service homepage selection through email login, registration,
-    // Google/Facebook OAuth redirects, and a fresh customer-portal load.
+    // A stored selection is restored only during an active sign-in handoff.
+    // A normal visit or a later login starts with a clean request form.
+    let sphereAuthPending = false;
+    try {
+      const pendingAuth = JSON.parse(
+        localStorage.getItem("zelpx.sphere.auth.pending") ||
+        sessionStorage.getItem("zelpx.sphere.auth.pending") || "null"
+      );
+      const pendingAge = pendingAuth?.at ? Date.now() - Number(pendingAuth.at) : Infinity;
+      sphereAuthPending = Boolean(pendingAge >= 0 && pendingAge < 15 * 60 * 1000);
+    } catch (_) {}
+    // Preserve homepage selections only across the authentication handoff.
     let customerRequestIntent = null;
     try {
       if (urlSphereDraft.service || urlSphereDraft.zip) {
@@ -1942,20 +1952,12 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       } else {
         const savedIntent = JSON.parse(localStorage.getItem(CUSTOMER_REQUEST_INTENT_KEY) || "null");
         const intentAge = savedIntent?.createdAt ? Date.now() - Number(savedIntent.createdAt) : Infinity;
-        if (savedIntent && intentAge >= 0 && intentAge < 2 * 60 * 60 * 1000) customerRequestIntent = savedIntent;
+        if (sphereAuthPending && savedIntent && intentAge >= 0 && intentAge < 15 * 60 * 1000) customerRequestIntent = savedIntent;
         else localStorage.removeItem(CUSTOMER_REQUEST_INTENT_KEY);
       }
     } catch (_) {}
     let sphereDraft = null;
     const hasSphereUrlData = urlSphereDraft.source === "sphere" && urlSphereDraft.services.length > 0;
-    let sphereAuthPending = false;
-    try {
-      const pendingAuth = JSON.parse(
-        localStorage.getItem("zelpx.sphere.auth.pending") ||
-        sessionStorage.getItem("zelpx.sphere.auth.pending") || "null"
-      );
-      sphereAuthPending = Boolean(pendingAuth?.at && Date.now() - pendingAuth.at < 15 * 60 * 1000);
-    } catch (_) {}
     if (hasSphereUrlData) {
       // A URL from the sphere is an explicit, fresh selection.
       sphereDraft = urlSphereDraft;
@@ -1966,9 +1968,8 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
       try {
         const savedDraft = JSON.parse(localStorage.getItem(SPHERE_DRAFT_KEY) || "null");
         const age = savedDraft?.createdAt ? Date.now() - Number(savedDraft.createdAt) : Infinity;
-        const recentDraft = savedDraft?.createdAt
-          ? age >= 0 && age < 2 * 60 * 60 * 1000
-          : sphereAuthPending;
+        const recentDraft = sphereAuthPending && savedDraft?.createdAt &&
+          age >= 0 && age < 15 * 60 * 1000;
         if (savedDraft?.source === "sphere" && Array.isArray(savedDraft.services) &&
             savedDraft.services.length > 0 && recentDraft) {
           sphereDraft = savedDraft;
