@@ -1639,9 +1639,22 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const item=document.createElement("span");
       const status=professionVerificationById.get(p.id);
       const statusLabel=status==="verified"?"Verified":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
-      item.textContent=p.profession_name+" · "+statusLabel;
-      item.title="Credential review status: "+statusLabel;
-      item.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
+      item.style.cssText="display:inline-flex;align-items:center;gap:7px;padding:5px 7px 5px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
+      const label=document.createElement("span");
+      label.textContent=p.profession_name+" · "+statusLabel;
+      label.title="Credential review status: "+statusLabel;
+      const remove=document.createElement("button");
+      remove.type="button";
+      remove.textContent="×";
+      remove.setAttribute("aria-label","Remove "+p.profession_name+" from selected services");
+      remove.title="Remove this selected service";
+      remove.style.cssText="display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;min-height:23px;padding:0;border:0;border-radius:50%;background:#fff0e8;color:#a84216;font-size:19px;font-weight:700;line-height:1;cursor:pointer;flex:0 0 23px";
+      remove.addEventListener("click",()=>{
+        selectedProfessionIds.delete(p.id);
+        renderProfessionOptions();
+        refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));
+      });
+      item.append(label,remove);
       list.append(item);
     });
   }
