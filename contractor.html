@@ -562,6 +562,16 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
   font-weight:700!important;line-height:1!important;opacity:1!important;visibility:visible!important;
   position:relative!important;float:none!important;cursor:pointer!important;box-shadow:none!important;
 }
+#selectedProfileServicesPanel .selected-service-undo{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:10px;padding:10px 12px;border:1px solid #f3b18f;border-radius:10px;
+  background:#fff0e8;color:#49352b;font-size:13px;font-weight:600;
+}
+#selectedProfileServicesPanel .selected-service-undo-button{
+  flex:0 0 auto;min-height:34px;padding:6px 14px!important;border-radius:999px!important;
+  background:#15171c!important;color:#fff!important;font-size:12px!important;
+  box-shadow:none!important;
+}
 #selectedProfileServicesList button.selected-service-remove:focus-visible{
   outline:3px solid #e97843!important;outline-offset:2px!important;
 }
@@ -1650,6 +1660,48 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   // selections and admin review records remain intact.
   async function renderProfessionCredentialUploads(){ return; }
 
+  let selectedServiceUndoTimer=null;
+  let selectedServiceUndoItem=null;
+  function showSelectedServiceUndo(profession){
+    const panel=$("selectedProfileServicesPanel");
+    if(!panel)return;
+    let toast=$("selectedServiceUndoNotice");
+    if(!toast){
+      toast=document.createElement("div");
+      toast.id="selectedServiceUndoNotice";
+      toast.className="selected-service-undo";
+      toast.setAttribute("role","status");
+      toast.setAttribute("aria-live","polite");
+      panel.append(toast);
+    }
+    selectedServiceUndoItem=profession;
+    toast.replaceChildren();
+    const text=document.createElement("span");
+    text.textContent=profession.profession_name+" removed";
+    const undo=document.createElement("button");
+    undo.type="button";
+    undo.className="selected-service-undo-button";
+    undo.textContent="UNDO";
+    undo.addEventListener("click",async()=>{
+      if(!selectedServiceUndoItem)return;
+      const restore=selectedServiceUndoItem;
+      selectedServiceUndoItem=null;
+      if(selectedServiceUndoTimer)clearTimeout(selectedServiceUndoTimer);
+      selectedServiceUndoTimer=null;
+      toast.remove();
+      selectedProfessionIds.add(restore.id);
+      renderProfessionOptions();
+      try{await refreshProfessionRules();}
+      catch(e){message("professionComplianceSummary","Could not restore service: "+e.message,"error");}
+    });
+    toast.append(text,undo);
+    if(selectedServiceUndoTimer)clearTimeout(selectedServiceUndoTimer);
+    selectedServiceUndoTimer=setTimeout(()=>{
+      selectedServiceUndoItem=null;
+      selectedServiceUndoTimer=null;
+      toast.remove();
+    },10000);
+  }
   function renderSelectedProfileServices() {
     const list=$("selectedProfileServicesList");
     if(!list) return;
@@ -1680,6 +1732,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       remove.addEventListener("click",()=>{
         selectedProfessionIds.delete(p.id);
         renderProfessionOptions();
+        showSelectedServiceUndo(p);
         refreshProfessionRules().catch(e=>message("professionComplianceSummary","Could not refresh requirements: "+e.message,"error"));
       });
       item.append(label,remove);
