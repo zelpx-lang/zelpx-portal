@@ -1927,9 +1927,16 @@
     refreshIncomingLeadBadge();
     const page = $("adminIncomingLeadsPage");
     if (page && !page.classList.contains("hidden")) {
-      message("serviceRequestsMessage",
-        "A new customer request has arrived. Select “Refresh incoming leads” when you are ready to load it.",
-        "success");
+      if (!serviceRequestsEditing) {
+        // Automatically add newly submitted requests to the visible admin list.
+        loadServiceRequests();
+        message("serviceRequestsMessage", "New customer request added to Incoming leads.", "success");
+      } else {
+        // Preserve any request card currently being edited.
+        message("serviceRequestsMessage",
+          "A new customer request has arrived. It will be loaded after you finish editing or refresh the list.",
+          "success");
+      }
     }
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("ZELPX — new incoming lead", {
