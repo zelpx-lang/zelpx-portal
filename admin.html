@@ -3029,7 +3029,9 @@
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
-    const loginButton = $("loginBtn");\n    if (loginButton) { loginButton.type = "button"; loginButton.onclick = signIn; }\n    $("signupBtn").addEventListener("click", signUp);
+    const loginButton = $("loginBtn");
+    if (loginButton) { loginButton.type = "button"; loginButton.onclick = signIn; }
+    $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
