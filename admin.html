@@ -38,8 +38,7 @@
     button.danger { background:#fff0ef; color:var(--red); }
     button:disabled { opacity:.55; cursor:not-allowed; }
     /* Administrator sign-in: ZELPX orange, no blue tap/focus flash. */
-    #authView{position:relative!important;z-index:100001!important;pointer-events:auto!important;isolation:isolate;}
-    #loginBtn{position:relative!important;z-index:100002!important;pointer-events:auto!important;touch-action:manipulation;background:#f36b38!important;color:#fff!important;border:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
+    #loginBtn{background:#f36b38!important;color:#fff!important;border:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
     #loginBtn:hover,#loginBtn:active{background:#df5727!important;color:#fff!important;}
     #loginBtn:focus,#loginBtn:focus-visible{outline:2px solid #f6a27f!important;outline-offset:2px;box-shadow:none!important;}
     #loginBtn:disabled{background:#d85f34!important;opacity:.7;}
@@ -534,7 +533,7 @@
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
     <div class="actions">
-      <button id="loginBtn" type="button" onclick="window.zelpxAdminSignIn && window.zelpxAdminSignIn()">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
+      <button id="loginBtn" type="button">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
       <a id="forgotPasswordLink" href="/forgot-password.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
     </div>
@@ -782,9 +781,6 @@
       setBusy($("loginBtn"), false);
     }
   }
-  // Expose only the administrator sign-in action for the direct button handler.
-  window.zelpxAdminSignIn = signIn;
-
   async function signUp() {
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
@@ -2980,9 +2976,6 @@
   function wireEvents() {
     // Bind sign-in before any optional dashboard handlers so a later UI error
     // cannot leave the administrator locked out of the portal.
-    const signInButton = $("loginBtn");
-    if (signInButton) { signInButton.type = "button"; signInButton.onclick = signIn; }
-
     // Bind Incoming leads directly so the navigation works even if another
     // document-level click handler interferes with delegated events.
     const incomingLeadsButton = document.querySelector('#adminPanel [data-admin-page="adminIncomingLeadsPage"]');
@@ -3033,9 +3026,7 @@
       document.querySelectorAll("#adminPanel [data-admin-page]").forEach(item => item.classList.remove("active"));
       window.scrollTo({ top:0, behavior:"smooth" });
     }));
-    const loginButton = $("loginBtn");
-    if (loginButton) { loginButton.type = "button"; loginButton.onclick = signIn; }
-    $("signupBtn").addEventListener("click", signUp);
+    $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
     $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
