@@ -1680,7 +1680,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       toast.className="selected-service-undo";
       toast.setAttribute("role","status");
       toast.setAttribute("aria-live","polite");
-      document.body.append(toast);
+      toast.style.cssText="display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;width:100%!important;box-sizing:border-box!important;margin:12px 0 0!important;padding:12px!important;border:1px solid #edc0a8!important;border-radius:12px!important;background:#fff0e8!important;color:#39332e!important;font-size:14px!important;font-weight:600!important;position:relative!important;z-index:20!important;visibility:visible!important;opacity:1!important;";
+      panel.append(toast);
     }
     selectedServiceUndoItem=profession;
     toast.replaceChildren();
@@ -1690,6 +1691,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     undo.type="button";
     undo.className="selected-service-undo-button";
     undo.textContent="UNDO";
+    undo.style.cssText="display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:76px!important;min-height:40px!important;padding:8px 16px!important;border:0!important;border-radius:999px!important;background:#15171c!important;color:#fff!important;font-size:13px!important;font-weight:800!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:21!important;";
     undo.addEventListener("click",async()=>{
       if(!selectedServiceUndoItem)return;
       const restore=selectedServiceUndoItem;
@@ -1708,7 +1710,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       selectedServiceUndoItem=null;
       selectedServiceUndoTimer=null;
       toast.remove();
-    },10000);
+    },15000);
   }
   function renderSelectedProfileServices() {
     const list=$("selectedProfileServicesList");
