@@ -1968,6 +1968,8 @@
 
   let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null, contractorRegistrationPoll = null;
   let serviceRequestsChannel = null, serviceRequestsPoll = null, serviceRequestsEditing = false;
+  let refundRequestsChannel = null, refundRequestsPoll = null;
+  const seenRefundRequestIds = new Set();
   const seenContractorChangeIds = new Set();
   const seenServiceRequestIds = new Set();
   async function refreshIncomingLeadBadge() {
@@ -2017,6 +2019,36 @@
     if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
     if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
     refreshIncomingLeadBadge();
+    refreshRefundBadge();
+    if (refundRequestsChannel) db.removeChannel(refundRequestsChannel);
+    if (refundRequestsPoll) clearInterval(refundRequestsPoll);
+    // Record existing open requests so only newly submitted refund requests trigger alerts.
+    db.from("lead_protection_claims").select("id,status").in("status",["under_review","pending"]).limit(200)
+      .then(({data,error}) => {
+        if (error) { console.warn("Could not initialize refund request alerts:",error.message); return; }
+        (data || []).forEach(claim => seenRefundRequestIds.add(claim.id));
+      });
+    refundRequestsChannel = db.channel("zelpx-admin-refund-requests")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"lead_protection_claims"},payload => {
+        const claim = payload.new || {};
+        if (!isAdmin || !currentUser || !claim.id ||
+            !["under_review","pending"].includes(claim.status) || seenRefundRequestIds.has(claim.id)) return;
+        seenRefundRequestIds.add(claim.id);
+        refreshRefundBadge();
+        const page = $("adminRefundRequestsPage");
+        if (page && !page.classList.contains("hidden")) loadRefundRequests();
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("ZELPX — new refund request", {
+            body:"A contractor submitted a refund request. Open Refund requests to review it.",
+            tag:"zelpx-refund-request-" + claim.id
+          });
+        }
+      })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Refund request realtime unavailable:",status,error || "");
+      });
+    refundRequestsPoll = setInterval(refreshRefundBadge,15000);
     serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},payload => {
         if (!isAdmin || !currentUser) return;
