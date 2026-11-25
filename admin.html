@@ -38,7 +38,8 @@
     button.danger { background:#fff0ef; color:var(--red); }
     button:disabled { opacity:.55; cursor:not-allowed; }
     /* Administrator sign-in: ZELPX orange, no blue tap/focus flash. */
-    #loginBtn{background:#f36b38!important;color:#fff!important;border:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
+    #authView{position:relative!important;z-index:100001!important;pointer-events:auto!important;isolation:isolate;}
+    #loginBtn{position:relative!important;z-index:100002!important;pointer-events:auto!important;touch-action:manipulation;background:#f36b38!important;color:#fff!important;border:0;box-shadow:none;-webkit-tap-highlight-color:transparent;}
     #loginBtn:hover,#loginBtn:active{background:#df5727!important;color:#fff!important;}
     #loginBtn:focus,#loginBtn:focus-visible{outline:2px solid #f6a27f!important;outline-offset:2px;box-shadow:none!important;}
     #loginBtn:disabled{background:#d85f34!important;opacity:.7;}
@@ -533,7 +534,7 @@
       <p class="muted" style="grid-column:1/-1">Your business location is used to match local service requests. Customer street addresses remain private until a lead is purchased.</p>
     </div>
     <div class="actions">
-      <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
+      <button id="loginBtn" type="button" onclick="window.zelpxAdminSignIn && window.zelpxAdminSignIn()">Sign in</button><button id="showSignupBtn" class="secondary hidden">Create contractor account</button>
       <a id="forgotPasswordLink" href="/forgot-password.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" class="hidden">Create account</button><button id="cancelSignupBtn" class="secondary hidden">Cancel</button>
     </div>
@@ -781,6 +782,9 @@
       setBusy($("loginBtn"), false);
     }
   }
+  // Expose only the administrator sign-in action for the direct button handler.
+  window.zelpxAdminSignIn = signIn;
+
   async function signUp() {
     clearMessage("authMessage");
     const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), companyName = $("companyName").value.trim(), phone = $("phone").value.trim();
