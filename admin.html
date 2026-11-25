@@ -619,6 +619,15 @@
         <section id="adminPanel" class="card hidden">
       <h2>Administrator workspace</h2>
       <p class="muted">Choose a section. Each tool opens on its own page.</p>
+      <section class="lead" id="siteMaintenanceCard" style="margin:14px 0">
+        <h3>Website maintenance mode</h3>
+        <p class="muted">Temporarily pause public access while you update ZELPX. Administrator access remains available.</p>
+        <label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0">
+          <input id="siteMaintenanceToggle" type="checkbox" style="width:22px;min-height:22px;margin:0">
+          <span>Enable maintenance mode for all visitors</span>
+        </label>
+        <div id="siteMaintenanceStatus" class="message hidden" role="status" aria-live="polite"></div>
+      </section>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
@@ -864,7 +873,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
+    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -3222,6 +3231,47 @@ $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedCon
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
+  async function loadSiteMaintenanceSetting() {
+    const toggle = $("siteMaintenanceToggle");
+    const status = $("siteMaintenanceStatus");
+    if (!toggle || !isAdmin) return;
+    toggle.disabled = true;
+    try {
+      const { data, error } = await db.from("site_settings")
+        .select("maintenance_mode").eq("id", 1).single();
+      if (error) throw error;
+      toggle.checked = data.maintenance_mode === true;
+      status.textContent = toggle.checked ? "Maintenance mode is ON. Visitors cannot use the public site." : "Maintenance mode is OFF. The site is open to visitors.";
+      status.className = "message " + (toggle.checked ? "error" : "success");
+      show(status);
+    } catch (error) {
+      status.textContent = "Could not load maintenance status: " + (error.message || "Unknown error");
+      status.className = "message error"; show(status);
+    } finally { toggle.disabled = false; }
+  }
+  $("siteMaintenanceToggle")?.addEventListener("change", async (event) => {
+    const toggle = event.currentTarget;
+    const status = $("siteMaintenanceStatus");
+    const enabled = toggle.checked;
+    toggle.disabled = true;
+    try {
+      const { error } = await db.from("site_settings").update({
+        maintenance_mode: enabled,
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser?.id || null
+      }).eq("id", 1);
+      if (error) throw error;
+      status.textContent = enabled
+        ? "Maintenance mode is ON. Public visitors will see the maintenance page."
+        : "Maintenance mode is OFF. ZELPX is open to visitors again.";
+      status.className = "message " + (enabled ? "error" : "success"); show(status);
+    } catch (error) {
+      toggle.checked = !enabled;
+      status.textContent = "Could not change maintenance mode: " + (error.message || "Unknown error");
+      status.className = "message error"; show(status);
+    } finally { toggle.disabled = false; }
+  });
+
   async function start() {
     try {
       // Initialize Supabase before wiring the dashboard. If an unrelated
