@@ -2202,7 +2202,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           try {
             if(!sentPhone) throw new Error("Send an SMS code first.");
             const code=codeInput.value.trim();
-            if(!/^\\d{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
+            if(!/^[0-9]{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
             const response=await fetch("/api/customer-phone/verify-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone:sentPhone,code,purpose:"request_submission"})});
             const result=await response.json().catch(()=>({}));
             if(!response.ok || !result.verified) {
