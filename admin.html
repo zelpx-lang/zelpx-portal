@@ -2557,6 +2557,9 @@
               if (!leadId) throw new Error("The server did not return a lead ID. Refresh and check the request status before trying again.");
               serviceRequestsEditing = false;
               message("serviceRequestsMessage", (isPackage ? "Special Lead Package published successfully. One buyer can purchase the entire project. Lead ID: " : "Regular Lead published successfully. Lead ID: ") + leadId, "success");
+              // The detail dialog is mounted outside the list. Close it after the
+              // database confirms publication so the old "Publishing…" state cannot remain visible.
+              if (backdrop && backdrop.isConnected) backdrop.remove();
               await loadServiceRequests(); await loadAdminLeads(); await loadLeads();
             } catch (e) {
               feedback.textContent = "Could not publish request: " + (e.message || "Unknown error");
