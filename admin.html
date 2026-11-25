@@ -56,6 +56,8 @@
     .actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:16px; }
     .actions > button { max-width:100%; }
     .hidden { display:none!important; } .muted { color:var(--muted); }
+    .incoming-lead-badge { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 7px; margin-left:7px; border-radius:999px; background:#dc2626; color:#fff; font-size:12px; font-weight:800; line-height:1; vertical-align:middle; box-shadow:0 0 0 2px #fff; }
+    .incoming-lead-badge.hidden { display:none!important; }
     .message { padding:11px 13px; border-radius:9px; margin:12px 0; background:#eef4fb; color:#24425f; white-space:pre-wrap; overflow-wrap:anywhere; }
     .message.error { background:#fff0ef; color:var(--red); } .message.success { background:#eaf7f0; color:var(--green); }
     .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; position:relative; }
@@ -577,7 +579,7 @@
         <button type="button" data-admin-page="adminUnlicensedPage">Contractors without a license</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
-        <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads</button>
+        <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
@@ -1904,6 +1906,38 @@
   let contractorChangesChannel = null, contractorChangesPoll = null, contractorRegistrationChannel = null, contractorRegistrationPoll = null;
   let serviceRequestsChannel = null, serviceRequestsPoll = null, serviceRequestsEditing = false;
   const seenContractorChangeIds = new Set();
+  const seenServiceRequestIds = new Set();
+  async function refreshIncomingLeadBadge() {
+    if (!isAdmin || !currentUser) return;
+    const badge = $("incomingLeadBadge");
+    if (!badge) return;
+    const { count, error } = await db.from("service_requests")
+      .select("id", { count:"exact", head:true })
+      .eq("status", "new")
+      .is("lead_id", null);
+    if (error) { console.warn("Incoming lead badge refresh failed:", error.message); return; }
+    const total = Number(count || 0);
+    badge.textContent = total > 99 ? "99+" : String(total);
+    badge.classList.toggle("hidden", total < 1);
+    badge.setAttribute("aria-label", total + " new incoming leads");
+  }
+  function announceNewServiceRequest(request) {
+    if (!request?.id || seenServiceRequestIds.has(request.id)) return;
+    seenServiceRequestIds.add(request.id);
+    refreshIncomingLeadBadge();
+    const page = $("adminIncomingLeadsPage");
+    if (page && !page.classList.contains("hidden")) {
+      message("serviceRequestsMessage",
+        "A new customer request has arrived. Select “Refresh incoming leads” when you are ready to load it.",
+        "success");
+    }
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("ZELPX — new incoming lead", {
+        body:"A customer submitted a new service request. Open Incoming leads to review it.",
+        tag:"zelpx-service-request-" + request.id
+      });
+    }
+  }
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
     if (contractorChangesChannel) db.removeChannel(contractorChangesChannel);
@@ -1912,25 +1946,18 @@
     if (contractorRegistrationPoll) clearInterval(contractorRegistrationPoll);
     if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
     if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
+    refreshIncomingLeadBadge();
     serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},() => {
-        // Never replace the Incoming leads list while an administrator is reading it.
-        // A new request is announced; the administrator chooses when to refresh.
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},payload => {
         if (!isAdmin || !currentUser) return;
-        const page = $("adminIncomingLeadsPage");
-        if (page && !page.classList.contains("hidden")) {
-          message("serviceRequestsMessage",
-            "A new customer request has arrived. Select “Refresh incoming leads” when you are ready to load it.",
-            "success");
-        }
+        announceNewServiceRequest(payload.new || {});
       })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
           console.warn("Service request realtime unavailable:",status,error || "");
       });
-    // Incoming leads are refreshed manually to keep the administrator's
-    // current reading position and open request details stable.
-    serviceRequestsPoll = null;
+    // Fallback polling keeps the badge accurate if Realtime is temporarily disconnected.
+    serviceRequestsPoll = setInterval(refreshIncomingLeadBadge, 15000);
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
@@ -2097,6 +2124,7 @@
         .select("id,user_id,request_type,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (error) throw error;
+      refreshIncomingLeadBadge();
       const requestIds = (requests || []).map(request => request.id);
       let verificationByRequest = {};
       if (requestIds.length) {
