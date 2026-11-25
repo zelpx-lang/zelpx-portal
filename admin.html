@@ -91,6 +91,8 @@
     .request-summary-main strong{font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .request-summary-main small{color:var(--muted);font-size:11px;line-height:1.3;overflow-wrap:anywhere;}
     .request-summary-row .request-open-button{min-height:34px;padding:6px 12px;align-self:center;min-width:72px;flex:0 0 auto;font-size:12px;}
+    .request-needs-review{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 7px;border-radius:999px;background:#fff1e8;color:#b9471d;font-size:10px;font-weight:800;white-space:nowrap;}
+    .request-needs-review .bell{font-size:13px;line-height:1;}
     .request-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:#15171ccc;}
     .request-modal-backdrop.hidden{display:none!important;}
     .request-modal{width:min(760px,100%);max-height:90dvh;overflow:auto;background:#f6f2ec;border-radius:20px;padding:16px;box-shadow:0 24px 80px #0006;}
@@ -2564,10 +2566,26 @@
         const summaryMain = document.createElement("div"); summaryMain.className = "request-summary-main";
         const summaryName = document.createElement("strong"); summaryName.textContent = modalTitle;
         const summaryMeta = document.createElement("small");
-        summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · " + (request.lead_id || request.status === "published" ? "Published" : (request.status || "New"));
+        const requestStatus = request.lead_id || request.status === "published" ? "published" : (request.status || "new");
+        const needsAttention = requestStatus === "new";
+        summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · " + (requestStatus === "published" ? "Published" : requestStatus);
         summaryMain.append(summaryName, summaryMeta);
+        let attentionBell = null;
+        if (needsAttention) {
+          attentionBell = document.createElement("span");
+          attentionBell.className = "request-needs-review";
+          attentionBell.setAttribute("role", "status");
+          attentionBell.setAttribute("aria-label", "New request needs review and publication");
+          const bellIcon = document.createElement("span");
+          bellIcon.className = "bell";
+          bellIcon.setAttribute("aria-hidden", "true");
+          bellIcon.textContent = "🔔";
+          attentionBell.append(bellIcon, document.createTextNode("Review"));
+        }
         const openDetails = document.createElement("button"); openDetails.type = "button"; openDetails.className = "request-open-button"; openDetails.textContent = "Open";
-        summary.append(summaryMain, openDetails);
+        summary.append(summaryMain);
+        if (attentionBell) summary.append(attentionBell);
+        summary.append(openDetails);
 
         const backdrop = document.createElement("div"); backdrop.className = "request-modal-backdrop hidden";
         backdrop.setAttribute("role","presentation");
