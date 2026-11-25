@@ -639,20 +639,7 @@
         </div>
         <p class="muted" style="margin-bottom:0">After each update to the preview branch, these same links show the newest version. Production publication still requires your separate approval.</p>
       </section>
-      <section class="lead" id="releaseApprovalCard" style="margin:14px 0">
-        <h3>Production release approval</h3>
-        <p class="muted">Test the Preview version first. Enter its exact deployment URL and commit/version, then confirm approval. This records your approval only; it does not publish automatically.</p>
-        <div class="grid">
-          <div><label for="releasePreviewUrl">Preview URL</label><input id="releasePreviewUrl" type="url" placeholder="https://zelpx-portal-....vercel.app"></div>
-          <div><label for="releaseVersion">Commit SHA or version</label><input id="releaseVersion" placeholder="Paste the tested commit SHA"></div>
-        </div>
-        <label style="display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;margin:12px 0">
-          <input id="releaseApprovalCheck" type="checkbox" style="width:22px;min-height:22px;margin:0">
-          <span>I tested this exact Preview version and approve it for production publication.</span>
-        </label>
-        <div class="actions"><button id="approveReleaseBtn" type="button">Confirm approval</button></div>
-        <div id="releaseApprovalStatus" class="message hidden" role="status" aria-live="polite"></div>
-      </section>
+
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
@@ -898,7 +885,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadReleaseApproval(); await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
+    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); await loadContractorChangeRequests(); startContractorChangeAlerts(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -3256,61 +3243,7 @@ $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedCon
     document.querySelectorAll(".tabs button[data-tab]").forEach(button => button.addEventListener("click", () => switchTab(button.dataset.tab)));
     $("authPassword").addEventListener("keydown", event => { if (event.key === "Enter") signupMode ? signUp() : signIn(); });
   }
-  async function loadReleaseApproval() {
-    const status = $("releaseApprovalStatus");
-    if (!status || !isAdmin) return;
-    try {
-      const { data, error } = await db.from("site_settings")
-        .select("release_approved,release_version,release_preview_url,release_approved_at")
-        .eq("id", 1).single();
-      if (error) throw error;
-      $("releasePreviewUrl").value = data.release_preview_url || "";
-      $("releaseVersion").value = data.release_version || "";
-      $("releaseApprovalCheck").checked = data.release_approved === true;
-      status.textContent = data.release_approved
-        ? "Approved by an administrator on " + (data.release_approved_at ? new Date(data.release_approved_at).toLocaleString() : "a recorded date") + ". This is an approval record, not a deployment."
-        : "No production release has been approved.";
-      status.className = "message " + (data.release_approved ? "success" : ""); show(status);
-    } catch (error) {
-      status.textContent = "Could not load release approval: " + (error.message || "Unknown error");
-      status.className = "message error"; show(status);
-    }
-  }
-  $("approveReleaseBtn")?.addEventListener("click", async () => {
-    const button = $("approveReleaseBtn");
-    const status = $("releaseApprovalStatus");
-    const url = ($("releasePreviewUrl").value || "").trim();
-    const version = ($("releaseVersion").value || "").trim();
-    if (!$("releaseApprovalCheck").checked) {
-      status.textContent = "Check the confirmation box after testing the Preview version.";
-      status.className = "message error"; show(status); return;
-    }
-    if (!/^https:\/\/[^\s]+\.vercel\.app(?:\/[^\s]*)?$/.test(url) || !version) {
-      status.textContent = "Enter a valid Vercel Preview URL and the exact tested commit SHA or version.";
-      status.className = "message error"; show(status); return;
-    }
-    if (!currentUser?.id || !isAdmin) {
-      status.textContent = "Administrator sign-in is required.";
-      status.className = "message error"; show(status); return;
-    }
-    button.disabled = true;
-    try {
-      const { error } = await db.from("site_settings").update({
-        release_approved: true,
-        release_version: version,
-        release_preview_url: url,
-        release_approved_at: new Date().toISOString(),
-        release_approved_by: currentUser.id
-      }).eq("id", 1);
-      if (error) throw error;
-      status.textContent = "Approval recorded for " + version + ". Production has NOT been changed. Publication must be performed separately after verifying the approved commit.";
-      status.className = "message success"; show(status);
-    } catch (error) {
-      status.textContent = "Could not record approval: " + (error.message || "Unknown error");
-      status.className = "message error"; show(status);
-      $("releaseApprovalCheck").checked = false;
-    } finally { button.disabled = false; }
-  });
+
   async function loadSiteMaintenanceSetting() {
     const toggle = $("siteMaintenanceToggle");
     const status = $("siteMaintenanceStatus");
