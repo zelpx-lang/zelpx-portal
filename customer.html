@@ -2181,7 +2181,7 @@ html.zelpx-session-check #zelpxAccountOpening{display:flex}
           sendButton.disabled=true; sendButton.textContent="Sending…";
           try {
             const raw=phoneInput.value.trim();
-            const digits=raw.replace(/\\D/g,"");
+            const digits=raw.replace(/\D/g,"");
             const phone=raw.startsWith("+") ? "+"+digits : digits.length===10 ? "+1"+digits : digits.length===11&&digits.startsWith("1") ? "+"+digits : "";
             if(!phone || digits.length<10 || digits.length>15) throw new Error("Enter a valid mobile number, including area code.");
             const response=await fetch("/api/customer-phone/send-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone,purpose:"request_submission"})});
