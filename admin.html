@@ -96,7 +96,9 @@
     .request-modal{width:min(760px,100%);max-height:90dvh;overflow:auto;background:#f6f2ec;border-radius:20px;padding:16px;box-shadow:0 24px 80px #0006;}
     .request-modal-head{position:sticky;top:-16px;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 14px;background:#f6f2ec;border-bottom:1px solid var(--line);}
     .request-modal-head h2{margin:0;font-size:19px;}
-    .request-modal-head button{display:none!important;}\n    .request-modal-close-bottom{position:sticky;bottom:0;display:flex;justify-content:flex-end;padding:12px 0 2px;background:#f6f2ec;border-top:1px solid var(--line);margin-top:12px;}\n    .request-modal-close-bottom button{min-width:132px;min-height:48px;}
+    .request-modal-head button{display:none!important;}
+    .request-modal-close-bottom{position:sticky;bottom:0;display:flex;justify-content:flex-end;padding:12px 0 2px;background:#f6f2ec;border-top:1px solid var(--line);margin-top:12px;}
+    .request-modal-close-bottom button{min-width:132px;min-height:48px;}
     .request-modal-content>.lead{margin:12px 0 0;}
     @media(max-width:700px){.request-modal-backdrop{padding:8px;align-items:flex-end}.request-modal{max-height:94dvh;border-radius:18px 18px 10px 10px;padding:12px}.request-summary-row{padding:10px 11px}.request-summary-main strong{font-size:14px}.request-summary-row .request-open-button{padding:7px 12px;font-size:12px;}}
 
@@ -2578,7 +2580,10 @@
         const modalContent = document.createElement("div"); modalContent.className = "request-modal-content";
         const detailCard = document.createElement("article"); detailCard.className = "lead";
         while (card.firstChild) detailCard.append(card.firstChild);
-        modalContent.append(detailCard);\n        const closeBar = document.createElement("div"); closeBar.className = "request-modal-close-bottom";\n        closeBar.append(closeModal);\n        modal.append(modalHead, modalContent, closeBar); backdrop.append(modal);
+        modalContent.append(detailCard);
+        const closeBar = document.createElement("div"); closeBar.className = "request-modal-close-bottom";
+        closeBar.append(closeModal);
+        modal.append(modalHead, modalContent, closeBar); backdrop.append(modal);
         const closeRequestModal = () => { backdrop.classList.add("hidden"); openDetails.focus(); };
         openDetails.addEventListener("click", () => { backdrop.classList.remove("hidden"); closeModal.focus(); });
         closeModal.addEventListener("click", closeRequestModal);
