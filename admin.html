@@ -2984,7 +2984,41 @@
           }
           card.append(note,actions);
         }
-        list.append(card);
+        const modalTitle = h.textContent;
+        const summary = document.createElement("article");
+        summary.className = "request-summary-row";
+        const summaryMain = document.createElement("div"); summaryMain.className = "request-summary-main";
+        const summaryName = document.createElement("strong"); summaryName.textContent = modalTitle;
+        const summaryMeta = document.createElement("small");
+        summaryMeta.textContent = (contractor.company_name||profile.full_name||"Unknown contractor") + " · " +
+          new Date(claim.created_at).toLocaleString() + " · " + (claim.status||"pending").replaceAll("_"," ");
+        summaryMain.append(summaryName,summaryMeta);
+        const openDetails = document.createElement("button"); openDetails.type = "button";
+        openDetails.className = "request-open-button"; openDetails.textContent = "Open";
+        summary.append(summaryMain,openDetails);
+
+        const backdrop = document.createElement("div"); backdrop.className = "request-modal-backdrop hidden";
+        backdrop.setAttribute("role","presentation");
+        const modal = document.createElement("section"); modal.className = "request-modal";
+        modal.setAttribute("role","dialog"); modal.setAttribute("aria-modal","true");
+        modal.setAttribute("aria-label","Refund request details");
+        const modalHead = document.createElement("div"); modalHead.className = "request-modal-head";
+        const modalHeading = document.createElement("h2"); modalHeading.textContent = modalTitle;
+        const closeModal = document.createElement("button"); closeModal.type = "button";
+        closeModal.className = "secondary"; closeModal.textContent = "Close";
+        modalHead.append(modalHeading,closeModal);
+        const modalContent = document.createElement("div"); modalContent.className = "request-modal-content";
+        modalContent.append(card);
+        const closeBar = document.createElement("div"); closeBar.className = "request-modal-close-bottom";
+        closeBar.append(closeModal);
+        modal.append(modalHead,modalContent,closeBar); backdrop.append(modal);
+        const closeRequestModal = () => { backdrop.classList.add("hidden"); openDetails.focus(); };
+        openDetails.addEventListener("click",() => { backdrop.classList.remove("hidden"); closeModal.focus(); });
+        closeModal.addEventListener("click",closeRequestModal);
+        backdrop.addEventListener("click",event => { if(event.target===backdrop)closeRequestModal(); });
+        modal.addEventListener("keydown",event => { if(event.key==="Escape")closeRequestModal(); });
+        document.body.append(backdrop);
+        list.append(summary);
       });
     } catch(e){list.textContent="Could not load refund requests: "+(e.message||"Unknown error");message("refundRequestsMessage",e.message||"Could not load refund requests.","error");}
   }
