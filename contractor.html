@@ -1636,19 +1636,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       return;
     }
     chosen.forEach(p=>{
-      const item=document.createElement("span");
+      const item=document.createElement("div");
       const status=professionVerificationById.get(p.id);
       const statusLabel=status==="verified"?"Verified":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
-      item.style.cssText="display:inline-flex;align-items:center;gap:7px;padding:5px 7px 5px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
+      item.style.cssText="display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:7px;box-sizing:border-box;width:fit-content;max-width:100%;padding:5px 7px 5px 10px;border:1px solid #f3b18f;border-radius:999px;background:#fff;color:#38332e;font-size:13px;line-height:1.25";
       const label=document.createElement("span");
       label.textContent=p.profession_name+" · "+statusLabel;
       label.title="Credential review status: "+statusLabel;
+      label.style.cssText="display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;flex:0 1 auto";
       const remove=document.createElement("button");
       remove.type="button";
       remove.textContent="×";
       remove.setAttribute("aria-label","Remove "+p.profession_name+" from selected services");
       remove.title="Remove this selected service";
-      remove.style.cssText="display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;min-height:23px;padding:0;border:0;border-radius:50%;background:#fff0e8;color:#a84216;font-size:19px;font-weight:700;line-height:1;cursor:pointer;flex:0 0 23px";
+      remove.style.cssText="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;box-sizing:border-box;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;border:1px solid #e97843!important;border-radius:50%!important;background:#fff0e8!important;color:#a84216!important;font-size:22px!important;font-weight:800!important;line-height:1!important;cursor:pointer;flex:0 0 28px!important;box-shadow:none!important;visibility:visible!important;opacity:1!important";
       remove.addEventListener("click",()=>{
         selectedProfessionIds.delete(p.id);
         renderProfessionOptions();
