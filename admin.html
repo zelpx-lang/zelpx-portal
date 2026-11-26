@@ -628,21 +628,21 @@
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section id="newContractorRegistrationsSection" class="lead">
-          <h2>New contractor registrations</h2>
-          <p>Review and approve new contractor accounts here. License verification remains separate; approving an account does not automatically verify a license.</p>
-          <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-          <div id="pendingContractorsMessage" class="message hidden"></div>
-          <div id="pendingContractorsList"><p class="muted">Loading new contractor registrations…</p></div>
+        <section class="lead">
+          <h2>Contractor activity</h2>
+          <p>All new contractor registrations and every submitted contractor account update appear here. This is an activity history, not an approval queue.</p>
+          <div id="contractorActivityMessage" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="actions"><button id="refreshContractorActivityBtn" type="button" class="secondary">Refresh activity</button></div>
+          <div id="contractorActivityList"><p class="muted">Loading contractor activity…</p></div>
         </section>
         <section class="lead">
-        <h2>Contractor activity</h2>
-        <p>View contractor accounts without a current verified license, including new and existing accounts.</p>
-        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
-        <div id="unlicensedContractorsMessage" class="message hidden"></div>
-        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
-      </section>
+          <h2>Contractors without a current verified license</h2>
+          <p>Current account status and license overview.</p>
+          <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
+          <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh contractors</button></div>
+          <div id="unlicensedContractorsMessage" class="message hidden"></div>
+          <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+        </section>
 
 
       </section>
@@ -1435,261 +1435,93 @@
     });
   }
 
-  async function loadPendingContractors() {
+  async function loadContractorActivityFeed() {
     if (!isAdmin) return;
-    const list = $("pendingContractorsList");
-    list.textContent = "Loading pending contractors…";
-    clearMessage("pendingContractorsMessage");
+    const list = $("contractorActivityList");
+    if (!list) return;
+    list.textContent = "Loading contractor activity…";
+    clearMessage("contractorActivityMessage");
     try {
-      const { data, error } = await db.functions.invoke("admin-list-new-contractors", { body: {} });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
-      list.replaceChildren();
-      list.style.cssText = "display:block;width:100%;padding:0;margin:8px 0 0;";
-      const alertBox = $("contractorRegistrationAlert");
-      const pendingCount = contractors?.length || 0;
-      
-      if (alertBox) {
-        alertBox.classList.toggle("hidden", pendingCount === 0);
-        alertBox.className = pendingCount ? "message error" : "message hidden";
-        alertBox.textContent = pendingCount
-          ? `New contractor registrations awaiting your decision: ${pendingCount}. Review each registration and choose With License, Without License, or Reject.`
-          : "";
-      }
-      if (!contractors?.length) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "No new contractor registrations are waiting for review.";
-        list.append(empty);
-        return;
-      }
-      const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
-      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
-      const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
-        contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
-        contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
-        contractorIds.length?db.from("contractor_profession_qualifications").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
-        contractorIds.length?db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
-        db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").in("contractor_id",contractorIds).order("created_at",{ascending:false}).limit(1000)
+      const [contractorsResult, changesResult] = await Promise.all([
+        db.from("contractors").select("id,user_id,company_name,email,verification_status,created_at,contractor_phone").order("created_at",{ascending:false}).limit(500),
+        db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(1000)
       ]);
-      for(const result of [fullResult,licenseResult,professionResult,categoryResult,changeResult])if(result.error)throw result.error;
-      const fullById=new Map((fullResult.data||[]).map(x=>[x.id,x]));
-      const userIds=[...new Set((fullResult.data||[]).map(x=>x.user_id).filter(Boolean))];
-      const profileResult=userIds.length?await db.from("profiles").select("*").in("id",userIds):{data:[],error:null};
-      if(profileResult.error)throw profileResult.error;
-      const profileById=new Map((profileResult.data||[]).map(x=>[x.id,x]));
-      const licensesById=new Map(),professionsById=new Map(),categoriesById=new Map(),changesById=new Map();
-      const groupRows=(map,key,rows)=>{for(const row of rows||[]){if(!map.has(row[key]))map.set(row[key],[]);map.get(row[key]).push(row);}};
-      groupRows(licensesById,"contractor_id",licenseResult.data);
-      groupRows(professionsById,"contractor_id",professionResult.data);
-      groupRows(categoriesById,"contractor_id",categoryResult.data);
-      groupRows(changesById,"contractor_id",changeResult.data);
-      const professionIds=[...new Set((professionResult.data||[]).map(x=>x.profession_id).filter(Boolean))];
-      const professionNamesResult=professionIds.length?await db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):{data:[],error:null};
-      if(professionNamesResult.error)throw professionNamesResult.error;
-      const professionNames=new Map((professionNamesResult.data||[]).map(x=>[x.id,x.profession_name]));
-      const formatValue=(key,value)=>{
-        if(value===null||value===undefined||value==="")return null;
-        if(typeof value==="boolean")return value?"Yes":"No";
-        if(typeof value==="object")return JSON.stringify(value,null,2);
-        if(/(?:expiration_date|_date)$/.test(key)&&typeof value==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return value.slice(5,7)+"/"+value.slice(8,10)+"/"+value.slice(0,4);
-        if(/_at$/.test(key)){const date=new Date(value);if(!Number.isNaN(date.getTime()))return date.toLocaleString("en-US");}
-        return String(value);
-      };
-      const prettyLabel=key=>key.replace(/_/g," ").replace(/\\b\\w/g,ch=>ch.toUpperCase());
-      const addInfo=(parent,label,value)=>{
-        if(value===null||value===undefined||value==="")return;
-        const p=document.createElement("p"),strong=document.createElement("strong");
-        strong.textContent=label+": ";p.append(strong,document.createTextNode(String(value)));parent.append(p);
-      };
-      const addSection=(parent,label)=>{const section=document.createElement("section");section.style.cssText="padding:12px;background:#fffaf5;border:1px solid #eee2d5;border-radius:12px;margin:12px 0;overflow-wrap:anywhere";const title=document.createElement("h4");title.textContent=label;section.append(title);parent.append(section);return section;};
-      contractors.forEach(contractor => {
-        const full=fullById.get(contractor.id)||contractor;
-        const profile=profileById.get(full.user_id)||{};
-        const card = document.createElement("article");
-        card.style.cssText = "display:block;width:100%;box-sizing:border-box;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-radius:0;background:transparent;box-shadow:none;";
-        const heading = document.createElement("button");
-        heading.type = "button"; heading.className = "secondary";
-        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
-        const title = document.createElement("span");
-        title.textContent = contractor.company_name || contractor.full_name || "Contractor";
-        const plus = document.createElement("span");
-        plus.textContent = "+"; plus.setAttribute("aria-hidden","true");
-        plus.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
-        heading.append(title,plus); heading.setAttribute("aria-expanded","false");
-        const content = document.createElement("div");
-        content.className = "hidden"; content.style.cssText = "padding-top:10px;";
-        heading.addEventListener("click",()=>{const open=!content.classList.contains("hidden");content.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));plus.textContent=open?"+":"−";});
-        card.append(heading,content);
-        const accessLabel = contractor.verification_status === "verified"
-          ? (contractor.has_license === true
-              ? "ACCESS ALLOWED — license verified"
-              : "ACCESS ALLOWED — administrator exception (no license)")
-          : contractor.verification_status === "rejected"
-            ? "ACCESS DENIED — rejected by administrator"
-            : "NO ACCESS — awaiting administrator decision";
-        const details = [
-          ["Email", contractor.email || "Not provided"],
-          ["Lead access", accessLabel],
-          ["Current approval status", contractor.verification_status || "Unknown"],
-          ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
-          ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
-          ["License expiration date", contractor.has_license ? (contractor.license_expiration_date || "Not provided — request correction before license verification") : "Not applicable"],
-          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
-        ];
-        details.forEach(([label, value]) => {
-          const p = document.createElement("p");
-          const strong = document.createElement("strong");
-          strong.textContent = label + ": ";
-          p.append(strong, document.createTextNode(String(value)));
-          content.append(p);
-        });
-        const actions = document.createElement("div");
-        actions.className = "actions";
-        const submitContractorDecision = async (choice, button) => {
-          if (button.disabled) return;
-          const labels = {
-            approve: "Approving…",
-            approve_without_license: "Approving…",
-            reject: "Rejecting…"
-          };
-          const originalText = button.textContent;
-          button.disabled = true;
-          actions.querySelectorAll("button").forEach(item => item.disabled = true);
-          setBusy(button, true, labels[choice]);
-          try {
-            const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
-              body: { contractor_id: contractor.id, decision: choice }
-            });
-            if (reviewError) throw reviewError;
-            if (data?.error) throw new Error(data.error);
-            const statusText = choice === "approve"
-              ? "Account approved with restricted access. Company license is still pending in License Verification."
-              : choice === "approve_without_license"
-                ? "Account approved without a license. Licensed work remains blocked."
-                : "Registration rejected. Contractor remains blocked.";
-            const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
-            message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
-            await loadPendingContractors();
-          } catch (e) {
-            message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
-            actions.querySelectorAll("button").forEach(item => item.disabled = false);
-            button.textContent = originalText;
+      if (contractorsResult.error) throw contractorsResult.error;
+      if (changesResult.error) throw changesResult.error;
+      const contractors = contractorsResult.data || [];
+      const changes = changesResult.data || [];
+      const userIds = [...new Set([...contractors.map(x=>x.user_id),...changes.map(x=>x.user_id)].filter(Boolean))];
+      const profileResult = userIds.length
+        ? await db.from("profiles").select("id,full_name,phone").in("id",userIds)
+        : {data:[],error:null};
+      if (profileResult.error) throw profileResult.error;
+      const profiles = new Map((profileResult.data || []).map(x=>[x.id,x]));
+      const contractorMap = new Map(contractors.map(x=>[x.id,x]));
+      const events = [
+        ...contractors.map(c=>({kind:"registration",date:c.created_at,contractor:c,profile:profiles.get(c.user_id)||{}})),
+        ...changes.map(r=>({kind:"update",date:r.created_at,request:r,contractor:contractorMap.get(r.contractor_id)||null,profile:profiles.get(r.user_id)||{}}))
+      ].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+      list.replaceChildren();
+      const pending = changes.filter(x=>x.status==="pending").length;
+      const summary = document.createElement("p");
+      summary.className = "muted";
+      summary.textContent = events.length + " activity event(s) · " + contractors.length + " registration(s) · " + changes.length + " update(s)" + (pending ? " · " + pending + " pending" : "");
+      list.append(summary);
+      if (!events.length) {
+        const empty=document.createElement("p");empty.className="muted";empty.textContent="No contractor registrations or account updates yet.";list.append(empty);return;
+      }
+      const labelForType = value => ({
+        company_profile:"Company profile update",
+        profession_qualifications:"Profession qualifications update",
+        service_categories:"Service categories update",
+        state_licenses:"State license update"
+      }[value] || String(value||"Contractor account update").replaceAll("_"," "));
+      const niceKey = key => String(key).replaceAll("_"," ").replace(/\b\w/g,ch=>ch.toUpperCase());
+      for (const event of events) {
+        const card=document.createElement("article");
+        card.style.cssText="padding:14px 4px;border-bottom:1px solid #e8e1d6;background:transparent;overflow-wrap:anywhere;";
+        const company=event.contractor?.company_name || "Contractor";
+        const name=event.profile?.full_name || "";
+        const heading=document.createElement("h3");
+        heading.style.cssText="font-size:16px;margin:0 0 5px;";
+        heading.textContent=(event.kind==="registration"?"New contractor: ":"Contractor update: ")+company+(name?" · "+name:"");
+        const meta=document.createElement("p");meta.className="muted";
+        const date=event.date?new Date(event.date).toLocaleString("en-US"):"Date unavailable";
+        meta.textContent=(event.kind==="registration"?"New registration":"Updated: "+labelForType(event.request.request_type))+" · "+date;
+        card.append(heading,meta);
+        const contact=document.createElement("p");
+        contact.textContent=[event.contractor?.email,event.profile?.phone||event.contractor?.contractor_phone].filter(Boolean).join(" · ");
+        if(contact.textContent)card.append(contact);
+        if(event.kind==="registration"){
+          const status=document.createElement("p");status.textContent="Account status: "+(event.contractor?.verification_status||"registered");card.append(status);
+        } else {
+          const status=document.createElement("p");
+          status.textContent="Request status: "+String(event.request.status||"unknown").toUpperCase();
+          card.append(status);
+          const changesObj=event.request.requested_changes||{};
+          const entries=Object.entries(changesObj);
+          if(entries.length){
+            const details=document.createElement("details");
+            const summaryEl=document.createElement("summary");summaryEl.textContent="View submitted changes ("+entries.length+")";details.append(summaryEl);
+            const ul=document.createElement("ul");ul.style.cssText="margin:8px 0;padding-left:20px;";
+            for(const [key,value] of entries){
+              const li=document.createElement("li");
+              let shown=value;
+              if(value===null||value==="")shown="—";
+              else if(typeof value==="boolean")shown=value?"Yes":"No";
+              else if(typeof value==="object")shown=JSON.stringify(value);
+              li.textContent=niceKey(key)+": "+String(shown);ul.append(li);
+            }
+            details.append(ul);card.append(details);
           }
-        };
-        const approve = document.createElement("button");
-        approve.type = "button";
-        approve.textContent = "Approve account — license review pending";
-        approve.addEventListener("click", () => submitContractorDecision("approve", approve));
-        const approveWithoutLicense = document.createElement("button");
-        approveWithoutLicense.type = "button";
-        approveWithoutLicense.className = "secondary";
-        approveWithoutLicense.textContent = "Approve account — no license";
-        approveWithoutLicense.addEventListener("click", () => submitContractorDecision("approve_without_license", approveWithoutLicense));
-        const reject = document.createElement("button");
-        reject.type = "button";
-        reject.className = "secondary";
-        reject.textContent = "Reject";
-        reject.addEventListener("click", () => submitContractorDecision("reject", reject));
-        actions.append(approve, approveWithoutLicense, reject);
-        content.append(actions);
+          if(event.request.admin_note){const note=document.createElement("p");note.textContent="Administrator note: "+event.request.admin_note;card.append(note);}
+        }
         list.append(card);
-      });
-    } catch (e) {
-      list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
-      message("pendingContractorsMessage", "Could not load new contractor registrations: " + (e.message || "Unknown error"), "error");
+      }
+    } catch(e) {
+      list.textContent="Could not load contractor activity: "+(e.message||"Unknown error");
+      message("contractorActivityMessage","Could not load contractor activity: "+(e.message||"Unknown error"),"error");
     }
-  }
-
-  function startContractorChangeAlerts() {
-    if (!isAdmin || !currentUser) return;
-    if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);
-    if (contractorRegistrationPoll) clearInterval(contractorRegistrationPoll);
-    if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
-    if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
-    refreshIncomingLeadBadge();
-    refreshRefundBadge();
-    if (refundRequestsChannel) db.removeChannel(refundRequestsChannel);
-    if (refundRequestsPoll) clearInterval(refundRequestsPoll);
-    // Record existing open requests so only newly submitted refund requests trigger alerts.
-    db.from("lead_protection_claims").select("id,status").in("status",["under_review","pending"]).limit(200)
-      .then(({data,error}) => {
-        if (error) { console.warn("Could not initialize refund request alerts:",error.message); return; }
-        (data || []).forEach(claim => seenRefundRequestIds.add(claim.id));
-      });
-    refundRequestsChannel = db.channel("zelpx-admin-refund-requests")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"lead_protection_claims"},payload => {
-        const claim = payload.new || {};
-        if (!isAdmin || !currentUser || !claim.id ||
-            !["under_review","pending"].includes(claim.status) || seenRefundRequestIds.has(claim.id)) return;
-        seenRefundRequestIds.add(claim.id);
-        refreshRefundBadge();
-        const page = $("adminRefundRequestsPage");
-        if (page && !page.classList.contains("hidden")) loadRefundRequests();
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("ZELPX — new refund request", {
-            body:"A contractor submitted a refund request. Open Refund requests to review it.",
-            tag:"zelpx-refund-request-" + claim.id
-          });
-        }
-      })
-      .subscribe((status,error) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
-          console.warn("Refund request realtime unavailable:",status,error || "");
-      });
-    refundRequestsPoll = setInterval(refreshRefundBadge,15000);
-    serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},payload => {
-        if (!isAdmin || !currentUser) return;
-        announceNewServiceRequest(payload.new || {});
-      })
-      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"service_requests"},payload => {
-        if (!isAdmin || !currentUser) return;
-        const updated = payload.new || {};
-        if (updated.status === "published" && updated.lead_id) {
-          showPublishedRequestResult(updated.id, updated.lead_id);
-        }
-        refreshIncomingLeadBadge();
-      })
-      .subscribe((status,error) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
-          console.warn("Service request realtime unavailable:",status,error || "");
-      });
-    // Fallback polling keeps the badge accurate if Realtime is temporarily disconnected.
-    serviceRequestsPoll = setInterval(refreshIncomingLeadBadge, 15000);
-    contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
-        if (!isAdmin || !currentUser) return;
-        loadPendingContractors();loadUnlicensedContractors();loadAdminContractorDirectory();
-      })
-      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"contractors"},payload => {
-        if (!isAdmin || !currentUser) return;
-        loadUnlicensedContractors();loadAdminContractorDirectory();
-      })
-      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload => {
-        if (!isAdmin || !currentUser) return;
-        loadUnlicensedContractors();loadAdminContractorDirectory();
-      })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_service_categories"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
-      .subscribe((status,error) => {
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
-          console.warn("Contractor registration realtime unavailable:",status,error || "");
-      });
-    // Fallback refresh: keep new contractor registrations current if realtime delivery is delayed.
-    let lastRegistrationIds = null;
-    contractorRegistrationPoll = setInterval(async () => {
-      if (!isAdmin || !currentUser) return;
-      try {
-        const {data,error} = await db.functions.invoke("admin-list-new-contractors",{body:{}});
-        if (error || data?.error) return;
-        const ids = (Array.isArray(data?.contractors)?data.contractors:[]).map(x=>x.id).sort().join("|");
-        if (lastRegistrationIds === null) { lastRegistrationIds = ids; return; }
-        if (ids !== lastRegistrationIds) { lastRegistrationIds = ids; loadPendingContractors(); }
-      } catch(e) { console.warn("Contractor registration polling failed:",e.message||e); }
-    }, 5000);
   }
 
   async function loadUnlicensedContractors() {
