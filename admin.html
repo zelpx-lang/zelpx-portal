@@ -1479,16 +1479,18 @@
         return;
       }
       const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
-      const [fullResult,profileResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
+      const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
         contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
-        db.from("profiles").select("*").in("id",(contractors||[]).map(x=>x.user_id).filter(Boolean)),
         contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
         contractorIds.length?db.from("contractor_profession_qualifications").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
         contractorIds.length?db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
         db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").in("contractor_id",contractorIds).order("created_at",{ascending:false}).limit(1000)
       ]);
-      for(const result of [fullResult,profileResult,licenseResult,professionResult,categoryResult,changeResult])if(result.error)throw result.error;
+      for(const result of [fullResult,licenseResult,professionResult,categoryResult,changeResult])if(result.error)throw result.error;
       const fullById=new Map((fullResult.data||[]).map(x=>[x.id,x]));
+      const userIds=[...new Set((fullResult.data||[]).map(x=>x.user_id).filter(Boolean))];
+      const profileResult=userIds.length?await db.from("profiles").select("*").in("id",userIds):{data:[],error:null};
+      if(profileResult.error)throw profileResult.error;
       const profileById=new Map((profileResult.data||[]).map(x=>[x.id,x]));
       const licensesById=new Map(),professionsById=new Map(),categoriesById=new Map(),changesById=new Map();
       const groupRows=(map,key,rows)=>{for(const row of rows||[]){if(!map.has(row[key]))map.set(row[key],[]);map.get(row[key]).push(row);}};
