@@ -12,9 +12,9 @@ header{height:76px;background:#fbf9f4;border-bottom:1px solid var(--line);displa
 .controls{margin-top:30px;background:white;border:1px solid var(--line);border-radius:22px;padding:12px;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;max-width:850px;box-shadow:0 18px 48px #3327190d}.field{padding:4px 12px;border-right:1px solid var(--line)}.field label{display:block;font-size:10px;font-weight:900;letter-spacing:.1em;color:#827c72}.field input,.field select{width:100%;border:0;outline:0;background:transparent;padding:5px 0;color:var(--ink);font-weight:650}.btn{border:0;border-radius:15px;background:var(--orange);color:white;font-weight:900;padding:0 23px;min-height:52px;cursor:pointer}
 main{padding:40px 0 76px}.bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}.tabs,.filters{display:flex;gap:8px;flex-wrap:wrap}.tab,.chip{border:1px solid var(--line);background:var(--white);padding:10px 16px;border-radius:99px;font-weight:850;cursor:pointer;color:#6f6a61}.tab.active{background:var(--ink);border-color:var(--ink);color:white}.chip{font-size:12px;padding:8px 13px}.chip.active{border-color:#f5a17f;background:var(--soft);color:#9c431f}
 .feature{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin:22px 0}.feature-main{border-radius:27px;background:#20231f;color:white;padding:29px;min-height:240px;position:relative;overflow:hidden}.feature-main:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;right:-75px;top:-95px;background:var(--orange)}.feature-main>*{position:relative;z-index:1}.feature-main small{font-size:11px;letter-spacing:.13em;font-weight:900;color:#ffd3c0}.feature-main h2{font-size:clamp(28px,4vw,42px);line-height:1.04;letter-spacing:-.045em;margin:18px 0;max-width:500px}.feature-main p{color:#ddd9d1;max-width:450px;margin:0}.side{border:1px solid var(--line);border-radius:27px;padding:26px;background:var(--white);display:flex;flex-direction:column;justify-content:space-between}.number{font-size:39px;font-weight:950;letter-spacing:-.06em;color:var(--orange)}.side p{color:var(--muted);margin:5px 0 0}.status{display:inline-flex;margin-top:16px;padding:7px 11px;border-radius:99px;background:#f2f0eb;color:#68635b;font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
-.empty{border:1px dashed #d9d0c3;border-radius:24px;background:var(--white);padding:44px 22px;text-align:center}.symbol{width:58px;height:58px;border-radius:18px;background:var(--soft);color:var(--orange);display:grid;place-items:center;font-size:27px;margin:0 auto 14px}.empty h3{font-size:23px;margin:0 0 7px}.empty p{color:var(--muted);max-width:590px;margin:0 auto}.note{margin-top:22px;padding:16px 19px;border-left:3px solid var(--orange);background:#fff8f3;border-radius:0 14px 14px 0;color:#6d6259;font-size:13px}
+.stories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:22px 0}.story{background:var(--white);border:1px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:190px}.story-meta{font-size:10px;font-weight:900;letter-spacing:.08em;color:#9c5434;text-transform:uppercase}.story h3{font-size:21px;line-height:1.2;margin:0;letter-spacing:-.025em}.story p{color:var(--muted);margin:0;font-size:14px}.story a{margin-top:auto;color:#b64c25;font-weight:900;font-size:13px}.story time{font-size:11px;color:#8a847a}.stories-empty{grid-column:1/-1}.empty{border:1px dashed #d9d0c3;border-radius:24px;background:var(--white);padding:44px 22px;text-align:center}.symbol{width:58px;height:58px;border-radius:18px;background:var(--soft);color:var(--orange);display:grid;place-items:center;font-size:27px;margin:0 auto 14px}.empty h3{font-size:23px;margin:0 0 7px}.empty p{color:var(--muted);max-width:590px;margin:0 auto}.note{margin-top:22px;padding:16px 19px;border-left:3px solid var(--orange);background:#fff8f3;border-radius:0 14px 14px 0;color:#6d6259;font-size:13px}
 footer{background:#1b1d1a;color:#e9e4db;padding:28px 0}.foot{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}.foot small{color:#aaa69d}.foot a{color:#ffc0a5;font-weight:850}
-@media(max-width:700px){.wrap{width:calc(100% - 28px)}.brand{font-size:20px}.home{display:none}.hero{padding:45px 0 36px}.controls{grid-template-columns:1fr}.field{border-right:0;border-bottom:1px solid var(--line);padding:7px 10px}.btn{width:100%}.feature{grid-template-columns:1fr}.bar{align-items:flex-start}.tabs{width:100%}.tab{flex:1}.filters{width:100%}}
+@media(max-width:700px){.stories{grid-template-columns:1fr}.wrap{width:calc(100% - 28px)}.brand{font-size:20px}.home{display:none}.hero{padding:45px 0 36px}.controls{grid-template-columns:1fr}.field{border-right:0;border-bottom:1px solid var(--line);padding:7px 10px}.btn{width:100%}.feature{grid-template-columns:1fr}.bar{align-items:flex-start}.tabs{width:100%}.tab{flex:1}.filters{width:100%}}
 </style></head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="/">ZELPX<span>.</span> LOCAL</a><div class="actions"><div class="languages" aria-label="Choose language"><button data-lang="en" class="active">EN</button><button data-lang="es">ES</button><button data-lang="ru">RU</button></div><a class="home" href="/">ZELPX HOME ↗</a></div></div></header>
@@ -22,7 +22,7 @@ footer{background:#1b1d1a;color:#e9e4db;padding:28px 0}.foot{display:flex;justif
 <div class="controls"><div class="field"><label for="zip" data-t="zip">ZIP CODE</label><input id="zip" inputmode="numeric" maxlength="5" placeholder="e.g. 98660"></div><div class="field"><label for="city" data-t="city">CITY / AREA</label><select id="city"><option>Vancouver, WA</option><option>Portland, OR</option><option>Beaverton, OR</option><option>Hillsboro, OR</option></select></div><button class="btn" data-t="explore">Explore local</button></div></div></section>
 <main class="wrap"><div class="bar"><div class="tabs"><button class="tab active" data-tab="news" data-t="news">News</button><button class="tab" data-tab="events" data-t="events">Events</button></div><div class="filters"><button class="chip active" data-filter="all" data-t="all">All</button><button class="chip" data-filter="community" data-t="community">Community</button><button class="chip" data-filter="business" data-t="business">Business</button><button class="chip" data-filter="public" data-t="public">Public safety</button></div></div>
 <div class="feature"><section class="feature-main"><small data-t="pulse">THE LOCAL PULSE</small><h2 data-html="feature">Closer to home.<br>Clearer perspective.</h2><p data-t="featurecopy">Useful local information, with original sources kept close and context made easy to understand.</p></section><aside class="side"><div><div class="number">EN · ES · RU</div><strong data-t="three">One local feed. Three languages.</strong><p data-t="threecopy">Choose your language at any time. Your preference stays on this device.</p></div><span class="status" data-t="pending">News feed connection pending</span></aside></div>
-<section class="empty" aria-live="polite"><div class="symbol">✳</div><h3 data-t="emptytitle">Your local feed is getting ready</h3><p data-t="emptycopy">The page design is ready. Verified news sources and event feeds have not been connected yet, so no unverified or made-up stories are shown.</p><span class="status" data-t="emptytag">No demo stories · No invented headlines</span></section>
+<section id="stories" class="stories" aria-live="polite"></section><section class="empty" id="empty-state" aria-live="polite"><div class="symbol">✳</div><h3 data-t="emptytitle">Your local feed is getting ready</h3><p data-t="emptycopy">The page design is ready. Verified news sources and event feeds have not been connected yet, so no unverified or made-up stories are shown.</p><span class="status" data-t="emptytag">No demo stories · No invented headlines</span></section>
 <div class="note" data-t="note">ZELPX LOCAL will publish from approved sources only. Each story will include its original source and publication date. Unverified items will be held for review.</div></main>
 <footer><div class="wrap foot"><div><strong class="brand">ZELPX<span>.</span> LOCAL</strong><br><small data-t="footer">Local information, thoughtfully delivered.</small></div><a href="/browse-jobs" data-t="market">Find a home service pro ↗</a></div></footer>
 <script>
@@ -37,5 +37,55 @@ document.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",(
 document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x===b));document.querySelector(".empty h3").textContent=b.dataset.tab==="events"?translations[language].events+": "+translations[language].emptytitle:translations[language].emptytitle}));
 document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>document.querySelectorAll("[data-filter]").forEach(x=>x.classList.toggle("active",x===b))));
 document.querySelector(".btn").addEventListener("click",()=>{const field=document.getElementById("zip");if(field.value&&!/^\d{5}$/.test(field.value)){field.setCustomValidity(language==="ru"?"Введите ZIP-код из 5 цифр.":language==="es"?"Ingresa un código postal de 5 dígitos.":"Enter a 5-digit ZIP code.");field.reportValidity()}else field.setCustomValidity("")});
-document.getElementById("zip").addEventListener("input",e=>e.target.setCustomValidity(""));
+document.getElementById("zip").addEventListener("input",e=>{e.target.setCustomValidity("");renderStories()});
+document.getElementById("city").addEventListener("change",renderStories);
+document.querySelector(".btn").addEventListener("click",renderStories);
+document.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>{activeTab=b.dataset.tab;renderStories()}));
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{activeFilter=b.dataset.filter;renderStories()}));
+
+const SUPABASE_URL="https://zsrnjkndgbchfxibxiyd.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+let loadedStories=[];
+let activeTab="news";
+let activeFilter="all";
+const cityNames={"Vancouver, WA":"Vancouver","Portland, OR":"Portland","Beaverton, OR":"Beaverton","Hillsboro, OR":"Hillsboro"};
+function safeDate(value){if(!value)return "";const d=new Date(value);return Number.isNaN(d.getTime())?"":d.toLocaleDateString(language==="ru"?"ru-RU":language==="es"?"es-MX":"en-US",{year:"numeric",month:"short",day:"numeric"})}
+function translated(item){const rows=item.local_news_translations||[];return rows.find(x=>x.language===language)||rows.find(x=>x.language==="en")||{title:item.original_title,summary:item.original_summary}}
+function renderStories(){
+ const root=document.getElementById("stories");root.replaceChildren();
+ const zip=document.getElementById("zip").value.trim();
+ const city=cityNames[document.getElementById("city").value]||"";
+ const items=loadedStories.filter(item=>{
+  if(item.content_type!==activeTab)return false;
+  if(activeFilter!=="all"&&(item.category||"").toLowerCase()!==activeFilter)return false;
+  if(city&&item.city&&item.city.toLowerCase()!==city.toLowerCase()&&!(item.region||[]).some(x=>String(x).toLowerCase().includes(city.toLowerCase())))return false;
+  if(zip&&(item.zip_codes||[]).length&&!(item.zip_codes||[]).includes(zip))return false;
+  return true;
+ });
+ document.getElementById("empty-state").style.display=items.length?"none":"block";
+ if(!items.length)return;
+ items.forEach(item=>{
+  const tr=translated(item);const card=document.createElement("article");card.className="story";
+  const meta=document.createElement("div");meta.className="story-meta";meta.textContent=(item.category||"Local update").replace(/_/g," ")+" · "+(item.city||item.region?.[0]||"Local");
+  const title=document.createElement("h3");title.textContent=tr.title||item.original_title||"Local update";
+  const summary=document.createElement("p");summary.textContent=tr.summary||item.original_summary||"";
+  const date=document.createElement("time");date.textContent=safeDate(item.source_published_at||item.published_at);
+  const link=document.createElement("a");link.href=item.source_article_url;link.target="_blank";link.rel="noopener noreferrer";link.textContent=language==="ru"?"Читать в источнике ↗":language==="es"?"Leer en la fuente ↗":"Read at source ↗";
+  card.append(meta,title,summary,date,link);root.append(card);
+ });
+}
+async function loadStories(){
+ const root=document.getElementById("stories");root.innerHTML='<div class="empty stories-empty"><div class="symbol">…</div><h3>Loading local updates</h3></div>';
+ try{
+  const select="id,content_type,original_title,original_summary,source_article_url,category,region,city,zip_codes,source_published_at,published_at,local_news_translations(language,title,summary)";
+  const url=SUPABASE_URL+"/rest/v1/local_news?select="+encodeURIComponent(select)+"&status=eq.published&order=source_published_at.desc.nullslast&limit=100";
+  const response=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:"Bearer "+SUPABASE_ANON_KEY}});
+  if(!response.ok)throw new Error("News feed unavailable ("+response.status+")");
+  loadedStories=await response.json();renderStories();
+ }catch(error){
+  root.replaceChildren();const msg=document.createElement("div");msg.className="empty stories-empty";const h=document.createElement("h3");h.textContent="News feed is temporarily unavailable";const p=document.createElement("p");p.textContent="Please try again later. No unverified stories are displayed.";msg.append(h,p);root.append(msg);
+ }
+}
+
+loadStories();
 </script></body></html>
