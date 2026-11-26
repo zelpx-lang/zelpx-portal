@@ -2195,9 +2195,29 @@
       contractors.forEach(contractor => {
         const card = document.createElement("article");
         card.className = "lead";
-        const title = document.createElement("h3");
+        const heading = document.createElement("button");
+        heading.type = "button";
+        heading.className = "unlicensed-contractor-toggle secondary";
+        heading.setAttribute("aria-expanded", "false");
+        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
+        const title = document.createElement("strong");
         title.textContent = contractor.company_name || "Contractor company";
-        card.append(title);
+        title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
+        heading.append(title, expandIcon);
+        const panel = document.createElement("div");
+        panel.className = "unlicensed-contractor-details hidden";
+        panel.style.cssText = "padding-top:10px;";
+        heading.addEventListener("click", () => {
+          const willOpen = panel.classList.contains("hidden");
+          panel.classList.toggle("hidden", !willOpen);
+          heading.setAttribute("aria-expanded", String(willOpen));
+          expandIcon.textContent = willOpen ? "−" : "+";
+        });
+        card.append(heading);
         const details = [
           ["Company name", contractor.company_name || "Not provided"],
           ["Email", contractor.email || "Not provided"],
@@ -2221,7 +2241,7 @@
           } else {
             p.append(document.createTextNode(String(value)));
           }
-          card.append(p);
+          panel.append(p);
         });
         const actions = document.createElement("div");
         actions.className = "actions";
@@ -2229,7 +2249,7 @@
         const accessStatus = document.createElement("p");
         accessStatus.className = allowed ? "message success" : "message error";
         accessStatus.textContent = allowed ? "Lead access: ALLOWED" : "Lead access: BLOCKED";
-        card.append(accessStatus);
+        panel.append(accessStatus);
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = allowed ? "danger" : "";
@@ -2259,7 +2279,8 @@
           }
         });
         actions.append(toggle);
-        card.append(actions);
+        panel.append(actions);
+        card.append(panel);
         list.append(card);
       });
     } catch (e) {
