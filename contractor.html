@@ -1445,16 +1445,29 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(primaryFile){primaryFile.dataset.existingPath=primary?.document_path||"";primaryFile.dataset.existingState=primary?.state_code||"";}
     renderAdditionalStateLicenses();
   }
+  function fillAdditionalLicenseEditor(){
+    const state_code=$("additionalLicenseState").value;
+    const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(state_code||"").toUpperCase());
+    $("additionalLicenseNumber").value=existing?.license_number||"";
+    $("additionalLicenseType").value=existing?.license_type||"";
+    $("additionalLicenseExpiry").value=existing?.expiration_date||"";
+    $("additionalLicenseModalTitle").textContent=existing?"Edit state license":"Add another state license";
+    $("saveAdditionalLicenseBtn").textContent=existing?"Save changes":"Add state";
+  }
   function openAdditionalLicenseModal(){
     const select=$("additionalLicenseState"), source=$("profileLicenseState");
     select.replaceChildren(new Option("Choose state",""));
     [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
-    const used=new Set([ $("profileLicenseState").value, ...additionalStateLicenses.map(x=>x.state_code) ].filter(Boolean));
-    [...select.options].forEach(o=>{if(used.has(o.value))o.disabled=true;});
+    const primaryState=String($("profileLicenseState").value||"").toUpperCase();
+    [...select.options].forEach(o=>{if(o.value&&String(o.value).toUpperCase()===primaryState)o.disabled=true;});
+    select.value="";
     $("additionalLicenseNumber").value="";$("additionalLicenseType").value="";$("additionalLicenseFile").value="";$("additionalLicenseExpiry").value="";
+    $("additionalLicenseModalTitle").textContent="Add another state license";
+    $("saveAdditionalLicenseBtn").textContent="Add state";
     $("additionalLicenseModalMessage").className="message hidden";
     $("additionalLicenseStateModal").classList.remove("hidden");
   }
+  $("additionalLicenseState").addEventListener("change",fillAdditionalLicenseEditor);
   $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
   $("cancelAdditionalLicenseBtn").addEventListener("click",()=>$("additionalLicenseStateModal").classList.add("hidden"));
   $("saveAdditionalLicenseBtn").addEventListener("click",()=>{
@@ -1464,9 +1477,12 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const document_file=null;
     const expiration_date=$("additionalLicenseExpiry").value||null;
     if(!state_code||!license_number||!license_type){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
-    // No document upload is required for additional state licenses.
-    additionalStateLicenses.push({state_code,license_number,license_type,document_file,expiration_date,review_status:"pending"});
-    renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
+    if(String(state_code).toUpperCase()===String($("profileLicenseState").value||"").toUpperCase()){const m=$("additionalLicenseModalMessage");m.textContent="This is your primary license state. Edit it in the main license fields above.";m.className="message error";return;}
+    // Selecting an existing additional state edits that record instead of creating a duplicate.
+    additionalStateLicenses=[...additionalStateLicenses.filter(x=>String(x.state_code||"").toUpperCase()!==String(state_code).toUpperCase()),
+      {state_code,license_number,license_type,document_file,document_path:null,expiration_date,review_status:"pending"}];
+    renderAdditionalStateLicenses();
+    $("additionalLicenseStateModal").classList.add("hidden");
   });
   async function loadAccount(preloadedProfile = null) {
     // The role/profile has already been checked on the OAuth return path.
