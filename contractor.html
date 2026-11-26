@@ -1526,25 +1526,26 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       Object.prototype.hasOwnProperty.call(draft, key) ? (draft[key] ?? "") : (activeValue ?? "");
 
     currentProfile={...(currentProfile||{}),...(profile||{})};
-    $("profileFullName").value = profile?.full_name || "";
-    $("profilePhone").value = profile?.phone || "";
+    $("profileFullName").value = draftValue("full_name", profile?.full_name);
+    $("profilePhone").value = draftValue("phone", profile?.phone);
     renderContractorPhoneVerification();
-    $("contractorAvatarPreview").src = profile?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
-    $("contractorAvatarPreview").dataset.currentUrl = profile?.avatar_url || "";
-    $("removeContractorAvatarButton").hidden = !profile?.avatar_url;
-    $("profileCompany").value = contractor?.company_name || "";
-    $("profileCompanyEmail").value = contractor?.email || "";
-    $("profileServiceAddress").value = contractor?.service_address || "";
-    $("profileServiceCity").value = contractor?.service_city || "";
+    const draftAvatar = draftValue("avatar_url", profile?.avatar_url);
+    $("contractorAvatarPreview").src = draftAvatar || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
+    $("contractorAvatarPreview").dataset.currentUrl = draftAvatar || "";
+    $("removeContractorAvatarButton").hidden = !draftAvatar;
+    $("profileCompany").value = draftValue("company_name", contractor?.company_name);
+    $("profileCompanyEmail").value = draftValue("email", contractor?.email);
+    $("profileServiceAddress").value = draftValue("service_address", contractor?.service_address);
+    $("profileServiceCity").value = draftValue("service_city", contractor?.service_city);
     const { data: profileStates, error: profileStatesError } = await db.from("us_states").select("state_code,state_name").eq("is_active", true).order("state_name");
     if (profileStatesError) throw profileStatesError;
     const profileStateSelect = $("profileServiceState");
     profileStateSelect.replaceChildren(new Option("Select state", ""));
     (profileStates || []).forEach(s => profileStateSelect.add(new Option(s.state_name, s.state_code)));
-    profileStateSelect.value = contractor?.service_state || "";
-    $("profileServiceZip").value = contractor?.service_zip_code || "";
+    profileStateSelect.value = draftValue("service_state", contractor?.service_state);
+    $("profileServiceZip").value = draftValue("service_zip_code", contractor?.service_zip_code);
     $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
-    $("profileLeadEmailNotifications").checked = contractor?.lead_email_notifications !== false;
+    $("profileLeadEmailNotifications").checked = draftValue("lead_email_notifications", contractor?.lead_email_notifications) !== false;
     const draftHasLicense = draftValue("has_license", contractor?.has_license);
     $("profileHasLicense").value = draftHasLicense === true ? "yes" : draftHasLicense === false ? "no" : "";
     $("profileLicenseNumber").value = draftValue("license_number", contractor?.license_number);
@@ -1923,8 +1924,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if (contractorAccountError) throw contractorAccountError;
     if (!contractorAccount) throw new Error("Contractor account required.");
     const digits = value => String(value || "").replace(/\D/g, "");
-    // Every company/profile update must be confirmed with a fresh SMS code,
-    // even when this contractor's phone was verified during an earlier update.
+    // Phone ownership is verified once and remains attached to this contractor
+    // account. Ordinary profile edits must not request another SMS code.
     currentContractor = { ...(currentContractor || {}), ...contractorAccount };
 
     return await new Promise(resolve => {
@@ -1932,7 +1933,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       overlay.style.cssText = "position:fixed;inset:0;z-index:100500;background:#24170f99;display:flex;align-items:center;justify-content:center;padding:18px";
       const panel = document.createElement("section");
       panel.style.cssText = "width:min(100%,420px);max-height:calc(100dvh - 36px);overflow-y:auto;background:#fffefa;border-radius:20px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005;box-sizing:border-box;font-family:inherit";
-panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;color:#30231e">Verify phone & update account</h2><p style="margin:12px 0 20px;color:#756b64;line-height:1.5">For every company or profile update, enter the SMS code sent to your contractor phone. Your changes will be saved only after the code is confirmed.</p><label for="zelpxContractorVerifyPhone" style="display:block;font-weight:700;color:#514840;margin:14px 0 6px">Mobile number</label><input id="zelpxContractorVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px"><button type="button" id="zelpxContractorSendCode" style="display:block;width:100%;padding:15px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Send SMS code for this update</button><label for="zelpxContractorVerifyCode" style="display:block;font-weight:700;color:#514840;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxContractorVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px;letter-spacing:2px"><p id="zelpxContractorVerifyMessage" role="status" style="min-height:22px;margin:8px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px"><button type="button" id="zelpxContractorCancel" style="min-height:54px;padding:13px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-size:16px;font-weight:700">Cancel</button><button type="button" id="zelpxContractorVerify" style="min-height:54px;padding:13px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Verify & save account</button></div>';
+panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;color:#30231e">Verify contractor phone</h2><p style="margin:12px 0 20px;color:#756b64;line-height:1.5">Verify this phone once to link it to your contractor account. After verification, you can submit account updates without repeating SMS verification. Each update will be sent to an administrator for review.</p><label for="zelpxContractorVerifyPhone" style="display:block;font-weight:700;color:#514840;margin:14px 0 6px">Mobile number</label><input id="zelpxContractorVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px"><button type="button" id="zelpxContractorSendCode" style="display:block;width:100%;padding:15px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Send SMS code for this update</button><label for="zelpxContractorVerifyCode" style="display:block;font-weight:700;color:#514840;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxContractorVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px;letter-spacing:2px"><p id="zelpxContractorVerifyMessage" role="status" style="min-height:22px;margin:8px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px"><button type="button" id="zelpxContractorCancel" style="min-height:54px;padding:13px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-size:16px;font-weight:700">Cancel</button><button type="button" id="zelpxContractorVerify" style="min-height:54px;padding:13px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Verify & save account</button></div>';
       overlay.append(panel); document.body.append(overlay);
       const phoneInput=panel.querySelector("#zelpxContractorVerifyPhone");
       const codeInput=panel.querySelector("#zelpxContractorVerifyCode");
@@ -1988,7 +1989,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     if(!status||!button)return;
     if(contractorPhoneIsVerified()){
       status.className="message success";
-      status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". You can add credits and purchase leads. A new SMS code is required for every company or profile update.";
+      status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". You can update your account without repeating SMS verification. Each submitted update goes to an administrator for review.";
       button.textContent="Save company & account updates";button.disabled=false;
     }else{
       status.className="message error";
@@ -1999,11 +2000,13 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   async function verifyContractorPhoneFromAccount(){
     const button=$("verifyContractorPhoneBtn");
     try{
-      const verified=await ensureContractorPhoneVerified();
-      if(!verified)return;
-      const {data,error}=await db.from("contractors").select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number").eq("user_id",currentUser.id).single();
-      if(error)throw error;
-      currentContractor={...(currentContractor||{}),...data};
+      if(!contractorPhoneIsVerified()){
+        const verified=await ensureContractorPhoneVerified();
+        if(!verified)return;
+        const {data,error}=await db.from("contractors").select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number").eq("user_id",currentUser.id).single();
+        if(error)throw error;
+        currentContractor={...(currentContractor||{}),...data};
+      }
       renderContractorPhoneVerification();
       await saveCompany(button, true);
       renderContractorPhoneVerification();
@@ -2928,7 +2931,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const hasCompletePrimaryLicense = hasLicense && !!(licenseNumber && licenseState && licenseType);
       const hasCompleteEmployerLicense = employeeNeedsEmployerLicense && !!(licenseNumber && licenseState && licenseType);
       if (currentContractor) {
-        if (!phoneVerifiedForThisSave) {
+        if (!contractorPhoneIsVerified()) {
           const verified = await ensureContractorPhoneVerified();
           if (!verified) return;
           const {data:verifiedAccount,error:verifiedAccountError}=await db.from("contractors")
@@ -2959,22 +2962,6 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           insurance_policy_number: $("profileInsurancePolicyNumber").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
-        // Save ordinary contact and location fields directly so they remain current
-        // after logout/login. License and insurance changes still require admin review.
-        const { error: profileUpdateError } = await db.from("profiles")
-          .update({ full_name, phone }).eq("id", currentUser.id);
-        if (profileUpdateError) throw profileUpdateError;
-        const activeProfileChanges = {
-          company_name: changes.company_name, email: changes.email,
-          service_address: changes.service_address, service_city: changes.service_city,
-          service_state: changes.service_state, service_zip_code: changes.service_zip_code,
-          service_radius_miles: changes.service_radius_miles,
-          service_latitude: changes.service_latitude, service_longitude: changes.service_longitude,
-          lead_email_notifications: changes.lead_email_notifications
-        };
-        const { error: contractorUpdateError } = await db.from("contractors")
-          .update(activeProfileChanges).eq("id", currentContractor.id).eq("user_id", currentUser.id);
-        if (contractorUpdateError) throw contractorUpdateError;
         // Submit each company license as its own state-scoped record.
         const submitCompanyStateLicenseByNumber = async (license) => {
           const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(license.state_code||"").toUpperCase());
@@ -3013,24 +3000,19 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           }
         }
 
-        const complianceChanges = {
-          has_license: changes.has_license, license_number: changes.license_number,
-          license_state: changes.license_state, license_type: changes.license_type,
-          license_expiration_date: changes.license_expiration_date,
-          license_number_2: changes.license_number_2, license_state_2: changes.license_state_2, license_type_2: changes.license_type_2,
-          additional_state_licenses: additionalStateLicenses.map(({state_code,license_number,license_type})=>({state_code,license_number,license_type})),
-          has_insurance_certificate: changes.has_insurance_certificate,
-          insurance_agency_name: changes.insurance_agency_name,
-          insurance_agent_phone: changes.insurance_agent_phone,
-          insurance_policy_number: changes.insurance_policy_number,
-          insurance_expiration_date: changes.insurance_expiration_date
+        // Submit the complete account draft for administrator review.
+        // Active profile rows are not changed until the administrator approves it.
+        const profileChanges = {
+          ...changes,
+          avatar_url: currentProfile?.avatar_url || null
         };
-        if(!isEmployee){
-          const {error:requestError}=await db.rpc("submit_contractor_change_request",{p_type:"company_profile",p_changes:complianceChanges});
-          if(requestError) throw requestError;
-        }
-        currentContractor = { ...currentContractor, ...activeProfileChanges };
-        currentProfile = { ...currentProfile, full_name, phone };
+        delete profileChanges.service_radius_miles; // saved separately as a self-service preference
+        delete profileChanges.has_insurance_certificate; // legacy display-only field; no document upload is used
+        const {error:requestError}=await db.rpc("submit_contractor_change_request",{
+          p_type:"company_profile",
+          p_changes:profileChanges
+        });
+        if(requestError) throw requestError;
 
         // Submit selected professions from the same Save company details action.
         if (selectedProfessionIds.size) {
@@ -3057,8 +3039,8 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         }
       }
       const successText = isEmployee
-        ? "Your worker profile and service area are saved. Required profession credentials must be verified before you perform regulated work."
-        : "Saved successfully. Your name, phone, company and location details are now active. License, insurance and profession changes remain pending administrator review.";
+        ? "Your worker profile and service area changes were submitted. They become active after administrator review."
+        : "Your account update was submitted successfully. Your current information remains active until an administrator approves the changes.";
       message("appMessage", successText, "success");
       if (saveStatus) { saveStatus.textContent = "✓ " + successText; saveStatus.className = "message success"; }
       saveButton.textContent = "Submitted ✓";
