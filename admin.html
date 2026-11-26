@@ -1441,7 +1441,7 @@
         licBox.append(row);
       });
       const insBox=section("Insurance information");add(insBox,"Insurance agency",c.insurance_agency_name);add(insBox,"Insurance agent phone",c.insurance_agent_phone);add(insBox,"Policy number",c.insurance_policy_number);add(insBox,"Insurance expiration",dateUS("insurance_expiration_date",c.insurance_expiration_date));add(insBox,"Insurance review status",c.insurance_review_status);
-      const svcBox=section("Selected services and professions");add(svcBox,"Service categories",c.categories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");c.professions.forEach((x,i)=>add(svcBox,"Profession "+(i+1),[c.professionNames.get(x.profession_id),x.state_code,x.work_role,x.license_type,x.license_number,x.verification_status,dateUS("license_expiration_date",x.license_expiration_date)].filter(Boolean).join(" · ")));
+      const svcBox=section("Selected services and professions");add(svcBox,"Service categories",c.categories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");c.professions.forEach((x,i)=>add(svcBox,"Profession "+(i+1),[c.professionNames.get(x.profession_id),x.state_code,x.work_role,x.license_type,x.license_number,(x.verification_status==="verified"?"Approved":x.verification_status),dateUS("license_expiration_date",x.license_expiration_date)].filter(Boolean).join(" · ")));
       const updatesBox=section("Account update history");if(!c.change_requests.length)add(updatesBox,"Updates","No change requests recorded.");c.change_requests.forEach((x,i)=>{add(updatesBox,"Update "+(i+1)+" — "+(x.request_type||"Profile")+" ("+(x.status||"unknown")+")",dateUS("created_at",x.created_at));add(updatesBox,"Administrator note",x.admin_note);Object.entries(x.requested_changes||{}).forEach(([k,v])=>{if(v===null||v===undefined||v==="")return;if(k==="additional_state_licenses"&&Array.isArray(v)){v.forEach((z,j)=>add(updatesBox,"Requested additional license "+(j+1),[stateName(z.state_code),z.license_type,z.license_number].filter(Boolean).join(" · ")));}else add(updatesBox,k.replace(/_/g," "),typeof v==="object"?JSON.stringify(v):dateUS(k,v));});});
       const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
       const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:stretch;justify-content:flex-start;gap:12px;flex-wrap:nowrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
@@ -1822,7 +1822,7 @@
             const licenseInfo=document.createElement("div");
             licenseInfo.style.cssText="flex:1 1 190px;min-width:0;overflow-wrap:anywhere;line-height:1.45;";
             const normalized=String(license.review_status||"pending").trim().toLowerCase();
-            const statusLabel=normalized==="verified"?"Verified":normalized==="approved"?"Verified":normalized==="rejected"||normalized==="declined"?"Declined":"Pending";
+            const statusLabel=normalized==="verified"?"Approved":normalized==="approved"?"Approved":normalized==="rejected"||normalized==="declined"?"Declined":"Pending";
             licenseInfo.textContent=[stateName(license.state_code),license.license_type,license.license_number,statusLabel].filter(Boolean).join(" · ");
             licenseRow.append(licenseInfo);
             if(!["verified","approved","rejected","declined"].includes(normalized)){
@@ -2522,190 +2522,6 @@
     } catch (e) {
       list.textContent = "Could not load company state licenses: " + (e.message || "Unknown error");
       message("licensedContractorsMessage", "Check administrator SELECT access to contractor_state_licenses, contractors, and profiles. " + (e.message || ""), "error");
-    }
-  }
-
-
-  async function loadPendingProfessionCredentials() {
-    if (!isAdmin) return;
-    const list = $("professionCredentialsList");
-    const count = $("professionCredentialsCount");
-    if (!list) return;
-    list.textContent = "Loading profession credentials…";
-    clearMessage("professionCredentialsMessage");
-    if (count) count.textContent = "";
-    try {
-      const { data: qualifications, error } = await db.from("contractor_profession_qualifications")
-        .select("id,contractor_id,profession_id,state_code,work_role,license_number,license_type,issuing_authority,license_expiration_date,license_document_path,verification_status,created_at")
-        .in("verification_status", ["pending", "not_submitted"])
-        .order("updated_at", { ascending: false })
-        .limit(1000);
-      if (error) throw error;
-
-      const rows = qualifications || [];
-      const qualificationIds = rows.map(x => x.id).filter(Boolean);
-      const { data: renewalHistory, error: historyError } = qualificationIds.length
-        ? await db.from("contractor_license_review_history").select("license_record_id,changed_at").eq("license_kind","profession").in("license_record_id",qualificationIds)
-        : { data: [], error: null };
-      if (historyError) throw historyError;
-      const renewalIds = new Set((renewalHistory || []).map(x => x.license_record_id));
-      const contractorIds = [...new Set(rows.map(x => x.contractor_id).filter(Boolean))];
-      const professionIds = [...new Set(rows.map(x => x.profession_id).filter(Boolean))];
-      const states = [...new Set(rows.map(x => String(x.state_code || "").toUpperCase()).filter(Boolean))];
-      const [contractorsResult, professionsResult, rulesResult, companyLicensesResult] = await Promise.all([
-        contractorIds.length ? db.from("contractors").select("id,user_id,company_name,email,verification_status,service_city,service_state").in("id", contractorIds) : Promise.resolve({data:[],error:null}),
-        professionIds.length ? db.from("zelpx_professions").select("id,profession_name").in("id", professionIds) : Promise.resolve({data:[],error:null}),
-        professionIds.length && states.length ? db.from("state_profession_rules").select("profession_id,state_code,requirement_status").eq("jurisdiction_level","state").in("profession_id",professionIds).in("state_code",states) : Promise.resolve({data:[],error:null}),
-        contractorIds.length ? db.from("contractor_state_licenses").select("contractor_id,state_code,review_status,expiration_date,license_number,license_type").in("contractor_id",contractorIds) : Promise.resolve({data:[],error:null})
-      ]);
-      if (contractorsResult.error) throw contractorsResult.error;
-      if (professionsResult.error) throw professionsResult.error;
-      if (rulesResult.error) throw rulesResult.error;
-      if (companyLicensesResult.error) throw companyLicensesResult.error;
-
-      const userIds = [...new Set((contractorsResult.data || []).map(x => x.user_id).filter(Boolean))];
-      const { data: profiles, error: profileError } = userIds.length
-        ? await db.from("profiles").select("id,full_name,phone").in("id", userIds)
-        : {data:[],error:null};
-      if (profileError) throw profileError;
-
-      const contractorMap = new Map((contractorsResult.data || []).map(x => [x.id,x]));
-      const professionMap = new Map((professionsResult.data || []).map(x => [x.id,x.profession_name]));
-      const profileMap = new Map((profiles || []).map(x => [x.id,x]));
-      const ruleMap = new Map((rulesResult.data || []).map(x => [String(x.state_code).toUpperCase()+":"+x.profession_id,String(x.requirement_status || "").toLowerCase()]));
-      const companyLicenseMap = new Map((companyLicensesResult.data || []).map(x => [x.contractor_id+":"+String(x.state_code).toUpperCase(),x]));
-
-      const todayForCredentialReview = new Date().toISOString().slice(0,10);
-      const reviewable = rows.filter(q => {
-        const requirement = ruleMap.get(String(q.state_code || "").toUpperCase()+":"+q.profession_id);
-        const employeeConditional = q.work_role === "employee" && requirement === "conditional";
-        const numberBasedCredential = !!q.license_number && !!q.license_type &&
-          !!q.license_expiration_date && q.license_expiration_date >= todayForCredentialReview;
-        return (q.verification_status === "pending" && (numberBasedCredential || employeeConditional)) ||
-          (q.verification_status === "not_submitted" && employeeConditional);
-      });
-      list.replaceChildren();
-      if (count) count.textContent = "Ready for number-based review: " + reviewable.length + " · Waiting for license details: " + rows.filter(q => q.verification_status === "pending" && (!q.license_number || !q.license_type || !q.license_expiration_date || q.license_expiration_date < todayForCredentialReview)).length;
-      if (!reviewable.length) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = rows.length ? "No complete license numbers and current expiration dates have been submitted yet. Document uploads are not required." : "No profession credentials are waiting for review.";
-        list.append(empty);
-        return;
-      }
-
-      reviewable.forEach(q => {
-        const contractor = contractorMap.get(q.contractor_id) || {};
-        const profile = profileMap.get(contractor.user_id) || {};
-        const professionName = professionMap.get(q.profession_id) || "Profession";
-        const stateCode = String(q.state_code || "").toUpperCase();
-        const requirement = ruleMap.get(stateCode+":"+q.profession_id) || "unverified";
-        const companyLicense = companyLicenseMap.get(q.contractor_id+":"+stateCode);
-        const today = new Date().toISOString().slice(0,10);
-        const companyVerified = companyLicense?.review_status === "verified" &&
-          !!companyLicense.expiration_date && companyLicense.expiration_date >= today;
-        const individualExpiryValid = !!q.license_expiration_date && q.license_expiration_date >= today;
-        const employeeConditional = q.work_role === "employee" && requirement === "conditional";
-        const card = document.createElement("article");
-        card.className = "lead";
-        const title = document.createElement("h3");
-        title.textContent = (contractor.company_name || profile.full_name || "Contractor") + " — " + professionName + " (" + stateCode + ")";
-        card.append(title);
-        const details = [
-          ["Contact",profile.full_name || "Not provided"],
-          ["Email",contractor.email || "Not provided"],
-          ["Phone",profile.phone || "Not provided"],
-          ["Profession",professionName],
-          ["State",stateCode],
-          ["Work arrangement",q.work_role || "Not specified"],
-          ["State rule",requirement],
-          ["Individual license number",q.license_number || (employeeConditional ? "Not required for employee conditional scope" : "Not provided")],
-          ["License type",q.license_type || (employeeConditional ? "Employer scope review" : "Not provided")],
-          ["Issuing authority",q.issuing_authority || "Not provided"],
-          ["Expiration",q.license_expiration_date || "Not provided"],
-          ["Company license",companyVerified ? "Verified" : (companyLicense?.review_status || "Not submitted")],
-          ["Submission type",renewalIds.has(q.id) ? "Renewal / resubmission after prior approval" : "Initial submission"],
-          ["Credential status",q.verification_status || "Not specified"]
-        ];
-        details.forEach(([label,value]) => {
-          const p = document.createElement("p");
-          const strong = document.createElement("strong");
-          strong.textContent = label + ": ";
-          p.append(strong,document.createTextNode(String(value)));
-          card.append(p);
-        });
-
-        if (q.license_document_path) {
-          const linkRow = document.createElement("p");
-          const link = document.createElement("a");
-          link.href = "#";
-          link.textContent = "Open individual profession license document";
-          link.addEventListener("click",async event => {
-            event.preventDefault();
-            link.textContent = "Opening document…";
-            try {
-              const {data:signed,error:signedError} = await db.storage.from("contractor-licenses").createSignedUrl(q.license_document_path,3600);
-              if (signedError) throw signedError;
-              if (!signed?.signedUrl) throw new Error("A secure document link could not be created.");
-              window.open(signed.signedUrl,"_blank","noopener,noreferrer");
-              link.textContent = "Open individual profession license document";
-            } catch(e) {
-              link.textContent = "Could not open document: " + (e.message || "Unknown error");
-            }
-          });
-          linkRow.append(link);
-          card.append(linkRow);
-        } else if (!employeeConditional) {
-          const missing = document.createElement("p");
-          missing.className = "message error";
-          missing.textContent = "Enter the license number, license type and current expiration date. No document upload is required.";
-          card.append(missing);
-        } else {
-          const scopeNote = document.createElement("p");
-          scopeNote.className = "muted";
-          scopeNote.textContent = "No individual document is requested for this employee conditional scope. Confirm the employer license and permitted work scope before approval.";
-          card.append(scopeNote);
-        }
-
-        const note = document.createElement("textarea");
-        note.rows = 2;
-        note.placeholder = "Required: official registry lookup result and license status checked";
-        note.setAttribute("aria-label","Profession credential administrator note");
-        card.append(note);
-
-        const verify = document.createElement("button");
-        verify.type = "button";
-        verify.textContent = "Verify profession";
-        verify.disabled = !companyVerified || (!employeeConditional && (!q.license_number || !q.license_type || !individualExpiryValid));
-        verify.addEventListener("click",async()=>{
-          if (!note.value.trim()) {
-            note.focus();
-            message("professionCredentialsMessage","Enter administrator verification notes before approving this profession.","error");
-            return;
-          }
-          if (!window.confirm("Confirm that the credential or employee work scope and the verified company license are valid for this profession in " + stateCode + "?")) return;
-          verify.disabled = true;
-          verify.textContent = "Verifying…";
-          try {
-            const {error:verifyError} = await db.rpc("zelpx_admin_verify_contractor_qualification",{
-              p_qualification_id:q.id,
-              p_admin_notes:note.value.trim()
-            });
-            if (verifyError) throw verifyError;
-            message("professionCredentialsMessage",professionName+" ("+stateCode+") marked Verified.","success");
-            await loadPendingProfessionCredentials();
-          } catch(e) {
-            message("professionCredentialsMessage","Could not verify profession: "+(e.message || "Unknown error"),"error");
-            verify.disabled = !companyVerified || (!employeeConditional && (!q.license_number || !q.license_type || !individualExpiryValid));
-            verify.textContent = "Verify profession";
-          }
-        });
-        card.append(verify);
-        list.append(card);
-      });
-    } catch(e) {
-      list.textContent = "Could not load profession credentials: " + (e.message || "Unknown error");
-      message("professionCredentialsMessage","Check administrator access to contractor_profession_qualifications, state_profession_rules, and contractor_state_licenses. " + (e.message || ""),"error");
     }
   }
 
