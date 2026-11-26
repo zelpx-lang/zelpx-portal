@@ -2280,6 +2280,21 @@
         });
         actions.append(toggle);
         panel.append(actions);
+
+        const closeRow = document.createElement("div");
+        closeRow.style.cssText = "display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);";
+        const closeButton = document.createElement("button");
+        closeButton.type = "button";
+        closeButton.className = "secondary";
+        closeButton.textContent = "Close";
+        closeButton.style.cssText = "min-height:40px;padding:8px 22px;box-shadow:none;";
+        closeButton.addEventListener("click", () => {
+          panel.classList.add("hidden");
+          heading.setAttribute("aria-expanded", "false");
+          expandIcon.textContent = "+";
+        });
+        closeRow.append(closeButton);
+        panel.append(closeRow);
         card.append(panel);
         list.append(card);
       });
