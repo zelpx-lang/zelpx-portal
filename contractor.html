@@ -1426,7 +1426,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const row=document.createElement("div");
       row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
       const label=document.createElement("span");label.style.cssText="min-width:0;flex:1;line-height:1.45";
-      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review");
+      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Approved":item.review_status==="rejected"?"Rejected":"Pending review");
       const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove";
       remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
       remove.addEventListener("click",()=>{additionalStateLicenses=additionalStateLicenses.filter(x=>String(x.state_code).toUpperCase()!==String(item.state_code).toUpperCase());renderAdditionalStateLicenses();});
@@ -1553,13 +1553,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const companyLicenseStatus=$("profileCompanyLicenseReviewStatus");
     if(companyLicenseStatus){
       const review=contractor?.license_review_status||"not submitted";
-      const label=review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified";
+      const label=review==="verified"?"Approved":review==="rejected"?"Rejected":"Pending review / not verified";
       companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
     }
     await loadAdditionalStateLicenses(draft,contractor);
     if(companyLicenseStatus){
       const review=contractor?.license_review_status||"not submitted";
-      companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified");
+      companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Approved":review==="rejected"?"Rejected":"Pending review / not verified");
     }
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
     $("profileHasInsuranceCertificate").value = String(draftValue("has_insurance_certificate", contractor?.has_insurance_certificate) === true ? "yes" : "no");
@@ -1724,7 +1724,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     chosen.forEach(p=>{
       const item=document.createElement("div");
       const status=professionVerificationById.get(p.id);
-      const statusLabel=status==="verified"?"Verified":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
+      const statusLabel=status==="verified"?"Approved":status==="not_required"?"No license required":status==="rejected"?"Rejected":status==="not_submitted"?"License not submitted":status==="pending"?"Pending review":"Not reviewed";
       item.className="selected-service-row";
       const label=document.createElement("span");
       label.className="selected-service-label";
@@ -3286,12 +3286,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
                 try{
                   const {error}=await db.rpc("zelpx_admin_review_company_state_license",{p_contractor_id:c.id,p_state_code:license.state_code,p_decision:decision,p_admin_notes:note.value.trim()||null});
                   if(error)throw error;
-                  message("adminContractorReviewMessage",stateName(license.state_code)+" license "+(decision==="approved"?"approved and verified.":"declined."),"success");
+                  message("adminContractorReviewMessage",stateName(license.state_code)+" license "+(decision==="approved"?"approved.":"declined."),"success");
                   await loadAdminContractorReviews();
                 }catch(e){
                   message("adminContractorReviewMessage","Could not update "+stateName(license.state_code)+" license: "+(e.message||"Unknown error"),"error");
                   buttons.forEach(b=>b.disabled=false);
-                  button.textContent=decision==="approved"?"Approve & Verify":"Decline";
+                  button.textContent=decision==="approved"?"Approve":"Decline";
                 }
               };
               const approve=document.createElement("button");approve.type="button";approve.className="secondary";approve.textContent="Approve & Verify";approve.onclick=()=>decide("approved",approve);
