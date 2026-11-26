@@ -1544,7 +1544,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     (profileStates || []).forEach(s => profileStateSelect.add(new Option(s.state_name, s.state_code)));
     profileStateSelect.value = draftValue("service_state", contractor?.service_state);
     $("profileServiceZip").value = draftValue("service_zip_code", contractor?.service_zip_code);
-    $("profileServiceRadius").value = String(contractor?.service_radius_miles || 25);
+    $("profileServiceRadius").value = String(draftValue("service_radius_miles", contractor?.service_radius_miles) || 25);
     $("profileLeadEmailNotifications").checked = draftValue("lead_email_notifications", contractor?.lead_email_notifications) !== false;
     const draftHasLicense = draftValue("has_license", contractor?.has_license);
     $("profileHasLicense").value = draftHasLicense === true ? "yes" : draftHasLicense === false ? "no" : "";
@@ -2877,26 +2877,28 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       if (status) { status.textContent = "Choose a valid service radius."; status.className = "message error"; }
       return;
     }
+    if (!contractorPhoneIsVerified()) {
+      if (status) { status.textContent = "Verify your account phone once before submitting account changes."; status.className = "message error"; }
+      return;
+    }
     if (button.disabled) return;
     button.disabled = true;
-    button.textContent = "Saving…";
+    button.textContent = "Submitting…";
     try {
-      const { error } = await db.from("contractors")
-        .update({ service_radius_miles: radius })
-        .eq("id", currentContractor.id)
-        .eq("user_id", currentUser.id);
+      const { error } = await db.rpc("submit_contractor_change_request", {
+        p_type: "company_profile",
+        p_changes: { service_radius_miles: radius }
+      });
       if (error) throw error;
-      currentContractor = { ...currentContractor, service_radius_miles: radius };
-      if (status) { status.textContent = "Service radius saved."; status.className = "message success"; }
-      button.textContent = "Saved ✓";
+      if (status) { status.textContent = "Service radius change submitted for administrator review. The current radius stays active until approval."; status.className = "message success"; }
+      button.textContent = "Submitted ✓";
     } catch (e) {
-      if (status) { status.textContent = "Could not save service radius: " + (e.message || "Unknown error"); status.className = "message error"; }
+      if (status) { status.textContent = "Could not submit service radius: " + (e.message || "Unknown error"); status.className = "message error"; }
       button.textContent = "Save radius";
     } finally {
       button.disabled = false;
     }
   }
-
   async function saveCompany(saveButton = $("verifyContractorPhoneBtn"), phoneVerifiedForThisSave = false) {
     const saveStatus = $("companySaveStatus");
     const originalButtonText = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
