@@ -2413,39 +2413,58 @@
 
         const adminNote = document.createElement("textarea");
         adminNote.rows = 2;
-        adminNote.placeholder = "Required administrator note: registry checked and license status confirmed";
-        adminNote.setAttribute("aria-label", "Company state license verification note");
+        adminNote.placeholder = "Administrator note (optional for approval; recommended for decline)";
+        adminNote.setAttribute("aria-label", "Company state license review note");
         card.append(adminNote);
 
-        const verify = document.createElement("button");
-        verify.type = "button";
-        verify.textContent = "Verify " + license.state_code + " License";
-        verify.disabled = !license.license_number || !license.license_type || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
-        verify.addEventListener("click", async () => {
-          if (!adminNote.value.trim()) {
-            adminNote.focus();
-            message("licensedContractorsMessage", "Enter an administrator note before verifying the company state license.", "error");
-            return;
-          }
-          if (!window.confirm("Confirm that you checked the official state registry and this company license is active, matches the contractor, and covers " + license.state_code + "?")) return;
-          verify.disabled = true;
-          verify.textContent = "Verifying…";
-          try {
-            const { error: verifyError } = await db.rpc("zelpx_admin_verify_company_state_license", {
-              p_contractor_id: license.contractor_id,
-              p_state_code: license.state_code,
-              p_admin_notes: adminNote.value.trim()
-            });
-            if (verifyError) throw verifyError;
-            message("licensedContractorsMessage", license.state_code + " company license marked Verified. You can now review the contractor's selected professions for this state.", "success");
-            await loadLicensedContractors();
-          } catch (e) {
-            message("licensedContractorsMessage", "Could not verify " + license.state_code + " company license: " + (e.message || "Unknown error"), "error");
-            verify.disabled = !license.license_number || !license.license_type || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
-            verify.textContent = "Verify " + license.state_code + " License";
-          }
-        });
-        card.append(verify);
+        const reviewActions = document.createElement("div");
+        reviewActions.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;";
+        const makeDecisionButton = (decision, label, color) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = label;
+          button.style.cssText = "width:auto;min-width:120px;flex:1 1 120px;margin:0;" + (color ? "background:"+color+";border-color:"+color+";" : "");
+          button.disabled = !contractor.id || !license.license_number || !license.license_type;
+          button.addEventListener("click", async () => {
+            if (decision === "declined" && !adminNote.value.trim() &&
+                !window.confirm("Decline this license without an administrator note?")) return;
+            if (decision === "approved" && license.expiration_date &&
+                license.expiration_date < new Date().toISOString().slice(0,10)) {
+              message("licensedContractorsMessage", "This license is expired and cannot be approved.", "error");
+              return;
+            }
+            if (!window.confirm((decision === "approved" ? "Approve " : "Decline ") +
+                license.state_code + " license for " +
+                (contractor.company_name || profile.full_name || "this contractor") + "?")) return;
+            const buttons = [...reviewActions.querySelectorAll("button")];
+            buttons.forEach(b => b.disabled = true);
+            button.textContent = decision === "approved" ? "Approving…" : "Declining…";
+            try {
+              const { error: reviewError } = await db.rpc("zelpx_admin_review_company_state_license", {
+                p_contractor_id: license.contractor_id,
+                p_state_code: license.state_code,
+                p_decision: decision,
+                p_admin_notes: adminNote.value.trim() || null
+              });
+              if (reviewError) throw reviewError;
+              message("licensedContractorsMessage",
+                license.state_code + " license " + (decision === "approved" ? "approved." : "declined."),
+                "success");
+              await loadLicensedContractors();
+            } catch (e) {
+              message("licensedContractorsMessage", "Could not review " + license.state_code +
+                " license: " + (e.message || "Unknown error"), "error");
+              buttons.forEach(b => b.disabled = false);
+              button.textContent = label;
+            }
+          });
+          return button;
+        };
+        reviewActions.append(
+          makeDecisionButton("approved", "Approve", "#16834a"),
+          makeDecisionButton("declined", "Decline", "#b5472b")
+        );
+        card.append(reviewActions);
         list.append(card);
       });
     } catch (e) {
