@@ -286,28 +286,28 @@ $function$;
 
 -- Approval is atomic: capture the old version, apply the new version, and mark
 -- the request reviewed in the same transaction. The contractor row ID is unchanged.
-create or replace function public.review_contractor_change_request(
-  p_request_id uuid,
-  p_decision text,
-  p_admin_note text default null
-)
-returns void
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $function$
+CREATE OR REPLACE FUNCTION public.review_contractor_change_request(p_request_id uuid, p_decision text, p_admin_note text DEFAULT NULL::text)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
 declare
   r public.contractor_change_requests%rowtype;
   v_item jsonb;
-  v_categories jsonb;
-  v_professions jsonb;
-  v_previous jsonb;
-  v_after jsonb;
-  v_license_route boolean;
+  v_profession_id uuid;
+  v_state text;
+  v_requirement text;
+  v_has_licensed_items boolean := false;
+  v_company_license_verified boolean := false;
+  v_license_required boolean;
+  v_license_change boolean := false;
 begin
   if auth.uid() is null or not exists (
-    select 1 from public.profiles where id = auth.uid() and role = 'admin'
-  ) then raise exception 'Administrator access required'; end if;
+    select 1 from public.profiles where id=auth.uid() and role='admin'
+  ) then
+    raise exception 'Administrator access required';
+  end if;
 
   if p_decision not in ('approved_with_license','approved_without_license','rejected') then
     raise exception 'Choose approval with license, approval without license, or rejection';
@@ -315,232 +315,248 @@ begin
 
   select * into r
   from public.contractor_change_requests
-  where id = p_request_id
+  where id=p_request_id
   for update;
 
   if not found then raise exception 'Change request not found'; end if;
   if r.status <> 'pending' then raise exception 'This request has already been reviewed'; end if;
 
-  v_license_route := p_decision = 'approved_with_license';
+  v_license_change := r.request_type='company_profile' and (
+    r.requested_changes ? 'has_license' or r.requested_changes ? 'license_number'
+    or r.requested_changes ? 'license_state' or r.requested_changes ? 'license_type'
+    or r.requested_changes ? 'license_expiration_date' or r.requested_changes ? 'license_number_2'
+    or r.requested_changes ? 'license_state_2' or r.requested_changes ? 'license_type_2'
+  );
 
   if p_decision <> 'rejected' then
-    select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into v_categories
-    from (
-      select sc.id, sc.name, csc.category_id
-      from public.contractor_service_categories csc
-      join public.service_categories sc on sc.id = csc.category_id
-      where csc.contractor_id = r.contractor_id
-      order by sc.name
-    ) x;
-
-    select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into v_professions
-    from (
-      select q.*
-      from public.contractor_profession_qualifications q
-      where q.contractor_id = r.contractor_id
-      order by q.state_code, q.profession_id
-    ) x;
-
-    select jsonb_build_object(
-      'profile', to_jsonb(p),
-      'contractor', to_jsonb(c),
-      'service_categories', v_categories,
-      'profession_qualifications', v_professions
-    )
-    into v_previous
-    from public.profiles p
-    join public.contractors c on c.user_id = p.id
-    where p.id = r.user_id and c.id = r.contractor_id;
-
-    if r.request_type = 'company_profile' then
-      if v_license_route and (
-        coalesce(nullif(r.requested_changes->>'license_number',''),
-                 (select license_number from public.contractors where id=r.contractor_id),'') = ''
-        or coalesce(nullif(r.requested_changes->>'license_document_path',''),
-                    (select license_document_path from public.contractors where id=r.contractor_id),'') = ''
-      ) then
-        raise exception 'Cannot approve with license: license number and uploaded license document are required';
+    if r.request_type='company_profile' then
+      if p_decision='approved_with_license' and v_license_change
+         and (coalesce(r.requested_changes->>'license_number','')=''
+           or coalesce(r.requested_changes->>'license_state','')=''
+           or coalesce(r.requested_changes->>'license_type','')='') then
+        raise exception 'Cannot approve with license: state, license number, and license type are required';
+      end if;
+      if p_decision='approved_with_license'
+         and ((coalesce(r.requested_changes->>'license_number_2','')<>''
+            or coalesce(r.requested_changes->>'license_state_2','')<>''
+            or coalesce(r.requested_changes->>'license_type_2','')<>'')
+           and (coalesce(r.requested_changes->>'license_number_2','')=''
+            or coalesce(r.requested_changes->>'license_state_2','')=''
+            or coalesce(r.requested_changes->>'license_type_2','')='')) then
+        raise exception 'Second state license must include state, license number, and license type';
+      end if;
+      if p_decision='approved_with_license'
+         and upper(coalesce(r.requested_changes->>'license_state',''))=upper(coalesce(r.requested_changes->>'license_state_2',''))
+         and coalesce(r.requested_changes->>'license_state_2','')<>'' then
+        raise exception 'The two license states must be different';
       end if;
 
       update public.profiles
-      set full_name = case when r.requested_changes ? 'full_name'
-                           then nullif(r.requested_changes->>'full_name','') else full_name end,
-          phone = case when r.requested_changes ? 'phone'
-                       then nullif(r.requested_changes->>'phone','') else phone end,
-          avatar_url = case when r.requested_changes ? 'avatar_url'
-                            then nullif(r.requested_changes->>'avatar_url','') else avatar_url end
-      where id = r.user_id;
+      set full_name=case when r.requested_changes?'full_name' then r.requested_changes->>'full_name' else full_name end,
+          phone=case when r.requested_changes?'phone' then r.requested_changes->>'phone' else phone end,
+          avatar_url=case when r.requested_changes?'avatar_url' then nullif(r.requested_changes->>'avatar_url','') else avatar_url end
+      where id=r.user_id;
 
-      update public.contractors
-      set company_name = case when r.requested_changes ? 'company_name'
-                              then nullif(r.requested_changes->>'company_name','') else company_name end,
-          email = case when r.requested_changes ? 'email'
-                       then nullif(r.requested_changes->>'email','') else email end,
-          service_address = case when r.requested_changes ? 'service_address'
-                                 then nullif(r.requested_changes->>'service_address','') else service_address end,
-          service_city = case when r.requested_changes ? 'service_city'
-                              then nullif(r.requested_changes->>'service_city','') else service_city end,
-          service_state = case when r.requested_changes ? 'service_state'
-                               then upper(nullif(r.requested_changes->>'service_state','')) else service_state end,
-          service_zip_code = case when r.requested_changes ? 'service_zip_code'
-                                  then nullif(r.requested_changes->>'service_zip_code','') else service_zip_code end,
-          service_radius_miles = case when r.requested_changes ? 'service_radius_miles'
-                                       then (r.requested_changes->>'service_radius_miles')::integer else service_radius_miles end,
-          service_latitude = case when r.requested_changes ? 'service_latitude'
-                                  then nullif(r.requested_changes->>'service_latitude','null')::double precision else service_latitude end,
-          service_longitude = case when r.requested_changes ? 'service_longitude'
-                                   then nullif(r.requested_changes->>'service_longitude','null')::double precision else service_longitude end,
-          has_license = v_license_route,
-          license_number = case when not v_license_route then null
-                                when r.requested_changes ? 'license_number' then nullif(r.requested_changes->>'license_number','')
-                                else license_number end,
-          license_state = case when not v_license_route then null
-                               when r.requested_changes ? 'license_state' then upper(nullif(r.requested_changes->>'license_state',''))
-                               else license_state end,
-          license_type = case when not v_license_route then null
-                              when r.requested_changes ? 'license_type' then nullif(r.requested_changes->>'license_type','')
-                              else license_type end,
-          license_document_path = case when not v_license_route then null
-                                        when r.requested_changes ? 'license_document_path' then nullif(r.requested_changes->>'license_document_path','')
-                                        else license_document_path end,
-          license_review_status = case when v_license_route then 'approved' else 'not_applicable' end,
-          insurance_policy_number = case when r.requested_changes ? 'insurance_policy_number'
-                                         then nullif(r.requested_changes->>'insurance_policy_number','') else insurance_policy_number end,
-          insurance_expiration_date = case when r.requested_changes ? 'insurance_expiration_date'
-                                           then nullif(r.requested_changes->>'insurance_expiration_date','')::date else insurance_expiration_date end,
-          insurance_document_path = case when r.requested_changes ? 'insurance_document_path'
-                                         then nullif(r.requested_changes->>'insurance_document_path','') else insurance_document_path end,
-          insurance_review_status = case
-            when r.requested_changes ? 'insurance_document_path'
-              or r.requested_changes ? 'insurance_policy_number'
-              or r.requested_changes ? 'insurance_expiration_date' then 'approved'
-            else insurance_review_status end,
-          lead_email_notifications = case when r.requested_changes ? 'lead_email_notifications'
-                                           then (r.requested_changes->>'lead_email_notifications')::boolean
-                                           else lead_email_notifications end,
-          verification_status = 'verified'
-      where id = r.contractor_id;
+      update public.contractors set
+        company_name=case when r.requested_changes?'company_name' then r.requested_changes->>'company_name' else company_name end,
+        email=case when r.requested_changes?'email' then r.requested_changes->>'email' else email end,
+        service_address=case when r.requested_changes?'service_address' then r.requested_changes->>'service_address' else service_address end,
+        service_city=case when r.requested_changes?'service_city' then r.requested_changes->>'service_city' else service_city end,
+        service_state=case when r.requested_changes?'service_state' then r.requested_changes->>'service_state' else service_state end,
+        service_zip_code=case when r.requested_changes?'service_zip_code' then r.requested_changes->>'service_zip_code' else service_zip_code end,
+        service_radius_miles=case when r.requested_changes?'service_radius_miles' then (r.requested_changes->>'service_radius_miles')::integer else service_radius_miles end,
+        service_latitude=case when r.requested_changes?'service_latitude' then nullif(r.requested_changes->>'service_latitude','')::double precision else service_latitude end,
+        service_longitude=case when r.requested_changes?'service_longitude' then nullif(r.requested_changes->>'service_longitude','')::double precision else service_longitude end,
+        lead_email_notifications=case when r.requested_changes?'lead_email_notifications' then (r.requested_changes->>'lead_email_notifications')::boolean else lead_email_notifications end,
+        has_license=case when not v_license_change then has_license when p_decision='approved_with_license' then true when p_decision='approved_without_license' then false else has_license end,
+        license_number=case when not v_license_change then license_number when p_decision='approved_without_license' then null when r.requested_changes?'license_number' then nullif(r.requested_changes->>'license_number','') else license_number end,
+        license_state=case when not v_license_change then license_state when p_decision='approved_without_license' then null when r.requested_changes?'license_state' then nullif(r.requested_changes->>'license_state','') else license_state end,
+        license_type=case when not v_license_change then license_type when p_decision='approved_without_license' then null when r.requested_changes?'license_type' then nullif(r.requested_changes->>'license_type','') else license_type end,
+        license_expiration_date=case when not v_license_change then license_expiration_date when p_decision='approved_without_license' then null when r.requested_changes?'license_expiration_date' then nullif(r.requested_changes->>'license_expiration_date','')::date else license_expiration_date end,
+        license_number_2=case when not v_license_change then license_number_2 when p_decision='approved_without_license' then null when r.requested_changes?'license_number_2' then nullif(r.requested_changes->>'license_number_2','') else license_number_2 end,
+        license_state_2=case when not v_license_change then license_state_2 when p_decision='approved_without_license' then null when r.requested_changes?'license_state_2' then nullif(r.requested_changes->>'license_state_2','') else license_state_2 end,
+        license_type_2=case when not v_license_change then license_type_2 when p_decision='approved_without_license' then null when r.requested_changes?'license_type_2' then nullif(r.requested_changes->>'license_type_2','') else license_type_2 end,
+        license_document_path=case when not v_license_change then license_document_path when p_decision='approved_without_license' then null when r.requested_changes?'license_document_path' then nullif(r.requested_changes->>'license_document_path','') else license_document_path end,
+        license_review_status=case when not v_license_change then license_review_status when p_decision='approved_with_license' then 'pending' else 'not_applicable' end,
+        insurance_agency_name=case when r.requested_changes?'insurance_agency_name' then nullif(r.requested_changes->>'insurance_agency_name','') else insurance_agency_name end,
+        insurance_agent_phone=case when r.requested_changes?'insurance_agent_phone' then nullif(r.requested_changes->>'insurance_agent_phone','') else insurance_agent_phone end,
+        insurance_policy_number=case when r.requested_changes?'insurance_policy_number' then nullif(r.requested_changes->>'insurance_policy_number','') else insurance_policy_number end,
+        insurance_expiration_date=case when r.requested_changes?'insurance_expiration_date' then nullif(r.requested_changes->>'insurance_expiration_date','')::date else insurance_expiration_date end,
+        insurance_document_path=case when r.requested_changes?'insurance_document_path' then nullif(r.requested_changes->>'insurance_document_path','') else insurance_document_path end,
+        insurance_review_status=case
+          when r.requested_changes?'insurance_document_path' or r.requested_changes?'insurance_agency_name'
+            or r.requested_changes?'insurance_agent_phone' or r.requested_changes?'insurance_policy_number'
+            or r.requested_changes?'insurance_expiration_date'
+          then case when nullif(r.requested_changes->>'insurance_document_path','') is null
+             and nullif(r.requested_changes->>'insurance_agency_name','') is null
+             and nullif(r.requested_changes->>'insurance_agent_phone','') is null
+             and nullif(r.requested_changes->>'insurance_policy_number','') is null
+             and nullif(r.requested_changes->>'insurance_expiration_date','') is null
+             then 'not_submitted' else 'pending' end
+          else insurance_review_status end
+      where id=r.contractor_id;
 
-    elsif r.request_type = 'service_categories' then
+    elsif r.request_type='service_categories' then
       if jsonb_typeof(r.requested_changes->'category_ids') is distinct from 'array' then
         raise exception 'Invalid category list';
       end if;
-      delete from public.contractor_service_categories
-      where contractor_id = r.contractor_id;
+      delete from public.contractor_service_categories where contractor_id=r.contractor_id;
       insert into public.contractor_service_categories(contractor_id,category_id)
-      select r.contractor_id, value::uuid
-      from jsonb_array_elements_text(r.requested_changes->'category_ids') as x(value);
-      -- A category-only request must not change the contractor's license status.
+      select r.contractor_id,value::uuid
+      from jsonb_array_elements_text(r.requested_changes->'category_ids') x(value)
+      join public.service_categories sc on sc.id=value::uuid and sc.is_active=true
+      on conflict do nothing;
 
-    elsif r.request_type = 'profession_qualifications' then
-      if jsonb_typeof(r.requested_changes->'items') is distinct from 'array' then
+    elsif r.request_type='profession_qualifications' then
+      if jsonb_typeof(r.requested_changes->'items') is distinct from 'array'
+         or jsonb_array_length(r.requested_changes->'items')=0 then
         raise exception 'Invalid profession list';
       end if;
 
-      if v_license_route and exists (
-        select 1
-        from jsonb_array_elements(r.requested_changes->'items') x(value)
-        where coalesce((value->>'license_required_at_registration')::boolean,false)
-          and (coalesce(value->>'license_number','') = ''
-               or coalesce(value->>'license_document_path','') = '')
-      ) then
-        raise exception 'Cannot approve with license: each licensed profession needs a license number and document';
+      if jsonb_array_length(r.requested_changes->'items') <>
+         (select count(distinct value->>'profession_id') from jsonb_array_elements(r.requested_changes->'items')) then
+        raise exception 'Duplicate professions are not allowed';
       end if;
 
-      delete from public.contractor_profession_qualifications
-      where contractor_id = r.contractor_id
-        and state_code = upper(r.requested_changes->>'state_code');
+      v_state := upper(trim(coalesce(r.requested_changes->>'state_code','')));
+      if not exists (
+        select 1 from public.us_states s
+        where upper(trim(s.state_code)) = v_state and s.is_active = true
+      ) then
+        raise exception 'Profession approval requires an active US state';
+      end if;
+      if coalesce(r.requested_changes->>'work_role','') not in ('independent','employee') then
+        raise exception 'Invalid work role';
+      end if;
 
-      for v_item in
-        select value from jsonb_array_elements(r.requested_changes->'items')
+      -- Determine licensing from canonical state rules, never from browser-supplied booleans.
+      for v_item in select value from jsonb_array_elements(r.requested_changes->'items')
       loop
-        insert into public.contractor_profession_qualifications(
-          contractor_id,profession_id,state_code,work_role,
-          license_required_at_registration,license_number,license_type,
-          issuing_authority,license_expiration_date,license_document_path,
-          verification_status,verified_at
-        )
-        values (
-          r.contractor_id,(v_item->>'profession_id')::uuid,
-          upper(r.requested_changes->>'state_code'),
-          r.requested_changes->>'work_role',
-          coalesce((v_item->>'license_required_at_registration')::boolean,false),
-          nullif(v_item->>'license_number',''),
-          nullif(v_item->>'license_type',''),
-          nullif(v_item->>'issuing_authority',''),
-          nullif(v_item->>'license_expiration_date','')::date,
-          nullif(v_item->>'license_document_path',''),
-          case when v_license_route then 'verified'
-               when coalesce((v_item->>'license_required_at_registration')::boolean,false) then 'not_submitted'
-               else 'not_required' end,
-          case when v_license_route then now() else null end
-        );
+        begin
+          v_profession_id := (v_item->>'profession_id')::uuid;
+        exception when others then
+          raise exception 'Invalid profession ID in request';
+        end;
+        if not exists (
+          select 1 from public.zelpx_professions p
+          where p.id=v_profession_id and p.is_active=true
+        ) then
+          raise exception 'Selected profession is inactive or unavailable';
+        end if;
+
+        select lower(trim(spr.requirement_status)) into v_requirement
+        from public.state_profession_rules spr
+        where spr.profession_id=v_profession_id
+          and upper(trim(spr.state_code))=v_state
+          and spr.jurisdiction_level='state'
+        limit 1;
+
+        if v_requirement is null then
+          raise exception 'No state-level licensing rule exists for one of the selected professions';
+        end if;
+        if v_requirement in ('required','conditional')
+           and (
+             r.requested_changes->>'work_role' = 'independent'
+             or (r.requested_changes->>'work_role' = 'employee' and v_requirement = 'conditional')
+           ) then
+          v_has_licensed_items := true;
+        end if;
       end loop;
 
-      -- Rebuild active service categories from the complete approved profession
-      -- set across every state. Do not leave stale categories and do not erase
-      -- approved work from another state when one state's qualifications change.
-      delete from public.contractor_service_categories
-      where contractor_id = r.contractor_id;
+      select exists(
+        select 1
+        from public.contractor_state_licenses csl
+        where csl.contractor_id=r.contractor_id
+          and upper(trim(csl.state_code))=v_state
+          and csl.review_status='verified'
+          and (csl.expiration_date is null or csl.expiration_date>=current_date)
+          and coalesce(trim(csl.license_number),'')<>''
+          and coalesce(trim(csl.license_type),'')<>''
+
+      ) into v_company_license_verified;
+
+      if v_has_licensed_items and not v_company_license_verified then
+        raise exception 'A verified company or employer license for this work state is required before approving this work scope';
+      end if;
+
+      delete from public.contractor_profession_qualifications q
+      where q.contractor_id=r.contractor_id
+        and q.state_code=v_state
+        and not exists(
+          select 1 from jsonb_array_elements(r.requested_changes->'items') x(value)
+          where (x.value->>'profession_id')::uuid=q.profession_id
+        );
+
+      for v_item in select value from jsonb_array_elements(r.requested_changes->'items')
+      loop
+        v_profession_id := (v_item->>'profession_id')::uuid;
+        select lower(trim(spr.requirement_status)) into v_requirement
+        from public.state_profession_rules spr
+        where spr.profession_id=v_profession_id
+          and upper(trim(spr.state_code))=v_state
+          and spr.jurisdiction_level='state'
+        limit 1;
+
+        v_license_required := v_requirement in ('required','conditional','unverified','local_only');
+
+        insert into public.contractor_profession_qualifications(
+          contractor_id,profession_id,state_code,work_role,license_required_at_registration,
+          license_number,license_type,issuing_authority,license_expiration_date,license_document_path,
+          verification_status,verified_at
+        ) values (
+          r.contractor_id,v_profession_id,v_state,r.requested_changes->>'work_role',
+          v_license_required,null,null,null,null,null,
+          case when v_requirement='not_required' then 'not_required' else 'not_submitted' end,
+          null
+        )
+        on conflict(contractor_id,profession_id,state_code) do update set
+          work_role=excluded.work_role,
+          license_required_at_registration=excluded.license_required_at_registration,
+          verification_status=case
+            when excluded.license_required_at_registration=false then 'not_required'
+            when public.contractor_profession_qualifications.work_role
+                 is distinct from excluded.work_role then 'not_submitted'
+            when public.contractor_profession_qualifications.verification_status='verified'
+              then 'verified'
+            else 'not_submitted'
+          end,
+          verified_at=case
+            when public.contractor_profession_qualifications.work_role
+                 is distinct from excluded.work_role then null
+            when excluded.license_required_at_registration=false then null
+            else public.contractor_profession_qualifications.verified_at
+          end,
+          admin_notes=case
+            when public.contractor_profession_qualifications.work_role
+                 is distinct from excluded.work_role then null
+            else public.contractor_profession_qualifications.admin_notes
+          end,
+          updated_at=now();
+      end loop;
+
+      delete from public.contractor_service_categories where contractor_id=r.contractor_id;
       insert into public.contractor_service_categories(contractor_id,category_id)
       select distinct r.contractor_id,m.category_id
       from public.contractor_profession_qualifications q
       join public.service_category_profession_map m
-        on m.profession_id = q.profession_id and m.mapping_status = 'mapped'
-      join public.service_categories sc on sc.id = m.category_id and sc.is_active = true
-      where q.contractor_id = r.contractor_id
+        on m.profession_id=q.profession_id and m.mapping_status='mapped'
+      join public.service_categories sc on sc.id=m.category_id and sc.is_active=true
+      where q.contractor_id=r.contractor_id
       on conflict do nothing;
-
-      update public.contractors
-      set has_license = v_license_route,
-          license_review_status = case when v_license_route then 'approved' else 'not_applicable' end,
-          verification_status = 'verified'
-      where id = r.contractor_id;
+    else
+      raise exception 'Unsupported change request type';
     end if;
-
-    select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into v_categories
-    from (
-      select sc.id, sc.name, csc.category_id
-      from public.contractor_service_categories csc
-      join public.service_categories sc on sc.id = csc.category_id
-      where csc.contractor_id = r.contractor_id
-      order by sc.name
-    ) x;
-
-    select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) into v_professions
-    from (
-      select q.*
-      from public.contractor_profession_qualifications q
-      where q.contractor_id = r.contractor_id
-      order by q.state_code, q.profession_id
-    ) x;
-
-    select jsonb_build_object(
-      'profile', (select to_jsonb(p) from public.profiles p where p.id = r.user_id),
-      'contractor', (select to_jsonb(c) from public.contractors c where c.id = r.contractor_id),
-      'service_categories', v_categories,
-      'profession_qualifications', v_professions
-    ) into v_after;
-
-    insert into public.contractor_profile_history(
-      contractor_id,user_id,change_request_id,request_type,
-      previous_data,approved_data,reviewed_by
-    )
-    values (
-      r.contractor_id,r.user_id,r.id,r.request_type,
-      coalesce(v_previous,'{}'::jsonb),coalesce(v_after,'{}'::jsonb),auth.uid()
-    )
-    on conflict (change_request_id) do nothing;
   end if;
 
   update public.contractor_change_requests
-  set status = case when p_decision = 'rejected' then 'rejected' else 'approved' end,
-      admin_note = nullif(trim(p_admin_note),''),
-      reviewed_by = auth.uid(),
-      reviewed_at = now()
-  where id = p_request_id;
-end
-$function$;
+  set status=case when p_decision='rejected' then 'rejected' else 'approved' end,
+      admin_note=nullif(trim(p_admin_note),''),
+      reviewed_by=auth.uid(),
+      reviewed_at=now()
+  where id=p_request_id;
+end;
+$function$
+;
 
 revoke all on function public.review_contractor_change_request(uuid,text,text) from public, anon;
 grant execute on function public.review_contractor_change_request(uuid,text,text) to authenticated;
