@@ -651,13 +651,6 @@
       </section>
       <section id="adminApprovalsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section id="newContractorRegistrationsSection" class="lead">
-          <h2>New contractor registrations</h2>
-          <p>Review every new registration here. Approving an account with a license only grants restricted access to work that does not require a license; the company license must still be verified separately in License Verification. Approving without a license keeps licensed work blocked.</p>
-          <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
-          <div id="pendingContractorsMessage" class="message hidden"></div>
-          <div id="pendingContractorsList"><p class="muted">Loading new contractor registrations…</p></div>
-        </section>
         <section class="lead">
           <h2>Contractor profile and license updates</h2>
         <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject. Approved profile versions are retained in the permanent contractor history; reviewed requests cannot be deleted.</p>
@@ -668,9 +661,16 @@
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
+        <section id="newContractorRegistrationsSection" class="lead">
+          <h2>New contractor registrations</h2>
+          <p>Review and approve new contractor accounts here. License verification remains separate; approving an account does not automatically verify a license.</p>
+          <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="pendingContractorsMessage" class="message hidden"></div>
+          <div id="pendingContractorsList"><p class="muted">Loading new contractor registrations…</p></div>
+        </section>
         <section class="lead">
         <h2>Contractor activity</h2>
-        <p>All contractor accounts without a current license, including both new registrations and existing active accounts. This list is separate from approval requests.</p>
+        <p>View contractor accounts without a current verified license, including new and existing accounts.</p>
         <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
         <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
         <div id="unlicensedContractorsMessage" class="message hidden"></div>
