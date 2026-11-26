@@ -1989,7 +1989,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       if(error)throw error;
       currentContractor={...(currentContractor||{}),...data};
       renderContractorPhoneVerification();
-      await saveCompany(button);
+      await saveCompany(button, true);
       renderContractorPhoneVerification();
     }catch(e){
       message("appMessage",e.message||"Could not verify your phone number or update your account.","error");
@@ -2878,7 +2878,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     }
   }
 
-  async function saveCompany(saveButton = $("verifyContractorPhoneBtn")) {
+  async function saveCompany(saveButton = $("verifyContractorPhoneBtn"), phoneVerifiedForThisSave = false) {
     const saveStatus = $("companySaveStatus");
     const originalButtonText = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
     if (saveButton.disabled) return;
@@ -2912,6 +2912,16 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const hasCompletePrimaryLicense = hasLicense && !!(licenseNumber && licenseState && licenseType);
       const hasCompleteEmployerLicense = employeeNeedsEmployerLicense && !!(licenseNumber && licenseState && licenseType);
       if (currentContractor) {
+        if (!phoneVerifiedForThisSave) {
+          const verified = await ensureContractorPhoneVerified();
+          if (!verified) return;
+          const {data:verifiedAccount,error:verifiedAccountError}=await db.from("contractors")
+            .select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number")
+            .eq("user_id",currentUser.id).single();
+          if(verifiedAccountError)throw verifiedAccountError;
+          currentContractor={...(currentContractor||{}),...verifiedAccount};
+        }
+        if (!contractorPhoneIsVerified()) throw new Error("Phone verification is required before saving any account changes.");
         if (!isEmployee) await verifyContractorBusinessAddress();
         const changes = {
           full_name, phone,
