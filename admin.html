@@ -2197,6 +2197,9 @@
         if (!isAdmin || !currentUser) return;
         loadUnlicensedContractors();
       })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_service_categories"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
           console.warn("Contractor registration realtime unavailable:",status,error || "");
@@ -2233,7 +2236,8 @@
         loadContractorChangeRequests();
       });
     contractorChangesChannel = db.channel("zelpx-admin-change-requests")
-      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},payload => announce(payload.new || {}))
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractor_change_requests"},payload => { announce(payload.new || {}); if(isAdmin&&currentUser)loadUnlicensedContractors(); })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"contractor_change_requests"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
           console.warn("Contractor update realtime unavailable:",status,error || "");
