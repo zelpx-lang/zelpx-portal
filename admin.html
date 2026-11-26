@@ -1406,7 +1406,8 @@
         const stateName=document.createElement("strong");stateName.textContent=(x.state_code||"State")+" license";
         const detail=document.createElement("div");detail.textContent=[x.license_type,x.license_number,dateUS("expiration_date",x.expiration_date),x.review_status==="verified"&&(!x.expiration_date||x.expiration_date>=new Date().toISOString().slice(0,10))?"Active":x.review_status||"Pending"].filter(Boolean).join(" · ");
         info.append(stateName,detail);row.append(info);
-        if((x.review_status||"pending")==="pending"){
+        const normalizedLicenseStatus=String(x.review_status||"pending").trim().toLowerCase();
+        if(!["verified","approved","rejected","declined"].includes(normalizedLicenseStatus)){
           const makeReviewButton=(decision,label,color)=>{
             const btn=document.createElement("button");btn.type="button";btn.className="secondary";btn.textContent=label;
             btn.style.cssText="width:auto;min-height:36px;padding:7px 12px;margin:0;flex:0 0 auto;font-size:13px;font-weight:800;"+(color?("color:"+color+";"):"");
