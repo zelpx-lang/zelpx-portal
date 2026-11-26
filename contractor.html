@@ -2950,22 +2950,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           .update(activeProfileChanges).eq("id", currentContractor.id).eq("user_id", currentUser.id);
         if (contractorUpdateError) throw contractorUpdateError;
         // Submit each company license as its own state-scoped record.
-        const uploadCompanyStateLicense = async (license) => {
+        const submitCompanyStateLicenseByNumber = async (license) => {
           const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(license.state_code||"").toUpperCase());
-          const file=license.document_file||null;
           const unchanged=existing&&existing.license_number===license.license_number&&existing.license_type===license.license_type
-            &&(existing.expiration_date||null)===(license.expiration_date||null)&&!file;
-          if(unchanged&&existing.document_path)return;
-          let path=license.document_path||existing?.document_path||null;
-          if(file){
-            const allowed=["application/pdf","image/jpeg","image/png","image/webp"];
-            if(!allowed.includes(file.type)||file.size>10*1024*1024)throw new Error("Company license documents must be PDF, JPG, PNG or WebP and no larger than 10 MB.");
-            const ext={"application/pdf":"pdf","image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type];
-            path=currentUser.id+"/company-state-"+license.state_code+"-"+Date.now()+"."+ext;
-            const {error:uploadError}=await db.storage.from("contractor-licenses").upload(path,file,{upsert:false,contentType:file.type,cacheControl:"3600"});
-            if(uploadError)throw uploadError;
-          }
-          // License number is verified by an administrator; no document upload is collected.
+            &&(existing.expiration_date||null)===(license.expiration_date||null);
+          if(unchanged)return;
+          // ZELPX verifies company licenses by number in the official state registry. No files are uploaded.
           const {error}=await db.rpc("zelpx_submit_company_state_license",{
             p_state_code:license.state_code,p_license_number:license.license_number,
             p_license_type:license.license_type,p_document_path:null,p_expiration_date:license.expiration_date||null
@@ -2979,9 +2969,9 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           }
         };
         if(!isEmployee && hasCompletePrimaryLicense){
-          await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
-            document_file:$("profileCompanyLicenseFile").files?.[0]||null,
-            document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
+          await submitCompanyStateLicenseByNumber({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
+            document_file:null,
+            document_path:null,
             expiration_date:licenseExpiry||null});
         }
         if(hasCompleteEmployerLicense){
@@ -2989,11 +2979,11 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
             document_file:$("profileCompanyLicenseFile").files?.[0]||null,
             document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
             expiration_date:licenseExpiry});
-          if($("profileCompanyLicenseReviewStatus"))$("profileCompanyLicenseReviewStatus").textContent="Employer license submitted. Work remains pending until an administrator verifies this document.";
+          if($("profileCompanyLicenseReviewStatus"))$("profileCompanyLicenseReviewStatus").textContent="Employer license number submitted. Work remains pending until an administrator checks the official state registry.";
         }
         if(!isEmployee){
           for(const license of additionalStateLicenses){
-            await uploadCompanyStateLicense(license);
+            await submitCompanyStateLicenseByNumber(license);
           }
         }
 
