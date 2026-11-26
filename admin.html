@@ -1801,6 +1801,47 @@
             const submittedExpiry = stateLicense?.expiration_date || null;
             addChange("License expiration date", company.license_expiration_date || "Not set", submittedExpiry || "Not submitted — contractor must enter the expiration date");
           }
+          // Show the complete saved company profile, not only fields included in the compliance-change JSON.
+          addDetail("Contact name", profile.full_name);
+          addDetail("Contact phone", profile.phone);
+          addDetail("Company name", company.company_name);
+          addDetail("Company email", company.email);
+          addDetail("Business street address", company.service_address);
+          addDetail("Business city", company.service_city);
+          addDetail("Business state", company.service_state);
+          addDetail("Business ZIP code", company.service_zip_code);
+          addDetail("Service radius (miles)", company.service_radius_miles);
+          addDetail("Lead email notifications", company.lead_email_notifications === true ? "Enabled" : company.lead_email_notifications === false ? "Disabled" : null);
+
+          // The request stores every state license in additional_state_licenses.
+          // Render each state separately, including its expiry and current review status.
+          const submittedStateLicenses = Array.isArray(changes.additional_state_licenses) ? changes.additional_state_licenses : [];
+          if (submittedStateLicenses.length) {
+            const licenseHeading = document.createElement("h4");
+            licenseHeading.textContent = "All company state licenses submitted";
+            licenseHeading.style.cssText = "margin:14px 0 8px;color:#302923";
+            details.append(licenseHeading);
+            submittedStateLicenses.forEach((license, index) => {
+              const stateCode = String(license.state_code || "").toUpperCase();
+              const savedLicense = stateLicenseRows.get(company.id + "|" + stateCode);
+              const row = document.createElement("div");
+              row.style.cssText = "padding:10px 12px;margin:8px 0;border:1px solid #e6ddd4;border-radius:12px;background:#fffdfa";
+              const heading = document.createElement("strong");
+              heading.textContent = "License " + (index + 1) + " — " + (stateCode || "State not provided");
+              row.append(heading);
+              const line = document.createElement("p");
+              line.style.margin = "6px 0 0";
+              const parts = [
+                "Number: " + displayValue(license.license_number),
+                "Type: " + displayValue(license.license_type),
+                "Expiration: " + displayValue(savedLicense?.expiration_date || license.expiration_date),
+                "Review: " + displayValue(savedLicense?.review_status || "pending")
+              ];
+              line.textContent = parts.join(" · ");
+              row.append(line);
+              details.append(row);
+            });
+          }
         } else if (request.request_type === "service_categories") {
           const before = (currentCategoryIds.get(request.contractor_id) || []).map(id => categoryNames.get(id) || "Unknown category");
           const after = (changes.category_ids || []).map(id => categoryNames.get(id) || "Unknown category");
