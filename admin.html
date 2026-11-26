@@ -629,7 +629,6 @@
         <div id="siteMaintenanceStatus" class="message hidden" role="status" aria-live="polite"></div>
       </section>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
-        <button type="button" data-admin-page="adminApprovalsPage">Contractor approvals</button>
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
@@ -649,16 +648,6 @@
           <div id="adminFindContractorsResults"><p class="muted">Enter a search term to find contractors.</p></div>
         </section>
       </section>
-      <section id="adminApprovalsPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-          <h2>Contractor profile and license updates</h2>
-        <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject. Approved profile versions are retained in the permanent contractor history; reviewed requests cannot be deleted.</p>
-        <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
-        <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
-        <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
-      </section>
-      </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section id="newContractorRegistrationsSection" class="lead">
@@ -676,6 +665,14 @@
         <div id="unlicensedContractorsMessage" class="message hidden"></div>
         <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
       </section>
+        <section class="lead">
+          <h2>Contractor profile and license updates</h2>
+        <p>Review all profile, profession, category and license changes submitted by existing contractors. Choose With License, Without License, or Reject. Approved profile versions are retained in the permanent contractor history; reviewed requests cannot be deleted.</p>
+        <div id="contractorChangesAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div id="contractorChangesMessage" class="message hidden" role="status" aria-live="polite"></div>
+        <div id="contractorChangesList"><p class="muted">Loading contractor update requests…</p></div>
+      </section>
+
       </section>
       <section id="adminCreateLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -3315,7 +3312,6 @@
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
-    if (pageId === "adminApprovalsPage") loadPendingContractors();
     if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
