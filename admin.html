@@ -2203,19 +2203,19 @@
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
-        loadPendingContractors();loadUnlicensedContractors();
+        loadPendingContractors();loadUnlicensedContractors();loadAdminContractorDirectory();
       })
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
-        loadUnlicensedContractors();
+        loadUnlicensedContractors();loadAdminContractorDirectory();
       })
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload => {
         if (!isAdmin || !currentUser) return;
-        loadUnlicensedContractors();
+        loadUnlicensedContractors();loadAdminContractorDirectory();
       })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_service_categories"},payload => { if(isAdmin&&currentUser)loadUnlicensedContractors(); })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_service_categories"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
           console.warn("Contractor registration realtime unavailable:",status,error || "");
@@ -2238,7 +2238,7 @@
         });
       }
       loadContractorChangeRequests();
-      loadUnlicensedContractors();
+      loadUnlicensedContractors();loadAdminContractorDirectory();
     };
     // Treat requests created before this admin session as existing, but announce requests
     // submitted while the administrator was already signed in (including just before reload).
