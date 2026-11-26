@@ -2199,6 +2199,7 @@
         title.textContent = contractor.company_name || "Contractor company";
         card.append(title);
         const details = [
+          ["Company name", contractor.company_name || "Not provided"],
           ["Email", contractor.email || "Not provided"],
           ["Phone", contractor.phone || "Not provided"],
           ["Status", contractor.verification_status || "Unknown"],
