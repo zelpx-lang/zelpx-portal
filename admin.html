@@ -2187,7 +2187,15 @@
     contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
         if (!isAdmin || !currentUser) return;
-        loadPendingContractors();
+        loadPendingContractors();loadUnlicensedContractors();
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"contractors"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadUnlicensedContractors();
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadUnlicensedContractors();
       })
       .subscribe((status,error) => {
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
@@ -2211,6 +2219,7 @@
         });
       }
       loadContractorChangeRequests();
+      loadUnlicensedContractors();
     };
     // Treat requests created before this admin session as existing, but announce requests
     // submitted while the administrator was already signed in (including just before reload).
