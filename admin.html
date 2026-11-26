@@ -1495,30 +1495,70 @@
       const niceKey = key => String(key).replaceAll("_"," ").replace(/\b\w/g,ch=>ch.toUpperCase());
       for (const event of events) {
         const card=document.createElement("article");
-        card.style.cssText="padding:14px 4px;border-bottom:1px solid #e8e1d6;background:transparent;overflow-wrap:anywhere;";
+        card.className="lead";
+        card.style.cssText="padding:12px 16px;margin:10px 0;border-radius:18px;overflow-wrap:anywhere;";
         const company=event.contractor?.company_name || "Contractor";
         const name=event.profile?.full_name || "";
-        const heading=document.createElement("h3");
-        heading.style.cssText="font-size:16px;margin:0 0 5px;";
-        heading.textContent=(event.kind==="registration"?"New contractor: ":"Contractor update: ")+company+(name?" · "+name:"");
-        const meta=document.createElement("p");meta.className="muted";
+        const heading=document.createElement("button");
+        heading.type="button";
+        heading.className="unlicensed-contractor-toggle secondary";
+        heading.setAttribute("aria-expanded","false");
+        heading.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
+        const title=document.createElement("strong");
+        title.textContent=(event.kind==="registration"?"New contractor: ":"Contractor update: ")+company+(name?" · "+name:"");
+        title.style.cssText="font-size:17px;overflow-wrap:anywhere;min-width:0;";
+        const badge=document.createElement("span");
+        const statusValue=event.kind==="registration"?(event.contractor?.verification_status||"registered"):(event.request.status||"unknown");
+        badge.textContent=String(statusValue).replaceAll("_"," ");
+        badge.style.cssText="flex:0 0 auto;margin-left:auto;padding:5px 9px;border-radius:999px;background:"+(String(statusValue).toLowerCase()==="pending"?"#fff3d8":String(statusValue).toLowerCase()==="approved"||String(statusValue).toLowerCase()==="verified"?"#e3f5ec":"#f1ece3")+";color:"+(String(statusValue).toLowerCase()==="pending"?"#946200":String(statusValue).toLowerCase()==="approved"||String(statusValue).toLowerCase()==="verified"?"#147d55":"#5d584f")+";font-size:12px;font-weight:800;white-space:nowrap;";
+        const expandIcon=document.createElement("span");
+        expandIcon.textContent="+";
+        expandIcon.setAttribute("aria-hidden","true");
+        expandIcon.style.cssText="flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
+        heading.append(title,badge,expandIcon);
+        const panel=document.createElement("div");
+        panel.className="unlicensed-contractor-details hidden";
+        panel.style.cssText="padding:10px 4px 4px;";
+        heading.addEventListener("click",()=>{
+          const willOpen=panel.classList.contains("hidden");
+          panel.classList.toggle("hidden",!willOpen);
+          heading.setAttribute("aria-expanded",String(willOpen));
+          expandIcon.textContent=willOpen?"−":"+";
+        });
+        card.append(heading,panel);
         const date=event.date?new Date(event.date).toLocaleString("en-US"):"Date unavailable";
-        meta.textContent=(event.kind==="registration"?"New registration":"Updated: "+labelForType(event.request.request_type))+" · "+date;
-        card.append(heading,meta);
-        const contact=document.createElement("p");
-        contact.textContent=[event.contractor?.email,event.profile?.phone||event.contractor?.contractor_phone].filter(Boolean).join(" · ");
-        if(contact.textContent)card.append(contact);
-        if(event.kind==="registration"){
-          const status=document.createElement("p");status.textContent="Account status: "+(event.contractor?.verification_status||"registered");card.append(status);
-        } else {
-          const status=document.createElement("p");
-          status.textContent="Request status: "+String(event.request.status||"unknown").toUpperCase();
-          card.append(status);
+        const identity=document.createElement("section");
+        identity.style.cssText="padding:12px;background:#fffaf5;border:1px solid #eee2d5;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;";
+        const identityTitle=document.createElement("h4");identityTitle.textContent="Account and contact information";identity.append(identityTitle);
+        const addInfo=(parent,label,value)=>{
+          if(value===null||value===undefined||value==="")return;
+          const p=document.createElement("p"),strong=document.createElement("strong");
+          strong.textContent=label+": ";p.append(strong,document.createTextNode(String(value)));parent.append(p);
+        };
+        addInfo(identity,"Activity",event.kind==="registration"?"New contractor registration":"Account update — "+labelForType(event.request.request_type));
+        addInfo(identity,"Submitted",date);
+        addInfo(identity,"Company",company);
+        addInfo(identity,"Full name",name);
+        addInfo(identity,"Email",event.contractor?.email);
+        const phone=event.profile?.phone||event.contractor?.contractor_phone;
+        if(phone){
+          const p=document.createElement("p"),strong=document.createElement("strong"),link=document.createElement("a");
+          strong.textContent="Phone: ";link.textContent=phone;link.href="tel:"+String(phone).replace(/[^0-9+]/g,"");p.append(strong,link);identity.append(p);
+        }
+        addInfo(identity,"Account status",event.contractor?.verification_status||"registered");
+        if(event.kind==="update"){
+          addInfo(identity,"Request status",String(event.request.status||"unknown").toUpperCase());
+          addInfo(identity,"Reviewed",event.request.reviewed_at?new Date(event.request.reviewed_at).toLocaleString("en-US"):"Not reviewed");
+          if(event.request.admin_note)addInfo(identity,"Administrator note",event.request.admin_note);
+        }
+        panel.append(identity);
+        if(event.kind==="update"){
           const changesObj=event.request.requested_changes||{};
           const entries=Object.entries(changesObj);
+          const changesSection=document.createElement("section");
+          changesSection.style.cssText="padding:12px;background:#fff;border:1px solid #eee2d5;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;";
+          const changesTitle=document.createElement("h4");changesTitle.textContent="Submitted account changes";changesSection.append(changesTitle);
           if(entries.length){
-            const details=document.createElement("details");
-            const summaryEl=document.createElement("summary");summaryEl.textContent="View submitted changes ("+entries.length+")";details.append(summaryEl);
             const ul=document.createElement("ul");ul.style.cssText="margin:8px 0;padding-left:20px;";
             for(const [key,value] of entries){
               const li=document.createElement("li");
@@ -1528,9 +1568,11 @@
               else if(typeof value==="object")shown=JSON.stringify(value);
               li.textContent=niceKey(key)+": "+String(shown);ul.append(li);
             }
-            details.append(ul);card.append(details);
+            changesSection.append(ul);
+          } else {
+            const empty=document.createElement("p");empty.className="muted";empty.textContent="No field details were included in this request.";changesSection.append(empty);
           }
-          if(event.request.admin_note){const note=document.createElement("p");note.textContent="Administrator note: "+event.request.admin_note;card.append(note);}
+          panel.append(changesSection);
         }
         list.append(card);
       }
