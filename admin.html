@@ -1388,21 +1388,26 @@
     const results = $("adminFindContractorsResults"), count = $("adminFindContractorsCount");
     results.textContent = "Loading contractors…";
     try {
-      const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license")
-        .order("created_at", { ascending: false }).limit(1000);
+      const { data: contractors, error } = await db.from("contractors").select("*").order("created_at", { ascending: false }).limit(1000);
       if (error) throw error;
-      const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
-      const { data: profiles, error: profileError } = userIds.length
-        ? await db.from("profiles").select("id,full_name,phone,avatar_url").in("id", userIds)
-        : { data: [], error: null };
-      if (profileError) throw profileError;
-      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
-      adminContractorDirectory = (contractors || []).map(c => {
-        const p = profileMap.get(c.user_id) || {};
-        return { ...c, full_name: p.full_name || "", phone: p.phone || "",
-          search_text: [p.full_name,c.company_name,c.email,p.phone,c.service_address,c.service_city,c.service_state,c.service_zip_code].filter(Boolean).join(" ").toLocaleLowerCase() };
-      });
+      const ids=(contractors||[]).map(x=>x.id).filter(Boolean), userIds=[...new Set((contractors||[]).map(x=>x.user_id).filter(Boolean))];
+      const [profileResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
+        userIds.length?db.from("profiles").select("*").in("id",userIds):Promise.resolve({data:[],error:null}),
+        ids.length?db.from("contractor_state_licenses").select("*").in("contractor_id",ids):Promise.resolve({data:[],error:null}),
+        ids.length?db.from("contractor_profession_qualifications").select("*").in("contractor_id",ids):Promise.resolve({data:[],error:null}),
+        ids.length?db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",ids):Promise.resolve({data:[],error:null}),
+        ids.length?db.from("contractor_change_requests").select("id,contractor_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").in("contractor_id",ids).order("created_at",{ascending:false}).limit(2000):Promise.resolve({data:[],error:null})
+      ]);
+      for(const r of [profileResult,licenseResult,professionResult,categoryResult,changeResult])if(r.error)throw r.error;
+      const profileMap=new Map((profileResult.data||[]).map(p=>[p.id,p]));
+      const group=(rows,key)=>{const m=new Map();for(const x of rows||[]){if(!m.has(x[key]))m.set(x[key],[]);m.get(x[key]).push(x);}return m;};
+      const licensesBy=group(licenseResult.data,"contractor_id"),professionsBy=group(professionResult.data,"contractor_id"),categoriesBy=group(categoryResult.data,"contractor_id"),changesBy=group(changeResult.data,"contractor_id");
+      const professionIds=[...new Set((professionResult.data||[]).map(x=>x.profession_id).filter(Boolean))];
+      const professionNamesResult=professionIds.length?await db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):{data:[],error:null};
+      if(professionNamesResult.error)throw professionNamesResult.error;
+      const professionNames=new Map((professionNamesResult.data||[]).map(x=>[x.id,x.profession_name]));
+      const dateUS=(key,value)=>{if(!value)return "";if(/(?:expiration_date|_date)$/.test(key)&&/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value)))return String(value).slice(5,7)+"/"+String(value).slice(8,10)+"/"+String(value).slice(0,4);if(/_at$/.test(key)){const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString("en-US");}return String(value);};
+      adminContractorDirectory=(contractors||[]).map(c=>{const p=profileMap.get(c.user_id)||{};return {...c,full_name:p.full_name||"",phone:c.contractor_phone||p.phone||"",profile:p,state_licenses:licensesBy.get(c.id)||[],professions:professionsBy.get(c.id)||[],categories:categoriesBy.get(c.id)||[],change_requests:changesBy.get(c.id)||[],professionNames,search_text:[p.full_name,c.company_name,c.email,p.phone,c.contractor_phone,c.service_address,c.service_city,c.service_state,c.service_zip_code,c.license_number,c.license_number_2,...(licensesBy.get(c.id)||[]).flatMap(x=>[x.license_number,x.state_code,x.license_type])].filter(Boolean).join(" ").toLocaleLowerCase()};});
       filterAdminContractorDirectory();
     } catch (e) {
       results.textContent = "Could not load contractors: " + (e.message || "Unknown error");
@@ -1433,7 +1438,18 @@
       const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b);if(label==="Phone"&&value){const a=document.createElement("a");a.textContent=String(value);a.href="tel:"+String(value).replace(/[^0-9+]/g,"");p.append(a);}else{p.append(document.createTextNode(value||"Not provided"));}panel.append(p);};
       line("Contact name",c.full_name); line("Business name",c.company_name); line("Email",c.email); line("Phone",c.phone); line("Address", [c.service_address,c.service_city,c.service_state,c.service_zip_code].filter(Boolean).join(", ")); line("State",c.service_state);
       line("Current approval status",c.verification_status);
+      line("Registered",dateUS("created_at",c.created_at));line("Service radius (miles)",c.service_radius_miles);
+      line("Phone verified",c.contractor_phone_verified_at||c.profile.phone_verified_at?"Yes":"No");
+      line("Phone verification date",dateUS("contractor_phone_verified_at",c.contractor_phone_verified_at||c.profile.phone_verified_at));
       line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
+      const section=label=>{const box=document.createElement("section");box.style.cssText="padding:10px;margin:10px 0;background:#fffaf5;border:1px solid #eee2d5;border-radius:10px;overflow-wrap:anywhere";const h=document.createElement("h4");h.textContent=label;box.append(h);panel.append(box);return box;};
+      const add=(box,label,value)=>{if(value===null||value===undefined||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));box.append(p);};
+      const licBox=section("All license information");
+      add(licBox,"Primary license type",c.license_type);add(licBox,"Primary license state",c.license_state);add(licBox,"Primary license number",c.license_number);add(licBox,"Primary expiration",dateUS("license_expiration_date",c.license_expiration_date));add(licBox,"Primary review status",c.license_review_status);add(licBox,"Second license type",c.license_type_2);add(licBox,"Second license state",c.license_state_2);add(licBox,"Second license number",c.license_number_2);
+      c.state_licenses.forEach((x,i)=>add(licBox,"Additional license "+(i+1),[x.state_code,x.license_type,x.license_number,dateUS("expiration_date",x.expiration_date),x.review_status].filter(Boolean).join(" · ")));
+      const insBox=section("Insurance information");add(insBox,"Has insurance certificate",c.has_insurance_certificate===true?"Yes":c.has_insurance_certificate===false?"No":"Not specified");add(insBox,"Insurance agency",c.insurance_agency_name);add(insBox,"Insurance agent phone",c.insurance_agent_phone);add(insBox,"Policy number",c.insurance_policy_number);add(insBox,"Insurance expiration",dateUS("insurance_expiration_date",c.insurance_expiration_date));add(insBox,"Insurance review status",c.insurance_review_status);add(insBox,"Insurance certificate",c.insurance_document_path?"Uploaded":"Not uploaded");
+      const svcBox=section("Selected services and professions");add(svcBox,"Service categories",c.categories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");c.professions.forEach((x,i)=>add(svcBox,"Profession "+(i+1),[c.professionNames.get(x.profession_id),x.state_code,x.work_role,x.license_type,x.license_number,x.verification_status,dateUS("license_expiration_date",x.license_expiration_date)].filter(Boolean).join(" · ")));
+      const updatesBox=section("Account update history");if(!c.change_requests.length)add(updatesBox,"Updates","No change requests recorded.");c.change_requests.forEach((x,i)=>{add(updatesBox,"Update "+(i+1)+" — "+(x.request_type||"Profile")+" ("+(x.status||"unknown")+")",dateUS("created_at",x.created_at));add(updatesBox,"Administrator note",x.admin_note);Object.entries(x.requested_changes||{}).forEach(([k,v])=>{if(v===null||v===undefined||v==="")return;if(k==="additional_state_licenses"&&Array.isArray(v)){v.forEach((z,j)=>add(updatesBox,"Requested additional license "+(j+1),[z.state_code,z.license_type,z.license_number].filter(Boolean).join(" · ")));}else add(updatesBox,k.replace(/_/g," "),typeof v==="object"?JSON.stringify(v):dateUS(k,v));});});
       const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
       const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:stretch;justify-content:flex-start;gap:12px;flex-wrap:nowrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
       const accessButton=document.createElement("button"); accessButton.type="button"; accessButton.className="secondary"; accessButton.disabled=true; accessButton.style.cssText="flex:1 1 0;width:0;min-width:0;max-width:none;margin:0;padding:12px 8px;font-size:14px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;"; accessButton.textContent="Checking…";
