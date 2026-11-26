@@ -1806,9 +1806,58 @@
         line("Address",[full.service_city,full.service_state,full.service_zip_code].filter(Boolean).join(", "));
         line("Phone verification",full.contractor_phone_verified_at||profile.phone_verified_at?"Verified":"Not verified");
         line("License",full.has_license===true?"Yes":full.has_license===false?"No":"Not specified");
-        const licenseSummary=(licensesById.get(full.id)||[]).map(x=>[x.state_code,x.license_type,x.license_number,x.review_status==="verified"&&(!x.expiration_date||x.expiration_date>=new Date().toISOString().slice(0,10))?"Active":x.review_status].filter(Boolean).join(" · "));
-        if(full.license_number)licenseSummary.unshift([full.license_state,full.license_type,full.license_number,licenseStatusLabel].filter(Boolean).join(" · "));
-        line("State licenses",licenseSummary.join(" | "));
+        const stateLicenseRows=(licensesById.get(full.id)||[]).filter(x=>!x.deleted_at);
+        if(full.license_number&&!stateLicenseRows.some(x=>String(x.state_code||"").toUpperCase()===String(full.license_state||"").toUpperCase())){
+          stateLicenseRows.unshift({state_code:full.license_state,license_type:full.license_type,license_number:full.license_number,review_status:full.license_review_status||"pending",expiration_date:full.license_expiration_date});
+        }
+        if(stateLicenseRows.length){
+          const licenseWrap=document.createElement("div");
+          licenseWrap.style.cssText="margin:8px 0 12px;padding:10px;border:1px solid #e8e1d6;border-radius:12px;background:#fffaf5;";
+          const licenseTitle=document.createElement("strong");licenseTitle.textContent="State licenses:";licenseWrap.append(licenseTitle);
+          stateLicenseRows.forEach(license=>{
+            const licenseRow=document.createElement("div");
+            licenseRow.style.cssText="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #eee2d5;";
+            const licenseInfo=document.createElement("div");
+            licenseInfo.style.cssText="flex:1 1 190px;min-width:0;overflow-wrap:anywhere;line-height:1.45;";
+            const normalized=String(license.review_status||"pending").trim().toLowerCase();
+            const statusLabel=normalized==="verified"?"Verified":normalized==="approved"?"Verified":normalized==="rejected"||normalized==="declined"?"Declined":"Pending";
+            licenseInfo.textContent=[license.state_code,license.license_type,license.license_number,statusLabel].filter(Boolean).join(" · ");
+            licenseRow.append(licenseInfo);
+            if(!["verified","approved","rejected","declined"].includes(normalized)){
+              const addReviewButton=(decision,label,color)=>{
+                const btn=document.createElement("button");btn.type="button";btn.textContent=label;btn.className="secondary";
+                btn.style.cssText="width:auto;min-width:88px;min-height:38px;padding:7px 12px;margin:0;flex:0 0 auto;font-size:13px;font-weight:800;color:"+color+";";
+                btn.addEventListener("click",async()=>{
+                  if(btn.disabled)return;
+                  const note=window.prompt(decision==="approved"?"Optional approval note:":"Reason for declining this license (optional):","");
+                  if(note===null)return;
+                  const buttons=[...licenseRow.querySelectorAll("button")];buttons.forEach(b=>b.disabled=true);
+                  btn.textContent=decision==="approved"?"Approving…":"Declining…";
+                  try{
+                    const {error}=await db.rpc("zelpx_admin_review_company_state_license",{
+                      p_contractor_id:full.id,
+                      p_state_code:license.state_code,
+                      p_decision:decision,
+                      p_admin_notes:note.trim()||null
+                    });
+                    if(error)throw error;
+                    message("unlicensedContractorsMessage",license.state_code+" license "+(decision==="approved"?"approved.":"declined."),"success");
+                    await loadUnlicensedContractors();
+                  }catch(e){
+                    message("unlicensedContractorsMessage","Could not review "+license.state_code+" license: "+(e.message||"Unknown error"),"error");
+                    buttons.forEach(b=>b.disabled=false);btn.textContent=label;
+                  }
+                });
+                return btn;
+              };
+              licenseRow.append(addReviewButton("approved","Approve","#16794b"),addReviewButton("declined","Decline","#b5472b"));
+            }
+            licenseWrap.append(licenseRow);
+          });
+          panel.append(licenseWrap);
+        }else{
+          line("State licenses","No state licenses submitted");
+        }
         line("Insurance",full.insurance_policy_number?("Policy "+full.insurance_policy_number+(full.insurance_expiration_date?" · expires "+formatValue("insurance_expiration_date",full.insurance_expiration_date):"")):"Not provided");
         const categoryNames=(categoriesById.get(full.id)||[]).map(x=>x.service_categories?.name||x.category_id);
         line("Services",categoryNames.join(", ")||"None selected");
