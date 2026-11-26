@@ -1430,7 +1430,7 @@
       const panel=document.createElement("div"); panel.className="hidden"; panel.style.cssText="padding-top:10px;";
       heading.addEventListener("click",()=>{const open=!panel.classList.contains("hidden");panel.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));icon.textContent=open?"+":"−";});
       card.append(heading,panel);
-      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(value||"Not provided"));panel.append(p);};
+      const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b);if(label==="Phone"&&value){const a=document.createElement("a");a.textContent=String(value);a.href="tel:"+String(value).replace(/[^0-9+]/g,"");p.append(a);}else{p.append(document.createTextNode(value||"Not provided"));}panel.append(p);};
       line("Contact name",c.full_name); line("Business name",c.company_name); line("Email",c.email); line("Phone",c.phone); line("State",c.service_state);
       line("Current approval status",c.verification_status);
       line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
