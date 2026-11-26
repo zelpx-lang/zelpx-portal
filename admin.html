@@ -610,7 +610,6 @@
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity</button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">License Verification</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
       </nav>
@@ -701,23 +700,7 @@
           <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
         </section>
       </section>
-      <section id="adminVerifyLeadPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-          <h2>Company State License Verification</h2>
-          <p>Review each submitted state license separately (Oregon and Washington). Verify the license number and current status in the official state registry. A document upload is not required.</p>
-          <div id="licensedContractorsMessage" class="message hidden" role="status" aria-live="polite"></div>
-          <div class="actions"><button id="refreshLicensedContractorsBtn" type="button" class="secondary">Refresh licensed contractors</button><span id="licensedContractorsCount" class="muted"></span></div>
-          <div id="licensedContractorsList"><p class="muted">Loading licensed contractors…</p></div>
-          <section class="lead" style="margin-top:18px">
-            <h3>Individual Profession License Verification</h3>
-            <p>Review profession-specific credentials separately for each selected profession. Employee conditional scopes may be approved against the verified employer license without an individual document; other licensed scopes require the individual's document.</p>
-            <div id="professionCredentialsMessage" class="message hidden" role="status" aria-live="polite"></div>
-            <div class="actions"><button id="refreshProfessionCredentialsBtn" type="button" class="secondary">Refresh profession credentials</button><span id="professionCredentialsCount" class="muted"></span></div>
-            <div id="professionCredentialsList"><p class="muted">Loading profession credentials…</p></div>
-          </section>
-        </section>
-      </section>
+      
     </section>
   </section>
 </main>
@@ -2634,7 +2617,6 @@
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
-    if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminRefundRequestsPage") loadRefundRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
@@ -2717,8 +2699,6 @@
     $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
     $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
-    $("refreshLicensedContractorsBtn").addEventListener("click", loadLicensedContractors);
-  $("refreshProfessionCredentialsBtn")?.addEventListener("click", loadPendingProfessionCredentials);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
 $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
