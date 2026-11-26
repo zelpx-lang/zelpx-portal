@@ -1442,7 +1442,7 @@
       });
       const insBox=section("Insurance information");add(insBox,"Insurance agency",c.insurance_agency_name);add(insBox,"Insurance agent phone",c.insurance_agent_phone);add(insBox,"Policy number",c.insurance_policy_number);add(insBox,"Insurance expiration",dateUS("insurance_expiration_date",c.insurance_expiration_date));add(insBox,"Insurance review status",c.insurance_review_status);
       const svcBox=section("Selected services and professions");add(svcBox,"Service categories",c.categories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");c.professions.forEach((x,i)=>add(svcBox,"Profession "+(i+1),[c.professionNames.get(x.profession_id),x.state_code,x.work_role,x.license_type,x.license_number,x.verification_status,dateUS("license_expiration_date",x.license_expiration_date)].filter(Boolean).join(" · ")));
-      const updatesBox=section("Account update history");if(!c.change_requests.length)add(updatesBox,"Updates","No change requests recorded.");c.change_requests.forEach((x,i)=>{add(updatesBox,"Update "+(i+1)+" — "+(x.request_type||"Profile")+" ("+(x.status||"unknown")+")",dateUS("created_at",x.created_at));add(updatesBox,"Administrator note",x.admin_note);Object.entries(x.requested_changes||{}).forEach(([k,v])=>{if(v===null||v===undefined||v==="")return;if(k==="additional_state_licenses"&&Array.isArray(v)){v.forEach((z,j)=>add(updatesBox,"Requested additional license "+(j+1),[z.state_code,z.license_type,z.license_number].filter(Boolean).join(" · ")));}else add(updatesBox,k.replace(/_/g," "),typeof v==="object"?JSON.stringify(v):dateUS(k,v));});});
+      const updatesBox=section("Account update history");if(!c.change_requests.length)add(updatesBox,"Updates","No change requests recorded.");c.change_requests.forEach((x,i)=>{add(updatesBox,"Update "+(i+1)+" — "+(x.request_type||"Profile")+" ("+(x.status||"unknown")+")",dateUS("created_at",x.created_at));add(updatesBox,"Administrator note",x.admin_note);Object.entries(x.requested_changes||{}).forEach(([k,v])=>{if(v===null||v===undefined||v==="")return;if(k==="additional_state_licenses"&&Array.isArray(v)){v.forEach((z,j)=>add(updatesBox,"Requested additional license "+(j+1),[stateName(z.state_code),z.license_type,z.license_number].filter(Boolean).join(" · ")));}else add(updatesBox,k.replace(/_/g," "),typeof v==="object"?JSON.stringify(v):dateUS(k,v));});});
       const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
       const actions=document.createElement("div"); actions.className="actions"; actions.style.cssText="display:flex;flex-direction:row;align-items:stretch;justify-content:flex-start;gap:12px;flex-wrap:nowrap;width:100%;margin:12px 0 2px;padding-top:10px;border-top:1px solid #eadfd3;";
       const accessButton=document.createElement("button"); accessButton.type="button"; accessButton.className="secondary"; accessButton.disabled=true; accessButton.style.cssText="flex:1 1 0;width:0;min-width:0;max-width:none;margin:0;padding:12px 8px;font-size:14px;line-height:1.25;white-space:normal;overflow-wrap:anywhere;"; accessButton.textContent="Checking…";
@@ -1843,10 +1843,10 @@
                       p_admin_notes:note.trim()||null
                     });
                     if(error)throw error;
-                    message("unlicensedContractorsMessage",license.state_code+" license "+(decision==="approved"?"approved.":"declined."),"success");
+                    message("unlicensedContractorsMessage",stateName(license.state_code)+" license "+(decision==="approved"?"approved.":"declined."),"success");
                     await loadUnlicensedContractors();
                   }catch(e){
-                    message("unlicensedContractorsMessage","Could not review "+license.state_code+" license: "+(e.message||"Unknown error"),"error");
+                    message("unlicensedContractorsMessage","Could not review "+stateName(license.state_code)+" license: "+(e.message||"Unknown error"),"error");
                     buttons.forEach(b=>b.disabled=false);btn.textContent=label;
                   }
                 });
@@ -1863,7 +1863,7 @@
         line("Insurance",full.insurance_policy_number?("Policy "+full.insurance_policy_number+(full.insurance_expiration_date?" · expires "+formatValue("insurance_expiration_date",full.insurance_expiration_date):"")):"Not provided");
         const categoryNames=(categoriesById.get(full.id)||[]).map(x=>x.service_categories?.name||x.category_id);
         line("Services",categoryNames.join(", ")||"None selected");
-        const professionNamesShort=(professionsById.get(full.id)||[]).map(x=>[professionNames.get(x.profession_id),x.state_code].filter(Boolean).join(" — "));
+        const professionNamesShort=(professionsById.get(full.id)||[]).map(x=>[professionNames.get(x.profession_id),stateName(x.state_code)].filter(Boolean).join(" — "));
         line("Professions",professionNamesShort.join(", "));
         line("Registered",formatValue("created_at",full.created_at));
         const actions = document.createElement("div");
