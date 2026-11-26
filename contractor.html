@@ -834,30 +834,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
           <input id="profileCompanyLicenseFile" type="hidden" aria-hidden="true">
           <div><label for="profileCompanyLicenseExpiry">Expiration date (if applicable)</label><input id="profileCompanyLicenseExpiry" type="date"></div>
-        <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
-          <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
-          <div id="removedLicenseStatesWrap" class="hidden" style="margin:12px 0;padding:10px;border:1px dashed var(--line);border-radius:12px">
-            <strong style="display:block;margin-bottom:6px">Removed licenses</strong>
-            <div id="removedLicenseStatesList"></div>
-          </div>
-          <button id="addLicenseStateBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">＋ Add another state</button>
-          <small class="muted" style="display:block;margin-top:6px">Add a separate license for every state where you want to perform licensed work. State licenses are reviewed independently; your business location does not have to match the license state.</small>
-        </div>
-        <div id="additionalLicenseStateModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="additionalLicenseModalTitle" style="position:fixed;inset:0;z-index:10000;background:rgba(20,18,15,.55);display:flex;align-items:center;justify-content:center;padding:18px">
-          <div style="width:min(100%,430px);background:#fffdfa;border:1px solid #e8e1d6;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.22)">
-            <h3 id="additionalLicenseModalTitle" style="margin:0 0 14px">Add another state license</h3>
-            <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
-            <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
-            <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
-            <input id="additionalLicenseFile" type="hidden" aria-hidden="true">
-            <label for="additionalLicenseExpiry" style="display:block;margin-top:12px">Expiration date (if applicable)</label><input id="additionalLicenseExpiry" type="date">
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
-              <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
-              <button id="saveAdditionalLicenseBtn" type="button">Add state</button>
-            </div>
-            <div id="additionalLicenseModalMessage" class="message hidden" role="status"></div>
-          </div>
-        </div>
         <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
           <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
@@ -1418,133 +1394,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(metadataError)console.warn("Could not clear one-time signup profession metadata:",metadataError.message);
   }
 
-  let additionalStateLicenses = [];
-  async function renderAdditionalStateLicenses(){
-    const list=$("additionalLicenseStatesList"), removedList=$("removedLicenseStatesList");
-    if(!list)return;
-    list.replaceChildren();
-    const active=additionalStateLicenses.filter(x=>!x.deleted_at);
-    const removed=additionalStateLicenses.filter(x=>!!x.deleted_at);
-    if(!active.length)list.textContent="No additional state licenses added.";
-    for(const item of active){
-      const row=document.createElement("div");
-      row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
-      const label=document.createElement("span");
-      label.style.cssText="min-width:0;flex:1;line-height:1.45";
-      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review");
-      row.append(label);
-      const remove=document.createElement("button");remove.type="button";remove.className="secondary";
-      remove.textContent="Delete";remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
-      remove.addEventListener("click",()=>deleteAdditionalStateLicense(item.state_code,remove));
-      row.append(remove);
-      list.append(row);
-    }
-    if(removedList){
-      removedList.replaceChildren();
-      const wrap=$("removedLicenseStatesWrap");
-      if(wrap)wrap.classList.toggle("hidden",removed.length===0);
-      for(const item of removed){
-        const row=document.createElement("div");
-        row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
-        const label=document.createElement("span");label.style.cssText="min-width:0;flex:1;line-height:1.45";
-        label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · Removed";
-        const restore=document.createElement("button");restore.type="button";restore.className="secondary";
-        restore.textContent="Restore";restore.style.cssText="width:auto;min-height:36px;padding:6px 12px;flex:0 0 auto";
-        restore.addEventListener("click",()=>restoreAdditionalStateLicense(item.state_code,restore));
-        row.append(label,restore);removedList.append(row);
-      }
-    }
-  }
-  async function refreshAdditionalStateLicenses(){
-    const {data,error}=await db.from("contractor_state_licenses")
-      .select("state_code,license_number,license_type,review_status,document_path,expiration_date,deleted_at")
-      .eq("contractor_id",currentContractor.id).order("state_code");
-    if(error)throw error;
-    additionalStateLicenses=(data||[]).map(x=>({...x}));
-    await renderAdditionalStateLicenses();
-  }
-  async function deleteAdditionalStateLicense(stateCode,button){
-    if(!currentContractor||button?.disabled)return;
-    if(!confirm("Remove the "+stateCode+" license from your contractor account? You can restore it later."))return;
-    button.disabled=true;button.textContent="Deleting…";
-    try{
-      // Removing an additional state license does not require phone re-verification.
-      const {error}=await db.rpc("zelpx_delete_company_state_license",{p_state_code:stateCode});
-      if(error)throw error;
-      await refreshAdditionalStateLicenses();
-    }catch(e){alert("Could not remove license: "+(e.message||"Unknown error"));button.disabled=false;button.textContent="Delete";}
-  }
-  async function restoreAdditionalStateLicense(stateCode,button){
-    if(!currentContractor||button?.disabled)return;
-    button.disabled=true;button.textContent="Verify phone…";
-    try{
-      const phoneVerified=await ensureContractorPhoneVerified();
-      if(!phoneVerified)return;
-      button.textContent="Restoring…";
-      const {error}=await db.rpc("zelpx_restore_company_state_license",{p_state_code:stateCode});
-      if(error)throw error;
-      await refreshAdditionalStateLicenses();
-    }catch(e){alert("Could not restore license: "+(e.message||"Unknown error"));button.disabled=false;button.textContent="Restore";}
-  }
-  async function loadAdditionalStateLicenses(pendingDraft, contractor){
-    if(!currentContractor)return;
-    const {data,error}=await db.from("contractor_state_licenses")
-      .select("state_code,license_number,license_type,review_status,document_path,expiration_date,deleted_at")
-      .eq("contractor_id",currentContractor.id).order("state_code");
-    if(error)throw error;
-    const map=new Map();
-    (data||[]).forEach(x=>map.set(x.state_code,{...x}));
-    if(contractor?.license_state_2 && contractor?.license_number_2 && contractor?.license_type_2 && !map.has(contractor.license_state_2)){
-      map.set(contractor.license_state_2,{state_code:contractor.license_state_2,license_number:contractor.license_number_2,license_type:contractor.license_type_2,review_status:"pending",document_path:null,deleted_at:null});
-    }
-    (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{if(x.state_code&&!map.has(x.state_code))map.set(x.state_code,{...x,review_status:"pending",deleted_at:null});});
-    additionalStateLicenses=[...map.values()];
-    const primary=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(contractor?.license_state||"").toUpperCase()&&!x.deleted_at);
-    const primaryExpiry=$("profileCompanyLicenseExpiry");
-    if(primaryExpiry)primaryExpiry.value=primary?.expiration_date||"";
-    const primaryFile=$("profileCompanyLicenseFile");
-    if(primaryFile){primaryFile.dataset.existingPath=primary?.document_path||"";primaryFile.dataset.existingState=primary?.state_code||"";}
-    await renderAdditionalStateLicenses();
-  }
-  function fillAdditionalLicenseEditor(){
-    const state_code=$("additionalLicenseState").value;
-    const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(state_code||"").toUpperCase());
-    $("additionalLicenseNumber").value=existing?.license_number||"";
-    $("additionalLicenseType").value=existing?.license_type||"";
-    $("additionalLicenseExpiry").value=existing?.expiration_date||"";
-    $("additionalLicenseModalTitle").textContent=existing?"Edit state license":"Add another state license";
-    $("saveAdditionalLicenseBtn").textContent=existing?"Save changes":"Add state";
-  }
-  function openAdditionalLicenseModal(){
-    const select=$("additionalLicenseState"), source=$("profileLicenseState");
-    select.replaceChildren(new Option("Choose state",""));
-    [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
-    const primaryState=String($("profileLicenseState").value||"").toUpperCase();
-    [...select.options].forEach(o=>{if(o.value&&String(o.value).toUpperCase()===primaryState)o.disabled=true;});
-    select.value="";
-    $("additionalLicenseNumber").value="";$("additionalLicenseType").value="";$("additionalLicenseFile").value="";$("additionalLicenseExpiry").value="";
-    $("additionalLicenseModalTitle").textContent="Add another state license";
-    $("saveAdditionalLicenseBtn").textContent="Add state";
-    $("additionalLicenseModalMessage").className="message hidden";
-    $("additionalLicenseStateModal").classList.remove("hidden");
-  }
-  $("additionalLicenseState").addEventListener("change",fillAdditionalLicenseEditor);
-  $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
-  $("cancelAdditionalLicenseBtn").addEventListener("click",()=>$("additionalLicenseStateModal").classList.add("hidden"));
-  $("saveAdditionalLicenseBtn").addEventListener("click",()=>{
-    const state_code=$("additionalLicenseState").value;
-    const license_number=$("additionalLicenseNumber").value.trim();
-    const license_type=$("additionalLicenseType").value.trim();
-    const document_file=null;
-    const expiration_date=$("additionalLicenseExpiry").value||null;
-    if(!state_code||!license_number||!license_type){const m=$("additionalLicenseModalMessage");m.textContent="Enter the state, license number, and license type.";m.className="message error";return;}
-    if(String(state_code).toUpperCase()===String($("profileLicenseState").value||"").toUpperCase()){const m=$("additionalLicenseModalMessage");m.textContent="This is your primary license state. Edit it in the main license fields above.";m.className="message error";return;}
-    // Selecting an existing additional state edits that record instead of creating a duplicate.
-    additionalStateLicenses=[...additionalStateLicenses.filter(x=>String(x.state_code||"").toUpperCase()!==String(state_code).toUpperCase()),
-      {state_code,license_number,license_type,document_file,document_path:null,expiration_date,review_status:"pending"}];
-    renderAdditionalStateLicenses();
-    $("additionalLicenseStateModal").classList.add("hidden");
-  });
   async function loadAccount(preloadedProfile = null) {
     // The role/profile has already been checked on the OAuth return path.
     // Avoid a second profile round trip there; regular refreshes still fetch it.
@@ -1619,11 +1468,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const label=review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified";
       companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
     }
-    await loadAdditionalStateLicenses(draft, contractor);
-    const activeWorkState=String($("professionState").value||contractor?.service_state||"").toUpperCase();
-    const activeStateLicense=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===activeWorkState);
     if(companyLicenseStatus){
-      const review=activeStateLicense?.review_status||"not submitted";
+      const review=contractor?.license_review_status||"not submitted";
       companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified");
     }
     $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes");
@@ -1885,8 +1731,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(licenseTypeLabel)licenseTypeLabel.textContent=employeeNeedsEmployerLicense?"Employer license type":"License type";
     const licenseFileLabel=document.querySelector('label[for="profileCompanyLicenseFile"]');
     if(licenseFileLabel)licenseFileLabel.textContent=employeeNeedsEmployerLicense?"Employer license document (PDF, JPG, PNG or WebP, max 10 MB)":"Company license document (PDF, JPG, PNG or WebP, max 10 MB)";
-    const additionalStates=$("additionalLicenseStatesWrap");
-    if(additionalStates)additionalStates.classList.toggle("hidden",employee);
     const licenseFilter=$("professionLicenseFilter");
     if(licenseFilter) licenseFilter.classList.toggle("hidden",employee);
     const licenseChoice=$("profileHasLicense")?.value||"";
@@ -3011,51 +2855,26 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           has_license: hasLicense, license_number: hasLicense ? licenseNumber : null,
           license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
           license_expiration_date: hasLicense ? licenseExpiry : null,
-          license_number_2: currentContractor.license_number_2 || null,
-          license_state_2: currentContractor.license_state_2 || null,
-          license_type_2: currentContractor.license_type_2 || null,
+          license_number_2: null,
+          license_state_2: null,
+          license_type_2: null,
           has_insurance_certificate: $("profileHasInsuranceCertificate").value === "yes",
           insurance_agency_name: $("profileHasInsuranceCertificate").value==="yes" ? $("profileInsuranceAgency").value.trim() || null : null,
           insurance_agent_phone: $("profileHasInsuranceCertificate").value==="yes" ? $("profileInsurancePhone").value.trim() || null : null,
           insurance_policy_number: $("profileInsurancePolicyNumber").value.trim() || null,
           insurance_expiration_date: $("profileInsuranceExpiration").value || null
         };
-        // Submit each company license as its own state-scoped record.
-        const submitCompanyStateLicenseByNumber = async (license) => {
-          const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(license.state_code||"").toUpperCase());
-          const unchanged=existing&&existing.license_number===license.license_number&&existing.license_type===license.license_type
-            &&(existing.expiration_date||null)===(license.expiration_date||null);
-          if(unchanged)return;
-          // ZELPX verifies company licenses by number in the official state registry. No files are uploaded.
-          const {error}=await db.rpc("zelpx_submit_company_state_license",{
-            p_state_code:license.state_code,p_license_number:license.license_number,
-            p_license_type:license.license_type,p_document_path:null,p_expiration_date:license.expiration_date||null
-          });
-          if(error)throw error;
-          const savedRecord={state_code:license.state_code,license_number:license.license_number,license_type:license.license_type,
-            document_path:null,expiration_date:license.expiration_date||null,review_status:"pending"};
-          additionalStateLicenses=[...additionalStateLicenses.filter(x=>x.state_code!==license.state_code),savedRecord];
-          if(String(license.state_code).toUpperCase()===String($("professionState").value).toUpperCase()&&$("profileCompanyLicenseReviewStatus")){
-            $("profileCompanyLicenseReviewStatus").textContent="Submitted — pending administrator verification. Licensed status appears only after approval.";
-          }
-        };
-        if(!isEmployee && hasCompletePrimaryLicense){
-          await submitCompanyStateLicenseByNumber({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
-            document_file:null,
-            document_path:null,
-            expiration_date:licenseExpiry||null});
-        }
-        if(hasCompleteEmployerLicense){
-          await uploadCompanyStateLicense({state_code:licenseState,license_number:licenseNumber,license_type:licenseType,
-            document_file:$("profileCompanyLicenseFile").files?.[0]||null,
-            document_path:$("profileCompanyLicenseFile").dataset.existingState===licenseState?($("profileCompanyLicenseFile").dataset.existingPath||null):null,
-            expiration_date:licenseExpiry});
-          if($("profileCompanyLicenseReviewStatus"))$("profileCompanyLicenseReviewStatus").textContent="Employer license number submitted. Work remains pending until an administrator checks the official state registry.";
-        }
-        if(!isEmployee){
-          for(const license of additionalStateLicenses.filter(x=>!x.deleted_at)){
-            await submitCompanyStateLicenseByNumber(license);
-          }
+        // Replace the contractor's entire state-license set on every account update.
+        // Previous state-license rows are deleted; only the newly submitted primary license remains.
+        const replacementLicenses = (hasCompletePrimaryLicense || hasCompleteEmployerLicense)
+          ? [{state_code:licenseState,license_number:licenseNumber,license_type:licenseType,expiration_date:licenseExpiry||null}]
+          : [];
+        const {error:licenseReplaceError}=await db.rpc("zelpx_replace_company_state_licenses",{
+          p_licenses:replacementLicenses
+        });
+        if(licenseReplaceError)throw licenseReplaceError;
+        if(replacementLicenses.length && $("profileCompanyLicenseReviewStatus")){
+          $("profileCompanyLicenseReviewStatus").textContent="Submitted — pending administrator verification. Licensed status appears only after approval.";
         }
 
         // Submit the complete account draft for administrator review.
