@@ -1389,7 +1389,7 @@
     results.textContent = "Loading contractors…";
     try {
       const { data: contractors, error } = await db.from("contractors")
-        .select("id,user_id,company_name,email,verification_status,service_state,has_license")
+        .select("id,user_id,company_name,email,verification_status,service_address,service_city,service_state,service_zip_code,has_license")
         .order("created_at", { ascending: false }).limit(1000);
       if (error) throw error;
       const userIds = [...new Set((contractors || []).map(c => c.user_id).filter(Boolean))];
@@ -1401,7 +1401,7 @@
       adminContractorDirectory = (contractors || []).map(c => {
         const p = profileMap.get(c.user_id) || {};
         return { ...c, full_name: p.full_name || "", phone: p.phone || "",
-          search_text: [p.full_name,c.company_name,c.email,p.phone,c.service_state].filter(Boolean).join(" ").toLocaleLowerCase() };
+          search_text: [p.full_name,c.company_name,c.email,p.phone,c.service_address,c.service_city,c.service_state,c.service_zip_code].filter(Boolean).join(" ").toLocaleLowerCase() };
       });
       filterAdminContractorDirectory();
     } catch (e) {
@@ -1431,7 +1431,7 @@
       heading.addEventListener("click",()=>{const open=!panel.classList.contains("hidden");panel.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));icon.textContent=open?"+":"−";});
       card.append(heading,panel);
       const line=(label,value)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b);if(label==="Phone"&&value){const a=document.createElement("a");a.textContent=String(value);a.href="tel:"+String(value).replace(/[^0-9+]/g,"");p.append(a);}else{p.append(document.createTextNode(value||"Not provided"));}panel.append(p);};
-      line("Contact name",c.full_name); line("Business name",c.company_name); line("Email",c.email); line("Phone",c.phone); line("State",c.service_state);
+      line("Contact name",c.full_name); line("Business name",c.company_name); line("Email",c.email); line("Phone",c.phone); line("Address", [c.service_address,c.service_city,c.service_state,c.service_zip_code].filter(Boolean).join(", ")); line("State",c.service_state);
       line("Current approval status",c.verification_status);
       line("Has current license",c.has_license===true?"Yes":c.has_license===false?"No":"Not specified");
       const status=document.createElement("p"); status.className="message"; status.textContent="Checking account access…"; panel.append(status);
@@ -2202,6 +2202,7 @@
           ["Company name", contractor.company_name || "Not provided"],
           ["Email", contractor.email || "Not provided"],
           ["Phone", contractor.phone || "Not provided"],
+          ["Address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
           ["Status", contractor.verification_status || "Unknown"],
           ["License", "No current license indicated"],
           ["Location", [contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
