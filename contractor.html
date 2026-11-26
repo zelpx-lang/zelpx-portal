@@ -820,12 +820,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           </div>
         </div>
       </div>
-      <section class="lead" id="contractorPhoneVerificationCard">
-        <h3>Verify phone number & update account</h3>
-        <p>Every company or profile update requires a new SMS confirmation. Your changes are saved only after you enter the latest code successfully. A confirmed account can add wallet credits and purchase leads.</p>
-        <div id="contractorPhoneVerificationStatus" class="message" role="status" aria-live="polite">Checking phone verification…</div>
+      <section class="lead" id="contractorAccountSaveCard">
+        <h3>Save company & account updates</h3>
+        <p>Save your company and profile details directly without an SMS phone verification step. Changes to licenses, insurance, and regulated work types may still require administrator review.</p>
         <div id="companySaveStatus" class="message hidden" role="status" aria-live="polite"></div>
-        <div class="actions"><button id="verifyContractorPhoneBtn" type="button" aria-busy="false">Verify phone number & update account</button></div>
+        <div class="actions"><button id="verifyContractorPhoneBtn" type="button" aria-busy="false">Save company & account updates</button></div>
       </section>
     </section>
 
@@ -1466,7 +1465,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     currentProfile={...(currentProfile||{}),...(profile||{})};
     $("profileFullName").value = profile?.full_name || "";
     $("profilePhone").value = profile?.phone || "";
-    renderContractorPhoneVerification();
     $("contractorAvatarPreview").src = profile?.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
     $("contractorAvatarPreview").dataset.currentUrl = profile?.avatar_url || "";
     $("removeContractorAvatarButton").hidden = !profile?.avatar_url;
@@ -1850,105 +1848,12 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     finally {setBusy(button,false);}
   }
 
-  async function ensureContractorPhoneVerified() {
-    const { data: sessionData, error: sessionError } = await db.auth.getSession();
-    if (sessionError) throw sessionError;
-    const token = sessionData.session?.access_token;
-    if (!token) throw new Error("Please sign in again.");
-    const { data: contractorAccount, error: contractorAccountError } = await db.from("contractors")
-      .select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number")
-      .eq("user_id", currentUser.id).maybeSingle();
-    if (contractorAccountError) throw contractorAccountError;
-    if (!contractorAccount) throw new Error("Contractor account required.");
-    const digits = value => String(value || "").replace(/\D/g, "");
-    // Every company/profile update must be confirmed with a fresh SMS code,
-    // even when this contractor's phone was verified during an earlier update.
-    currentContractor = { ...(currentContractor || {}), ...contractorAccount };
-
-    return await new Promise(resolve => {
-      const overlay = document.createElement("div");
-      overlay.style.cssText = "position:fixed;inset:0;z-index:100500;background:#24170f99;display:flex;align-items:center;justify-content:center;padding:18px";
-      const panel = document.createElement("section");
-      panel.style.cssText = "width:min(100%,420px);max-height:calc(100dvh - 36px);overflow-y:auto;background:#fffefa;border-radius:20px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005;box-sizing:border-box;font-family:inherit";
-panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;color:#30231e">Verify phone & update account</h2><p style="margin:12px 0 20px;color:#756b64;line-height:1.5">For every company or profile update, enter the SMS code sent to your contractor phone. Your changes will be saved only after the code is confirmed.</p><label for="zelpxContractorVerifyPhone" style="display:block;font-weight:700;color:#514840;margin:14px 0 6px">Mobile number</label><input id="zelpxContractorVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px"><button type="button" id="zelpxContractorSendCode" style="display:block;width:100%;padding:15px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Send SMS code for this update</button><label for="zelpxContractorVerifyCode" style="display:block;font-weight:700;color:#514840;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxContractorVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px;letter-spacing:2px"><p id="zelpxContractorVerifyMessage" role="status" style="min-height:22px;margin:8px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px"><button type="button" id="zelpxContractorCancel" style="min-height:54px;padding:13px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-size:16px;font-weight:700">Cancel</button><button type="button" id="zelpxContractorVerify" style="min-height:54px;padding:13px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Verify & save account</button></div>';
-      overlay.append(panel); document.body.append(overlay);
-      const phoneInput=panel.querySelector("#zelpxContractorVerifyPhone");
-      const codeInput=panel.querySelector("#zelpxContractorVerifyCode");
-      const msg=panel.querySelector("#zelpxContractorVerifyMessage");
-      phoneInput.value=contractorAccount.contractor_phone || "";
-      let sentPhone="";
-      const finish=value=>{overlay.remove();resolve(value);};
-      panel.querySelector("#zelpxContractorCancel").onclick=()=>finish(false);
-      panel.querySelector("#zelpxContractorSendCode").onclick=async()=>{
-        try {
-          const raw=phoneInput.value.trim(), d=digits(raw);
-          const phone=raw.startsWith("+") ? "+"+d : d.length===10 ? "+1"+d : d.length===11&&d.startsWith("1") ? "+"+d : "";
-          if(!phone || d.length<10 || d.length>15) throw new Error("Enter a valid mobile number, including area code.");
-          const response=await fetch("/api/customer-phone/send-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({phone,purpose:"contractor_account"})});
-          const result=await response.json().catch(()=>({}));
-          if(!response.ok) {
-            if (response.status === 409 || result.code === "PHONE_ALREADY_IN_USE") {
-              msg.style.cssText = "padding:12px 14px;border-radius:12px;background:#fff0ed;color:#a83224;font-weight:600";
-              msg.textContent = "This phone number already belongs to another ZELPX account. Do not create another account. Sign in to the existing account — the same account can open both Customer and Contractor dashboards.";
-              return;
-            }
-            throw new Error(result.error || "Could not send SMS code.");
-          }
-          msg.style.cssText = "padding:0;color:#756b64";
-          sentPhone=phone; phoneInput.value=phone; msg.textContent="SMS code sent to "+phone+".";
-        } catch(e){msg.style.cssText = "padding:12px 14px;border-radius:12px;background:#fff0ed;color:#a83224";msg.textContent=e.message || "Could not send SMS code.";}
-      };
-      panel.querySelector("#zelpxContractorVerify").onclick=async()=>{
-        try {
-          if(!sentPhone) throw new Error("Send an SMS code first.");
-          const code=codeInput.value.trim();
-          if(!/^\d{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
-          const response=await fetch("/api/customer-phone/verify-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({phone:sentPhone,code,purpose:"contractor_account"})});
-          const result=await response.json().catch(()=>({}));
-          if(!response.ok || !result.verified) throw new Error(result.error || "The code could not be verified.");
-          currentContractor={...(currentContractor||{}),contractor_phone:sentPhone,contractor_phone_verified_at:new Date().toISOString(),contractor_phone_verified_number:sentPhone};
-          finish(true);
-        } catch(e){msg.textContent=e.message || "Could not verify phone.";}
-      };
-      phoneInput.focus();
-    });
-  }
-
   function contractorPhoneIsVerified(profile=currentProfile) {
     const digits = value => String(value || "").replace(/\D/g, "");
     return !!(currentContractor?.contractor_phone_verified_at &&
       digits(currentContractor.contractor_phone).length >= 10 &&
       digits(currentContractor.contractor_phone) === digits(currentContractor.contractor_phone_verified_number) &&
       !!currentContractor?.id);
-  }
-  function renderContractorPhoneVerification() {
-    const status=$("contractorPhoneVerificationStatus"),button=$("verifyContractorPhoneBtn");
-    if(!status||!button)return;
-    if(contractorPhoneIsVerified()){
-      status.className="message success";
-      status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". You can add credits and purchase leads. A new SMS code is required for every company or profile update.";
-      button.textContent="Save company & account updates";button.disabled=false;
-    }else{
-      status.className="message error";
-      status.textContent="Phone not verified. Confirm your phone by SMS before saving company updates, adding wallet credits, or purchasing leads.";
-      button.textContent="Verify phone number & update account";button.disabled=false;
-    }
-  }
-  async function verifyContractorPhoneFromAccount(){
-    const button=$("verifyContractorPhoneBtn");
-    try{
-      const verified=await ensureContractorPhoneVerified();
-      if(!verified)return;
-      const {data,error}=await db.from("contractors").select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number").eq("user_id",currentUser.id).single();
-      if(error)throw error;
-      currentContractor={...(currentContractor||{}),...data};
-      renderContractorPhoneVerification();
-      await saveCompany(button);
-      renderContractorPhoneVerification();
-    }catch(e){
-      message("appMessage",e.message||"Could not verify your phone number or update your account.","error");
-      renderContractorPhoneVerification();
-    }
   }
   async function addCredits() {
     clearMessage("appMessage");
@@ -2833,7 +2738,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
 
   async function saveCompany(saveButton = $("verifyContractorPhoneBtn")) {
     const saveStatus = $("companySaveStatus");
-    const originalButtonText = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
+    const originalButtonText = "Save company & account updates";
     if (saveButton.disabled) return;
     saveButton.disabled = true;
     saveButton.textContent = "Saving…";
@@ -3009,7 +2914,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     } finally {
       saveButton.disabled = false;
       saveButton.setAttribute("aria-busy", "false");
-      if (!saved) saveButton.textContent = contractorPhoneIsVerified() ? "Save company & account updates" : "Verify phone number & update account";
+      if (!saved) saveButton.textContent = originalButtonText;
     }
   }
   // Look up US ZIP codes and fill the corresponding city/state. Fields remain editable for verification.
@@ -3784,7 +3689,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("profileServiceZip").addEventListener("change", () => lookupUsZip($("profileServiceZip"), $("profileServiceCity"), $("profileServiceState"), null));
     $("profileServiceZip").addEventListener("blur", () => lookupUsZip($("profileServiceZip"), $("profileServiceCity"), $("profileServiceState"), null));
     $("addCreditsBtn").addEventListener("click", addCredits);
-    $("verifyContractorPhoneBtn").addEventListener("click",verifyContractorPhoneFromAccount);
+    $("verifyContractorPhoneBtn").addEventListener("click",() => saveCompany($("verifyContractorPhoneBtn")));
     $("refreshBalanceBtn").addEventListener("click", async () => {
       try { await loadAccount(); message("appMessage", "Balance refreshed.", "success"); }
       catch (e) { message("appMessage", "Could not refresh balance: " + e.message, "error"); }
