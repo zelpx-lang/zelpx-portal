@@ -834,6 +834,25 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <div><label for="profileLicenseType">License type</label><input id="profileLicenseType"></div>
           <input id="profileCompanyLicenseFile" type="hidden" aria-hidden="true">
           <div><label for="profileCompanyLicenseExpiry">Expiration date (if applicable)</label><input id="profileCompanyLicenseExpiry" type="date"></div>
+        <div id="additionalLicenseStatesWrap" style="grid-column:1/-1;margin:8px 0 4px">
+          <div id="additionalLicenseStatesList" class="muted" style="font-size:13px;margin-bottom:8px"></div>
+          <button id="addLicenseStateBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">＋ Add another state</button>
+          <small class="muted" style="display:block;margin-top:6px">Add a separate license for every state where you want to perform licensed work. All listed state licenses are replaced with your latest information whenever you update your account.</small>
+        </div>
+        <div id="additionalLicenseStateModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="additionalLicenseModalTitle" style="position:fixed;inset:0;z-index:10000;background:rgba(20,18,15,.55);display:flex;align-items:center;justify-content:center;padding:18px">
+          <div style="width:min(100%,430px);background:#fffdfa;border:1px solid #e8e1d6;border-radius:18px;padding:20px;box-shadow:0 18px 60px rgba(0,0,0,.22)">
+            <h3 id="additionalLicenseModalTitle" style="margin:0 0 14px">Add another state license</h3>
+            <label for="additionalLicenseState">Issuing state</label><select id="additionalLicenseState"><option value="">Choose state</option></select>
+            <label for="additionalLicenseNumber" style="display:block;margin-top:12px">License number</label><input id="additionalLicenseNumber" autocomplete="off">
+            <label for="additionalLicenseType" style="display:block;margin-top:12px">License type</label><input id="additionalLicenseType" autocomplete="off">
+            <label for="additionalLicenseExpiry" style="display:block;margin-top:12px">Expiration date (if applicable)</label><input id="additionalLicenseExpiry" type="date">
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+              <button id="cancelAdditionalLicenseBtn" type="button" class="secondary">Cancel</button>
+              <button id="saveAdditionalLicenseBtn" type="button">Add state</button>
+            </div>
+            <div id="additionalLicenseModalMessage" class="message hidden" role="status"></div>
+          </div>
+        </div>
         <div id="profileBusinessInsuranceSection" style="grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:4px">
           <h3>Business insurance</h3>
           <p class="muted" style="margin:0 0 10px;font-size:13px">No document upload is required. Select whether you have a current insurance certificate.</p>
@@ -1394,6 +1413,73 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(metadataError)console.warn("Could not clear one-time signup profession metadata:",metadataError.message);
   }
 
+  let additionalStateLicenses = [];
+  async function renderAdditionalStateLicenses(){
+    const list=$("additionalLicenseStatesList"); if(!list)return;
+    list.replaceChildren();
+    const primary=String($("profileLicenseState")?.value||"").toUpperCase();
+    const items=additionalStateLicenses.filter(x=>!x.deleted_at&&String(x.state_code||"").toUpperCase()!==primary);
+    if(!items.length){list.textContent="No additional state licenses added.";return;}
+    for(const item of items){
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
+      const label=document.createElement("span");label.style.cssText="min-width:0;flex:1;line-height:1.45";
+      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review");
+      const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove";
+      remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
+      remove.addEventListener("click",()=>{additionalStateLicenses=additionalStateLicenses.filter(x=>String(x.state_code).toUpperCase()!==String(item.state_code).toUpperCase());renderAdditionalStateLicenses();});
+      row.append(label,remove);list.append(row);
+    }
+  }
+  async function loadAdditionalStateLicenses(pendingDraft,contractor){
+    if(!currentContractor)return;
+    const {data,error}=await db.from("contractor_state_licenses")
+      .select("state_code,license_number,license_type,review_status,document_path,expiration_date,deleted_at")
+      .eq("contractor_id",currentContractor.id).order("state_code");
+    if(error)throw error;
+    const map=new Map();
+    (data||[]).forEach(x=>map.set(String(x.state_code).toUpperCase(),{...x}));
+    if(contractor?.license_state_2&&contractor?.license_number_2&&contractor?.license_type_2){
+      map.set(String(contractor.license_state_2).toUpperCase(),{state_code:contractor.license_state_2,license_number:contractor.license_number_2,license_type:contractor.license_type_2,review_status:"pending",expiration_date:null});
+    }
+    (Array.isArray(pendingDraft?.additional_state_licenses)?pendingDraft.additional_state_licenses:[]).forEach(x=>{
+      if(x.state_code)map.set(String(x.state_code).toUpperCase(),{...x,review_status:"pending"});
+    });
+    additionalStateLicenses=[...map.values()];
+    const primary=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(contractor?.license_state||"").toUpperCase());
+    const expiry=$("profileCompanyLicenseExpiry");if(expiry)expiry.value=primary?.expiration_date||contractor?.license_expiration_date||"";
+    await renderAdditionalStateLicenses();
+  }
+  function fillAdditionalLicenseEditor(){
+    const state=$("additionalLicenseState").value;
+    const existing=additionalStateLicenses.find(x=>String(x.state_code||"").toUpperCase()===String(state||"").toUpperCase());
+    $("additionalLicenseNumber").value=existing?.license_number||"";
+    $("additionalLicenseType").value=existing?.license_type||"";
+    $("additionalLicenseExpiry").value=existing?.expiration_date||"";
+    $("additionalLicenseModalTitle").textContent=existing?"Edit state license":"Add another state license";
+    $("saveAdditionalLicenseBtn").textContent=existing?"Save changes":"Add state";
+  }
+  function openAdditionalLicenseModal(){
+    const select=$("additionalLicenseState"),source=$("profileLicenseState");
+    select.replaceChildren(new Option("Choose state",""));
+    [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
+    const primary=String(source.value||"").toUpperCase();
+    [...select.options].forEach(o=>{if(o.value&&String(o.value).toUpperCase()===primary)o.disabled=true;});
+    select.value="";$("additionalLicenseNumber").value="";$("additionalLicenseType").value="";$("additionalLicenseExpiry").value="";
+    $("additionalLicenseModalTitle").textContent="Add another state license";$("saveAdditionalLicenseBtn").textContent="Add state";
+    $("additionalLicenseModalMessage").className="message hidden";$("additionalLicenseStateModal").classList.remove("hidden");
+  }
+  $("additionalLicenseState").addEventListener("change",fillAdditionalLicenseEditor);
+  $("addLicenseStateBtn").addEventListener("click",openAdditionalLicenseModal);
+  $("cancelAdditionalLicenseBtn").addEventListener("click",()=>$("additionalLicenseStateModal").classList.add("hidden"));
+  $("saveAdditionalLicenseBtn").addEventListener("click",()=>{
+    const state_code=$("additionalLicenseState").value,license_number=$("additionalLicenseNumber").value.trim(),license_type=$("additionalLicenseType").value.trim(),expiration_date=$("additionalLicenseExpiry").value||null;
+    const msg=$("additionalLicenseModalMessage");
+    if(!state_code||!license_number||!license_type){msg.textContent="Enter the state, license number, and license type.";msg.className="message error";return;}
+    if(String(state_code).toUpperCase()===String($("profileLicenseState").value||"").toUpperCase()){msg.textContent="Edit the primary state license in the main fields.";msg.className="message error";return;}
+    additionalStateLicenses=[...additionalStateLicenses.filter(x=>String(x.state_code||"").toUpperCase()!==String(state_code).toUpperCase()),{state_code,license_number,license_type,expiration_date,review_status:"pending"}];
+    renderAdditionalStateLicenses();$("additionalLicenseStateModal").classList.add("hidden");
+  });
   async function loadAccount(preloadedProfile = null) {
     // The role/profile has already been checked on the OAuth return path.
     // Avoid a second profile round trip there; regular refreshes still fetch it.
@@ -1468,6 +1554,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const label=review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified";
       companyLicenseStatus.textContent="Company license review status: "+label+(pendingCompanyChanges?" · You have changes awaiting administrator review.":"");
     }
+    await loadAdditionalStateLicenses(draft,contractor);
     if(companyLicenseStatus){
       const review=contractor?.license_review_status||"not submitted";
       companyLicenseStatus.textContent="License review status: "+(review==="verified"?"Verified":review==="rejected"?"Rejected":"Pending review / not verified");
@@ -2866,9 +2953,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         };
         // Replace the contractor's entire state-license set on every account update.
         // Previous state-license rows are deleted; only the newly submitted primary license remains.
-        const replacementLicenses = (hasCompletePrimaryLicense || hasCompleteEmployerLicense)
+        const primaryLicense = (hasCompletePrimaryLicense || hasCompleteEmployerLicense)
           ? [{state_code:licenseState,license_number:licenseNumber,license_type:licenseType,expiration_date:licenseExpiry||null}]
           : [];
+        const replacementLicenses = [...primaryLicense,...additionalStateLicenses.filter(x=>!x.deleted_at
+          &&String(x.state_code||"").toUpperCase()!==String(licenseState||"").toUpperCase())
+          .map(x=>({state_code:x.state_code,license_number:x.license_number,license_type:x.license_type,expiration_date:x.expiration_date||null}))];
         const {error:licenseReplaceError}=await db.rpc("zelpx_replace_company_state_licenses",{
           p_licenses:replacementLicenses
         });
