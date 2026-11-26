@@ -1921,7 +1921,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const phoneInput=panel.querySelector("#zelpxContractorVerifyPhone");
       const codeInput=panel.querySelector("#zelpxContractorVerifyCode");
       const msg=panel.querySelector("#zelpxContractorVerifyMessage");
-      phoneInput.value=contractorAccount.contractor_phone || "";
+      phoneInput.value=contractorAccount.contractor_phone || $("profilePhone")?.value?.trim() || currentProfile?.phone || "";
       let sentPhone="";
       const finish=value=>{overlay.remove();resolve(value);};
       panel.querySelector("#zelpxContractorCancel").onclick=()=>finish(false);
