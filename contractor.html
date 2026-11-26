@@ -3390,7 +3390,8 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           card.append(h);
           const meta=document.createElement("p");meta.className="muted";meta.textContent="Submitted "+new Date(r.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"});card.append(meta);
           const detail=document.createElement("section");detail.style.cssText="background:#fffaf5;border:1px solid #f0dfce;border-radius:12px;padding:12px;margin:10px 0";
-          const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(value)));detail.append(p);};
+          const formatUSDate=value=>{const match=typeof value==="string"?value.match(/^(\d{4})-(\d{2})-(\d{2})$/):null;return match?match[2]+"/"+match[3]+"/"+match[1]:value;};
+           const addDetail=(label,value)=>{if(value===undefined||value===null||value==="")return;const p=document.createElement("p"),b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(formatUSDate(value))));detail.append(p);};
           if(r.request_type==="profession_qualifications"){
             addDetail("State",changes.state_code);addDetail("Work arrangement",changes.work_role);
             (changes.items||[]).forEach((item,index)=>{
@@ -3411,7 +3412,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
                   const item=document.createElement("div");item.style.cssText="padding:10px;border:1px solid #f0dfce;border-radius:10px;background:#fff";
                   const title=document.createElement("strong");title.textContent="License "+(index+1)+" — "+String(license.state_code||"State not provided").toUpperCase();item.append(title);
                   const row=(label,val)=>{if(val===undefined||val===null||String(val).trim()===""||String(val).trim().toLowerCase()==="null")return;const p=document.createElement("p");p.style.margin="6px 0 0";const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(val)));item.append(p);};
-                  row("License type",license.license_type);row("License number",license.license_number);row("Expiration",license.expiration_date);
+                  row("License type",license.license_type);row("License number",license.license_number);row("Expiration",formatUSDate(license.expiration_date));
                   list.append(item);
                 });
                 detail.append(list);return;
