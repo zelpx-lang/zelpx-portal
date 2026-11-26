@@ -183,7 +183,11 @@ begin
   if p_type = 'company_profile' then
     -- Service radius remains a separate preference. Every account/profile
     -- submission creates its own admin-review request; earlier requests are retained.
-    v_changes := v_changes - 'service_radius_miles' - 'additional_state_licenses' - 'has_insurance_certificate';
+    v_changes := v_changes - 'additional_state_licenses' - 'has_insurance_certificate';
+    if v_changes ? 'service_radius_miles'
+       and (v_changes->>'service_radius_miles')::integer not in (10,25,50,100,150,250) then
+      raise exception 'Choose a valid service radius';
+    end if;
     if v_changes ? 'company_name' and nullif(btrim(v_changes->>'company_name'), '') is null then
       raise exception 'Company name is required and cannot be cleared';
     end if;
@@ -192,7 +196,7 @@ begin
       where key not in (
         'full_name','phone','avatar_url','company_name','email',
         'service_address','service_city','service_state','service_zip_code',
-        'service_latitude','service_longitude','lead_email_notifications',
+        'service_latitude','service_longitude','service_radius_miles','lead_email_notifications',
         'has_license','license_number','license_state','license_type',
         'license_expiration_date','license_number_2','license_state_2','license_type_2',
         'insurance_agency_name','insurance_agent_phone','insurance_policy_number',
@@ -380,6 +384,8 @@ begin
                                then upper(nullif(r.requested_changes->>'service_state','')) else service_state end,
           service_zip_code = case when r.requested_changes ? 'service_zip_code'
                                   then nullif(r.requested_changes->>'service_zip_code','') else service_zip_code end,
+          service_radius_miles = case when r.requested_changes ? 'service_radius_miles'
+                                       then (r.requested_changes->>'service_radius_miles')::integer else service_radius_miles end,
           service_latitude = case when r.requested_changes ? 'service_latitude'
                                   then nullif(r.requested_changes->>'service_latitude','null')::double precision else service_latitude end,
           service_longitude = case when r.requested_changes ? 'service_longitude'
