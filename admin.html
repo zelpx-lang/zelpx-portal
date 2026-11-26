@@ -2203,11 +2203,17 @@
         const title = document.createElement("strong");
         title.textContent = contractor.company_name || "Contractor company";
         title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
+        const accessIsAllowed = contractor.verification_status === "verified";
+        const accessBadge = document.createElement("span");
+        accessBadge.textContent = accessIsAllowed ? "🔓 Unblocked" : "🔒 Blocked";
+        accessBadge.setAttribute("role", "status");
+        accessBadge.setAttribute("aria-label", accessIsAllowed ? "Contractor lead access is unblocked" : "Contractor lead access is blocked");
+        accessBadge.style.cssText = "flex:0 0 auto;margin-left:auto;padding:5px 9px;border-radius:999px;background:" + (accessIsAllowed ? "#e3f5ec" : "#fdebe8") + ";color:" + (accessIsAllowed ? "#147d55" : "#b42318") + ";font-size:12px;font-weight:800;white-space:nowrap;";
         const expandIcon = document.createElement("span");
         expandIcon.textContent = "+";
         expandIcon.setAttribute("aria-hidden", "true");
         expandIcon.style.cssText = "flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
-        heading.append(title, expandIcon);
+        heading.append(title, accessBadge, expandIcon);
         const panel = document.createElement("div");
         panel.className = "unlicensed-contractor-details hidden";
         panel.style.cssText = "padding-top:10px;";
