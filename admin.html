@@ -1391,7 +1391,7 @@
       const { data: contractors, error } = await db.from("contractors").select("*").order("created_at", { ascending: false }).limit(1000);
       if (error) throw error;
       const ids=(contractors||[]).map(x=>x.id).filter(Boolean), userIds=[...new Set((contractors||[]).map(x=>x.user_id).filter(Boolean))];
-      if(ids.length){const syncResults=await Promise.all(ids.map(id=>db.rpc("zelpx_admin_sync_contractor_license_status",{p_contractor_id:id})));const syncError=syncResults.find(x=>x.error)?.error;if(syncError)throw syncError;}
+      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
       const [profileResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
         userIds.length?db.from("profiles").select("*").in("id",userIds):Promise.resolve({data:[],error:null}),
         ids.length?db.from("contractor_state_licenses").select("*").in("contractor_id",ids):Promise.resolve({data:[],error:null}),
@@ -1496,7 +1496,7 @@
         return;
       }
       const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
-      if(contractorIds.length){const syncResults=await Promise.all(contractorIds.map(id=>db.rpc("zelpx_admin_sync_contractor_license_status",{p_contractor_id:id})));const syncError=syncResults.find(x=>x.error)?.error;if(syncError)throw syncError;}
+      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
       const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
         contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
         contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
@@ -2306,7 +2306,7 @@
         return;
       }
       const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
-      if(contractorIds.length){const syncResults=await Promise.all(contractorIds.map(id=>db.rpc("zelpx_admin_sync_contractor_license_status",{p_contractor_id:id})));const syncError=syncResults.find(x=>x.error)?.error;if(syncError)throw syncError;}
+      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
       const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
         contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
         contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
