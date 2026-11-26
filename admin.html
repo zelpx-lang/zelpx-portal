@@ -713,6 +713,8 @@
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const $ = (id) => document.getElementById(id);
+  const STATE_NAMES = {AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"};
+  const stateName = (code) => STATE_NAMES[String(code || "").trim().toUpperCase()] || String(code || "Not provided");
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
@@ -1403,9 +1405,9 @@
         const row=document.createElement("div");
         row.style.cssText="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px;margin:8px 0;border:1px solid #e8e1d6;border-radius:10px;background:#fff;";
         const info=document.createElement("div");info.style.cssText="flex:1 1 180px;min-width:0;line-height:1.5";
-        const stateName=document.createElement("strong");stateName.textContent=(x.state_code||"State")+" license";
+        const stateLabel=document.createElement("strong");stateLabel.textContent=stateName(x.state_code)+" license";
         const detail=document.createElement("div");detail.textContent=[x.license_type,x.license_number,dateUS("expiration_date",x.expiration_date),x.review_status==="verified"&&(!x.expiration_date||x.expiration_date>=new Date().toISOString().slice(0,10))?"Active":x.review_status||"Pending"].filter(Boolean).join(" · ");
-        info.append(stateName,detail);row.append(info);
+        info.append(stateLabel,detail);row.append(info);
         const normalizedLicenseStatus=String(x.review_status||"pending").trim().toLowerCase();
         if(!["verified","approved","rejected","declined"].includes(normalizedLicenseStatus)){
           const makeReviewButton=(decision,label,color)=>{
@@ -1821,7 +1823,7 @@
             licenseInfo.style.cssText="flex:1 1 190px;min-width:0;overflow-wrap:anywhere;line-height:1.45;";
             const normalized=String(license.review_status||"pending").trim().toLowerCase();
             const statusLabel=normalized==="verified"?"Verified":normalized==="approved"?"Verified":normalized==="rejected"||normalized==="declined"?"Declined":"Pending";
-            licenseInfo.textContent=[license.state_code,license.license_type,license.license_number,statusLabel].filter(Boolean).join(" · ");
+            licenseInfo.textContent=[stateName(license.state_code),license.license_type,license.license_number,statusLabel].filter(Boolean).join(" · ");
             licenseRow.append(licenseInfo);
             if(!["verified","approved","rejected","declined"].includes(normalized)){
               const addReviewButton=(decision,label,color)=>{
