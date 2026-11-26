@@ -1744,109 +1744,18 @@
       contractors.forEach(contractor => {
         const full=fullById.get(contractor.id)||contractor;
         const profile=profileById.get(full.user_id)||{};
-        const card = document.createElement("article");
-        card.className = "lead";
-        const heading = document.createElement("button");
-        heading.type = "button";
-        heading.className = "unlicensed-contractor-toggle secondary";
-        heading.setAttribute("aria-expanded", "false");
-        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
-        const title = document.createElement("strong");
-        title.textContent = full.company_name || profile.full_name || "Contractor company";
-        title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
-        const accessIsAllowed = full.verification_status === "verified";
-        const accessBadge = document.createElement("span");
-        accessBadge.textContent = accessIsAllowed ? "🔓 Unblocked" : "🔒 Blocked";
-        accessBadge.setAttribute("role", "status");
-        accessBadge.style.cssText = "flex:0 0 auto;margin-left:auto;padding:5px 9px;border-radius:999px;background:" + (accessIsAllowed ? "#e3f5ec" : "#fdebe8") + ";color:" + (accessIsAllowed ? "#147d55" : "#b42318") + ";font-size:12px;font-weight:800;white-space:nowrap;";
-        const expandIcon = document.createElement("span");
-        expandIcon.textContent = "+";
-        expandIcon.setAttribute("aria-hidden", "true");
-        expandIcon.style.cssText = "flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
-        heading.append(title, accessBadge, expandIcon);
-        const panel = document.createElement("div");
-        panel.className = "unlicensed-contractor-details hidden";
-        panel.style.cssText = "padding-top:10px;";
-        heading.addEventListener("click", () => {
-          const willOpen = panel.classList.contains("hidden");
-          panel.classList.toggle("hidden", !willOpen);
-          heading.setAttribute("aria-expanded", String(willOpen));
-          expandIcon.textContent = willOpen ? "−" : "+";
-        });
-        card.append(heading);
-        const identity=addSection(panel,"Account and contact information");
-        addInfo(identity,"Company name",full.company_name);addInfo(identity,"Full name",profile.full_name);addInfo(identity,"Email",full.email);
-        const phone=full.contractor_phone||profile.phone;
-        if(phone){const p=document.createElement("p"),strong=document.createElement("strong"),link=document.createElement("a");strong.textContent="Phone: ";link.textContent=phone;link.href="tel:"+String(phone).replace(/[^0-9+]/g,"");p.append(strong,link);identity.append(p);}
-        addInfo(identity,"Phone verification",full.contractor_phone_verified_at||profile.phone_verified_at?"Verified":((full.contractor_phone||profile.phone)?"Not verified":"Not verified — no phone number on file"));
-        addInfo(identity,"Verified phone",full.contractor_phone_verified_number||profile.phone_verified_number);
-        addInfo(identity,"Address",[full.service_address,full.service_city,full.service_state,full.service_zip_code].filter(Boolean).join(", "));
-        addInfo(identity,"Service radius (miles)",full.service_radius_miles);addInfo(identity,"Account status",full.verification_status);addInfo(identity,"Registered",formatValue("created_at",full.created_at));
-        const licenseSection=addSection(panel,"License information");
-        addInfo(licenseSection,"Has license",formatValue("has_license",full.has_license));addInfo(licenseSection,"Primary license type",full.license_type);addInfo(licenseSection,"Primary license state",full.license_state);addInfo(licenseSection,"Primary license number",full.license_number);addInfo(licenseSection,"Primary license expiration",formatValue("license_expiration_date",full.license_expiration_date));const hasActiveVerifiedStateLicense=(licensesById.get(full.id)||[]).some(x=>x.review_status==="verified"&&(!x.expiration_date||x.expiration_date>=new Date().toISOString().slice(0,10)));const licenseStatusLabel=hasActiveVerifiedStateLicense||["verified","approved"].includes(full.license_review_status)?"Active":full.has_license===false&&!(licensesById.get(full.id)||[]).length?"Not applicable":({pending:"Pending review",rejected:"Rejected",not_applicable:"Not applicable"}[full.license_review_status]||full.license_review_status||"Not submitted");addInfo(licenseSection,"License review status",licenseStatusLabel);addInfo(licenseSection,"License review notes",full.license_review_notes);addInfo(licenseSection,"Second license type",full.license_type_2);addInfo(licenseSection,"Second license state",full.license_state_2);addInfo(licenseSection,"Second license number",full.license_number_2);
-        (licensesById.get(full.id)||[]).forEach((license,index)=>{const sub=addSection(licenseSection,"State license "+(index+1)+" — "+(license.state_code||""));addInfo(sub,"License type",license.license_type);addInfo(sub,"License number",license.license_number);addInfo(sub,"Expiration",formatValue("expiration_date",license.expiration_date));addInfo(sub,"Review status",license.review_status==="verified"&&(!license.expiration_date||license.expiration_date>=new Date().toISOString().slice(0,10))?"Active":license.review_status);});
-        const insuranceSection=addSection(panel,"Insurance information");
-        addInfo(insuranceSection,"Insurance agency",full.insurance_agency_name);addInfo(insuranceSection,"Insurance agent phone",full.insurance_agent_phone);addInfo(insuranceSection,"Policy number",full.insurance_policy_number);addInfo(insuranceSection,"Insurance expiration",formatValue("insurance_expiration_date",full.insurance_expiration_date));addInfo(insuranceSection,"Insurance review status",full.insurance_review_status);
-        const servicesSection=addSection(panel,"Selected services and professions");
-        const selectedCategories=categoriesById.get(full.id)||[];addInfo(servicesSection,"Selected service categories",selectedCategories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");
-        (professionsById.get(full.id)||[]).forEach((item,index)=>{const sub=addSection(servicesSection,"Profession "+(index+1)+" — "+(professionNames.get(item.profession_id)||""));addInfo(sub,"State",item.state_code);addInfo(sub,"Work arrangement",item.work_role);addInfo(sub,"License required",formatValue("license_required_at_registration",item.license_required_at_registration));addInfo(sub,"License type",item.license_type);addInfo(sub,"License number",item.license_number);addInfo(sub,"Expiration",formatValue("license_expiration_date",item.license_expiration_date));addInfo(sub,"Verification status",item.verification_status);});
-        const updatesSection=addSection(panel,"Account updates and review history");
-        const requests=changesById.get(full.id)||[];if(!requests.length)addInfo(updatesSection,"Updates","No submitted change requests recorded.");
-        requests.forEach((request,index)=>{const sub=addSection(updatesSection,"Update "+(index+1)+" — "+prettyLabel(request.request_type)+" · "+String(request.status||"").toUpperCase());addInfo(sub,"Submitted",formatValue("created_at",request.created_at));addInfo(sub,"Reviewed",formatValue("reviewed_at",request.reviewed_at));addInfo(sub,"Administrator note",request.admin_note);Object.entries(request.requested_changes||{}).forEach(([key,value])=>{if(value===null||value===undefined||value==="")return;if(key==="additional_state_licenses"&&Array.isArray(value)){value.forEach((license,i)=>addInfo(sub,"Additional license "+(i+1),[license.state_code,license.license_type,license.license_number].filter(Boolean).join(" · ")));return;}addInfo(sub,prettyLabel(key),typeof value==="object"?JSON.stringify(value):formatValue(key,value));});});
-        const actions = document.createElement("div");
-        actions.className = "actions";
-        const allowed = contractor.verification_status === "verified";
-        const accessStatus = document.createElement("p");
-        accessStatus.className = allowed ? "message success" : "message error";
-        accessStatus.textContent = allowed ? "Lead access: ALLOWED" : "Lead access: BLOCKED";
-        panel.append(accessStatus);
-        const toggle = document.createElement("button");
-        toggle.type = "button";
-        toggle.className = allowed ? "danger" : "";
-        toggle.textContent = allowed ? "Block account access" : "Allow account access";
-        toggle.addEventListener("click", async () => {
-          const company = contractor.company_name || contractor.email || "this contractor";
-          const action = allowed ? "block" : "allow";
-          const prompt = allowed
-            ? "Block this contractor from viewing and purchasing leads? Their login, account, and transaction history will remain."
-            : "Allow this contractor to view and purchase eligible leads? Their account must still meet location and other lead requirements.";
-          if (!window.confirm(prompt + "\\n\\n" + company)) return;
-          toggle.disabled = true;
-          toggle.textContent = allowed ? "Blocking…" : "Allowing…";
-          try {
-            const { data, error } = await db.functions.invoke("admin-remove-unlicensed-contractor", {
-              body: { contractor_id: contractor.id, action }
-            });
-            if (error) throw error;
-            if (data?.error) throw new Error(data.error);
-            message("unlicensedContractorsMessage",
-              (action === "allow" ? "Lead access allowed for " : "Lead access blocked for ") + company + ". Login and history unchanged.", "success");
-            await loadUnlicensedContractors();
-          } catch (e) {
-            message("unlicensedContractorsMessage", "Could not change lead access: " + (e.message || "Unknown error"), "error");
-            toggle.disabled = false;
-            toggle.textContent = allowed ? "Block account access" : "Allow account access";
-          }
-        });
-        actions.append(toggle);
-        panel.append(actions);
-
-        const closeRow = document.createElement("div");
-        closeRow.style.cssText = "display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);";
-        const closeButton = document.createElement("button");
-        closeButton.type = "button";
-        closeButton.className = "secondary";
-        closeButton.textContent = "Close";
-        closeButton.style.cssText = "min-height:40px;padding:8px 22px;box-shadow:none;";
-        closeButton.addEventListener("click", () => {
-          panel.classList.add("hidden");
-          heading.setAttribute("aria-expanded", "false");
-          expandIcon.textContent = "+";
-        });
-        closeRow.append(closeButton);
-        panel.append(closeRow);
-        card.append(panel);
+        const allowed=full.verification_status==="verified";
+        const card=document.createElement("article");
+        card.className="lead";
+        card.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;margin:10px 0;border:1px solid #ccebdc;border-radius:14px;background:#e3f5ec;color:#147d55;font-weight:700;overflow-wrap:anywhere;";
+        const name=document.createElement("span");
+        name.textContent=full.company_name||profile.full_name||"Contractor company";
+        const status=document.createElement("span");
+        status.textContent=allowed?"Unblocked":"Blocked";
+        status.style.cssText="flex:0 0 auto;font-weight:700;";
+        card.append(name,status);
         list.append(card);
+      });
       });
     } catch (e) {
       list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
