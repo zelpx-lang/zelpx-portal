@@ -3008,13 +3008,15 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           ...changes,
           avatar_url: currentProfile?.avatar_url || null
         };
-        delete profileChanges.service_radius_miles; // saved separately as a self-service preference
         delete profileChanges.has_insurance_certificate; // legacy display-only field; no document upload is used
         const {error:requestError}=await db.rpc("submit_contractor_change_request",{
           p_type:"company_profile",
           p_changes:profileChanges
         });
         if(requestError) throw requestError;
+        // Refresh the visible request history immediately so the contractor sees
+        // this exact submission as Pending without waiting for a page reload.
+        await loadContractorChangeRequests();
 
         // Submit selected professions from the same Save company details action.
         if (selectedProfessionIds.size) {
