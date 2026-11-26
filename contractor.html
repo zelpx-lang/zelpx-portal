@@ -945,6 +945,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   const SUPABASE_URL = "https://zsrnjkndgbchfxibxiyd.supabase.co";
   const SUPABASE_KEY = "sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
   const $ = (id) => document.getElementById(id);
+  const STATE_NAMES = {AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"};
+  const stateName = (code) => STATE_NAMES[String(code || "").trim().toUpperCase()] || String(code || "Not provided");
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
@@ -3247,10 +3249,10 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const line=(el,k,v)=>{const p=document.createElement("p"),b=document.createElement("strong");b.textContent=k+": ";p.append(b,document.createTextNode(v==null||v===""?"Not provided":String(v)));el.append(p);};
       for(const c of cs){
         const card=document.createElement("article");card.className="lead";const prof=profiles.get(c.user_id)||{};card.dataset.searchText=[c.company_name,prof.full_name,c.email,prof.phone,c.service_state].filter(Boolean).join(" ").toLocaleLowerCase();const h=document.createElement("h3");h.textContent=c.company_name||prof.full_name||"Contractor";card.append(h);
-        line(card,"Contact",c.email||prof.phone);line(card,"Account status",c.verification_status);line(card,"State",c.service_state);
+        line(card,"Contact",c.email||prof.phone);line(card,"Account status",c.verification_status);line(card,"State",stateName(c.service_state));
         line(card,"Selected service categories",(cr.data||[]).filter(x=>x.contractor_id===c.id).map(x=>x.service_categories?.name).filter(Boolean).join(", "));
         const lic=document.createElement("section");lic.style.cssText="padding:12px;background:#fffaf5;border-radius:12px;margin:10px 0";const lh=document.createElement("h4");lh.textContent="Company license";lic.append(lh);
-        line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",c.license_state);line(lic,"Type",c.license_type);line(lic,"Second license number",c.license_number_2);line(lic,"Second license state",c.license_state_2);line(lic,"Second license type",c.license_type_2);line(lic,"Document",c.license_document_path?"Uploaded":"Missing");line(lic,"Review status",c.license_review_status);if(c.license_review_notes)line(lic,"Admin review notes",c.license_review_notes);if(c.license_reviewed_at)line(lic,"Reviewed at",new Date(c.license_reviewed_at).toLocaleString());
+        line(lic,"Has license",c.has_license?"Yes":"No");line(lic,"Number",c.license_number);line(lic,"License state",stateName(c.license_state));line(lic,"Type",c.license_type);line(lic,"Second license number",c.license_number_2);line(lic,"Second license state",stateName(c.license_state_2));line(lic,"Second license type",c.license_type_2);line(lic,"Document",c.license_document_path?"Uploaded":"Missing");line(lic,"Review status",c.license_review_status);if(c.license_review_notes)line(lic,"Admin review notes",c.license_review_notes);if(c.license_reviewed_at)line(lic,"Reviewed at",new Date(c.license_reviewed_at).toLocaleString());
         if(c.has_license){
           const legacyNotice=document.createElement("p");
           legacyNotice.className="muted";
@@ -3264,28 +3266,37 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           const stateHeading=document.createElement("h4");stateHeading.textContent="Company licenses by state";stateSection.append(stateHeading);
           for(const license of stateLicenses){
             const item=document.createElement("div");item.style.cssText="padding:10px 0;border-top:1px solid var(--line)";
-            line(item,"State",license.state_code);line(item,"License",license.license_number+" · "+license.license_type);
+            line(item,"State",stateName(license.state_code));line(item,"License",license.license_number+" · "+license.license_type);
             line(item,"Document",license.document_path?"Uploaded":"Missing");
             line(item,"Expiration",license.expiration_date||"Not provided");line(item,"Review status",license.review_status);
             if(license.review_notes)line(item,"Review notes",license.review_notes);
             if(license.document_path){
-              const open=document.createElement("button");open.type="button";open.className="secondary";open.textContent="Open "+license.state_code+" license document";
+              const open=document.createElement("button");open.type="button";open.className="secondary";open.textContent="Open "+stateName(license.state_code)+" license document";
               open.onclick=async()=>{open.disabled=true;try{const {data,error}=await db.storage.from("contractor-licenses").createSignedUrl(license.document_path,300);if(error)throw error;if(!data?.signedUrl)throw new Error("Could not create secure document link.");window.open(data.signedUrl,"_blank","noopener,noreferrer");}catch(e){message("adminContractorReviewMessage","Could not open company license: "+e.message,"error");}finally{open.disabled=false;}};
               item.append(open);
             }
-            if(license.review_status!=="verified"){
-              const note=document.createElement("textarea");note.rows=2;note.placeholder="Required: state registry lookup, license status and expiration checked…";item.append(note);
-              const verify=document.createElement("button");verify.textContent="Verify "+license.state_code+" license";
-              verify.disabled=!license.document_path;
-              verify.onclick=async()=>{
-                if(!note.value.trim())return message("adminContractorReviewMessage","Enter notes for this state license.","error");
-                if(!window.confirm("Confirm this document and license have been checked for "+license.state_code+"?"))return;
-                verify.disabled=true;
-                const {error}=await db.rpc("zelpx_admin_verify_company_state_license",{p_contractor_id:c.id,p_state_code:license.state_code,p_admin_notes:note.value.trim()});
-                if(error){verify.disabled=false;return message("adminContractorReviewMessage",error.message,"error");}
-                message("adminContractorReviewMessage",license.state_code+" company license verified.","success");loadAdminContractorReviews();
+            if(!["verified","approved","rejected","declined"].includes(String(license.review_status||"pending").toLowerCase())){
+              const note=document.createElement("textarea");note.rows=2;note.placeholder="Optional admin note after checking the license number in the state registry…";item.append(note);
+              const actions=document.createElement("div");actions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;";
+              const decide=async(decision,button)=>{
+                if(button.disabled)return;
+                if(!window.confirm((decision==="approved"?"Approve and verify ":"Decline ")+stateName(license.state_code)+" company license?"))return;
+                const buttons=[...actions.querySelectorAll("button")];buttons.forEach(b=>b.disabled=true);
+                button.textContent=decision==="approved"?"Approving…":"Declining…";
+                try{
+                  const {error}=await db.rpc("zelpx_admin_review_company_state_license",{p_contractor_id:c.id,p_state_code:license.state_code,p_decision:decision,p_admin_notes:note.value.trim()||null});
+                  if(error)throw error;
+                  message("adminContractorReviewMessage",stateName(license.state_code)+" license "+(decision==="approved"?"approved and verified.":"declined."),"success");
+                  await loadAdminContractorReviews();
+                }catch(e){
+                  message("adminContractorReviewMessage","Could not update "+stateName(license.state_code)+" license: "+(e.message||"Unknown error"),"error");
+                  buttons.forEach(b=>b.disabled=false);
+                  button.textContent=decision==="approved"?"Approve & Verify":"Decline";
+                }
               };
-              item.append(verify);
+              const approve=document.createElement("button");approve.type="button";approve.className="secondary";approve.textContent="Approve & Verify";approve.onclick=()=>decide("approved",approve);
+              const decline=document.createElement("button");decline.type="button";decline.className="secondary";decline.textContent="Decline";decline.onclick=()=>decide("declined",decline);
+              actions.append(approve,decline);item.append(actions);
             }
             stateSection.append(item);
           }
