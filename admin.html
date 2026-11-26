@@ -1756,7 +1756,6 @@
         card.append(name,status);
         list.append(card);
       });
-      });
     } catch (e) {
       list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
       message("unlicensedContractorsMessage", "Could not load unlicensed contractor records. " + (e.message || ""), "error");
