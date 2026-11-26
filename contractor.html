@@ -1433,13 +1433,10 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       label.style.cssText="min-width:0;flex:1;line-height:1.45";
       label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Verified":item.review_status==="rejected"?"Rejected":"Pending review");
       row.append(label);
-      const isPrimary=String(item.state_code||"").toUpperCase()===String($("profileLicenseState")?.value||"").toUpperCase();
-      if(!isPrimary){
-        const remove=document.createElement("button");remove.type="button";remove.className="secondary";
-        remove.textContent="Delete";remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
-        remove.addEventListener("click",()=>deleteAdditionalStateLicense(item.state_code,remove));
-        row.append(remove);
-      }
+      const remove=document.createElement("button");remove.type="button";remove.className="secondary";
+      remove.textContent="Delete";remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
+      remove.addEventListener("click",()=>deleteAdditionalStateLicense(item.state_code,remove));
+      row.append(remove);
       list.append(row);
     }
     if(removedList){
