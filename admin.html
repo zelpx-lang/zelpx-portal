@@ -2200,6 +2200,7 @@
         card.append(title);
         const details = [
           ["Email", contractor.email || "Not provided"],
+          ["Phone", contractor.phone || "Not provided"],
           ["Status", contractor.verification_status || "Unknown"],
           ["License", "No current license indicated"],
           ["Location", [contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
@@ -2209,7 +2210,15 @@
           const p = document.createElement("p");
           const strong = document.createElement("strong");
           strong.textContent = label + ": ";
-          p.append(strong, document.createTextNode(String(value)));
+          p.append(strong);
+          if (label === "Phone" && value && value !== "Not provided") {
+            const phoneLink = document.createElement("a");
+            phoneLink.textContent = String(value);
+            phoneLink.href = "tel:" + String(value).replace(/[^0-9+]/g, "");
+            p.append(phoneLink);
+          } else {
+            p.append(document.createTextNode(String(value)));
+          }
           card.append(p);
         });
         const actions = document.createElement("div");
