@@ -3398,7 +3398,7 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
                 value.forEach((license,index)=>{
                   if(!license||typeof license!=="object")return;
                   const item=document.createElement("div");item.style.cssText="padding:10px;border:1px solid #f0dfce;border-radius:10px;background:#fff";
-                  const title=document.createElement("strong");title.textContent="License "+(index+1)+" — "+String(license.state_code||"State not provided").toUpperCase();item.append(title);
+                  const title=document.createElement("strong");title.textContent="License "+(index+1)+" — "+stateName(license.state_code);item.append(title);
                   const row=(label,val)=>{if(val===undefined||val===null||String(val).trim()===""||String(val).trim().toLowerCase()==="null")return;const p=document.createElement("p");p.style.margin="6px 0 0";const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(val)));item.append(p);};
                   row("License type",license.license_type);row("License number",license.license_number);row("Expiration",formatUSDate(license.expiration_date));
                   list.append(item);
