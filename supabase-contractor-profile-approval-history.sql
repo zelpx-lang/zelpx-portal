@@ -167,38 +167,36 @@ as $function$
 declare
   v_contractor_id uuid;
   v_id uuid;
+  v_state text;
   v_changes jsonb;
 begin
   if auth.uid() is null then raise exception 'Authentication required'; end if;
-
-  select id into v_contractor_id
-  from public.contractors
-  where user_id = auth.uid();
-
+  select id into v_contractor_id from public.contractors
+  where user_id = auth.uid() for update;
   if v_contractor_id is null then raise exception 'Contractor profile not found'; end if;
   if p_type not in ('company_profile','service_categories','profession_qualifications') then
     raise exception 'Unsupported change request type';
   end if;
-  if jsonb_typeof(p_changes) <> 'object' then raise exception 'Invalid change payload'; end if;
+  if jsonb_typeof(p_changes) is distinct from 'object' then raise exception 'Invalid change payload'; end if;
 
   v_changes := p_changes;
   if p_type = 'company_profile' then
-    -- Service radius is the only self-service field and is never accepted here.
-    v_changes := v_changes - 'service_radius_miles';
-    -- contractors.company_name is NOT NULL; reject an empty replacement before
-    -- it reaches the admin queue so approval cannot fail halfway through.
-    if v_changes ? 'company_name'
-       and nullif(btrim(v_changes->>'company_name'), '') is null then
+    -- Service radius remains a separate preference. Every account/profile
+    -- submission creates its own admin-review request; earlier requests are retained.
+    v_changes := v_changes - 'service_radius_miles' - 'additional_state_licenses' - 'has_insurance_certificate';
+    if v_changes ? 'company_name' and nullif(btrim(v_changes->>'company_name'), '') is null then
       raise exception 'Company name is required and cannot be cleared';
     end if;
     if exists (
       select 1 from jsonb_object_keys(v_changes) as keys(key)
       where key not in (
-        'full_name','phone','avatar_url','company_name','email','service_address','service_city',
-        'service_state','service_zip_code','service_latitude','service_longitude',
+        'full_name','phone','avatar_url','company_name','email',
+        'service_address','service_city','service_state','service_zip_code',
+        'service_latitude','service_longitude','lead_email_notifications',
         'has_license','license_number','license_state','license_type',
-        'license_document_path','insurance_document_path',
-        'insurance_policy_number','insurance_expiration_date','lead_email_notifications'
+        'license_expiration_date','license_number_2','license_state_2','license_type_2',
+        'insurance_agency_name','insurance_agent_phone','insurance_policy_number',
+        'insurance_expiration_date'
       )
     ) then raise exception 'Unsupported company profile field'; end if;
   elsif p_type = 'service_categories' then
@@ -207,45 +205,23 @@ begin
     end if;
     if exists (
       select 1 from jsonb_array_elements_text(v_changes->'category_ids') x(value)
-      where not exists (
-        select 1 from public.service_categories sc
-        where sc.id = x.value::uuid and sc.is_active = true
-      )
+      where not exists (select 1 from public.service_categories sc where sc.id=x.value::uuid and sc.is_active=true)
     ) then raise exception 'One or more selected service categories are unavailable'; end if;
   elsif p_type = 'profession_qualifications' then
+    v_state := upper(trim(coalesce(v_changes->>'state_code','')));
+    if not exists (select 1 from public.us_states s where upper(trim(s.state_code))=v_state and s.is_active=true) then
+      raise exception 'Profession requests require an active US state';
+    end if;
     if jsonb_typeof(v_changes->'items') is distinct from 'array'
-       or coalesce(v_changes->>'state_code','') !~ '^[A-Za-z]{2}$' then
-      raise exception 'Invalid profession selection';
+       or jsonb_array_length(v_changes->'items')=0 then
+      raise exception 'Select at least one profession';
     end if;
   end if;
 
-  select id into v_id
-  from public.contractor_change_requests
-  where contractor_id = v_contractor_id
-    and status = 'pending'
-    and request_type = p_type
-  order by created_at desc
-  limit 1
-  for update;
-
-  if v_id is not null then
-    update public.contractor_change_requests
-    set requested_changes = case
-          when p_type = 'company_profile' then requested_changes || v_changes
-          else v_changes
-        end,
-        created_at = now(),
-        admin_note = null
-    where id = v_id;
-    return v_id;
-  end if;
-
   insert into public.contractor_change_requests
-    (contractor_id,user_id,request_type,requested_changes)
-  values
-    (v_contractor_id,auth.uid(),p_type,v_changes)
+    (contractor_id,user_id,request_type,requested_changes,status,created_at)
+  values (v_contractor_id,auth.uid(),p_type,v_changes,'pending',now())
   returning id into v_id;
-
   return v_id;
 end
 $function$;
