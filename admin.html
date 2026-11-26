@@ -2981,17 +2981,21 @@
       const ruleMap = new Map((rulesResult.data || []).map(x => [String(x.state_code).toUpperCase()+":"+x.profession_id,String(x.requirement_status || "").toLowerCase()]));
       const companyLicenseMap = new Map((companyLicensesResult.data || []).map(x => [x.contractor_id+":"+String(x.state_code).toUpperCase(),x]));
 
+      const todayForCredentialReview = new Date().toISOString().slice(0,10);
       const reviewable = rows.filter(q => {
         const requirement = ruleMap.get(String(q.state_code || "").toUpperCase()+":"+q.profession_id);
-        return (q.verification_status === "pending" && !!q.license_document_path) ||
-          (q.verification_status === "not_submitted" && q.work_role === "employee" && requirement === "conditional");
+        const employeeConditional = q.work_role === "employee" && requirement === "conditional";
+        const numberBasedCredential = !!q.license_number && !!q.license_type &&
+          !!q.license_expiration_date && q.license_expiration_date >= todayForCredentialReview;
+        return (q.verification_status === "pending" && (numberBasedCredential || employeeConditional)) ||
+          (q.verification_status === "not_submitted" && employeeConditional);
       });
       list.replaceChildren();
-      if (count) count.textContent = "Ready for review: " + reviewable.length + " · Waiting for documents: " + rows.filter(q => q.verification_status === "pending" && !q.license_document_path).length;
+      if (count) count.textContent = "Ready for number-based review: " + reviewable.length + " · Waiting for license details: " + rows.filter(q => q.verification_status === "pending" && (!q.license_number || !q.license_type || !q.license_expiration_date || q.license_expiration_date < todayForCredentialReview)).length;
       if (!reviewable.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = rows.length ? "No submitted profession credentials are ready for review. Required individual documents must be uploaded first." : "No profession credentials are waiting for review.";
+        empty.textContent = rows.length ? "No complete license numbers and current expiration dates have been submitted yet. Document uploads are not required." : "No profession credentials are waiting for review.";
         list.append(empty);
         return;
       }
@@ -3060,7 +3064,7 @@
         } else if (!employeeConditional) {
           const missing = document.createElement("p");
           missing.className = "message error";
-          missing.textContent = "Individual profession document is required before approval.";
+          missing.textContent = "Enter the license number, license type and current expiration date. No document upload is required.";
           card.append(missing);
         } else {
           const scopeNote = document.createElement("p");
@@ -3071,14 +3075,14 @@
 
         const note = document.createElement("textarea");
         note.rows = 2;
-        note.placeholder = "Required administrator note: credential verified or employee scope reviewed";
+        note.placeholder = "Required: official registry lookup result and license status checked";
         note.setAttribute("aria-label","Profession credential administrator note");
         card.append(note);
 
         const verify = document.createElement("button");
         verify.type = "button";
         verify.textContent = "Verify profession";
-        verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type || !individualExpiryValid));
+        verify.disabled = !companyVerified || (!employeeConditional && (!q.license_number || !q.license_type || !individualExpiryValid));
         verify.addEventListener("click",async()=>{
           if (!note.value.trim()) {
             note.focus();
@@ -3098,7 +3102,7 @@
             await loadPendingProfessionCredentials();
           } catch(e) {
             message("professionCredentialsMessage","Could not verify profession: "+(e.message || "Unknown error"),"error");
-            verify.disabled = !companyVerified || (!employeeConditional && (!q.license_document_path || !q.license_number || !q.license_type || !individualExpiryValid));
+            verify.disabled = !companyVerified || (!employeeConditional && (!q.license_number || !q.license_type || !individualExpiryValid));
             verify.textContent = "Verify profession";
           }
         });
