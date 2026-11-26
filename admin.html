@@ -1794,7 +1794,7 @@
           const prompt = allowed
             ? "Block this contractor from viewing and purchasing leads? Their login, account, and transaction history will remain."
             : "Allow this contractor to view and purchase eligible leads? Their account must still meet location and other lead requirements.";
-          if (!window.confirm(prompt + "\\n\\n" + company)) return;
+          if (!window.confirm(prompt + "\n\n" + company)) return;
           toggle.disabled = true;
           toggle.textContent = allowed ? "Blocking…" : "Allowing…";
           try {
