@@ -628,14 +628,21 @@
       </section>
       <section id="adminUnlicensedPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <section class="lead">
-          <h2>Contractor activity</h2>
-          <p>All new contractor registrations and every submitted contractor account update appear here. This is an activity history, not an approval queue.</p>
-          <div id="contractorActivityMessage" class="message hidden" role="status" aria-live="polite"></div>
-          <div class="actions"><button id="refreshContractorActivityBtn" type="button" class="secondary">Refresh activity</button></div>
-          <div id="contractorActivityList"><p class="muted">Loading contractor activity…</p></div>
+        <section id="newContractorRegistrationsSection" class="lead">
+          <h2>New contractor registrations</h2>
+          <p>Review and approve new contractor accounts here. License verification remains separate; approving an account does not automatically verify a license.</p>
+          <div id="contractorRegistrationAlert" class="message hidden" role="status" aria-live="polite"></div>
+          <div id="pendingContractorsMessage" class="message hidden"></div>
+          <div id="pendingContractorsList"><p class="muted">Loading new contractor registrations…</p></div>
         </section>
-
+        <section class="lead">
+        <h2>Contractor activity</h2>
+        <p>View contractor accounts without a current verified license, including new and existing accounts.</p>
+        <div id="unlicensedContractorAlert" class="message hidden" role="status" aria-live="polite"></div>
+        <div class="actions"><button id="refreshUnlicensedContractorsBtn" type="button" class="secondary">Refresh unlicensed contractors</button></div>
+        <div id="unlicensedContractorsMessage" class="message hidden"></div>
+        <div id="unlicensedContractorsList"><p class="muted">Loading contractors…</p></div>
+      </section>
 
 
       </section>
@@ -835,7 +842,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadContractorActivityFeed(); await loadAdminLeads(); await loadServiceRequests(); startContractorActivityRealtime(); }
+    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); startContractorChangeAlerts(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -1428,146 +1435,422 @@
     });
   }
 
-  let contractorActivityChannel = null;
-  let contractorActivityPoll = null;
-  function startContractorActivityRealtime() {
-    if (!isAdmin || !currentUser) return;
-    if (contractorActivityChannel) db.removeChannel(contractorActivityChannel);
-    if (contractorActivityPoll) clearInterval(contractorActivityPoll);
-    contractorActivityChannel = db.channel("zelpx-admin-contractor-activity")
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractors"},()=>{if(isAdmin&&currentUser){loadContractorActivityFeed();}})
-      .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();})
-      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_change_requests"},()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();})
-      .subscribe((status,error)=>{
-        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.warn("Contractor activity realtime unavailable:",status,error||"");
+  async function loadPendingContractors() {
+    if (!isAdmin) return;
+    const list = $("pendingContractorsList");
+    list.textContent = "Loading pending contractors…";
+    clearMessage("pendingContractorsMessage");
+    try {
+      const { data, error } = await db.functions.invoke("admin-list-new-contractors", { body: {} });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const contractors = Array.isArray(data?.contractors) ? data.contractors : [];
+      list.replaceChildren();
+      list.style.cssText = "display:block;width:100%;padding:0;margin:8px 0 0;";
+      const alertBox = $("contractorRegistrationAlert");
+      const pendingCount = contractors?.length || 0;
+      
+      if (alertBox) {
+        alertBox.classList.toggle("hidden", pendingCount === 0);
+        alertBox.className = pendingCount ? "message error" : "message hidden";
+        alertBox.textContent = pendingCount
+          ? `New contractor registrations awaiting your decision: ${pendingCount}. Review each registration and choose With License, Without License, or Reject.`
+          : "";
+      }
+      if (!contractors?.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No new contractor registrations are waiting for review.";
+        list.append(empty);
+        return;
+      }
+      const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
+      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
+      const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
+        contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_profession_qualifications").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").in("contractor_id",contractorIds).order("created_at",{ascending:false}).limit(1000)
+      ]);
+      for(const result of [fullResult,licenseResult,professionResult,categoryResult,changeResult])if(result.error)throw result.error;
+      const fullById=new Map((fullResult.data||[]).map(x=>[x.id,x]));
+      const userIds=[...new Set((fullResult.data||[]).map(x=>x.user_id).filter(Boolean))];
+      const profileResult=userIds.length?await db.from("profiles").select("*").in("id",userIds):{data:[],error:null};
+      if(profileResult.error)throw profileResult.error;
+      const profileById=new Map((profileResult.data||[]).map(x=>[x.id,x]));
+      const licensesById=new Map(),professionsById=new Map(),categoriesById=new Map(),changesById=new Map();
+      const groupRows=(map,key,rows)=>{for(const row of rows||[]){if(!map.has(row[key]))map.set(row[key],[]);map.get(row[key]).push(row);}};
+      groupRows(licensesById,"contractor_id",licenseResult.data);
+      groupRows(professionsById,"contractor_id",professionResult.data);
+      groupRows(categoriesById,"contractor_id",categoryResult.data);
+      groupRows(changesById,"contractor_id",changeResult.data);
+      const professionIds=[...new Set((professionResult.data||[]).map(x=>x.profession_id).filter(Boolean))];
+      const professionNamesResult=professionIds.length?await db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):{data:[],error:null};
+      if(professionNamesResult.error)throw professionNamesResult.error;
+      const professionNames=new Map((professionNamesResult.data||[]).map(x=>[x.id,x.profession_name]));
+      const formatValue=(key,value)=>{
+        if(value===null||value===undefined||value==="")return null;
+        if(typeof value==="boolean")return value?"Yes":"No";
+        if(typeof value==="object")return JSON.stringify(value,null,2);
+        if(/(?:expiration_date|_date)$/.test(key)&&typeof value==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return value.slice(5,7)+"/"+value.slice(8,10)+"/"+value.slice(0,4);
+        if(/_at$/.test(key)){const date=new Date(value);if(!Number.isNaN(date.getTime()))return date.toLocaleString("en-US");}
+        return String(value);
+      };
+      const prettyLabel=key=>key.replace(/_/g," ").replace(/\\b\\w/g,ch=>ch.toUpperCase());
+      const addInfo=(parent,label,value)=>{
+        if(value===null||value===undefined||value==="")return;
+        const p=document.createElement("p"),strong=document.createElement("strong");
+        strong.textContent=label+": ";p.append(strong,document.createTextNode(String(value)));parent.append(p);
+      };
+      const addSection=(parent,label)=>{const section=document.createElement("section");section.style.cssText="padding:12px;background:#fffaf5;border:1px solid #eee2d5;border-radius:12px;margin:12px 0;overflow-wrap:anywhere";const title=document.createElement("h4");title.textContent=label;section.append(title);parent.append(section);return section;};
+      contractors.forEach(contractor => {
+        const full=fullById.get(contractor.id)||contractor;
+        const profile=profileById.get(full.user_id)||{};
+        const card = document.createElement("article");
+        card.style.cssText = "display:block;width:100%;box-sizing:border-box;padding:12px 14px;margin:0;border:0;border-bottom:1px solid #e8e1d6;border-radius:0;background:transparent;box-shadow:none;";
+        const heading = document.createElement("button");
+        heading.type = "button"; heading.className = "secondary";
+        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;font-size:16px;font-weight:800;margin:0;padding:4px 0;background:transparent;border:0;";
+        const title = document.createElement("span");
+        title.textContent = contractor.company_name || contractor.full_name || "Contractor";
+        const plus = document.createElement("span");
+        plus.textContent = "+"; plus.setAttribute("aria-hidden","true");
+        plus.style.cssText = "font-size:22px;font-weight:500;line-height:1;color:#e8753b;";
+        heading.append(title,plus); heading.setAttribute("aria-expanded","false");
+        const content = document.createElement("div");
+        content.className = "hidden"; content.style.cssText = "padding-top:10px;";
+        heading.addEventListener("click",()=>{const open=!content.classList.contains("hidden");content.classList.toggle("hidden",open);heading.setAttribute("aria-expanded",String(!open));plus.textContent=open?"+":"−";});
+        card.append(heading,content);
+        const accessLabel = contractor.verification_status === "verified"
+          ? (contractor.has_license === true
+              ? "ACCESS ALLOWED — license verified"
+              : "ACCESS ALLOWED — administrator exception (no license)")
+          : contractor.verification_status === "rejected"
+            ? "ACCESS DENIED — rejected by administrator"
+            : "NO ACCESS — awaiting administrator decision";
+        const details = [
+          ["Email", contractor.email || "Not provided"],
+          ["Lead access", accessLabel],
+          ["Current approval status", contractor.verification_status || "Unknown"],
+          ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
+          ["License", contractor.has_license ? [contractor.license_number, contractor.license_state, contractor.license_type].filter(Boolean).join(" · ") || "License details not provided" : "No current license indicated"],
+          ["License expiration date", contractor.has_license ? (contractor.license_expiration_date || "Not provided — request correction before license verification") : "Not applicable"],
+          ["Registered", contractor.created_at ? new Date(contractor.created_at).toLocaleString() : "Unknown"]
+        ];
+        details.forEach(([label, value]) => {
+          const p = document.createElement("p");
+          const strong = document.createElement("strong");
+          strong.textContent = label + ": ";
+          p.append(strong, document.createTextNode(String(value)));
+          content.append(p);
+        });
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const submitContractorDecision = async (choice, button) => {
+          if (button.disabled) return;
+          const labels = {
+            approve: "Approving…",
+            approve_without_license: "Approving…",
+            reject: "Rejecting…"
+          };
+          const originalText = button.textContent;
+          button.disabled = true;
+          actions.querySelectorAll("button").forEach(item => item.disabled = true);
+          setBusy(button, true, labels[choice]);
+          try {
+            const { data, error: reviewError } = await db.functions.invoke("admin-review-contractor", {
+              body: { contractor_id: contractor.id, decision: choice }
+            });
+            if (reviewError) throw reviewError;
+            if (data?.error) throw new Error(data.error);
+            const statusText = choice === "approve"
+              ? "Account approved with restricted access. Company license is still pending in License Verification."
+              : choice === "approve_without_license"
+                ? "Account approved without a license. Licensed work remains blocked."
+                : "Registration rejected. Contractor remains blocked.";
+            const emailText = data?.email_sent ? " Email sent successfully." : " WARNING: decision saved, but email was not sent.";
+            message("pendingContractorsMessage", statusText + emailText, data?.email_sent ? "success" : "error");
+            await loadPendingContractors();
+          } catch (e) {
+            message("pendingContractorsMessage", "Could not process contractor review: " + (e.message || "Unknown error"), "error");
+            actions.querySelectorAll("button").forEach(item => item.disabled = false);
+            button.textContent = originalText;
+          }
+        };
+        const approve = document.createElement("button");
+        approve.type = "button";
+        approve.textContent = "Approve account — license review pending";
+        approve.addEventListener("click", () => submitContractorDecision("approve", approve));
+        const approveWithoutLicense = document.createElement("button");
+        approveWithoutLicense.type = "button";
+        approveWithoutLicense.className = "secondary";
+        approveWithoutLicense.textContent = "Approve account — no license";
+        approveWithoutLicense.addEventListener("click", () => submitContractorDecision("approve_without_license", approveWithoutLicense));
+        const reject = document.createElement("button");
+        reject.type = "button";
+        reject.className = "secondary";
+        reject.textContent = "Reject";
+        reject.addEventListener("click", () => submitContractorDecision("reject", reject));
+        actions.append(approve, approveWithoutLicense, reject);
+        content.append(actions);
+        list.append(card);
       });
-    contractorActivityPoll = setInterval(()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();},15000);
+    } catch (e) {
+      list.textContent = "Could not load pending contractors: " + (e.message || "Unknown error");
+      message("pendingContractorsMessage", "Could not load new contractor registrations: " + (e.message || "Unknown error"), "error");
+    }
   }
 
-  async function loadContractorActivityFeed() {
+  function startContractorChangeAlerts() {
+    if (!isAdmin || !currentUser) return;
+    if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);
+    if (contractorRegistrationPoll) clearInterval(contractorRegistrationPoll);
+    if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
+    if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
+    refreshIncomingLeadBadge();
+    refreshRefundBadge();
+    if (refundRequestsChannel) db.removeChannel(refundRequestsChannel);
+    if (refundRequestsPoll) clearInterval(refundRequestsPoll);
+    // Record existing open requests so only newly submitted refund requests trigger alerts.
+    db.from("lead_protection_claims").select("id,status").in("status",["under_review","pending"]).limit(200)
+      .then(({data,error}) => {
+        if (error) { console.warn("Could not initialize refund request alerts:",error.message); return; }
+        (data || []).forEach(claim => seenRefundRequestIds.add(claim.id));
+      });
+    refundRequestsChannel = db.channel("zelpx-admin-refund-requests")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"lead_protection_claims"},payload => {
+        const claim = payload.new || {};
+        if (!isAdmin || !currentUser || !claim.id ||
+            !["under_review","pending"].includes(claim.status) || seenRefundRequestIds.has(claim.id)) return;
+        seenRefundRequestIds.add(claim.id);
+        refreshRefundBadge();
+        const page = $("adminRefundRequestsPage");
+        if (page && !page.classList.contains("hidden")) loadRefundRequests();
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("ZELPX — new refund request", {
+            body:"A contractor submitted a refund request. Open Refund requests to review it.",
+            tag:"zelpx-refund-request-" + claim.id
+          });
+        }
+      })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Refund request realtime unavailable:",status,error || "");
+      });
+    refundRequestsPoll = setInterval(refreshRefundBadge,15000);
+    serviceRequestsChannel = db.channel("zelpx-admin-service-requests")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"service_requests"},payload => {
+        if (!isAdmin || !currentUser) return;
+        announceNewServiceRequest(payload.new || {});
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"service_requests"},payload => {
+        if (!isAdmin || !currentUser) return;
+        const updated = payload.new || {};
+        if (updated.status === "published" && updated.lead_id) {
+          showPublishedRequestResult(updated.id, updated.lead_id);
+        }
+        refreshIncomingLeadBadge();
+      })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Service request realtime unavailable:",status,error || "");
+      });
+    // Fallback polling keeps the badge accurate if Realtime is temporarily disconnected.
+    serviceRequestsPoll = setInterval(refreshIncomingLeadBadge, 15000);
+    contractorRegistrationChannel = db.channel("zelpx-admin-contractor-registrations")
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"contractors"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadPendingContractors();loadUnlicensedContractors();loadAdminContractorDirectory();
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"contractors"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadUnlicensedContractors();loadAdminContractorDirectory();
+      })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload => {
+        if (!isAdmin || !currentUser) return;
+        loadUnlicensedContractors();loadAdminContractorDirectory();
+      })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_service_categories"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
+      .subscribe((status,error) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT")
+          console.warn("Contractor registration realtime unavailable:",status,error || "");
+      });
+    // Fallback refresh: keep new contractor registrations current if realtime delivery is delayed.
+    let lastRegistrationIds = null;
+    contractorRegistrationPoll = setInterval(async () => {
+      if (!isAdmin || !currentUser) return;
+      try {
+        const {data,error} = await db.functions.invoke("admin-list-new-contractors",{body:{}});
+        if (error || data?.error) return;
+        const ids = (Array.isArray(data?.contractors)?data.contractors:[]).map(x=>x.id).sort().join("|");
+        if (lastRegistrationIds === null) { lastRegistrationIds = ids; return; }
+        if (ids !== lastRegistrationIds) { lastRegistrationIds = ids; loadPendingContractors(); }
+      } catch(e) { console.warn("Contractor registration polling failed:",e.message||e); }
+    }, 5000);
+  }
+
+  async function loadUnlicensedContractors() {
     if (!isAdmin) return;
-    const list = $("contractorActivityList");
-    if (!list) return;
-    list.textContent = "Loading contractor activity…";
-    clearMessage("contractorActivityMessage");
+    const list = $("unlicensedContractorsList");
+    list.textContent = "Loading contractors…";
+    clearMessage("unlicensedContractorsMessage");
     try {
-      const [contractorsResult, changesResult] = await Promise.all([
-        db.from("contractors").select("id,user_id,company_name,email,verification_status,created_at,contractor_phone").order("created_at",{ascending:false}).limit(500),
-        db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").order("created_at",{ascending:false}).limit(1000)
-      ]);
-      if (contractorsResult.error) throw contractorsResult.error;
-      if (changesResult.error) throw changesResult.error;
-      const contractors = contractorsResult.data || [];
-      const changes = changesResult.data || [];
-      const userIds = [...new Set([...contractors.map(x=>x.user_id),...changes.map(x=>x.user_id)].filter(Boolean))];
-      const profileResult = userIds.length
-        ? await db.from("profiles").select("id,full_name,phone").in("id",userIds)
-        : {data:[],error:null};
-      if (profileResult.error) throw profileResult.error;
-      const profiles = new Map((profileResult.data || []).map(x=>[x.id,x]));
-      const contractorMap = new Map(contractors.map(x=>[x.id,x]));
-      const events = [
-        ...contractors.map(c=>({kind:"registration",date:c.created_at,contractor:c,profile:profiles.get(c.user_id)||{}})),
-        ...changes.map(r=>({kind:"update",date:r.created_at,request:r,contractor:contractorMap.get(r.contractor_id)||null,profile:profiles.get(r.user_id)||{}}))
-      ].sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+      const { data: contractors, error } = await db.rpc("admin_list_unlicensed_contractors");
+      if (error) throw error;
       list.replaceChildren();
-      const pending = changes.filter(x=>x.status==="pending").length;
-      const summary = document.createElement("p");
-      summary.className = "muted";
-      summary.textContent = events.length + " activity event(s) · " + contractors.length + " registration(s) · " + changes.length + " update(s)" + (pending ? " · " + pending + " pending" : "");
-      list.append(summary);
-      if (!events.length) {
-        const empty=document.createElement("p");empty.className="muted";empty.textContent="No contractor registrations or account updates yet.";list.append(empty);return;
+      const count = contractors?.length || 0;
+      const alertBox = $("unlicensedContractorAlert");
+      if (alertBox) {
+        alertBox.className = count ? "message error" : "message hidden";
+        alertBox.textContent = count
+          ? `Attention: ${count} contractor account(s) in the database have no current license.`
+          : "";
       }
-      const labelForType = value => ({
-        company_profile:"Company profile update",
-        profession_qualifications:"Profession qualifications update",
-        service_categories:"Service categories update",
-        state_licenses:"State license update"
-      }[value] || String(value||"Contractor account update").replaceAll("_"," "));
-      const niceKey = key => String(key).replaceAll("_"," ").replace(/\b\w/g,ch=>ch.toUpperCase());
-      for (const event of events) {
-        const card=document.createElement("article");
-        card.className="lead";
-        card.style.cssText="padding:12px 16px;margin:10px 0;border-radius:18px;overflow-wrap:anywhere;";
-        const company=event.contractor?.company_name || "Contractor";
-        const name=event.profile?.full_name || "";
-        const heading=document.createElement("button");
-        heading.type="button";
-        heading.className="unlicensed-contractor-toggle secondary";
-        heading.setAttribute("aria-expanded","false");
-        heading.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
-        const title=document.createElement("strong");
-        title.textContent=(event.kind==="registration"?"New contractor: ":"Contractor update: ")+company+(name?" · "+name:"");
-        title.style.cssText="font-size:17px;overflow-wrap:anywhere;min-width:0;";
-        const badge=document.createElement("span");
-        const expandIcon=document.createElement("span");
-        expandIcon.textContent="+";
-        expandIcon.setAttribute("aria-hidden","true");
-        expandIcon.style.cssText="flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
-        heading.append(title,expandIcon);
-        const panel=document.createElement("div");
-        panel.className="unlicensed-contractor-details hidden";
-        panel.style.cssText="padding:10px 4px 4px;";
-        heading.addEventListener("click",()=>{
-          const willOpen=panel.classList.contains("hidden");
-          panel.classList.toggle("hidden",!willOpen);
-          heading.setAttribute("aria-expanded",String(willOpen));
-          expandIcon.textContent=willOpen?"−":"+";
+      if (!count) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No active or pending contractors without a current license.";
+        list.append(empty);
+        return;
+      }
+      const contractorIds=(contractors||[]).map(x=>x.id).filter(Boolean);
+      const {error:syncError}=await db.rpc("zelpx_admin_sync_all_contractor_license_status");if(syncError)throw syncError;
+      const [fullResult,licenseResult,professionResult,categoryResult,changeResult]=await Promise.all([
+        contractorIds.length?db.from("contractors").select("*").in("id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_state_licenses").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_profession_qualifications").select("*").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_service_categories").select("contractor_id,category_id,service_categories(name)").in("contractor_id",contractorIds):Promise.resolve({data:[],error:null}),
+        contractorIds.length?db.from("contractor_change_requests").select("id,contractor_id,user_id,request_type,requested_changes,status,admin_note,created_at,reviewed_at").in("contractor_id",contractorIds).order("created_at",{ascending:false}).limit(2000):Promise.resolve({data:[],error:null})
+      ]);
+      for(const result of [fullResult,licenseResult,professionResult,categoryResult,changeResult])if(result.error)throw result.error;
+      const fullById=new Map((fullResult.data||[]).map(x=>[x.id,x]));
+      const userIds=[...new Set((fullResult.data||[]).map(x=>x.user_id).filter(Boolean))];
+      const profileResult=userIds.length?await db.from("profiles").select("*").in("id",userIds):{data:[],error:null};
+      if(profileResult.error)throw profileResult.error;
+      const profileById=new Map((profileResult.data||[]).map(x=>[x.id,x]));
+      const groupRows=(rows,key)=>{const map=new Map();for(const row of rows||[]){if(!map.has(row[key]))map.set(row[key],[]);map.get(row[key]).push(row);}return map;};
+      const licensesById=groupRows(licenseResult.data,"contractor_id"),professionsById=groupRows(professionResult.data,"contractor_id"),categoriesById=groupRows(categoryResult.data,"contractor_id"),changesById=groupRows(changeResult.data,"contractor_id");
+      const professionIds=[...new Set((professionResult.data||[]).map(x=>x.profession_id).filter(Boolean))];
+      const professionNamesResult=professionIds.length?await db.from("zelpx_professions").select("id,profession_name").in("id",professionIds):{data:[],error:null};
+      if(professionNamesResult.error)throw professionNamesResult.error;
+      const professionNames=new Map((professionNamesResult.data||[]).map(x=>[x.id,x.profession_name]));
+      const formatValue=(key,value)=>{if(value===null||value===undefined||value==="")return "";if(typeof value==="boolean")return value?"Yes":"No";if(typeof value==="object")return JSON.stringify(value);if(/(?:expiration_date|_date)$/.test(key)&&typeof value==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(value))return value.slice(5,7)+"/"+value.slice(8,10)+"/"+value.slice(0,4);if(/_at$/.test(key)){const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString("en-US");}return String(value);};
+      const prettyLabel=key=>key.replace(/_/g," ").replace(/\\b\\w/g,ch=>ch.toUpperCase());
+      const addInfo=(parent,label,value)=>{if(value===null||value===undefined||value==="")return;const p=document.createElement("p"),strong=document.createElement("strong");strong.textContent=label+": ";p.append(strong,document.createTextNode(String(value)));parent.append(p);};
+      const addSection=(parent,label)=>{const section=document.createElement("section");section.style.cssText="padding:12px;background:#fffaf5;border:1px solid #eee2d5;border-radius:12px;margin:12px 0;overflow-wrap:anywhere";const title=document.createElement("h4");title.textContent=label;section.append(title);parent.append(section);return section;};
+      contractors.forEach(contractor => {
+        const full=fullById.get(contractor.id)||contractor;
+        const profile=profileById.get(full.user_id)||{};
+        const card = document.createElement("article");
+        card.className = "lead";
+        const heading = document.createElement("button");
+        heading.type = "button";
+        heading.className = "unlicensed-contractor-toggle secondary";
+        heading.setAttribute("aria-expanded", "false");
+        heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
+        const title = document.createElement("strong");
+        title.textContent = full.company_name || profile.full_name || "Contractor company";
+        title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
+        const accessIsAllowed = full.verification_status === "verified";
+        const accessBadge = document.createElement("span");
+        accessBadge.textContent = accessIsAllowed ? "🔓 Unblocked" : "🔒 Blocked";
+        accessBadge.setAttribute("role", "status");
+        accessBadge.style.cssText = "flex:0 0 auto;margin-left:auto;padding:5px 9px;border-radius:999px;background:" + (accessIsAllowed ? "#e3f5ec" : "#fdebe8") + ";color:" + (accessIsAllowed ? "#147d55" : "#b42318") + ";font-size:12px;font-weight:800;white-space:nowrap;";
+        const expandIcon = document.createElement("span");
+        expandIcon.textContent = "+";
+        expandIcon.setAttribute("aria-hidden", "true");
+        expandIcon.style.cssText = "flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
+        heading.append(title, accessBadge, expandIcon);
+        const panel = document.createElement("div");
+        panel.className = "unlicensed-contractor-details hidden";
+        panel.style.cssText = "padding-top:10px;";
+        heading.addEventListener("click", () => {
+          const willOpen = panel.classList.contains("hidden");
+          panel.classList.toggle("hidden", !willOpen);
+          heading.setAttribute("aria-expanded", String(willOpen));
+          expandIcon.textContent = willOpen ? "−" : "+";
         });
-        card.append(heading,panel);
-        const date=event.date?new Date(event.date).toLocaleString("en-US"):"Date unavailable";
-        const identity=document.createElement("section");
-        identity.style.cssText="padding:12px;background:#fffaf5;border:1px solid #eee2d5;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;";
-        const identityTitle=document.createElement("h4");identityTitle.textContent="Account and contact information";identity.append(identityTitle);
-        const addInfo=(parent,label,value)=>{
-          if(value===null||value===undefined||value==="")return;
-          const p=document.createElement("p"),strong=document.createElement("strong");
-          strong.textContent=label+": ";p.append(strong,document.createTextNode(String(value)));parent.append(p);
-        };
-        addInfo(identity,"Activity",event.kind==="registration"?"New contractor registration":"Account update — "+labelForType(event.request.request_type));
-        addInfo(identity,"Submitted",date);
-        addInfo(identity,"Company",company);
-        addInfo(identity,"Full name",name);
-        addInfo(identity,"Email",event.contractor?.email);
-        const phone=event.profile?.phone||event.contractor?.contractor_phone;
-        if(phone){
-          const p=document.createElement("p"),strong=document.createElement("strong"),link=document.createElement("a");
-          strong.textContent="Phone: ";link.textContent=phone;link.href="tel:"+String(phone).replace(/[^0-9+]/g,"");p.append(strong,link);identity.append(p);
-        }
-        if(event.kind==="update"){
-          addInfo(identity,"Request status",String(event.request.status||"unknown").toUpperCase());
-          addInfo(identity,"Reviewed",event.request.reviewed_at?new Date(event.request.reviewed_at).toLocaleString("en-US"):"Not reviewed");
-          if(event.request.admin_note)addInfo(identity,"Administrator note",event.request.admin_note);
-        }
-        panel.append(identity);
-        if(event.kind==="update"){
-          const changesObj=event.request.requested_changes||{};
-          const entries=Object.entries(changesObj);
-          const changesSection=document.createElement("section");
-          changesSection.style.cssText="padding:12px;background:#fff;border:1px solid #eee2d5;border-radius:12px;margin:8px 0;overflow-wrap:anywhere;";
-          const changesTitle=document.createElement("h4");changesTitle.textContent="Submitted account changes";changesSection.append(changesTitle);
-          if(entries.length){
-            const ul=document.createElement("ul");ul.style.cssText="margin:8px 0;padding-left:20px;";
-            for(const [key,value] of entries){
-              const li=document.createElement("li");
-              let shown=value;
-              if(value===null||value==="")shown="—";
-              else if(typeof value==="boolean")shown=value?"Yes":"No";
-              else if(typeof value==="object")shown=JSON.stringify(value);
-              li.textContent=niceKey(key)+": "+String(shown);ul.append(li);
-            }
-            changesSection.append(ul);
-          } else {
-            const empty=document.createElement("p");empty.className="muted";empty.textContent="No field details were included in this request.";changesSection.append(empty);
+        card.append(heading);
+        const identity=addSection(panel,"Account and contact information");
+        addInfo(identity,"Company name",full.company_name);addInfo(identity,"Full name",profile.full_name);addInfo(identity,"Email",full.email);
+        const phone=full.contractor_phone||profile.phone;
+        if(phone){const p=document.createElement("p"),strong=document.createElement("strong"),link=document.createElement("a");strong.textContent="Phone: ";link.textContent=phone;link.href="tel:"+String(phone).replace(/[^0-9+]/g,"");p.append(strong,link);identity.append(p);}
+        addInfo(identity,"Phone verification",full.contractor_phone_verified_at||profile.phone_verified_at?"Verified":((full.contractor_phone||profile.phone)?"Not verified":"Not verified — no phone number on file"));
+        addInfo(identity,"Verified phone",full.contractor_phone_verified_number||profile.phone_verified_number);
+        addInfo(identity,"Address",[full.service_address,full.service_city,full.service_state,full.service_zip_code].filter(Boolean).join(", "));
+        addInfo(identity,"Service radius (miles)",full.service_radius_miles);addInfo(identity,"Account status",full.verification_status);addInfo(identity,"Registered",formatValue("created_at",full.created_at));
+        const licenseSection=addSection(panel,"License information");
+        addInfo(licenseSection,"Has license",formatValue("has_license",full.has_license));addInfo(licenseSection,"Primary license type",full.license_type);addInfo(licenseSection,"Primary license state",full.license_state);addInfo(licenseSection,"Primary license number",full.license_number);addInfo(licenseSection,"Primary license expiration",formatValue("license_expiration_date",full.license_expiration_date));const hasActiveVerifiedStateLicense=(licensesById.get(full.id)||[]).some(x=>x.review_status==="verified"&&(!x.expiration_date||x.expiration_date>=new Date().toISOString().slice(0,10)));const licenseStatusLabel=hasActiveVerifiedStateLicense||["verified","approved"].includes(full.license_review_status)?"Active":full.has_license===false&&!(licensesById.get(full.id)||[]).length?"Not applicable":({pending:"Pending review",rejected:"Rejected",not_applicable:"Not applicable"}[full.license_review_status]||full.license_review_status||"Not submitted");addInfo(licenseSection,"License review status",licenseStatusLabel);addInfo(licenseSection,"License review notes",full.license_review_notes);addInfo(licenseSection,"Second license type",full.license_type_2);addInfo(licenseSection,"Second license state",full.license_state_2);addInfo(licenseSection,"Second license number",full.license_number_2);
+        (licensesById.get(full.id)||[]).forEach((license,index)=>{const sub=addSection(licenseSection,"State license "+(index+1)+" — "+(license.state_code||""));addInfo(sub,"License type",license.license_type);addInfo(sub,"License number",license.license_number);addInfo(sub,"Expiration",formatValue("expiration_date",license.expiration_date));addInfo(sub,"Review status",license.review_status==="verified"&&(!license.expiration_date||license.expiration_date>=new Date().toISOString().slice(0,10))?"Active":license.review_status);});
+        const insuranceSection=addSection(panel,"Insurance information");
+        addInfo(insuranceSection,"Insurance agency",full.insurance_agency_name);addInfo(insuranceSection,"Insurance agent phone",full.insurance_agent_phone);addInfo(insuranceSection,"Policy number",full.insurance_policy_number);addInfo(insuranceSection,"Insurance expiration",formatValue("insurance_expiration_date",full.insurance_expiration_date));addInfo(insuranceSection,"Insurance review status",full.insurance_review_status);
+        const servicesSection=addSection(panel,"Selected services and professions");
+        const selectedCategories=categoriesById.get(full.id)||[];addInfo(servicesSection,"Selected service categories",selectedCategories.map(x=>x.service_categories?.name||x.category_id).join(", ")||"None selected");
+        (professionsById.get(full.id)||[]).forEach((item,index)=>{const sub=addSection(servicesSection,"Profession "+(index+1)+" — "+(professionNames.get(item.profession_id)||""));addInfo(sub,"State",item.state_code);addInfo(sub,"Work arrangement",item.work_role);addInfo(sub,"License required",formatValue("license_required_at_registration",item.license_required_at_registration));addInfo(sub,"License type",item.license_type);addInfo(sub,"License number",item.license_number);addInfo(sub,"Expiration",formatValue("license_expiration_date",item.license_expiration_date));addInfo(sub,"Verification status",item.verification_status);});
+        const updatesSection=addSection(panel,"Account updates and review history");
+        const requests=changesById.get(full.id)||[];if(!requests.length)addInfo(updatesSection,"Updates","No submitted change requests recorded.");
+        requests.forEach((request,index)=>{const sub=addSection(updatesSection,"Update "+(index+1)+" — "+prettyLabel(request.request_type)+" · "+String(request.status||"").toUpperCase());addInfo(sub,"Submitted",formatValue("created_at",request.created_at));addInfo(sub,"Reviewed",formatValue("reviewed_at",request.reviewed_at));addInfo(sub,"Administrator note",request.admin_note);Object.entries(request.requested_changes||{}).forEach(([key,value])=>{if(value===null||value===undefined||value==="")return;if(key==="additional_state_licenses"&&Array.isArray(value)){value.forEach((license,i)=>addInfo(sub,"Additional license "+(i+1),[license.state_code,license.license_type,license.license_number].filter(Boolean).join(" · ")));return;}addInfo(sub,prettyLabel(key),typeof value==="object"?JSON.stringify(value):formatValue(key,value));});});
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const allowed = contractor.verification_status === "verified";
+        const accessStatus = document.createElement("p");
+        accessStatus.className = allowed ? "message success" : "message error";
+        accessStatus.textContent = allowed ? "Lead access: ALLOWED" : "Lead access: BLOCKED";
+        panel.append(accessStatus);
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = allowed ? "danger" : "";
+        toggle.textContent = allowed ? "Block account access" : "Allow account access";
+        toggle.addEventListener("click", async () => {
+          const company = contractor.company_name || contractor.email || "this contractor";
+          const action = allowed ? "block" : "allow";
+          const prompt = allowed
+            ? "Block this contractor from viewing and purchasing leads? Their login, account, and transaction history will remain."
+            : "Allow this contractor to view and purchase eligible leads? Their account must still meet location and other lead requirements.";
+          if (!window.confirm(prompt + "\\n\\n" + company)) return;
+          toggle.disabled = true;
+          toggle.textContent = allowed ? "Blocking…" : "Allowing…";
+          try {
+            const { data, error } = await db.functions.invoke("admin-remove-unlicensed-contractor", {
+              body: { contractor_id: contractor.id, action }
+            });
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+            message("unlicensedContractorsMessage",
+              (action === "allow" ? "Lead access allowed for " : "Lead access blocked for ") + company + ". Login and history unchanged.", "success");
+            await loadUnlicensedContractors();
+          } catch (e) {
+            message("unlicensedContractorsMessage", "Could not change lead access: " + (e.message || "Unknown error"), "error");
+            toggle.disabled = false;
+            toggle.textContent = allowed ? "Block account access" : "Allow account access";
           }
-          panel.append(changesSection);
-        }
+        });
+        actions.append(toggle);
+        panel.append(actions);
+
+        const closeRow = document.createElement("div");
+        closeRow.style.cssText = "display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);";
+        const closeButton = document.createElement("button");
+        closeButton.type = "button";
+        closeButton.className = "secondary";
+        closeButton.textContent = "Close";
+        closeButton.style.cssText = "min-height:40px;padding:8px 22px;box-shadow:none;";
+        closeButton.addEventListener("click", () => {
+          panel.classList.add("hidden");
+          heading.setAttribute("aria-expanded", "false");
+          expandIcon.textContent = "+";
+        });
+        closeRow.append(closeButton);
+        panel.append(closeRow);
+        card.append(panel);
         list.append(card);
-      }
-    } catch(e) {
-      list.textContent="Could not load contractor activity: "+(e.message||"Unknown error");
-      message("contractorActivityMessage","Could not load contractor activity: "+(e.message||"Unknown error"),"error");
+      });
+    } catch (e) {
+      list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
+      message("unlicensedContractorsMessage", "Could not load unlicensed contractor records. " + (e.message || ""), "error");
     }
   }
 
@@ -2442,6 +2725,7 @@
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
+    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminRefundRequestsPage") loadRefundRequests();
@@ -2529,7 +2813,7 @@
   $("refreshProfessionCredentialsBtn")?.addEventListener("click", loadPendingProfessionCredentials);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-$("refreshContractorActivityBtn")?.addEventListener("click", loadContractorActivityFeed); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+$("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
