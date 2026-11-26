@@ -513,6 +513,52 @@ input,select,textarea{border-color:#eee4dc;background:#fffefa;color:#302923}
 }
 
 
+/* Remove Android's blue tap/focus overlay from contractor portal buttons */
+button,
+button:active,
+button:focus,
+button:focus-visible,
+a[role="button"]{
+  -webkit-tap-highlight-color:transparent!important;
+}
+button:focus,
+button:focus-visible{
+  outline:2px solid #e97843!important;
+  outline-offset:2px!important;
+}
+#zelpxContractorSendCode,
+#zelpxContractorCancel,
+#zelpxContractorVerify{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+#zelpxContractorSendCode:active,
+#zelpxContractorSendCode:focus,
+#zelpxContractorSendCode:focus-visible,
+#zelpxContractorVerify:active,
+#zelpxContractorVerify:focus,
+#zelpxContractorVerify:focus-visible{
+  background:#ef5b16!important;
+  color:#fff!important;
+  border:0!important;
+  outline:2px solid #e97843!important;
+  outline-offset:2px!important;
+  box-shadow:none!important;
+}
+#zelpxContractorCancel:active,
+#zelpxContractorCancel:focus,
+#zelpxContractorCancel:focus-visible{
+  background:#fff!important;
+  color:#30231e!important;
+  border:1px solid #dfd6cf!important;
+  outline:2px solid #e97843!important;
+  outline-offset:2px!important;
+  box-shadow:none!important;
+}
+
 /* Keep Android tap/focus feedback on social sign-in buttons within ZELPX orange palette */
 .social-auth-button{
   -webkit-tap-highlight-color:transparent;
