@@ -338,28 +338,6 @@
     }
 
 
-    /* Compact mobile layout for contractor update approvals */
-    #contractorChangesList .contractor-approval-slider { width:100%; margin:8px 0 0; }
-    #contractorChangesList .contractor-approval-viewport { height:auto !important; min-height:0 !important; }
-    #contractorChangesList .contractor-approval-slides { height:auto !important; min-height:0 !important; align-items:flex-start; }
-    #contractorChangesList .contractor-update-card { min-height:0 !important; height:auto !important; padding:14px !important; margin:6px 0 !important; border-radius:14px; }
-    #contractorChangesList .contractor-update-card h3 { font-size:18px; line-height:1.3; margin:0 0 6px; }
-    #contractorChangesList .contractor-update-card > p { font-size:13px; line-height:1.45; margin:4px 0 10px; }
-    #contractorChangesList .contractor-update-card .contactbox { padding:10px 12px; margin:8px 0 10px; border-radius:12px; }
-    #contractorChangesList .contractor-update-card .contactbox p { font-size:14px; line-height:1.4; margin:4px 0; }
-    #contractorChangesList .qualification-summary p { margin:4px 0; }
-    #contractorChangesList .contractor-update-card textarea { display:block; width:100%; min-height:62px !important; height:68px; box-sizing:border-box; resize:vertical; padding:10px 12px; margin:8px 0; border-radius:12px; font-size:14px; }
-    #contractorChangesList .contractor-update-actions { display:flex; gap:8px; margin-top:8px; }
-    #contractorChangesList .contractor-update-actions button { min-height:42px; height:42px; padding:8px 12px; border-radius:22px; font-size:14px; }
-    #contractorChangesList .contractor-approval-nav { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:260px; margin:8px auto 4px; padding:0; border:0; background:transparent; }
-    #contractorChangesList .contractor-approval-nav button { flex:0 0 42px !important; min-width:42px !important; width:42px; height:38px !important; padding:0 !important; border-radius:12px !important; font-size:14px !important; }
-    #contractorChangesList .contractor-approval-nav span { min-width:48px; font-size:13px; }
-    @media(max-width:700px) {
-      #contractorChangesList .contractor-update-card { padding:12px !important; }
-      #contractorChangesList .contractor-update-card .contactbox p { font-size:13px; }
-      #contractorChangesList .contractor-update-actions button { min-height:40px; height:40px; }
-    }
-
     /* Administrator palette refinement: orange is an accent, not the whole interface */
     :root { --blue:#b96f4d; --accent-soft:#f3e7df; }
     body.admin-mode button {
@@ -2440,7 +2418,6 @@
             if (verifyError) throw verifyError;
             message("licensedContractorsMessage", license.state_code + " company license marked Verified. You can now review the contractor's selected professions for this state.", "success");
             await loadLicensedContractors();
-            await loadContractorChangeRequests();
           } catch (e) {
             message("licensedContractorsMessage", "Could not verify " + license.state_code + " company license: " + (e.message || "Unknown error"), "error");
             verify.disabled = !license.license_number || !license.license_type || !license.expiration_date || license.expiration_date < new Date().toISOString().slice(0,10) || !contractor.id;
@@ -2748,7 +2725,6 @@
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
-    if (pageId === "adminContractorChangesPage") loadContractorChangeRequests();
     if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
     if (pageId === "adminVerifyLeadPage") { loadLicensedContractors(); loadPendingProfessionCredentials(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
