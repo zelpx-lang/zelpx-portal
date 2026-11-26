@@ -66,7 +66,7 @@ function renderStories(){
  document.getElementById("empty-state").style.display=items.length?"none":"block";
  if(!items.length)return;
  items.forEach(item=>{
-  const tr=translated(item);if(!tr)continue;const card=document.createElement("article");card.className="story";
+  const tr=translated(item);if(!tr)return;const card=document.createElement("article");card.className="story";
   const meta=document.createElement("div");meta.className="story-meta";meta.textContent=(item.category||"Local update").replace(/_/g," ")+" · "+(item.city||item.region?.[0]||"Local");
   const title=document.createElement("h3");title.textContent=tr.title||item.original_title||"Local update";
   const summary=document.createElement("p");summary.textContent=tr.summary||item.original_summary||"";
