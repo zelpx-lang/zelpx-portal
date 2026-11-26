@@ -1469,11 +1469,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   async function deleteAdditionalStateLicense(stateCode,button){
     if(!currentContractor||button?.disabled)return;
     if(!confirm("Remove the "+stateCode+" license from your contractor account? You can restore it later."))return;
-    button.disabled=true;button.textContent="Verify phone…";
+    button.disabled=true;button.textContent="Deleting…";
     try{
-      const phoneVerified=await ensureContractorPhoneVerified();
-      if(!phoneVerified)return;
-      button.textContent="Deleting…";
+      // Removing an additional state license does not require phone re-verification.
       const {error}=await db.rpc("zelpx_delete_company_state_license",{p_state_code:stateCode});
       if(error)throw error;
       await refreshAdditionalStateLicenses();
