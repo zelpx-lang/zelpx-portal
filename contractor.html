@@ -1881,6 +1881,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(!selectedProfessionIds.size) return message("specialtiesMessage","Select at least one profession before saving.","error");
     const button=$("saveProfessionQualificationsBtn"); setBusy(button,true,"Saving…");
     try {
+      const phoneVerified = await ensureContractorPhoneVerified();
+      if (!phoneVerified) return;
       await refreshProfessionRules();
       const state=$("professionState").value, role=$("professionWorkRole").value;
       const selected=professionCatalog.filter(p=>selectedProfessionIds.has(p.id));
@@ -2871,14 +2873,13 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       if (status) { status.textContent = "Choose a valid service radius."; status.className = "message error"; }
       return;
     }
-    if (!contractorPhoneIsVerified()) {
-      if (status) { status.textContent = "Verify your account phone once before submitting account changes."; status.className = "message error"; }
-      return;
-    }
     if (button.disabled) return;
     button.disabled = true;
-    button.textContent = "Submitting…";
+    button.textContent = "Verify phone…";
     try {
+      const phoneVerified = await ensureContractorPhoneVerified();
+      if (!phoneVerified) return;
+      button.textContent = "Submitting…";
       const { error } = await db.rpc("submit_contractor_change_request", {
         p_type: "company_profile",
         p_changes: { service_radius_miles: radius }
