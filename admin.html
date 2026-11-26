@@ -842,7 +842,7 @@
     }
     hide($("authView")); show($("appView")); show($("topUser"));
     await loadCategories(); await loadLeads(); await loadPurchases();
-    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadPendingContractors(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); startContractorChangeAlerts(); }
+    if (isAdmin) { await loadSiteMaintenanceSetting(); await loadContractorActivityFeed(); await loadUnlicensedContractors(); await loadAdminLeads(); await loadServiceRequests(); startContractorActivityRealtime(); }
     if (isAdmin && typeof window.ZELPXAutoSubscribe === "function") await window.ZELPXAutoSubscribe(db, "admin");
   }
   async function loadAccount() {
@@ -1433,6 +1433,22 @@
       results.append(card);
       checkAccess();
     });
+  }
+
+  let contractorActivityChannel = null;
+  let contractorActivityPoll = null;
+  function startContractorActivityRealtime() {
+    if (!isAdmin || !currentUser) return;
+    if (contractorActivityChannel) db.removeChannel(contractorActivityChannel);
+    if (contractorActivityPoll) clearInterval(contractorActivityPoll);
+    contractorActivityChannel = db.channel("zelpx-admin-contractor-activity")
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractors"},()=>{if(isAdmin&&currentUser){loadContractorActivityFeed();loadUnlicensedContractors();}})
+      .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();})
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_change_requests"},()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();})
+      .subscribe((status,error)=>{
+        if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")console.warn("Contractor activity realtime unavailable:",status,error||"");
+      });
+    contractorActivityPoll = setInterval(()=>{if(isAdmin&&currentUser)loadContractorActivityFeed();},15000);
   }
 
   async function loadContractorActivityFeed() {
@@ -2645,7 +2661,7 @@
   $("refreshProfessionCredentialsBtn")?.addEventListener("click", loadPendingProfessionCredentials);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-$("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+$("refreshContractorActivityBtn")?.addEventListener("click", loadContractorActivityFeed); $("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
