@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#171816">
+<title>ZELPX LOCAL — Admin Review</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#171816;--muted:#77746d;--paper:#f5f2ec;--white:#fffefa;--line:#e6dfd4;--orange:#f36b38;--soft:#fff0e8;--green:#1e7650;--red:#a53d32}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}.wrap{width:min(1180px,calc(100% - 32px));margin:auto}
+header{height:70px;background:#fffefa;border-bottom:1px solid var(--line);display:flex;align-items:center}.nav{display:flex;align-items:center;justify-content:space-between}.brand{font-size:21px;font-weight:950;letter-spacing:.13em}.brand b{color:var(--orange)}.top-actions{display:flex;gap:12px;align-items:center}.link{font-size:12px;font-weight:850;color:#6f695f;text-decoration:none}.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:850;background:var(--ink);color:white}.btn.orange{background:var(--orange)}.btn.ghost{background:white;color:var(--ink);border:1px solid var(--line)}.btn.danger{background:#fff1ef;color:var(--red);border:1px solid #f0d2ce}
+.hero{padding:34px 0 22px}.eyebrow{font-size:10px;letter-spacing:.14em;font-weight:950;color:#a34c2a}.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.02;letter-spacing:-.05em;margin:8px 0}.hero p{margin:0;color:var(--muted)}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 12px 35px #21180b08}.login{max-width:440px;margin:25px auto}.login h2{margin:0 0 6px}.login p{color:var(--muted);margin:0 0 20px}.field{display:grid;gap:6px;margin:12px 0}.field label{font-size:10px;font-weight:900;letter-spacing:.09em;color:#746e64}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff;outline:none}.field textarea{min-height:86px;resize:vertical}.field input:focus,.field textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px #f36b3818}
+#app{display:none}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}.stats{display:flex;gap:9px;flex-wrap:wrap}.stat{background:white;border:1px solid var(--line);border-radius:12px;padding:9px 13px;font-size:12px;color:var(--muted)}.stat strong{color:var(--ink);font-size:17px;margin-right:5px}.queue{display:grid;gap:16px;margin:18px 0 60px}.story{background:var(--white);border:1px solid var(--line);border-radius:20px;overflow:hidden}.story-head{padding:20px 22px 16px;border-bottom:1px solid var(--line)}.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:10px;font-weight:900;letter-spacing:.07em;color:#9b522f;text-transform:uppercase}.pill{border-radius:99px;background:var(--soft);padding:5px 9px}.story h2{font-size:22px;line-height:1.2;letter-spacing:-.025em;margin:11px 0 7px}.summary{color:#6e695f;margin:0 0 10px;font-size:13px}.source{font-size:12px;color:#a34c2a;font-weight:850;text-decoration:none}.editor{padding:18px 22px}.lang-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.lang{background:#faf8f3;border:1px solid var(--line);border-radius:14px;padding:13px}.lang h3{font-size:12px;margin:0 0 8px;letter-spacing:.06em}.lang .field{margin:8px 0}.lang textarea{min-height:96px}.actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:15px}.hint{font-size:11px;color:var(--muted);margin:8px 0 0}.empty{padding:36px;text-align:center;color:var(--muted)}.message{margin:12px 0;padding:11px 13px;border-radius:10px;background:#f3f0e9;font-size:13px}.message.error{background:#fff1ef;color:var(--red)}.message.ok{background:#edf7f1;color:var(--green)}.hidden{display:none!important}
+@media(max-width:760px){.lang-grid{grid-template-columns:1fr}.story-head,.editor{padding:16px}.top-actions .link{display:none}.actions .btn{flex:1}.panel{padding:18px}}
+</style></head>
+<body>
+<header><div class="wrap nav"><a class="brand" href="/news/" style="text-decoration:none;color:inherit">ZELPX<b>.</b> LOCAL <span style="font-size:10px;color:#8a8378;letter-spacing:.1em">ADMIN</span></a><div class="top-actions"><a class="link" href="/news/">VIEW PUBLIC PAGE ↗</a><button id="signout" class="btn ghost hidden">Sign out</button></div></div></header>
+<div class="wrap">
+<section class="hero"><div class="eyebrow">EDITORIAL CONTROL CENTER</div><h1>Local news review</h1><p>Review incoming stories, prepare all three languages, then publish or reject.</p></section>
+<section id="login" class="panel login"><h2>Administrator sign in</h2><p>Use your existing ZELPX administrator account.</p><form id="loginform"><div class="field"><label for="email">EMAIL</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label for="password">PASSWORD</label><input id="password" type="password" autocomplete="current-password" required></div><button class="btn orange" style="width:100%">Sign in</button></form><div id="loginmsg" aria-live="polite"></div></section>
+<section id="app"><div class="toolbar"><div class="stats"><div class="stat"><strong id="count">0</strong> awaiting review</div><div class="stat">Required languages: <strong>EN · ES · RU</strong></div></div><button id="refresh" class="btn ghost">↻ Refresh queue</button></div><div id="globalmsg" aria-live="polite"></div><div id="queue" class="queue"><div class="panel empty">Loading review queue…</div></div></section>
+</div>
+<script>
+const SUPABASE_URL="https://zsrnjkndgbchfxibxiyd.supabase.co";
+const SUPABASE_KEY="sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let stories=[];
+function message(el,text,type=""){el.innerHTML="";const d=document.createElement("div");d.className="message "+type;d.textContent=text;el.append(d)}
+function escapeText(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function translation(item,lang){return (item.local_news_translations||[]).find(x=>x.language===lang)||{title:lang==="en"?item.original_title:"",summary:lang==="en"?(item.original_summary||""):""}}
+function date(v){if(!v)return "";const d=new Date(v);return Number.isNaN(d.getTime())?"":d.toLocaleString()}
+async function api(payload){
+ const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error("Session expired. Please sign in again.");
+ const res=await fetch(SUPABASE_URL+"/functions/v1/local-news-admin",{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_KEY,Authorization:"Bearer "+session.access_token},body:JSON.stringify(payload)});
+ const data=await res.json().catch(()=>({error:"Unexpected server response"}));if(!res.ok)throw new Error(data.error||"Request failed");return data;
+}
+function render(){
+ $("count").textContent=stories.length;const root=$("queue");root.innerHTML="";
+ if(!stories.length){root.innerHTML='<div class="panel empty"><div style="font-size:30px;color:var(--orange)">✳</div><h2>Review queue is clear</h2><p>New items will appear here after the next scheduled source check.</p></div>';return}
+ stories.forEach(item=>{
+  const src=item.local_news_sources||{};const card=document.createElement("article");card.className="story";card.dataset.id=item.id;
+  const head=document.createElement("div");head.className="story-head";
+  const meta=document.createElement("div");meta.className="meta";meta.innerHTML='<span class="pill">'+escapeText(item.city||"Local")+'</span><span>'+escapeText(item.category||"community")+'</span><span>Received '+escapeText(date(item.ingested_at))+'</span>';
+  const h=document.createElement("h2");h.textContent=item.original_title||"Untitled story";
+  const p=document.createElement("p");p.className="summary";p.textContent=item.original_summary||"No source summary provided.";
+  const a=document.createElement("a");a.className="source";a.href=item.source_article_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=(src.name||"Original source")+" — Open original ↗";
+  head.append(meta,h,p,a);card.append(head);
+  const editor=document.createElement("div");editor.className="editor";
+  const grid=document.createElement("div");grid.className="lang-grid";
+  [["en","ENGLISH"],["es","ESPAÑOL"],["ru","РУССКИЙ"]].forEach(([lang,label])=>{
+   const t=translation(item,lang),box=document.createElement("section");box.className="lang";
+   const titleId=item.id+"-"+lang+"-title",sumId=item.id+"-"+lang+"-summary";
+   box.innerHTML='<h3>'+label+'</h3><div class="field"><label for="'+titleId+'">HEADLINE</label><input id="'+titleId+'" maxlength="500" value="'+escapeText(t.title||"")+'" placeholder="Translated headline"></div><div class="field"><label for="'+sumId+'">SHORT SUMMARY</label><textarea id="'+sumId+'" maxlength="1600" placeholder="Translated summary">'+escapeText(t.summary||"")+'</textarea></div>';
+   grid.append(box);
+  });
+  const hint=document.createElement("p");hint.className="hint";hint.textContent="All three languages need a headline and short summary before this story can be published.";
+  const actions=document.createElement("div");actions.className="actions";
+  const reject=document.createElement("button");reject.className="btn danger";reject.textContent="Reject";
+  const save=document.createElement("button");save.className="btn ghost";save.textContent="Save translations";
+  const approve=document.createElement("button");approve.className="btn orange";approve.textContent="Approve & publish";
+  const feedback=document.createElement("div");feedback.setAttribute("aria-live","polite");
+  function collect(){const out={};["en","es","ru"].forEach(lang=>out[lang]={title:$(item.id+"-"+lang+"-title").value,summary:$(item.id+"-"+lang+"-summary").value});return out}
+  save.onclick=async()=>{save.disabled=true;try{await api({action:"save",id:item.id,translations:collect()});message(feedback,"Translations saved.","ok")}catch(e){message(feedback,e.message,"error")}finally{save.disabled=false}};
+  approve.onclick=async()=>{if(!confirm("Publish this story to the public ZELPX LOCAL page in English, Spanish and Russian?"))return;approve.disabled=true;try{await api({action:"approve",id:item.id,translations:collect()});stories=stories.filter(x=>x.id!==item.id);render();message($("globalmsg"),"Story published successfully.","ok")}catch(e){message(feedback,e.message,"error")}finally{approve.disabled=false}};
+  reject.onclick=async()=>{if(!confirm("Reject and remove this story from the review queue?"))return;reject.disabled=true;try{await api({action:"reject",id:item.id});stories=stories.filter(x=>x.id!==item.id);render();message($("globalmsg"),"Story rejected.","ok")}catch(e){message(feedback,e.message,"error")}finally{reject.disabled=false}};
+  actions.append(reject,save,approve);editor.append(grid,hint,actions,feedback);card.append(editor);root.append(card);
+ });
+}
+async function load(){ $("queue").innerHTML='<div class="panel empty">Loading review queue…</div>';try{const data=await api({action:"list"});stories=data.items||[];render()}catch(e){$("queue").innerHTML="";message($("queue"),e.message,"error")}}
+async function checkSession(){const {data:{session}}=await sb.auth.getSession();if(session){$("login").classList.add("hidden");$("app").style.display="block";$("signout").classList.remove("hidden");await load()}else{$("login").classList.remove("hidden");$("app").style.display="none";$("signout").classList.add("hidden")}}
+$("loginform").addEventListener("submit",async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;try{const {error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;message($("loginmsg"),"Signed in. Checking administrator access…","ok");await checkSession()}catch(err){message($("loginmsg"),err.message||"Sign-in failed","error")}finally{btn.disabled=false}});
+$("signout").onclick=async()=>{await sb.auth.signOut();stories=[];await checkSession()};
+$("refresh").onclick=load;
+sb.auth.onAuthStateChange(()=>{setTimeout(checkSession,0)});
+checkSession();
+</script></body></html>
