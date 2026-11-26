@@ -1924,8 +1924,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if (contractorAccountError) throw contractorAccountError;
     if (!contractorAccount) throw new Error("Contractor account required.");
     const digits = value => String(value || "").replace(/\D/g, "");
-    // Phone ownership is verified once and remains attached to this contractor
-    // account. Ordinary profile edits must not request another SMS code.
+    // Every account update requires a fresh SMS verification, even when this
+    // phone number was verified previously. Always use the phone already on file.
     currentContractor = { ...(currentContractor || {}), ...contractorAccount };
 
     return await new Promise(resolve => {
@@ -1933,12 +1933,14 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       overlay.style.cssText = "position:fixed;inset:0;z-index:100500;background:#24170f99;display:flex;align-items:center;justify-content:center;padding:18px";
       const panel = document.createElement("section");
       panel.style.cssText = "width:min(100%,420px);max-height:calc(100dvh - 36px);overflow-y:auto;background:#fffefa;border-radius:20px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005;box-sizing:border-box;font-family:inherit";
-panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;color:#30231e">Verify contractor phone</h2><p style="margin:12px 0 20px;color:#756b64;line-height:1.5">Verify this phone once to link it to your contractor account. After verification, you can submit account updates without repeating SMS verification. Each update will be sent to an administrator for review.</p><label for="zelpxContractorVerifyPhone" style="display:block;font-weight:700;color:#514840;margin:14px 0 6px">Mobile number</label><input id="zelpxContractorVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px"><button type="button" id="zelpxContractorSendCode" style="display:block;width:100%;padding:15px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Send SMS code for this update</button><label for="zelpxContractorVerifyCode" style="display:block;font-weight:700;color:#514840;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxContractorVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px;letter-spacing:2px"><p id="zelpxContractorVerifyMessage" role="status" style="min-height:22px;margin:8px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px"><button type="button" id="zelpxContractorCancel" style="min-height:54px;padding:13px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-size:16px;font-weight:700">Cancel</button><button type="button" id="zelpxContractorVerify" style="min-height:54px;padding:13px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Verify & save account</button></div>';
+panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;color:#30231e">Verify contractor phone</h2><p style="margin:12px 0 20px;color:#756b64;line-height:1.5">For security, enter the SMS code sent to the phone number already registered to this contractor account. A new code is required for every account update.</p><label for="zelpxContractorVerifyPhone" style="display:block;font-weight:700;color:#514840;margin:14px 0 6px">Registered mobile number</label><input id="zelpxContractorVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" readonly style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#f5f2ed;color:#30231e;font-size:17px"><button type="button" id="zelpxContractorSendCode" style="display:block;width:100%;padding:15px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Send SMS code for this update</button><label for="zelpxContractorVerifyCode" style="display:block;font-weight:700;color:#514840;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxContractorVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;margin:0 0 10px;background:#fff;color:#30231e;font-size:17px;letter-spacing:2px"><p id="zelpxContractorVerifyMessage" role="status" style="min-height:22px;margin:8px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px"><button type="button" id="zelpxContractorCancel" style="min-height:54px;padding:13px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-size:16px;font-weight:700">Cancel</button><button type="button" id="zelpxContractorVerify" style="min-height:54px;padding:13px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-size:16px;font-weight:700">Verify & save account</button></div>';
       overlay.append(panel); document.body.append(overlay);
       const phoneInput=panel.querySelector("#zelpxContractorVerifyPhone");
       const codeInput=panel.querySelector("#zelpxContractorVerifyCode");
       const msg=panel.querySelector("#zelpxContractorVerifyMessage");
-      phoneInput.value=contractorAccount.contractor_phone || $("profilePhone")?.value?.trim() || currentProfile?.phone || "";
+      phoneInput.value=contractorAccount.contractor_phone || "";
+      if(!phoneInput.value) { finish(false); throw new Error("No registered contractor phone number is available. Contact ZELPX support."); }
+      phoneInput.readOnly=true;
       let sentPhone="";
       const finish=value=>{overlay.remove();resolve(value);};
       panel.querySelector("#zelpxContractorCancel").onclick=()=>finish(false);
@@ -1989,26 +1991,18 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     if(!status||!button)return;
     if(contractorPhoneIsVerified()){
       status.className="message success";
-      status.textContent="Phone verified: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". You can update your account without repeating SMS verification. Each submitted update goes to an administrator for review.";
-      button.textContent="Save company & account updates";button.disabled=false;
+      status.textContent="Phone on file: "+(currentContractor.contractor_phone_verified_number||currentContractor.contractor_phone)+". A fresh SMS code is required every time you update your account.";
+      button.textContent="Verify phone & update account";button.disabled=false;
     }else{
       status.className="message error";
-      status.textContent="Phone not verified. Confirm your phone by SMS before saving company updates, adding wallet credits, or purchasing leads.";
+      status.textContent="Confirm your registered phone by SMS before every account update.";
       button.textContent="Verify phone number & update account";button.disabled=false;
     }
   }
   async function verifyContractorPhoneFromAccount(){
     const button=$("verifyContractorPhoneBtn");
     try{
-      if(!contractorPhoneIsVerified()){
-        const verified=await ensureContractorPhoneVerified();
-        if(!verified)return;
-        const {data,error}=await db.from("contractors").select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number").eq("user_id",currentUser.id).single();
-        if(error)throw error;
-        currentContractor={...(currentContractor||{}),...data};
-      }
-      renderContractorPhoneVerification();
-      await saveCompany(button, true);
+      await saveCompany(button);
       renderContractorPhoneVerification();
     }catch(e){
       message("appMessage",e.message||"Could not verify your phone number or update your account.","error");
@@ -2933,15 +2927,15 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const hasCompletePrimaryLicense = hasLicense && !!(licenseNumber && licenseState && licenseType);
       const hasCompleteEmployerLicense = employeeNeedsEmployerLicense && !!(licenseNumber && licenseState && licenseType);
       if (currentContractor) {
-        if (!contractorPhoneIsVerified()) {
-          const verified = await ensureContractorPhoneVerified();
-          if (!verified) return;
-          const {data:verifiedAccount,error:verifiedAccountError}=await db.from("contractors")
-            .select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number")
-            .eq("user_id",currentUser.id).single();
-          if(verifiedAccountError)throw verifiedAccountError;
-          currentContractor={...(currentContractor||{}),...verifiedAccount};
-        }
+        // A fresh SMS verification is mandatory for every submission,
+        // including accounts whose phone was verified during an earlier update.
+        const verified = await ensureContractorPhoneVerified();
+        if (!verified) return;
+        const {data:verifiedAccount,error:verifiedAccountError}=await db.from("contractors")
+          .select("id,contractor_phone,contractor_phone_verified_at,contractor_phone_verified_number")
+          .eq("user_id",currentUser.id).single();
+        if(verifiedAccountError)throw verifiedAccountError;
+        currentContractor={...(currentContractor||{}),...verifiedAccount};
         if (!contractorPhoneIsVerified()) throw new Error("Phone verification is required before saving any account changes.");
         if (!isEmployee) await verifyContractorBusinessAddress();
         const changes = {
