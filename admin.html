@@ -1803,7 +1803,7 @@
         line("Name",profile.full_name);
         line("Email",full.email);
         line("Phone",full.contractor_phone||profile.phone);
-        line("Address",[full.service_city,full.service_state,full.service_zip_code].filter(Boolean).join(", "));
+        line("Address",[full.service_address,full.service_city,full.service_state,full.service_zip_code].filter(v=>v&&String(v).trim()).join(", "));
         line("Phone verification",full.contractor_phone_verified_at||profile.phone_verified_at?"Verified":"Not verified");
         line("License",full.has_license===true?"Yes":full.has_license===false?"No":"Not specified");
         const stateLicenseRows=(licensesById.get(full.id)||[]).filter(x=>!x.deleted_at);
