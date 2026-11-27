@@ -1895,7 +1895,14 @@
         const insuranceAgency=full.insurance_agency_name||latestCompanyChanges.insurance_agency_name;
         const insurancePhone=full.insurance_agent_phone||latestCompanyChanges.insurance_agent_phone;
         const insuranceExpiration=full.insurance_expiration_date||latestCompanyChanges.insurance_expiration_date;
-        const insuranceStatus=full.insurance_review_status||(insurancePolicy||insuranceExpiration?"Pending review":"Not provided");
+        const insuranceWasIncludedInApprovedUpdate=latestApprovedCompanyUpdate&&
+          (Object.prototype.hasOwnProperty.call(latestCompanyChanges,"insurance_policy_number")||
+           Object.prototype.hasOwnProperty.call(latestCompanyChanges,"insurance_expiration_date")||
+           Object.prototype.hasOwnProperty.call(latestCompanyChanges,"insurance_agency_name")||
+           Object.prototype.hasOwnProperty.call(latestCompanyChanges,"insurance_agent_phone"));
+        const insuranceStatus=insuranceWasIncludedInApprovedUpdate?"Approved":
+          (full.insurance_review_status==="approved"||full.insurance_review_status==="verified"?"Approved":
+          (insurancePolicy||insuranceExpiration?"Not reviewed":"Not provided"));
         line("Insurance agency",insuranceAgency);
         line("Insurance agent phone",insurancePhone);
         line("Insurance policy number",insurancePolicy||"Not provided");
