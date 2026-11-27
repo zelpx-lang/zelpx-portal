@@ -1808,10 +1808,41 @@
         line("Address",[full.service_address,full.service_city,full.service_state,full.service_zip_code].filter(v=>v&&String(v).trim()).join(", "));
         line("Phone verification",full.contractor_phone_verified_at||profile.phone_verified_at?"Verified":"Not verified");
         line("License",full.has_license===true?"Yes":full.has_license===false?"No":"Not specified");
-        const stateLicenseRows=(licensesById.get(full.id)||[]).filter(x=>!x.deleted_at);
-        if(full.license_number&&!stateLicenseRows.some(x=>String(x.state_code||"").toUpperCase()===String(full.license_state||"").toUpperCase())){
-          stateLicenseRows.unshift({state_code:full.license_state,license_type:full.license_type,license_number:full.license_number,review_status:full.license_review_status||"pending",expiration_date:full.license_expiration_date});
-        }
+        // Use the latest approved account update as a fallback if an older approval
+        // did not copy a submitted field into the main contractor row.
+        const latestApprovedCompanyUpdate=(changesById.get(full.id)||[])
+          .filter(x=>x.request_type==="company_profile"&&x.status==="approved")
+          .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))[0];
+        const latestCompanyChanges=latestApprovedCompanyUpdate?.requested_changes||{};
+        const stateLicenseRows=(licensesById.get(full.id)||[]).filter(x=>!x.deleted_at).map(x=>({...x}));
+        const addFallbackLicense=(license)=>{
+          if(!license?.state_code||!license?.license_number)return;
+          const stateCode=String(license.state_code).trim().toUpperCase();
+          const existing=stateLicenseRows.find(x=>String(x.state_code||"").trim().toUpperCase()===stateCode);
+          if(existing){
+            existing.license_type=existing.license_type||license.license_type;
+            existing.license_number=existing.license_number||license.license_number;
+            existing.expiration_date=existing.expiration_date||license.expiration_date;
+            existing.review_status=existing.review_status||license.review_status||"pending";
+            return;
+          }
+          stateLicenseRows.push({...license,state_code:stateCode,review_status:license.review_status||"pending"});
+        };
+        addFallbackLicense({
+          state_code:full.license_state||latestCompanyChanges.license_state,
+          license_type:full.license_type||latestCompanyChanges.license_type,
+          license_number:full.license_number||latestCompanyChanges.license_number,
+          expiration_date:full.license_expiration_date||latestCompanyChanges.license_expiration_date,
+          review_status:full.license_review_status||"pending"
+        });
+        addFallbackLicense({
+          state_code:full.license_state_2||latestCompanyChanges.license_state_2,
+          license_type:full.license_type_2||latestCompanyChanges.license_type_2,
+          license_number:full.license_number_2||latestCompanyChanges.license_number_2,
+          expiration_date:latestCompanyChanges.license_expiration_date_2,
+          review_status:"pending"
+        });
+        (latestCompanyChanges.additional_state_licenses||[]).forEach(addFallbackLicense);
         if(stateLicenseRows.length){
           const licenseWrap=document.createElement("div");
           licenseWrap.style.cssText="margin:8px 0 12px;padding:10px;border:1px solid #e8e1d6;border-radius:12px;background:#fffaf5;";
@@ -1823,7 +1854,7 @@
             licenseInfo.style.cssText="flex:1 1 190px;min-width:0;overflow-wrap:anywhere;line-height:1.45;";
             const normalized=String(license.review_status||"pending").trim().toLowerCase();
             const statusLabel=normalized==="verified"?"Approved":normalized==="approved"?"Approved":normalized==="rejected"||normalized==="declined"?"Declined":"Pending";
-            licenseInfo.textContent=[stateName(license.state_code),license.license_type,license.license_number,statusLabel].filter(Boolean).join(" · ");
+            licenseInfo.textContent=[stateName(license.state_code),license.license_type,license.license_number,license.expiration_date?"Expires "+formatValue("expiration_date",license.expiration_date):"",statusLabel].filter(Boolean).join(" · ");
             licenseRow.append(licenseInfo);
             if(!["verified","approved","rejected","declined"].includes(normalized)){
               const addReviewButton=(decision,label,color)=>{
@@ -1860,7 +1891,16 @@
         }else{
           line("State licenses","No state licenses submitted");
         }
-        line("Insurance",full.insurance_policy_number?("Policy "+full.insurance_policy_number+(full.insurance_expiration_date?" · expires "+formatValue("insurance_expiration_date",full.insurance_expiration_date):"")):"Not provided");
+        const insurancePolicy=full.insurance_policy_number||latestCompanyChanges.insurance_policy_number;
+        const insuranceAgency=full.insurance_agency_name||latestCompanyChanges.insurance_agency_name;
+        const insurancePhone=full.insurance_agent_phone||latestCompanyChanges.insurance_agent_phone;
+        const insuranceExpiration=full.insurance_expiration_date||latestCompanyChanges.insurance_expiration_date;
+        const insuranceStatus=full.insurance_review_status||(insurancePolicy||insuranceExpiration?"Pending review":"Not provided");
+        line("Insurance agency",insuranceAgency);
+        line("Insurance agent phone",insurancePhone);
+        line("Insurance policy number",insurancePolicy||"Not provided");
+        line("Insurance expiration",insuranceExpiration?formatValue("insurance_expiration_date",insuranceExpiration):"Not provided");
+        line("Insurance review status",insuranceStatus);
         const categoryNames=(categoriesById.get(full.id)||[]).map(x=>x.service_categories?.name||x.category_id);
         line("Services",categoryNames.join(", ")||"None selected");
         const professionNamesShort=(professionsById.get(full.id)||[]).map(x=>[professionNames.get(x.profession_id),stateName(x.state_code)].filter(Boolean).join(" — "));
