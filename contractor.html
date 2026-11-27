@@ -724,7 +724,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     <div class="actions">
       <button id="loginBtn">Sign in</button><button id="showSignupBtn" class="secondary">Create contractor account</button>
       <a id="forgotPasswordLink" href="/contractor-forgot-password.html" style="align-self:center">Forgot password?</a>
-      <button id="signupBtn" type="button" class="hidden">Create account</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
+      <button id="signupBtn" type="button" class="hidden">Complete Registration</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
     </div>
     <div id="contractorSocialAuth" class="social-auth" aria-label="Other sign-in options">
       <div class="social-auth-divider"><span>Or continue with</span></div>
@@ -982,7 +982,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     enabled ? show($("signupFields")) : hide($("signupFields"));
     enabled ? hide($("loginBtn")) : show($("loginBtn"));
     enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
-    enabled ? hide($("signupBtn")) : hide($("signupBtn"));
+    enabled ? show($("signupBtn")) : hide($("signupBtn"));
     enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
     enabled ? hide($("contractorSocialAuth")) : show($("contractorSocialAuth"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
