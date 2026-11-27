@@ -1933,7 +1933,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const licenseChoice=$("profileHasLicense").value;
     const licenseLabel=document.querySelector('label[for="profileHasLicense"]');
     if(licenseLabel) licenseLabel.textContent="Do you have a current license or registration?";
-    $("professionLicenseFilter").classList.remove("hidden");
+    $("professionLicenseFilter").classList.toggle("hidden", $("professionWorkRole").value === "employee");
     $("profileNoLicenseAckWrap").classList.toggle("hidden",licenseChoice!=="no");
     if(licenseChoice!=="no") $("profileNoLicenseAck").checked=false;
     // Do not silently discard a contractor's selected professions when the
