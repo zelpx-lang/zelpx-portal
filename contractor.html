@@ -2358,11 +2358,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           if (offerState?.status==="pending") { offerInput.value=(offerState.offer_cents/100).toFixed(2); const pending=document.createElement("small"); pending.textContent="Offer sent · awaiting customer approval"; offerWrap.append(pending); }
           offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
-        // Customer-approved offers replace instant purchases for all available leads.
-        // The ZELPX fee is charged only by the customer approval RPC.
-        if (!canOpenPurchase) {
-          const accessNote=document.createElement("span"); accessNote.className="lead-date"; accessNote.textContent="Sign in with an approved contractor account to make an offer."; footer.append(accessNote);
-        }
+        // Keep the existing instant-purchase flow for regular leads.
+        const buyButton = document.createElement("button"); buyButton.type = "button";
+        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
+        buyButton.disabled = !canOpenPurchase;
+        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+        footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
       details.append(footer); card.append(details);
