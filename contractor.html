@@ -1426,7 +1426,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const row=document.createElement("div");
       row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
       const label=document.createElement("span");label.style.cssText="min-width:0;flex:1;line-height:1.45";
-      label.textContent=item.state_code+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Approved":item.review_status==="rejected"?"Rejected":"Pending review");
+      label.textContent=stateName(item.state_code)+" · "+item.license_number+" · "+item.license_type+" · "+(item.review_status==="verified"?"Approved":item.review_status==="rejected"?"Rejected":"Pending review");
       const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove";
       remove.style.cssText="width:auto;min-height:36px;padding:6px 12px;color:#b5472b;flex:0 0 auto";
       remove.addEventListener("click",()=>{additionalStateLicenses=additionalStateLicenses.filter(x=>String(x.state_code).toUpperCase()!==String(item.state_code).toUpperCase());renderAdditionalStateLicenses();});
