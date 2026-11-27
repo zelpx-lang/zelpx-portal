@@ -1868,6 +1868,15 @@
         const title = document.createElement("strong");
         title.textContent = full.company_name || profile.full_name || "Contractor company";
         title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
+        const accountUpdates=(changesById.get(full.id)||[]).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+        const pendingAccountUpdates=accountUpdates.filter(x=>x.status==="pending");
+        const updateMarker=document.createElement("span");
+        updateMarker.textContent=pendingAccountUpdates.length ? "🟠 UPDATED · REVIEW" : "";
+        updateMarker.style.cssText="flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#fff0d6;color:#9a5b12;font-size:11px;font-weight:850;white-space:nowrap;";
+        updateMarker.hidden=!pendingAccountUpdates.length;
+        updateMarker.title=pendingAccountUpdates.length
+          ? "This account has "+pendingAccountUpdates.length+" pending update request(s). Open the account to review."
+          : "";
         const accessIsAllowed = full.verification_status === "verified";
         const accessBadge = document.createElement("span");
         accessBadge.textContent = accessIsAllowed ? "🔓 Unblocked" : "🔒 Blocked";
@@ -1877,7 +1886,7 @@
         expandIcon.textContent = "+";
         expandIcon.setAttribute("aria-hidden", "true");
         expandIcon.style.cssText = "flex:0 0 auto;font-size:25px;font-weight:400;line-height:1;color:#e8753b;";
-        heading.append(title, accessBadge, expandIcon);
+        heading.append(title, updateMarker, accessBadge, expandIcon);
         const panel = document.createElement("div");
         panel.className = "unlicensed-contractor-details hidden";
         panel.style.cssText = "padding-top:10px;";
@@ -1999,8 +2008,8 @@
         line("Insurance policy number",insurancePolicy||"Not provided");
         line("Insurance expiration",insuranceExpiration?formatValue("insurance_expiration_date",insuranceExpiration):"Not provided");
         line("Insurance review status",insuranceStatus);
-        const pendingChangeRequests=(changesById.get(full.id)||[])
-          .filter(request=>request.status==="pending")
+        const pendingChangeRequests=pendingAccountUpdates
+          .slice()
           .sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
         if(pendingChangeRequests.length){
           const requestsBox=document.createElement("section");
