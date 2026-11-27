@@ -2230,6 +2230,34 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       message("appMessage", "Purchase failed: " + friendly, "error"); await loadLeads();
     } finally { setBusy(button, false); }
   }
+  const contractorLeadOfferStates = new Map();
+  async function submitContractorLeadOffer(lead, amountInput, button) {
+    if (!contractorPhoneIsVerified()) return showLeadRequirementNotice("Phone verification required","Verify your contractor phone number before sending an offer.");
+    const amount = Number(amountInput.value);
+    if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== amount * 100) {
+      message("appMessage","Enter a valid job offer with no more than 2 decimal places.","error"); return;
+    }
+    setBusy(button,true,"Sending…");
+    try {
+      const { error } = await db.rpc("submit_lead_offer",{p_lead_id:lead.id,p_offer_cents:Math.round(amount*100)});
+      if(error) throw error;
+      contractorLeadOfferStates.set(lead.id,{status:"pending",offer_cents:Math.round(amount*100)});
+      message("appMessage","Your offer was sent to the customer. No ZELPX Credits are charged unless the customer approves.","success");
+      renderLeads();
+    } catch(error) { message("appMessage","Could not send offer: "+(error.message||"Unknown error"),"error"); }
+    finally { setBusy(button,false); }
+  }
+  async function declineContractorLead(lead,button) {
+    setBusy(button,true,"Saving…");
+    try {
+      const {error}=await db.rpc("decline_lead_offer",{p_lead_id:lead.id});
+      if(error) throw error;
+      contractorLeadOfferStates.set(lead.id,{status:"declined"});
+      message("appMessage","You declined this job. No credits were charged.","success");
+      renderLeads();
+    } catch(error) { message("appMessage","Could not decline job: "+(error.message||"Unknown error"),"error"); }
+    finally { setBusy(button,false); }
+  }
   let purchasedLeadIds = new Set();
   function splitLeadDescription(description) {
     const raw = String(description || "").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n");
@@ -2318,6 +2346,17 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           eligibility.className = "pill";
           eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : "Select this service in your profile";
           badges.append(eligibility);
+        }
+        const offerState = contractorLeadOfferStates.get(lead.id);
+        if (canOpenPurchase) {
+          const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
+          const offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Your job offer ($)"; offerInput.setAttribute("aria-label","Your job offer in dollars"); offerInput.style.cssText="flex:1;min-width:145px";
+          const offerButton = document.createElement("button"); offerButton.type="button"; offerButton.textContent=offerState?.status==="pending" ? "Update offer" : "Make an Offer";
+          offerButton.addEventListener("click",()=>submitContractorLeadOffer(lead,offerInput,offerButton));
+          const declineButton = document.createElement("button"); declineButton.type="button"; declineButton.className="secondary"; declineButton.textContent=offerState?.status==="declined" ? "Declined" : "Decline"; declineButton.disabled=offerState?.status==="declined";
+          declineButton.addEventListener("click",()=>declineContractorLead(lead,declineButton));
+          if (offerState?.status==="pending") { offerInput.value=(offerState.offer_cents/100).toFixed(2); const pending=document.createElement("small"); pending.textContent="Offer sent · awaiting customer approval"; offerWrap.append(pending); }
+          offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
