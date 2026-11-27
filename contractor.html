@@ -3776,10 +3776,16 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
-    $("clearSignupProfessionsBtn").addEventListener("click",()=>{
-      signupSelectedProfessionIds.clear();signupSelectedCategoryIds.clear();
-      renderSignupProfessionOptions();
-      refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
+    $("clearSignupProfessionsBtn").addEventListener("click",(event)=>{
+      event.preventDefault();
+      signupSelectedProfessionIds.clear();
+      signupSelectedCategoryIds.clear();
+      updateSignupSelectedServices();
+      $("signupConditionalAck").checked=false;
+      $("signupUnverifiedAck").checked=false;
+      $("signupConditionalAckLabel").classList.add("hidden");
+      $("signupUnverifiedAckLabel").classList.add("hidden");
+      renderSignupProfessionRules();
     });
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     function updateSignupInsuranceVisibility(){
