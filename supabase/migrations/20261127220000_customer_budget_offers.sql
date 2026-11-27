@@ -231,7 +231,7 @@ declare
   v_customer_request_id uuid;
 begin
   if auth.uid() is null then raise exception 'You must be signed in.'; end if;
-  if p_decision not in ('approve','decline') then raise exception 'Choose Approve or Decline.'; end if;
+  if p_decision is null or p_decision not in ('approve','decline') then raise exception 'Choose Approve or Decline.'; end if;
 
   select o.* into v_offer
   from public.lead_offers o
