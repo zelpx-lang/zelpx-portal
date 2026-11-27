@@ -663,7 +663,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   <style>@keyframes zelpxAuthSpin{to{transform:rotate(360deg)}}</style>
   <section id="authView" class="card">
     <h1>Welcome to ZELPX</h1><p>Sign in or create a contractor account to access the lead marketplace.</p>
-    <div id="authMessage" class="message hidden"></div>
     <div class="grid">
       <div><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com" required></div>
       <div><label for="authPassword">Password</label><div class="password-field"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password"><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
@@ -737,6 +736,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       <a id="forgotPasswordLink" href="/contractor-forgot-password.html" style="align-self:center">Forgot password?</a>
       <button id="signupBtn" type="button" class="hidden">Complete Registration</button><button id="cancelSignupBtn" type="button" class="secondary hidden">Cancel</button>
     </div>
+    <div id="authMessage" class="message hidden" role="alert" aria-live="polite"></div>
     <div id="contractorSocialAuth" class="social-auth" aria-label="Other sign-in options">
       <div class="social-auth-divider"><span>Or continue with</span></div>
       <button id="contractorGoogleSignInButton" class="social-auth-button" type="button">
