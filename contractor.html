@@ -676,7 +676,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
-      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only leads within this distance of your Business ZIP code will be shown.</small></div>
+      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only leads within this distance of your Business ZIP code will be shown.</small><small class="muted" style="display:block">Your service radius is saved with your registration and can be changed later in My Company.</small></div>
       <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
         <h3>Choose your work before creating your account</h3>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
@@ -709,6 +709,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <div><label for="licenseState2">Second issuing state</label><select id="licenseState2"><option value="">Choose state</option><option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option></select></div>
         <div><label for="licenseNumber2">Second license number</label><input id="licenseNumber2" autocomplete="off"></div>
         <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
+        <div id="signupAdditionalLicensesWrap" style="grid-column:1/-1;margin:8px 0 4px">
+          <div id="signupAdditionalLicensesList" class="muted" style="font-size:13px;margin-bottom:8px">No additional state licenses added.</div>
+          <button id="addSignupLicenseStateBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">＋ Add another state</button>
+          <small class="muted" style="display:block;margin-top:6px">Add a separate license for every state where you want to perform licensed work. Each state license is reviewed separately.</small>
+          <div id="signupAdditionalLicenseEditor" class="hidden" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fffaf5">
+            <h3 style="margin:0 0 8px">Additional state license</h3>
+            <label for="signupAdditionalLicenseState">Issuing state</label><select id="signupAdditionalLicenseState"><option value="">Choose state</option></select>
+            <label for="signupAdditionalLicenseNumber">License number</label><input id="signupAdditionalLicenseNumber" autocomplete="off">
+            <label for="signupAdditionalLicenseType">License type / classification</label><input id="signupAdditionalLicenseType" autocomplete="off">
+            <label for="signupAdditionalLicenseExpiry">Expiration date (if applicable)</label><input id="signupAdditionalLicenseExpiry" type="date">
+            <div class="actions"><button id="saveSignupAdditionalLicenseBtn" type="button">Add state</button><button id="cancelSignupAdditionalLicenseBtn" type="button" class="secondary">Cancel</button></div>
+            <div id="signupAdditionalLicenseMessage" class="message hidden" role="status"></div>
+          </div>
+        </div>
       </div>
       <div style="grid-column:1/-1"><label><input id="signupLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
@@ -1211,6 +1225,42 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     $("signupConditionalAckLabel").querySelector("input").nextSibling.textContent=employee?" I will only perform this work under an appropriately licensed employer and required supervision.":" I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.";
     $("signupUnverifiedAckLabel").querySelector("input").nextSibling.textContent=employee?" I will verify individual credentials and employer requirements before performing work not yet verified in ZELPX.":" I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.";
   }
+  let signupAdditionalStateLicenses = [];
+  function renderSignupAdditionalLicenses(){
+    const root=$("signupAdditionalLicensesList"); if(!root)return;
+    root.replaceChildren();
+    if(!signupAdditionalStateLicenses.length){root.textContent="No additional state licenses added.";return;}
+    signupAdditionalStateLicenses.forEach((item,index)=>{
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;margin:6px 0;border:1px solid var(--line);border-radius:12px;background:#fffdfa";
+      const label=document.createElement("span");label.style.cssText="min-width:0;flex:1";
+      label.textContent=stateName(item.state_code)+" · "+item.license_number+" · "+item.license_type+" · Pending review";
+      const remove=document.createElement("button");remove.type="button";remove.className="secondary";remove.textContent="Remove";remove.style.cssText="width:auto;min-height:36px;padding:6px 12px";
+      remove.addEventListener("click",()=>{signupAdditionalStateLicenses.splice(index,1);renderSignupAdditionalLicenses();});
+      row.append(label,remove);root.append(row);
+    });
+  }
+  function openSignupAdditionalLicenseEditor(){
+    const source=$("licenseState"),select=$("signupAdditionalLicenseState");
+    select.replaceChildren(new Option("Choose state",""));
+    [...source.options].filter(o=>o.value).forEach(o=>select.add(new Option(o.textContent,o.value)));
+    const used=new Set([String($("licenseState").value||"").toUpperCase(),String($("licenseState2").value||"").toUpperCase(),...signupAdditionalStateLicenses.map(x=>x.state_code)]);
+    [...select.options].forEach(o=>{if(o.value&&used.has(o.value.toUpperCase()))o.disabled=true;});
+    select.value="";$("signupAdditionalLicenseNumber").value="";$("signupAdditionalLicenseType").value="";$("signupAdditionalLicenseExpiry").value="";
+    $("signupAdditionalLicenseMessage").className="message hidden";$("signupAdditionalLicenseEditor").classList.remove("hidden");
+  }
+  function saveSignupAdditionalLicense(){
+    const state_code=$("signupAdditionalLicenseState").value.toUpperCase();
+    const license_number=$("signupAdditionalLicenseNumber").value.trim();
+    const license_type=$("signupAdditionalLicenseType").value.trim();
+    const expiration_date=$("signupAdditionalLicenseExpiry").value||null;
+    const msg=$("signupAdditionalLicenseMessage");
+    if(!state_code||!license_number||!license_type){msg.textContent="Enter the state, license number, and license type.";msg.className="message error";return;}
+    const used=[$("licenseState").value,$("licenseState2").value,...signupAdditionalStateLicenses.map(x=>x.state_code)].filter(Boolean).map(x=>x.toUpperCase());
+    if(used.includes(state_code)){msg.textContent="This state is already listed. Choose a different state.";msg.className="message error";return;}
+    signupAdditionalStateLicenses.push({state_code,license_number,license_type,expiration_date});
+    renderSignupAdditionalLicenses();$("signupAdditionalLicenseEditor").classList.add("hidden");
+  }
   async function signUp() {
     clearMessage("authMessage");
     const email = $("authEmail").value.trim().toLowerCase(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
@@ -1259,6 +1309,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if (hasLicense && new Date(licenseExpirationDate+"T00:00:00") < new Date(new Date().toDateString())) return message("authMessage", "The license expiration date must be today or later.", "error");
     if (hasLicense && ((licenseNumber2||licenseState2||licenseType2) && (!licenseNumber2||!licenseState2||!licenseType2))) return message("authMessage","Complete all three fields for the second state license, or leave all three blank.","error");
     if (hasLicense && licenseState2 && licenseState2===licenseState) return message("authMessage","Choose two different states for your licenses.","error");
+    if(hasLicense){
+      const listed=[licenseState,licenseState2,...signupAdditionalStateLicenses.map(x=>x.state_code)].filter(Boolean).map(x=>x.toUpperCase());
+      if(new Set(listed).size!==listed.length)return message("authMessage","Each state license must use a different state.","error");
+      if(signupAdditionalStateLicenses.some(x=>!x.state_code||!x.license_number||!x.license_type))return message("authMessage","Complete every additional state license entry.","error");
+    }
     const hasInsuranceCertificate=$("signupHasInsuranceCertificate").value==="yes";
     const insuranceAgencyName=$("signupInsuranceAgency").value.trim();
     const insuranceAgentPhone=$("signupInsurancePhone").value.trim();
@@ -1271,7 +1326,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     try {
       const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, email, lead_email_notifications: $("signupLeadEmailNotifications").checked, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
           license_expiration_date: hasLicense ? licenseExpirationDate : null,
-          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
+          license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, zelpx_signup_additional_state_licenses: hasLicense ? signupAdditionalStateLicenses : [], has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         throw new Error("This email is already registered. Please sign in to your existing account.");
@@ -1384,11 +1439,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(!currentContractor||m.has_license!==true||m.zelpx_signup_company_license_synced===true)return;
     const expiration=String(m.license_expiration_date||'').trim();
     const entries=[
-      {state:String(m.license_state||'').toUpperCase(),number:String(m.license_number||'').trim(),type:String(m.license_type||'').trim()},
-      {state:String(m.license_state_2||'').toUpperCase(),number:String(m.license_number_2||'').trim(),type:String(m.license_type_2||'').trim()}
+      {state:String(m.license_state||'').toUpperCase(),number:String(m.license_number||'').trim(),type:String(m.license_type||'').trim(),expiration},
+      {state:String(m.license_state_2||'').toUpperCase(),number:String(m.license_number_2||'').trim(),type:String(m.license_type_2||'').trim(),expiration},
+      ...(Array.isArray(m.zelpx_signup_additional_state_licenses)?m.zelpx_signup_additional_state_licenses:[]).map(x=>({state:String(x.state_code||'').toUpperCase(),number:String(x.license_number||'').trim(),type:String(x.license_type||'').trim(),expiration:String(x.expiration_date||'').trim()}))
     ].filter(x=>x.state&&x.number&&x.type);
     if(!entries.length)return;
-    if(!expiration)throw new Error('Your company license expiration date is missing. Update it in My Company before license review.');
     const {data:existing,error:existingError}=await db.from('contractor_state_licenses').select('state_code').eq('contractor_id',currentContractor.id);
     if(existingError)throw existingError;
     const existingStates=new Set((existing||[]).map(x=>String(x.state_code||'').toUpperCase()));
@@ -1396,12 +1451,12 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       if(existingStates.has(license.state))continue;
       const {error}=await db.rpc('zelpx_submit_company_state_license',{
         p_state_code:license.state,p_license_number:license.number,p_license_type:license.type,
-        p_document_path:null,p_expiration_date:expiration
+        p_document_path:null,p_expiration_date:license.expiration||null
       });
       if(error)throw error;
       existingStates.add(license.state);
     }
-    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_company_license_synced:true}});
+    const {error:metadataError}=await db.auth.updateUser({data:{zelpx_signup_company_license_synced:true,zelpx_signup_additional_state_licenses:null}});
     if(metadataError)throw metadataError;
   }
   async function syncSignupContractorServiceCategories(user){
@@ -3854,6 +3909,10 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     }
     updateSignupLicenseFields();
     $("hasLicense").addEventListener("change", () => {
+    $("addSignupLicenseStateBtn").addEventListener("click",openSignupAdditionalLicenseEditor);
+    $("saveSignupAdditionalLicenseBtn").addEventListener("click",saveSignupAdditionalLicense);
+    $("cancelSignupAdditionalLicenseBtn").addEventListener("click",()=>$("signupAdditionalLicenseEditor").classList.add("hidden"));
+
       // Preserve selections when switching the license filter.
       updateSignupLicenseFields();
       updateSignupInsuranceVisibility();
