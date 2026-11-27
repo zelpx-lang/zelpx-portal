@@ -1043,7 +1043,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     clearMessage("authMessage");
     try { if (!db || !db.auth || !db.functions) initClient(); }
     catch (clientError) { return message("authMessage", clientError.message, "error"); }
-    const email = $("authEmail").value.trim(), password = $("authPassword").value;
+    const email = $("authEmail").value.trim().toLowerCase(), password = $("authPassword").value;
     if (!email || !password) return message("authMessage", "Enter your email and password.", "error");
     setBusy($("loginBtn"), true, "Signing in…");
     show($("oauthReturnLoading"));
@@ -1198,7 +1198,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   }
   async function signUp() {
     clearMessage("authMessage");
-    const email = $("authEmail").value.trim(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
+    const email = $("authEmail").value.trim().toLowerCase(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
     const signupRole=$("signupWorkRole").value;
     const companyName = signupRole==="employee" ? fullName : $("companyName").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
@@ -1258,6 +1258,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           license_expiration_date: hasLicense ? licenseExpirationDate : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        throw new Error("This email is already registered. Please sign in to your existing account.");
+      }
       if (data.session) { message("authMessage", "Account created. Opening your portal…", "success"); await loadApp(); }
       else { message("authMessage", "Account created. Check your email to confirm the account, then sign in.", "success"); setSignupMode(false); }
     } catch (e) {
