@@ -1995,57 +1995,104 @@
           .filter(request=>request.status==="pending")
           .sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
         if(pendingChangeRequests.length){
-          const requestsBox=document.createElement("div");
-          requestsBox.style.cssText="margin:12px 0;padding:12px;border:1px solid #e8d9c8;border-radius:12px;background:#fffaf5;";
-          const requestsTitle=document.createElement("strong");
-          requestsTitle.textContent="Pending account updates";
+          const requestsBox=document.createElement("section");
+          requestsBox.style.cssText="margin:14px 0;padding:14px;border:1px solid #e7d8c7;border-radius:14px;background:#fffaf5;";
+          const requestsTitle=document.createElement("h3");
+          requestsTitle.textContent="Account updates awaiting your decision";
+          requestsTitle.style.cssText="margin:0 0 10px;font-size:16px;line-height:1.3;color:#243447;";
           requestsBox.append(requestsTitle);
           pendingChangeRequests.forEach(request=>{
-            const requestRow=document.createElement("div");
-            requestRow.style.cssText="padding:10px 0;border-top:1px solid #eee2d5;margin-top:8px;";
+            const card=document.createElement("div");
+            card.style.cssText="padding:12px 0;border-top:1px solid #eadfd3;";
+            const header=document.createElement("div");
+            header.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;";
             const requestName=document.createElement("strong");
-            requestName.textContent=request.request_type==="company_profile"?"Company profile":request.request_type==="profession_qualifications"?"Profession qualifications":String(request.request_type||"Account update").replaceAll("_"," ");
-            const requestDate=document.createElement("div");
-            requestDate.className="muted";
-            requestDate.textContent="Submitted: "+(request.created_at?new Date(request.created_at).toLocaleString():"Unknown");
-            const requestData=document.createElement("pre");
-            requestData.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.4 inherit;color:#625b52;background:#fff;padding:8px;border-radius:8px;max-height:150px;overflow:auto;";
-            requestData.textContent=JSON.stringify(request.requested_changes||{},null,2);
-            const requestActions=document.createElement("div");
-            requestActions.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;";
-            const decideRequest=async(decision,button)=>{
-              if(button.disabled)return;
-              const approved=decision==="approved_with_license";
-              if(!window.confirm((approved?"Approve":"Decline")+" this "+requestName.textContent.toLowerCase()+" update for "+(full.company_name||"this contractor")+"?"))return;
-              const buttons=[...requestActions.querySelectorAll("button")];
-              buttons.forEach(b=>b.disabled=true);
-              button.textContent=approved?"Approving…":"Declining…";
-              try{
-                const {error}=await db.rpc("review_contractor_change_request",{
-                  p_request_id:request.id,
-                  p_decision:decision,
-                  p_admin_note:null
-                });
-                if(error)throw error;
-                message("unlicensedContractorsMessage",requestName.textContent+" "+(approved?"approved.":"declined."),"success");
-                await loadUnlicensedContractors();
-              }catch(e){
-                message("unlicensedContractorsMessage","Could not update "+requestName.textContent+": "+(e.message||"Unknown error"),"error");
-                buttons.forEach(b=>b.disabled=false);
-                button.textContent=approved?"Approve":"Decline";
-              }
+            requestName.textContent=request.request_type==="company_profile"?"Company profile":request.request_type==="profession_qualifications"?"Services and qualifications":"Account update";
+            requestName.style.cssText="font-size:15px;color:#243447;";
+            const pendingTag=document.createElement("span");
+            pendingTag.textContent="Awaiting decision";
+            pendingTag.style.cssText="font-size:12px;font-weight:700;color:#8a5a18;background:#fff0d6;padding:4px 9px;border-radius:20px;";
+            header.append(requestName,pendingTag);
+            const requestDate=document.createElement("p");
+            requestDate.style.cssText="margin:4px 0 10px;color:#777;font-size:12px;";
+            requestDate.textContent="Submitted "+(request.created_at?new Date(request.created_at).toLocaleString("en-US"):"date unavailable");
+            const details=document.createElement("div");
+            details.style.cssText="display:grid;grid-template-columns:minmax(0,1fr);gap:5px;padding:10px;background:#fff;border:1px solid #eee6dc;border-radius:10px;font-size:13px;color:#4c4c4c;";
+            const addDetail=(label,value)=>{
+              if(value===null||value===undefined||value==="")return;
+              const item=document.createElement("div");
+              item.style.cssText="line-height:1.4;overflow-wrap:anywhere;";
+              const labelNode=document.createElement("strong");labelNode.textContent=label+": ";
+              item.append(labelNode,document.createTextNode(String(value)));details.append(item);
             };
-            const approveRequest=document.createElement("button");
-            approveRequest.type="button";approveRequest.className="secondary";approveRequest.textContent="Approve";
-            approveRequest.style.cssText="width:auto;min-height:38px;padding:7px 14px;color:#16794b;";
-            approveRequest.addEventListener("click",()=>decideRequest("approved_with_license",approveRequest));
-            const declineRequest=document.createElement("button");
-            declineRequest.type="button";declineRequest.className="secondary";declineRequest.textContent="Decline";
-            declineRequest.style.cssText="width:auto;min-height:38px;padding:7px 14px;color:#b5472b;";
-            declineRequest.addEventListener("click",()=>decideRequest("rejected",declineRequest));
-            requestActions.append(approveRequest,declineRequest);
-            requestRow.append(requestName,requestDate,requestData,requestActions);
-            requestsBox.append(requestRow);
+            const changes=request.requested_changes||{};
+            if(request.request_type==="company_profile"){
+              addDetail("Company",changes.company_name);
+              addDetail("Contact",changes.full_name);
+              addDetail("Email",changes.email);
+              addDetail("Phone",changes.phone);
+              addDetail("Address",[changes.service_address,changes.service_city,stateName(changes.service_state),changes.service_zip_code].filter(Boolean).join(", "));
+              if(changes.has_license===false)addDetail("License","No license declared");
+              else if(changes.has_license===true){
+                const licenseParts=[stateName(changes.license_state),changes.license_type,changes.license_number,changes.license_expiration_date].filter(Boolean);
+                if(licenseParts.length)addDetail("License",licenseParts.join(" · "));
+                else addDetail("License","No license details entered in this update");
+                const secondLicense=[stateName(changes.license_state_2),changes.license_type_2,changes.license_number_2,changes.license_expiration_date_2].filter(Boolean);
+                if(secondLicense.length)addDetail("Second license",secondLicense.join(" · "));
+                (Array.isArray(changes.additional_state_licenses)?changes.additional_state_licenses:[]).forEach((license,index)=>{
+                  const parts=[stateName(license.state_code),license.license_type,license.license_number,license.expiration_date].filter(Boolean);
+                  if(parts.length)addDetail("Additional license "+(index+1),parts.join(" · "));
+                });
+              }
+              const insurance=[changes.insurance_agency_name,changes.insurance_agent_phone,changes.insurance_policy_number,changes.insurance_expiration_date].filter(Boolean);
+              if(insurance.length){
+                addDetail("Insurance company",changes.insurance_agency_name);
+                addDetail("Insurance phone",changes.insurance_agent_phone);
+                addDetail("Policy number",changes.insurance_policy_number);
+                addDetail("Insurance expires",changes.insurance_expiration_date?formatValue("insurance_expiration_date",changes.insurance_expiration_date):null);
+              }else addDetail("Insurance","No insurance details entered in this update");
+              if(changes.avatar_url)addDetail("Profile photo","Updated");
+            }else if(request.request_type==="profession_qualifications"){
+              addDetail("State",stateName(changes.state_code));
+              addDetail("Work type",changes.work_role==="independent"?"Independent":changes.work_role);
+              (Array.isArray(changes.items)?changes.items:[]).forEach(item=>{
+                addDetail("Profession",professionNames.get(item.profession_id)||"Selected profession");
+                addDetail("License required",item.license_required_at_registration===false?"No":"Yes");
+              });
+            }else{
+              addDetail("Update","Details are available for administrator review");
+            }
+            if(!details.childElementCount)addDetail("Details","No information supplied");
+            const actions=document.createElement("div");
+            actions.style.cssText="display:flex;gap:9px;margin-top:10px;";
+            const createDecisionButton=(decision,label)=>{
+              const button=document.createElement("button");
+              button.type="button";
+              button.textContent=label;
+              button.className="secondary";
+              button.style.cssText="flex:1;min-width:0;min-height:42px;margin:0;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:750;"+(decision==="rejected"?"color:#b5472b;border-color:#e5c8bd;":"color:#16794b;border-color:#c8dfd1;");
+              button.addEventListener("click",async()=>{
+                if(button.disabled)return;
+                const verb=decision==="rejected"?"Decline":"Approve";
+                if(!window.confirm(verb+" this "+requestName.textContent.toLowerCase()+" update?"))return;
+                actions.querySelectorAll("button").forEach(b=>b.disabled=true);
+                button.textContent=decision==="rejected"?"Declining…":"Approving…";
+                try{
+                  const {error}=await db.rpc("review_contractor_change_request",{p_request_id:request.id,p_decision:decision,p_admin_note:null});
+                  if(error)throw error;
+                  message("unlicensedContractorsMessage",requestName.textContent+" "+(decision==="rejected"?"declined.":"approved."),"success");
+                  await loadUnlicensedContractors();
+                }catch(error){
+                  message("unlicensedContractorsMessage","Could not update request: "+(error.message||"Unknown error"),"error");
+                  actions.querySelectorAll("button").forEach(b=>b.disabled=false);
+                  button.textContent=label;
+                }
+              });
+              return button;
+            };
+            actions.append(createDecisionButton("approved_with_license","Approve"),createDecisionButton("rejected","Decline"));
+            card.append(header,requestDate,details,actions);
+            requestsBox.append(card);
           });
           panel.append(requestsBox);
         }
