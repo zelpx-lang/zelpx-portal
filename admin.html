@@ -1452,9 +1452,55 @@
           const title=document.createElement("strong");
           title.textContent=request.request_type==="company_profile"?"Company profile":request.request_type==="profession_qualifications"?"Profession qualifications":String(request.request_type||"Account update").replaceAll("_"," ");
           const date=document.createElement("p");date.className="muted";date.textContent="Submitted: "+dateUS("created_at",request.created_at);
-          const data=document.createElement("pre");
-          data.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.4 inherit;max-height:130px;overflow:auto;background:#fff;padding:8px;border-radius:8px;";
-          data.textContent=JSON.stringify(request.requested_changes||{},null,2);
+          const data=document.createElement("div");
+          data.style.cssText="display:grid;gap:6px;margin:8px 0;padding:10px;background:#fff;border-radius:8px;";
+          const changes=request.requested_changes||{};
+          const changeLine=(label,value)=>{
+            if(value===null||value===undefined||value==="")return;
+            const line=document.createElement("div");
+            line.style.cssText="overflow-wrap:anywhere;line-height:1.4;";
+            const strong=document.createElement("strong");strong.textContent=label+": ";
+            line.append(strong,document.createTextNode(String(value)));data.append(line);
+          };
+          const fullAddress=[changes.service_address,changes.service_city,stateName(changes.service_state),changes.service_zip_code].filter(Boolean).join(", ");
+          if(request.request_type==="company_profile"){
+            changeLine("Company",changes.company_name);
+            changeLine("Contact name",changes.full_name);
+            changeLine("Email",changes.email);
+            changeLine("Phone",changes.phone);
+            changeLine("Address",fullAddress);
+            changeLine("License",changes.has_license===true?"Yes":changes.has_license===false?"No":null);
+            const hasLicenseDetails=!!(changes.license_number||changes.license_type||changes.license_state||changes.license_number_2||changes.license_type_2||changes.license_state_2);
+            if(changes.has_license===true&&!hasLicenseDetails)changeLine("License details","Not entered in this update");
+            if(hasLicenseDetails){
+              changeLine("License 1",[stateName(changes.license_state),changes.license_type,changes.license_number,changes.license_expiration_date].filter(Boolean).join(" · "));
+              if(changes.license_number_2||changes.license_type_2||changes.license_state_2)changeLine("License 2",[stateName(changes.license_state_2),changes.license_type_2,changes.license_number_2,changes.license_expiration_date_2].filter(Boolean).join(" · "));
+            }
+            const insuranceValues=[changes.insurance_agency_name,changes.insurance_agent_phone,changes.insurance_policy_number,changes.insurance_expiration_date].filter(Boolean);
+            if(insuranceValues.length){
+              changeLine("Insurance agency",changes.insurance_agency_name);
+              changeLine("Insurance phone",changes.insurance_agent_phone);
+              changeLine("Insurance policy",changes.insurance_policy_number);
+              changeLine("Insurance expiration",changes.insurance_expiration_date?dateUS("insurance_expiration_date",changes.insurance_expiration_date):null);
+            }else changeLine("Insurance details","Not provided in this update");
+            if(changes.avatar_url)changeLine("Profile photo","Updated");
+            if(changes.service_radius_miles!==undefined)changeLine("Service radius",changes.service_radius_miles+" miles");
+          }else if(request.request_type==="profession_qualifications"){
+            changeLine("State",stateName(changes.state_code));
+            changeLine("Work role",changes.work_role==="independent"?"Independent":changes.work_role);
+            (Array.isArray(changes.items)?changes.items:[]).forEach((item,index)=>{
+              const profession=c.professionNames.get(item.profession_id)||"Selected profession";
+              changeLine("Profession "+(index+1),profession+" · License required: "+(item.license_required_at_registration===false?"No":"Yes"));
+            });
+          }else{
+            Object.entries(changes).forEach(([key,value])=>{
+              if(["avatar_url","profile_photo_url"].includes(key)){if(value)changeLine("Profile photo","Updated");return;}
+              if(value===null||value===undefined||value==="")return;
+              if(/_id$/.test(key))return;
+              changeLine(key.replace(/_/g," ").replace(/\b\w/g,ch=>ch.toUpperCase()),typeof value==="object"?JSON.stringify(value):dateUS(key,value));
+            });
+          }
+          if(!data.childElementCount)changeLine("Details","No field changes included in this request.");
           const buttons=document.createElement("div");buttons.className="actions";buttons.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;";
           const makeDecision=(decision,label,color)=>{
             const btn=document.createElement("button");btn.type="button";btn.className="secondary";btn.textContent=label;
