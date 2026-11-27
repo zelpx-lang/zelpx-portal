@@ -2215,9 +2215,9 @@
     list.textContent = "Loading customer requests…";
     clearMessage("serviceRequestsMessage");
     try {
-      const { data: requests, error } = await db.from("service_requests")
-        .select("id,user_id,request_type,service_type,description,property_address,service_city,service_state,service_zip_code,preferred_time,status,price,lead_id,payment_status,purchased_by,purchased_at,created_at")
-        .order("created_at", { ascending: false }).limit(100);
+      // Load the admin queue through a role-checked SECURITY DEFINER RPC.
+      // This avoids customer-request RLS differences hiding valid submissions.
+      const { data: requests, error } = await db.rpc("admin_list_service_requests");
       if (error) throw error;
       refreshIncomingLeadBadge();
       const requestIds = (requests || []).map(request => request.id);
