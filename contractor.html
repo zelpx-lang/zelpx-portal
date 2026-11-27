@@ -2460,7 +2460,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
 
     if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
       const preview = await db.from("public_available_leads")
-        .select("id,service_category,service_state,zip_code,urgency,price_cents,created_at")
+        .select("id,service_category,service_state,zip_code,urgency,price_cents,project_value_cents,customer_budget_choice,created_at")
         .order("created_at", { ascending: false }).limit(100);
       if (preview.error) {
         if (sequence !== leadsLoadSequence) return;
