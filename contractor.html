@@ -671,12 +671,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     <div id="signupFields" class="grid hidden">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
       <div id="signupCompanyNameField"><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
+      <div id="signupCompanyEmailField"><label for="signupCompanyEmail">Company email</label><input id="signupCompanyEmail" type="email" autocomplete="email" placeholder="Company email"></div>
       <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
       <div id="signupStreetAddressField"><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
       <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required></div>
       <div><label for="serviceState">State where you will work</label><select id="serviceState" autocomplete="address-level1" required><option value="">Select state</option></select></div>
-      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select></div>
+      <div><label for="serviceRadius">Service radius</label><select id="serviceRadius" required><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="250">250 miles</option></select><small class="muted">Only leads within this distance of your Business ZIP code will be shown.</small></div>
       <div style="grid-column:1/-1;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffaf5">
         <h3>Choose your work before creating your account</h3>
         <p class="muted">Select your work status and every profession you want to offer. ZELPX checks the selected state's licensing rules before account creation.</p>
@@ -686,7 +687,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <select id="hasLicense" required aria-label="Do you have a current business license?"><option value="" selected disabled>Select Yes or No</option><option value="no">No</option><option value="yes">Yes</option></select>
         </div>
         <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
-        <label for="signupServiceSearch">FIND A PROFESSION</label><input id="signupServiceSearch" type="search" placeholder="Search electrician, tile installer, cleaner…" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"><span>Select your state first, then choose professions.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen professions will appear here.</span></div></div>
+        <label for="signupServiceSearch">FIND A PROFESSION</label><input id="signupServiceSearch" type="search" placeholder="Search electrician, tile installer, cleaner…" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"><span>Select your state first, then choose professions.</span></div><div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearSignupProfessionsBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">Clear selected services</button></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen professions will appear here.</span></div></div>
         <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
           <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
           <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
@@ -710,6 +711,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <div><label for="licenseNumber2">Second license number</label><input id="licenseNumber2" autocomplete="off"></div>
         <div><label for="licenseType2">Second license type / classification</label><input id="licenseType2" placeholder="Trade / license classification"></div>
       </div>
+      <div style="grid-column:1/-1"><label><input id="signupLeadEmailNotifications" type="checkbox" checked> Email me when a new lead matches my service area</label><small class="muted">Emails contain the service category and general area only. Customer contact details and street address are not included.</small></div>
       <div id="signupInsuranceFields" class="grid" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
         <h3 style="grid-column:1/-1;margin:0">Business insurance</h3>
         <p class="muted" style="grid-column:1/-1;margin:0">No document upload is required. Tell us whether you have a current insurance certificate.</p>
@@ -1215,6 +1217,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const email = $("authEmail").value.trim().toLowerCase(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
     const signupRole=$("signupWorkRole").value;
     const companyName = signupRole==="employee" ? fullName : $("companyName").value.trim();
+    const companyEmail = signupRole==="employee" ? email : $("signupCompanyEmail").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
     if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.");
     const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
@@ -1268,7 +1271,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, email: companyEmail || email, lead_email_notifications: $("signupLeadEmailNotifications").checked, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
           license_expiration_date: hasLicense ? licenseExpirationDate : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
@@ -3701,9 +3704,17 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     $("loginBtn").addEventListener("click", signIn); $("signupBtn").addEventListener("click", signUp);
     $("serviceState").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     $("signupServiceSearch").addEventListener("input",renderSignupProfessionOptions);
+    $("clearSignupProfessionsBtn").addEventListener("click",()=>{
+      signupSelectedProfessionIds.clear();signupSelectedCategoryIds.clear();
+      renderSignupProfessionOptions();
+      refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
+    });
     $("signupWorkRole").addEventListener("change",()=>refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error")));
     function updateSignupInsuranceVisibility(){
-      const showInsurance=$("signupWorkRole").value==="independent";
+      const employee=$("signupWorkRole").value==="employee";
+      $("signupCompanyNameField").classList.toggle("hidden",employee);
+      $("signupCompanyEmailField").classList.toggle("hidden",employee);
+      const showInsurance=!employee;
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
       const yes=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
       ["signupInsuranceAgencyWrap","signupInsurancePhoneWrap","signupInsurancePolicyWrap","signupInsuranceExpirationWrap"].forEach(id=>$(id).classList.toggle("hidden",!yes));
