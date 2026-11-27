@@ -2682,7 +2682,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             const budgetLabel = document.createElement("span");
             budgetLabel.className = "request-label";
             budgetLabel.textContent = "Project budget: ";
-            budget.append(budgetLabel, document.createTextNode(money(request.customer_budget_cents)));
+            budget.append(budgetLabel, document.createTextNode(new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(request.customer_budget_cents / 100)));
             details.appendChild(budget);
           }
 
