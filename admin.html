@@ -1908,10 +1908,14 @@
         line("Insurance policy number",insurancePolicy||"Not provided");
         line("Insurance expiration",insuranceExpiration?formatValue("insurance_expiration_date",insuranceExpiration):"Not provided");
         line("Insurance review status",insuranceStatus);
-        const categoryNames=(categoriesById.get(full.id)||[]).map(x=>x.service_categories?.name||x.category_id);
-        line("Services",categoryNames.join(", ")||"None selected");
-        const professionNamesShort=(professionsById.get(full.id)||[]).map(x=>[professionNames.get(x.profession_id),stateName(x.state_code)].filter(Boolean).join(" — "));
-        line("Professions",professionNamesShort.join(", "));
+        const professionRows=professionsById.get(full.id)||[];
+        const professionNamesShort=professionRows.map(x=>[professionNames.get(x.profession_id),stateName(x.state_code)].filter(Boolean).join(" — "));
+        const normalizedProfessionNames=new Set(professionRows.map(x=>String(professionNames.get(x.profession_id)||"").trim().toLowerCase()).filter(Boolean));
+        const additionalCategories=(categoriesById.get(full.id)||[])
+          .map(x=>x.service_categories?.name||x.category_id)
+          .filter(name=>!normalizedProfessionNames.has(String(name||"").trim().toLowerCase()));
+        if(additionalCategories.length)line("Additional services",additionalCategories.join(", "));
+        line("Professions",professionNamesShort.join(", ")||"None selected");
         line("Registered",formatValue("created_at",full.created_at));
         const actions = document.createElement("div");
         actions.className = "actions";
