@@ -686,7 +686,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <select id="hasLicense" required aria-label="Do you have a current business license?"><option value="" selected disabled>Select Yes or No</option><option value="no">No</option><option value="yes">Yes</option></select>
         </div>
         <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
-        <label>Services / work types (full catalog)</label><input id="signupServiceSearch" type="search" placeholder="Search all services (e.g. tile, cleaning, repair)" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px;max-height:260px;overflow:auto"><span>Select your state first, then choose the services you offer.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Your selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen work types will appear here.</span></div></div>
+        <label for="signupServiceSearch">FIND A PROFESSION</label><input id="signupServiceSearch" type="search" placeholder="Search electrician, tile installer, cleaner…" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"><span>Select your state first, then choose professions.</span></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen professions will appear here.</span></div></div>
         <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
           <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
           <div id="signupProfessionRules" class="message" role="status" aria-live="polite">Enter your state and select professions to check requirements.</div>
@@ -1079,13 +1079,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   function updateSignupSelectedServices(){
     const list=$("signupSelectedServicesList"),count=$("signupSelectedServicesCount");
     if(!list||!count)return;
-    const selected=signupServiceCatalog.filter(c=>signupSelectedCategoryIds.has(c.id));
+    const selected=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id));
     count.textContent=selected.length+" selected";
     list.replaceChildren();
-    if(!selected.length){const empty=document.createElement("span");empty.className="muted";empty.style.fontSize="13px";empty.textContent="No services selected yet. Choose work types from the list above.";list.append(empty);return;}
-    selected.forEach(c=>{
+    if(!selected.length){const empty=document.createElement("span");empty.className="muted";empty.style.fontSize="13px";empty.textContent="No professions selected yet. Choose work types from the list above.";list.append(empty);return;}
+    selected.forEach(p=>{
       const chip=document.createElement("span");
-      chip.textContent=c.name;
+      chip.textContent=p.profession_name;
       chip.style.cssText="display:inline-flex;align-items:center;padding:7px 10px;border:1px solid #f4c3a8;border-radius:999px;background:#fff;color:#713b20;font-size:12px;font-weight:600";
       list.append(chip);
     });
@@ -1093,38 +1093,35 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   function renderSignupProfessionOptions(){
     updateSignupSelectedServices();
     const root=$("signupProfessionOptions");root.replaceChildren();
-    if(!signupServiceCatalog.length){root.textContent="No service categories are currently available. Please refresh and try again.";return;}
+    if(!signupProfessionCatalog.length){root.textContent="No professions are currently available. Please refresh and try again.";return;}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     const role=$("signupWorkRole")?.value||"independent";
     const licenseChoice=$("hasLicense")?.value||"";
-    // Workers looking for employment do not need a business-license Yes/No
-    // filter. They may select work types, while individual credentials and
-    // employer supervision are reviewed separately for each selected profession.
-    const visibleCategories=signupServiceCatalog.filter(category=>{
-      const map=signupCategoryMapRows.find(x=>x.category_id===category.id);
-      const rule=map?.mapping_status==="mapped"&&map.profession_id
-        ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
-        : null;
-      const status=rule?.requirement_status||"unverified";
+    const mappedIds=new Set(signupCategoryMapRows.filter(x=>x.mapping_status==="mapped"&&x.profession_id).map(x=>x.profession_id));
+    const ruleByProfession=new Map(signupRuleRows.map(r=>[r.profession_id,String(r.requirement_status||"unverified").toLowerCase()]));
+    const matches=signupProfessionCatalog.filter(p=>{
+      const status=ruleByProfession.get(p.id)||"unverified";
       const eligible=role==="employee" || licenseChoice==="yes" ||
         (licenseChoice==="no" && status==="not_required");
-      return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
+      return mappedIds.has(p.id) && eligible &&
+        (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(searchTerm);
     });
     if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
       root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;
     }
-    if(!visibleCategories.length){root.textContent="No service categories match your license status and work role.";return;}
-    const groups=new Map();
-    visibleCategories.forEach(c=>{const g=c.category_group||"Home Services";if(!groups.has(g))groups.set(g,[]);groups.get(g).push(c);});
-    [...groups.entries()].forEach(([group,cats])=>{
-      const heading=document.createElement("div");heading.textContent=group;heading.style.cssText="grid-column:1/-1;font-weight:800;margin:10px 0 2px;color:var(--muted)";root.append(heading);
-      cats.forEach(c=>{
-        const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:8px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:white;text-transform:none;letter-spacing:0;font-size:13px";
-        const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedCategoryIds.has(c.id);cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0";
-        cb.addEventListener("change",()=>{if(cb.checked)signupSelectedCategoryIds.add(c.id);else signupSelectedCategoryIds.delete(c.id);refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));});
-        const name=document.createElement("span");name.textContent=c.name;name.style.flex="1";
-        label.append(cb,name);root.append(label);
+    if(!matches.length){root.textContent="No professions match your license status and work role.";return;}
+    matches.forEach(p=>{
+      const label=document.createElement("label");
+      label.style.cssText="display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
+      const cb=document.createElement("input");cb.type="checkbox";cb.checked=signupSelectedProfessionIds.has(p.id);
+      cb.style.cssText="width:18px;min-height:18px;height:18px;margin:0;flex:0 0 18px;accent-color:#ff6a2b";
+      cb.addEventListener("change",()=>{
+        if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);
+        signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
+        refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
       });
+      const name=document.createElement("span");name.textContent=p.profession_name;name.style.flex="1";
+      label.append(cb,name);root.append(label);
     });
   }
   async function loadSignupWorkTypes(){
@@ -1167,8 +1164,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       optionsRoot.textContent="Could not verify licensing rules. Profession choices are temporarily hidden. Please retry.";
       throw error;
     }
-    const selectedMaps=signupCategoryMapRows.filter(m=>signupSelectedCategoryIds.has(m.category_id)&&m.mapping_status==="mapped"&&m.profession_id);
-    signupSelectedProfessionIds=new Set(selectedMaps.map(m=>m.profession_id));
+    signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
     renderSignupProfessionOptions();
     const employee=$("signupWorkRole").value==="employee";
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
