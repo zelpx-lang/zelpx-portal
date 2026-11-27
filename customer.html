@@ -449,6 +449,22 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
     .commercial-sharing-consent input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:var(--customer-orange)}
     .request-cancel-button{width:auto!important;min-height:38px;margin:0 8px 8px 0;padding:8px 13px;background:#fff7f2;color:#a84220;border:1px solid #edc5b0;box-shadow:none;font-size:13px}
     .request-cancel-button:hover:not(:disabled){background:#ffede2;color:#8e3215;box-shadow:none}
+    #customerBudgetSection{margin:16px 0;padding:17px;border:1px solid #f0ded2;border-radius:18px;background:linear-gradient(145deg,#fff 0%,#fff8f2 100%)}
+    #customerBudgetSection>strong{display:block;font-size:16px;color:var(--customer-ink)}
+    #customerBudgetSection>.subtitle{margin:6px 0 12px;text-align:left;font-size:12px}
+    .customer-budget-options{display:grid;gap:9px}
+    .customer-budget-option{display:flex;align-items:flex-start;gap:11px;margin:0;padding:12px;border:1px solid #eadbd0;border-radius:13px;background:#fffdfa;text-transform:none;letter-spacing:0;cursor:pointer}
+    .customer-budget-option:has(input:checked){border-color:#e99a70;background:#fff3eb}
+    .customer-budget-option>input{flex:0 0 19px;width:19px;height:19px;min-height:19px;margin:2px 0 0;accent-color:var(--customer-orange)}
+    .customer-budget-option>span{display:grid;gap:3px}
+    .customer-budget-option strong{font-size:13px;color:var(--customer-ink)}
+    .customer-budget-option small{font-size:12px;font-weight:450;color:var(--customer-muted);line-height:1.4}
+    .customer-budget-amount{margin:0 0 2px;padding:12px;border:1px dashed #e9b99e;border-radius:13px;background:#fffaf6}
+    .customer-budget-amount label{margin:0 0 6px}
+    .customer-budget-input{display:flex;align-items:center;gap:8px;padding-left:12px;border:1px solid #eadbd0;border-radius:12px;background:#fff}
+    .customer-budget-input>span{font-weight:800;color:#a85a35}
+    .customer-budget-input input{min-width:0;border:0!important;box-shadow:none!important}
+    .customer-budget-input input:focus{outline:0}
     #requestForm > button,#authForm > button { width:100%; }
     @media(max-width:600px) {
       body { padding:12px 9px; }
@@ -897,6 +913,29 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             <div id="removedServicesRestoreList"></div>
           </div>
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
+        </section>
+
+        <section id="customerBudgetSection" class="request-card" aria-labelledby="customerBudgetHeading">
+          <strong id="customerBudgetHeading">What is your budget for this project?</strong>
+          <p class="subtitle">Choose one option. Your budget helps contractors understand what you have in mind.</p>
+          <div class="customer-budget-options">
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="custom" required>
+              <span><strong>I know my budget</strong><small>I have a budget in mind.</small></span>
+            </label>
+            <div id="customerBudgetAmountWrap" class="customer-budget-amount hidden">
+              <label for="customerBudgetAmount">Your budget (USD)</label>
+              <div class="customer-budget-input"><span>$</span><input id="customerBudgetAmount" type="number" min="1" max="10000000" step="1" inputmode="decimal" placeholder="Enter amount"></div>
+            </div>
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="undecided">
+              <span><strong>Budget not decided</strong><small>I haven't decided how much I want to spend.</small></span>
+            </label>
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="guidance">
+              <span><strong>I want pricing guidance</strong><small>I'd like a contractor to help estimate the cost.</small></span>
+            </label>
+          </div>
         </section>
 
         <label for="propertyAddress">Property Street Address</label>
@@ -2259,6 +2298,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       });
     }
 
+    function updateCustomerBudgetFields() {
+      const selected = document.querySelector('input[name="customerBudgetChoice"]:checked')?.value || "";
+      const amountWrap = $("customerBudgetAmountWrap");
+      const amountInput = $("customerBudgetAmount");
+      const needsAmount = selected === "custom";
+      amountWrap.classList.toggle("hidden", !needsAmount);
+      amountInput.required = needsAmount;
+      if (!needsAmount) amountInput.value = "";
+    }
+    document.querySelectorAll('input[name="customerBudgetChoice"]').forEach(input => {
+      input.addEventListener("change", updateCustomerBudgetFields);
+    });
+    updateCustomerBudgetFields();
+
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       clearMessage("requestMessage");
@@ -2308,6 +2361,18 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (isSpherePackage && requestedServices.length < 2) {
           throw new Error("A Special Lead Package must include at least two services. Please return to the sphere and select at least two.");
         }
+        const budgetChoice = document.querySelector('input[name="customerBudgetChoice"]:checked')?.value || "";
+        const budgetAmount = $("customerBudgetAmount").value.trim();
+        if (!budgetChoice) throw new Error("Please choose one budget option.");
+        if (budgetChoice === "custom" && (!budgetAmount || !Number.isFinite(Number(budgetAmount)) || Number(budgetAmount) <= 0)) {
+          throw new Error("Please enter a valid project budget greater than $0.");
+        }
+        const customerBudgetLabel = budgetChoice === "custom"
+          ? "$" + Number(budgetAmount).toLocaleString("en-US") + " (customer's proposed budget)"
+          : budgetChoice === "undecided"
+            ? "Budget not decided"
+            : "Customer wants pricing guidance";
+
         const request = {
           user_id: session.user.id,
           request_type: isSpherePackage ? "lead_package" : "regular",
@@ -2319,7 +2384,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           // Use the matched street-address coordinates, not the ZIP centroid.
           service_latitude: Number(verifiedAddress.latitude) || null,
           service_longitude: Number(verifiedAddress.longitude) || null,
-          description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
+          description: "CUSTOMER BUDGET: " + customerBudgetLabel + "\n\n" + (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null,
           commercial_sharing_consent_at: new Date().toISOString(),
           commercial_sharing_consent_version: "2026-11-22-v1"
@@ -2342,6 +2407,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         customerRequestIntent = null;
         sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
+        updateCustomerBudgetFields();
         $("serviceState").value = "";
         window.zelpxCommercialSharingAccepted = false;
         $("commercialSharingConsent").checked = false;
