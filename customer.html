@@ -1162,7 +1162,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       event.preventDefault();
       clearMessage("message");
 
-      const email = $("email").value.trim();
+      const email = $("email").value.trim().toLowerCase();
       const password = $("password").value;
       const button = $("submitButton");
 
@@ -1206,6 +1206,10 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           });
 
           if (error) throw error;
+
+          if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+            throw new Error("This email is already registered. Please sign in to your existing account.");
+          }
 
           if (data.session) {
             await checkSession();
