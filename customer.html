@@ -2594,6 +2594,14 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
         if (error) throw error;
 
+        const { data: offerData, error: offerError } = await db.rpc("customer_get_my_lead_offers");
+        if (offerError) console.warn("Customer offers could not be loaded:", offerError.message);
+        const offersByLead = new Map();
+        (Array.isArray(offerData) ? offerData : []).forEach(offer => {
+          if (!offersByLead.has(offer.lead_id)) offersByLead.set(offer.lead_id, []);
+          offersByLead.get(offer.lead_id).push(offer);
+        });
+
         const requestLeadIds = (data || []).map(item => item.lead_id).filter(Boolean);
         const unreadByLead = new Map();
         let totalUnreadChats = 0;
@@ -2691,6 +2699,41 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           summary.append(summaryText, unreadBell, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
+
+          const requestOffers = offersByLead.get(request.lead_id) || [];
+          requestOffers.forEach(offer => {
+            const offerCard = document.createElement("section");
+            offerCard.className = "request-card";
+            offerCard.style.cssText = "margin:12px 0;padding:14px;border:1px solid #eadfd4;border-radius:12px;background:#fffaf5";
+            const offerTitle = document.createElement("strong");
+            offerTitle.textContent = "Contractor offer";
+            const offerDetails = document.createElement("p");
+            offerDetails.textContent = (offer.company_name || "Verified contractor") + " offers to complete this project for " + new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format((offer.offer_cents||0)/100) + ".";
+            const feeNote = document.createElement("small");
+            feeNote.textContent = "No payment is taken from you here. The contractor's ZELPX lead fee is charged only after you approve.";
+            offerCard.append(offerTitle,offerDetails,feeNote);
+            const offerActions = document.createElement("div");
+            offerActions.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px";
+            const approve = document.createElement("button");
+            approve.type="button"; approve.textContent="Approve";
+            const decline = document.createElement("button");
+            decline.type="button"; decline.className="secondary-button"; decline.textContent="Decline";
+            const respond = async decision => {
+              approve.disabled=true; decline.disabled=true;
+              try {
+                const {error:responseError}=await db.rpc("customer_respond_to_lead_offer",{p_offer_id:offer.offer_id,p_decision:decision});
+                if(responseError) throw responseError;
+                await loadRequests();
+                showMessage("requestMessage",decision==="approve" ? "Offer approved. The contractor has purchased the lead and can now contact you." : "Offer declined.","success");
+              } catch(error) {
+                approve.disabled=false; decline.disabled=false;
+                window.alert(error.message || "Could not respond to this offer.");
+              }
+            };
+            approve.addEventListener("click",()=>respond("approve"));
+            decline.addEventListener("click",()=>respond("decline"));
+            offerActions.append(approve,decline); offerCard.append(offerActions); details.append(offerCard);
+          });
 
           if (request.preferred_time) {
             const preferred = document.createElement("p");
