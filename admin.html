@@ -1867,15 +1867,16 @@
         heading.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:6px 4px;background:transparent;border:0;box-shadow:none;color:var(--ink);text-align:left;border-radius:10px;";
         const title = document.createElement("strong");
         title.textContent = full.company_name || profile.full_name || "Contractor company";
-        title.style.cssText = "font-size:18px;overflow-wrap:anywhere;";
+        title.style.cssText = "flex:1 1 0;min-width:0;font-size:18px;line-height:1.25;overflow-wrap:anywhere;word-break:normal;";
         const accountUpdates=(changesById.get(full.id)||[]).slice().sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
         const pendingAccountUpdates=accountUpdates.filter(x=>x.status==="pending");
         const updateMarker=document.createElement("span");
-        updateMarker.textContent=pendingAccountUpdates.length ? "🟠 UPDATED · REVIEW" : "";
-        updateMarker.style.cssText="flex:0 0 auto;padding:5px 8px;border-radius:999px;background:#fff0d6;color:#9a5b12;font-size:11px;font-weight:850;white-space:nowrap;";
+        updateMarker.textContent=pendingAccountUpdates.length ? "●" : "";
+        updateMarker.setAttribute("aria-label",pendingAccountUpdates.length ? "Updated · review required" : "");
+        updateMarker.style.cssText="flex:0 0 auto;width:12px;text-align:center;color:#e8753b;font-size:17px;line-height:1;";
         updateMarker.hidden=!pendingAccountUpdates.length;
         updateMarker.title=pendingAccountUpdates.length
-          ? "This account has "+pendingAccountUpdates.length+" pending update request(s). Open the account to review."
+          ? "Updated · "+pendingAccountUpdates.length+" pending change request(s). Open this account to review."
           : "";
         const accessIsAllowed = full.verification_status === "verified";
         const accessBadge = document.createElement("span");
