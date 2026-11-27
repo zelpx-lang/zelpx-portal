@@ -1511,7 +1511,16 @@
               if(!window.confirm(decisionText+" this "+title.textContent.toLowerCase()+" update for "+(c.company_name||c.full_name||"this contractor")+"?"))return;
               buttons.querySelectorAll("button").forEach(b=>b.disabled=true);btn.textContent=decision==="rejected"?"Declining…":"Approving…";
               try{
-                const {error}=await db.rpc("review_contractor_change_request",{p_request_id:request.id,p_decision:decision,p_admin_note:null});
+                // Match the approval decision to a contractor who explicitly declared no license.
+                const approvalDecision = decision==="approved_with_license" &&
+                  request.request_type==="company_profile" && changes.has_license===false
+                    ? "approved_without_license"
+                    : decision;
+                const {error}=await db.rpc("review_contractor_change_request",{
+                  p_request_id:request.id,
+                  p_decision:approvalDecision,
+                  p_admin_note:null
+                });
                 if(error)throw error;
                 message("adminFindContractorsMessage",title.textContent+" "+(decision==="rejected"?"declined.":"approved."),"success");
                 await loadAdminContractorDirectory();
