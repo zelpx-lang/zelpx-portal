@@ -2242,7 +2242,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const { error } = await db.rpc("submit_lead_offer",{p_lead_id:lead.id,p_offer_cents:Math.round(amount*100)});
       if(error) throw error;
       contractorLeadOfferStates.set(lead.id,{status:"pending",offer_cents:Math.round(amount*100)});
-      message("appMessage","Your offer was sent to the customer. No ZELPX Credits are charged unless the customer approves.","success");
+      message("appMessage","Your offer was sent to the customer. No ZELPX fee or credits are charged for this offer.","success");
       renderLeads();
     } catch(error) { message("appMessage","Could not send offer: "+(error.message||"Unknown error"),"error"); }
     finally { setBusy(button,false); }
