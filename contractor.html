@@ -2370,8 +2370,9 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : "Select this service in your profile";
           badges.append(eligibility);
         }
+        const canOffer = canOpenPurchase && lead.customer_budget_choice === "customer_entered" && lead.project_value_cents != null;
         const offerState = contractorLeadOfferStates.get(lead.id);
-        if (canOpenPurchase) {
+        if (canOffer) {
           const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
           const offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Your job offer ($)"; offerInput.setAttribute("aria-label","Your job offer in dollars"); offerInput.style.cssText="flex:1;min-width:145px";
           const offerButton = document.createElement("button"); offerButton.type="button"; offerButton.textContent=offerState?.status==="pending" ? "Update offer" : "Make an Offer";
