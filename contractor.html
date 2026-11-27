@@ -2359,6 +2359,19 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const chevron = document.createElement("span"); chevron.className = "lead-summary-chevron"; chevron.textContent = "＋";
       summarySide.append(chevron); summary.append(summaryMain, summarySide); card.append(summary);
       const details = document.createElement("div"); details.className = "lead-details hidden";
+      if (lead.project_value_cents != null && Number(lead.project_value_cents) > 0) {
+        const customerBudget = document.createElement("div");
+        customerBudget.className = "lead-customer-budget";
+        customerBudget.textContent = "Customer's project budget: " + money(lead.project_value_cents);
+        customerBudget.style.cssText = "display:block;margin:10px 0;padding:10px 12px;border-radius:10px;background:#edf8f1;color:#246b45;font-weight:700;font-size:15px";
+        details.append(customerBudget);
+      } else if (lead.customer_budget_choice === "not_decided" || lead.customer_budget_choice === "pricing_guidance") {
+        const customerBudget = document.createElement("div");
+        customerBudget.className = "lead-customer-budget";
+        customerBudget.textContent = lead.customer_budget_choice === "not_decided" ? "Customer budget: Not decided" : "Customer wants pricing guidance";
+        customerBudget.style.cssText = "display:block;margin:10px 0;padding:10px 12px;border-radius:10px;background:#f5f0e9;color:#746b61;font-weight:600;font-size:14px";
+        details.append(customerBudget);
+      }
       const badges = document.createElement("div"); badges.className = "lead-badges";
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; badges.append(status);
       if (isPackage) { const packageBadge = document.createElement("span"); packageBadge.className = "pill package-pill"; packageBadge.textContent = "Multi-service · one purchase"; badges.append(packageBadge); }
@@ -2409,7 +2422,8 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : "Select this service in your profile";
           badges.append(eligibility);
         }
-        const canOffer = canOpenPurchase && lead.customer_budget_choice === "customer_entered" && lead.project_value_cents != null;
+        const hasCustomerBudget = lead.project_value_cents != null && Number(lead.project_value_cents) > 0;
+        const canOffer = canOpenPurchase && hasCustomerBudget && ["customer_entered","custom"].includes(lead.customer_budget_choice);
         const offerState = contractorLeadOfferStates.get(lead.id);
         if (canOffer) {
           const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
