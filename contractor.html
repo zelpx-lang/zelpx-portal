@@ -2302,9 +2302,23 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const zip = document.createElement("span"); zip.className = "lead-summary-zip"; zip.textContent = "ZIP " + (lead.zip_code || "Area not specified");
       summaryMain.append(title, zip);
       const summarySide = document.createElement("span"); summarySide.className = "lead-summary-side";
-      const price = document.createElement("strong"); price.className = "lead-summary-price"; price.textContent = money(lead.price_cents);
+      const price = document.createElement("strong"); price.className = "lead-summary-price"; price.textContent = "Lead price: " + money(lead.price_cents);
+      summarySide.append(price);
+      if (lead.project_value_cents != null) {
+        const customerBudget = document.createElement("span");
+        customerBudget.className = "lead-summary-budget";
+        customerBudget.textContent = "Project budget: " + money(lead.project_value_cents);
+        customerBudget.style.cssText = "display:block;font-size:13px;font-weight:700;color:#27835f;text-align:right;margin-top:4px";
+        summarySide.append(customerBudget);
+      } else if (lead.customer_budget_choice === "not_decided" || lead.customer_budget_choice === "pricing_guidance") {
+        const budgetChoice = document.createElement("span");
+        budgetChoice.className = "lead-summary-budget";
+        budgetChoice.textContent = lead.customer_budget_choice === "not_decided" ? "Budget not decided" : "Wants pricing guidance";
+        budgetChoice.style.cssText = "display:block;font-size:12px;font-weight:600;color:#746b61;text-align:right;margin-top:4px";
+        summarySide.append(budgetChoice);
+      }
       const chevron = document.createElement("span"); chevron.className = "lead-summary-chevron"; chevron.textContent = "＋";
-      summarySide.append(price, chevron); summary.append(summaryMain, summarySide); card.append(summary);
+      summarySide.append(chevron); summary.append(summaryMain, summarySide); card.append(summary);
       const details = document.createElement("div"); details.className = "lead-details hidden";
       const badges = document.createElement("div"); badges.className = "lead-badges";
       const status = document.createElement("span"); status.className = "pill " + (lead.status === "available" ? "available" : "sold"); status.textContent = lead.status === "available" ? "Available" : "Sold"; badges.append(status);
