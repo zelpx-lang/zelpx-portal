@@ -608,7 +608,7 @@
       </section>
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
-        <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity</button>
+        <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity <span id="contractorActivityBadge" class="badge hidden" aria-label="Account updates awaiting review">0</span></button>
         <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
@@ -1730,6 +1730,9 @@
     if (serviceRequestsChannel) db.removeChannel(serviceRequestsChannel);
     if (serviceRequestsPoll) clearInterval(serviceRequestsPoll);
     refreshIncomingLeadBadge();
+    refreshContractorActivityBadge();
+    if(contractorActivityBadgePoll)clearInterval(contractorActivityBadgePoll);
+    contractorActivityBadgePoll=setInterval(refreshContractorActivityBadge,15000);
     refreshRefundBadge();
     if (refundRequestsChannel) db.removeChannel(refundRequestsChannel);
     if (refundRequestsPoll) clearInterval(refundRequestsPoll);
@@ -1791,6 +1794,12 @@
       .on("postgres_changes",{event:"UPDATE",schema:"public",table:"profiles"},payload => {
         if (!isAdmin || !currentUser) return;
         loadUnlicensedContractors();loadAdminContractorDirectory();
+      })
+      .on("postgres_changes",{event:"*",schema:"public",table:"contractor_change_requests"},payload => {
+        if (!isAdmin || !currentUser) return;
+        refreshContractorActivityBadge();
+        const activityPage=$("adminUnlicensedPage");
+        if(activityPage&&!activityPage.classList.contains("hidden"))loadUnlicensedContractors();
       })
       .on("postgres_changes",{event:"*",schema:"public",table:"contractor_state_licenses"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
       .on("postgres_changes",{event:"*",schema:"public",table:"contractor_profession_qualifications"},payload => { if(isAdmin&&currentUser){loadUnlicensedContractors();loadAdminContractorDirectory();} })
@@ -2792,6 +2801,23 @@
 
 
   let refundBadgeTimer=null;
+  let contractorActivityBadgePoll=null;
+  async function refreshContractorActivityBadge(){
+    if(!isAdmin||!db)return;
+    try{
+      const {count,error}=await db.from("contractor_change_requests")
+        .select("id",{count:"exact",head:true})
+        .eq("status","pending");
+      if(error)throw error;
+      const badge=$("contractorActivityBadge");
+      if(badge){
+        const total=Number(count||0);
+        badge.textContent=String(total);
+        badge.classList.toggle("hidden",total===0);
+        badge.setAttribute("aria-label",total+" contractor account update"+(total===1?"":"s")+" awaiting review");
+      }
+    }catch(e){console.warn("Contractor activity badge refresh failed:",e.message);}
+  }
   async function refreshRefundBadge(){
     if(!isAdmin||!db)return;
     try{
@@ -2898,7 +2924,7 @@
     document.querySelectorAll("#adminPanel [data-admin-page]").forEach(button => button.classList.toggle("active", button.dataset.adminPage === pageId));
     window.scrollTo({ top:0, behavior:"smooth" });
     if (pageId === "adminFindContractorsPage") loadAdminContractorDirectory();
-    if (pageId === "adminUnlicensedPage") loadUnlicensedContractors();
+    if (pageId === "adminUnlicensedPage") { refreshContractorActivityBadge(); loadUnlicensedContractors(); }
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminRefundRequestsPage") loadRefundRequests();
     if (pageId === "adminCreateLeadPage") loadCategories();
