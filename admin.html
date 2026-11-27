@@ -2208,6 +2208,25 @@
     }
   }
 
+  // Keep the Incoming leads badge synchronized with the administrator request queue.
+  async function refreshIncomingLeadBadge() {
+    const badge = $("incomingLeadBadge");
+    if (!badge || !isAdmin) return;
+    try {
+      const { data, error } = await db.rpc("admin_list_service_requests");
+      if (error) throw error;
+      const count = (data || []).filter(request =>
+        !request.lead_id && request.status === "new"
+      ).length;
+      badge.textContent = String(count);
+      badge.classList.toggle("hidden", count === 0);
+      badge.setAttribute("aria-label", count + " new incoming leads");
+    } catch (error) {
+      // Badge refresh must never prevent the request list from rendering.
+      console.warn("Incoming leads badge could not be refreshed:", error?.message || error);
+    }
+  }
+
   // Admin workflow: requests are reviewed and published only after explicit admin confirmation.
   async function loadServiceRequests() {
     if (!isAdmin) return;
