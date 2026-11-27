@@ -2358,11 +2358,11 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           if (offerState?.status==="pending") { offerInput.value=(offerState.offer_cents/100).toFixed(2); const pending=document.createElement("small"); pending.textContent="Offer sent · awaiting customer approval"; offerWrap.append(pending); }
           offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
-        const buyButton = document.createElement("button"); buyButton.type = "button";
-        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
-        buyButton.disabled = !canOpenPurchase;
-        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
-        footer.append(buyButton);
+        // Customer-approved offers replace instant purchases for all available leads.
+        // The ZELPX fee is charged only by the customer approval RPC.
+        if (!canOpenPurchase) {
+          const accessNote=document.createElement("span"); accessNote.className="lead-date"; accessNote.textContent="Sign in with an approved contractor account to make an offer."; footer.append(accessNote);
+        }
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
       details.append(footer); card.append(details);
@@ -2469,6 +2469,15 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       return;
     }
 
+    // Load this contractor's offer status so pending/declined choices survive refreshes.
+    if (!publicPreviewOnly && currentContractor?.id) {
+      const { data: ownOffers, error: ownOffersError } = await db.rpc("contractor_get_my_lead_offers");
+      if (ownOffersError) console.warn("Contractor offer status unavailable:", ownOffersError.message);
+      else {
+        contractorLeadOfferStates.clear();
+        (Array.isArray(ownOffers) ? ownOffers : []).forEach(offer => contractorLeadOfferStates.set(offer.lead_id,offer));
+      }
+    }
     // Show the main lead list as soon as the primary query returns.
     cachedLeads = data || [];
     if (publicPreviewOnly) purchasedLeadIds = new Set();
