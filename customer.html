@@ -2384,6 +2384,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           // Use the matched street-address coordinates, not the ZIP centroid.
           service_latitude: Number(verifiedAddress.latitude) || null,
           service_longitude: Number(verifiedAddress.longitude) || null,
+          customer_budget_cents: budgetChoice === "custom" ? Math.round(Number(budgetAmount) * 100) : null,
+          customer_budget_choice: budgetChoice,
           description: "CUSTOMER BUDGET: " + customerBudgetLabel + "\n\n" + (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null,
           commercial_sharing_consent_at: new Date().toISOString(),
@@ -2653,12 +2655,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
         const { data, error } = await db
           .from("service_requests")
-          .select("id, lead_id, purchased_by, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
+          .select("id, lead_id, purchased_by, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at, customer_budget_cents, customer_budget_choice")
           .eq("user_id", session.user.id)
           .is("hidden_at", null)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
+
+        const { data: customerOfferRows, error: customerOffersError } = await db.rpc("customer_get_my_lead_offers");
+        if (customerOffersError) console.warn("Contractor offers could not be loaded:", customerOffersError.message);
+        const offersByLead = new Map();
+        (customerOfferRows || []).forEach(offer => {
+          if (!offersByLead.has(offer.lead_id)) offersByLead.set(offer.lead_id, []);
+          offersByLead.get(offer.lead_id).push(offer);
+        });
 
         const requestLeadIds = (data || []).map(item => item.lead_id).filter(Boolean);
         const unreadByLead = new Map();
@@ -2757,6 +2767,61 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           summary.append(summaryText, unreadBell, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
+
+          if (request.customer_budget_cents != null && Number(request.customer_budget_cents) > 0) {
+            const budget = document.createElement("p");
+            budget.textContent = "Your project budget: $" + (Number(request.customer_budget_cents) / 100).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+            details.appendChild(budget);
+          }
+
+          const offers = request.lead_id ? (offersByLead.get(request.lead_id) || []) : [];
+          const pendingOffers = offers.filter(offer => offer.status === "pending");
+          if (pendingOffers.length) {
+            const offerSection = document.createElement("section");
+            offerSection.className = "customer-chat";
+            const offerHeading = document.createElement("strong");
+            offerHeading.textContent = "Contractor offers";
+            offerSection.appendChild(offerHeading);
+            pendingOffers.forEach(offer => {
+              const offerRow = document.createElement("div");
+              offerRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--customer-line)";
+              const offerInfo = document.createElement("div");
+              const contractorName = document.createElement("strong");
+              contractorName.textContent = offer.company_name || "Verified contractor";
+              const offerPrice = document.createElement("p");
+              offerPrice.style.margin = "3px 0";
+              offerPrice.textContent = "Offer: $" + (Number(offer.offer_cents || 0) / 100).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+              offerInfo.append(contractorName, offerPrice);
+              const offerActions = document.createElement("div");
+              offerActions.style.cssText = "display:flex;gap:7px;flex-wrap:wrap";
+              for (const [decision, label] of [["approve","Approve"],["decline","Decline"]]) {
+                const action = document.createElement("button");
+                action.type = "button";
+                action.textContent = label;
+                if (decision === "decline") action.className = "secondary-button";
+                action.addEventListener("click", async () => {
+                  if (decision === "approve" && !window.confirm("Approve this contractor's offer? The lead purchase price will automatically be deducted from the contractor's ZELPX Credits balance.")) return;
+                  action.disabled = true;
+                  action.textContent = decision === "approve" ? "Approving…" : "Declining…";
+                  try {
+                    const { data: response, error: responseError } = await db.rpc("customer_respond_to_lead_offer", { p_offer_id: offer.offer_id, p_decision: decision });
+                    if (responseError) throw responseError;
+                    if (!response?.success) throw new Error("The response was not confirmed.");
+                    await loadRequests();
+                    showMessage("requestMessage", decision === "approve" ? "Offer approved. The contractor's lead purchase is complete." : "Offer declined.", "success");
+                  } catch (error) {
+                    action.disabled = false;
+                    action.textContent = label;
+                    window.alert(error.message || "Could not process this offer.");
+                  }
+                });
+                offerActions.appendChild(action);
+              }
+              offerRow.append(offerInfo, offerActions);
+              offerSection.appendChild(offerRow);
+            });
+            details.appendChild(offerSection);
+          }
 
           if (request.preferred_time) {
             const preferred = document.createElement("p");
