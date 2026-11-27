@@ -1635,8 +1635,14 @@
           : contractor.verification_status === "rejected"
             ? "ACCESS DENIED — rejected by administrator"
             : "NO ACCESS — awaiting administrator decision";
+        const contractorProfessions=professionsById.get(contractor.id)||[];
+        const workRoles=[...new Set(contractorProfessions.map(x=>String(x.work_role||"").toLowerCase()).filter(Boolean))];
+        const workStatus=workRoles.includes("employee")?"Worker looking for employment":workRoles.includes("independent")?"Independent contractor / business":"Not recorded";
+        const selectedWork=contractorProfessions.map(x=>professionNames.get(x.profession_id)||"Selected profession").filter(Boolean);
         const details = [
           ["Email", contractor.email || "Not provided"],
+          ["WORK STATUS", workStatus],
+          ["Selected professions", selectedWork.length?[...new Set(selectedWork)].join(", "):"Not provided"],
           ["Lead access", accessLabel],
           ["Current approval status", contractor.verification_status || "Unknown"],
           ["Business address", [contractor.service_address, contractor.service_city, contractor.service_state, contractor.service_zip_code].filter(Boolean).join(", ") || "Not provided"],
