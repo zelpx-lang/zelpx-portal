@@ -1798,8 +1798,10 @@
     }, 5000);
   }
 
+  let unlicensedContractorsLoading = false;
   async function loadUnlicensedContractors() {
-    if (!isAdmin) return;
+    if (!isAdmin || unlicensedContractorsLoading) return;
+    unlicensedContractorsLoading = true;
     const list = $("unlicensedContractorsList");
     list.textContent = "Loading contractors…";
     clearMessage("unlicensedContractorsMessage");
@@ -2163,6 +2165,8 @@
     } catch (e) {
       list.textContent = "Could not load contractors without a license: " + (e.message || "Unknown error");
       message("unlicensedContractorsMessage", "Could not load unlicensed contractor records. " + (e.message || ""), "error");
+    } finally {
+      unlicensedContractorsLoading = false;
     }
   }
 
