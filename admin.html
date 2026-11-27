@@ -1197,7 +1197,8 @@
         .order("purchased_at", { ascending: false }).limit(500);
       if (error) throw error;
       const rows = purchases || [];
-      count.textContent = "Total purchases: " + rows.length;
+      const leadIncomeCents = rows.reduce((total,row)=>total + Number(row.price_cents || 0),0);
+      count.textContent = "Total purchases: " + rows.length + " · ZELPX lead income: " + money(leadIncomeCents);
       if (!rows.length) { list.textContent = "No purchased leads yet."; return; }
       const leadIds = [...new Set(rows.map(x => x.lead_id).filter(Boolean))];
       const contractorIds = [...new Set(rows.map(x => x.contractor_id).filter(Boolean))];
