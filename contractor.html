@@ -671,7 +671,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     <div id="signupFields" class="grid hidden">
       <div><label for="fullName">Your name</label><input id="fullName" autocomplete="name" placeholder="Full name" required></div>
       <div id="signupCompanyNameField"><label for="companyName">Company name</label><input id="companyName" placeholder="Company name" required></div>
-      <div id="signupCompanyEmailField"><label for="signupCompanyEmail">Company email</label><input id="signupCompanyEmail" type="email" autocomplete="email" placeholder="Company email"></div>
       <div><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="Phone number" required></div>
       <div id="signupStreetAddressField"><label for="serviceAddress">Business street address</label><input id="serviceAddress" autocomplete="street-address" placeholder="Street address" required></div>
       <div><label for="serviceZip">Business ZIP code</label><input id="serviceZip" inputmode="numeric" maxlength="10" autocomplete="postal-code" placeholder="5-digit ZIP" required></div>
@@ -1217,7 +1216,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const email = $("authEmail").value.trim().toLowerCase(), password = $("authPassword").value, fullName = $("fullName").value.trim(), phone = $("phone").value.trim();
     const signupRole=$("signupWorkRole").value;
     const companyName = signupRole==="employee" ? fullName : $("companyName").value.trim();
-    const companyEmail = signupRole==="employee" ? email : $("signupCompanyEmail").value.trim();
     const serviceAddress = $("serviceAddress").value.trim(), serviceCity = $("serviceCity").value.trim(), serviceState = $("serviceState").value.trim().toUpperCase(), serviceZip = $("serviceZip").value.trim().slice(0,5), serviceRadius = Number($("serviceRadius").value);
     if(!$("signupReadAgree").checked)return message("authMessage","Please scroll through the work and licensing information and accept the agreement before creating your account.");
     const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
@@ -1271,7 +1269,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if (password.length < 8) return message("authMessage", "Use a password with at least 8 characters.", "error");
     setBusy($("signupBtn"), true, "Creating account…");
     try {
-      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, email: companyEmail || email, lead_email_notifications: $("signupLeadEmailNotifications").checked, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
+      const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName, phone, company_name: companyName, email, lead_email_notifications: $("signupLeadEmailNotifications").checked, service_address: serviceAddress || null, service_city: serviceCity, service_state: serviceState, service_zip_code: serviceZip, service_radius_miles: serviceRadius, service_latitude: Number($("serviceZip").dataset.latitude) || null, service_longitude: Number($("serviceZip").dataset.longitude) || null, has_license: hasLicense, license_number: hasLicense ? licenseNumber : null, license_state: hasLicense ? licenseState : null, license_type: hasLicense ? licenseType : null,
           license_expiration_date: hasLicense ? licenseExpirationDate : null,
           license_number_2: hasLicense&&licenseNumber2?licenseNumber2:null, license_state_2: hasLicense&&licenseState2?licenseState2:null, license_type_2: hasLicense&&licenseType2?licenseType2:null, has_insurance_certificate: signupRole==="independent" ? hasInsuranceCertificate : false, insurance_agency_name: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgencyName : null, insurance_agent_phone: signupRole==="independent" && hasInsuranceCertificate ? insuranceAgentPhone : null, insurance_policy_number: signupRole==="independent" ? $("signupInsurancePolicyNumber").value.trim() : null, insurance_expiration_date: signupRole==="independent" ? insuranceExpiration : null, zelpx_signup_profession_ids: selectedSignup.map(p=>p.id), zelpx_signup_service_category_ids: selectedServiceCategoryIds, zelpx_signup_work_role: signupRole } } });
       if (error) throw error;
@@ -3713,7 +3711,6 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
     function updateSignupInsuranceVisibility(){
       const employee=$("signupWorkRole").value==="employee";
       $("signupCompanyNameField").classList.toggle("hidden",employee);
-      $("signupCompanyEmailField").classList.toggle("hidden",employee);
       const showInsurance=!employee;
       $("signupInsuranceFields").classList.toggle("hidden",!showInsurance);
       const yes=showInsurance && $("signupHasInsuranceCertificate").value==="yes";
