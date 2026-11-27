@@ -2591,7 +2591,37 @@
               void loadAdminLeads();
               void loadLeads();
             } catch (e) {
-              feedback.textContent = "Could not publish request: " + (e.message || "Unknown error");
+              const errorText = e?.message || "Unknown error";
+              // A stale admin modal can remain open after another publish succeeded.
+              // Re-check the database before showing a failure or allowing a duplicate publish.
+              if (/already been processed/i.test(errorText)) {
+                try {
+                  const { data: latestRequest, error: latestError } = await db
+                    .from("service_requests")
+                    .select("id,status,lead_id")
+                    .eq("id", request.id)
+                    .maybeSingle();
+                  if (!latestError && latestRequest?.lead_id) {
+                    request.lead_id = latestRequest.lead_id;
+                    request.status = latestRequest.status || "published";
+                    showPublishedRequestResult(request.id, latestRequest.lead_id);
+                    summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
+                    if (attentionBell) attentionBell.remove();
+                    feedback.textContent = "This request was already published. Lead ID: " + latestRequest.lead_id;
+                    feedback.className = "message success";
+                    publish.disabled = true;
+                    publish.textContent = "Already published";
+                    setBusy(publish, false);
+                    void refreshIncomingLeadBadge();
+                    void loadAdminLeads();
+                    void loadLeads();
+                    return;
+                  }
+                } catch (refreshError) {
+                  console.warn("Could not confirm the request's latest publish status:", refreshError);
+                }
+              }
+              feedback.textContent = "Could not publish request: " + errorText;
               feedback.className = "message error"; setBusy(publish, false);
             }
           });
