@@ -2703,24 +2703,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           const descriptionText = String(request.description || "No additional details provided.").replace(/\r\n/g, "\n").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n");
           description.append(descriptionLabel, document.createTextNode("\n" + descriptionText));
 
-          if (request.customer_budget_choice) {
-            const budgetChoice = document.createElement("p");
-            const choiceLabel = document.createElement("span");
-            choiceLabel.className = "request-label";
-            choiceLabel.textContent = "Budget preference: ";
-            const choiceText = request.customer_budget_choice === "customer_entered" ? "I know my budget" : request.customer_budget_choice === "not_decided" ? "Budget not decided" : "I want pricing guidance";
-            budgetChoice.append(choiceLabel, document.createTextNode(choiceText));
-            details.appendChild(budgetChoice);
-          }
-          if (request.customer_budget_cents != null) {
-            const budget = document.createElement("p");
-            const budgetLabel = document.createElement("span");
-            budgetLabel.className = "request-label";
-            budgetLabel.textContent = "Project budget: ";
-            budget.append(budgetLabel, document.createTextNode(new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(request.customer_budget_cents / 100)));
-            details.appendChild(budget);
-          }
-
           const date = document.createElement("p");
           date.textContent = "Order placed: "
             new Date(request.created_at).toLocaleString();
@@ -2757,6 +2739,24 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           summary.append(summaryText, unreadBell, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
+
+          if (request.customer_budget_choice) {
+            const budgetChoice = document.createElement("p");
+            const choiceLabel = document.createElement("span");
+            choiceLabel.className = "request-label";
+            choiceLabel.textContent = "Budget preference: ";
+            const choiceText = request.customer_budget_choice === "customer_entered" ? "I know my budget" : request.customer_budget_choice === "not_decided" ? "Budget not decided" : "I want pricing guidance";
+            budgetChoice.append(choiceLabel, document.createTextNode(choiceText));
+            details.appendChild(budgetChoice);
+          }
+          if (request.customer_budget_cents != null) {
+            const budget = document.createElement("p");
+            const budgetLabel = document.createElement("span");
+            budgetLabel.className = "request-label";
+            budgetLabel.textContent = "Project budget: ";
+            budget.append(budgetLabel, document.createTextNode(new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(request.customer_budget_cents / 100)));
+            details.appendChild(budget);
+          }
 
           const requestOffers = offersByLead.get(request.lead_id) || [];
           requestOffers.forEach(offer => {
