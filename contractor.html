@@ -2231,12 +2231,51 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     } finally { setBusy(button, false); }
   }
   let purchasedLeadIds = new Set();
+  let contractorLeadOffersById = new Map();
   function splitLeadDescription(description) {
     const raw = String(description || "").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n");
     const marker = /(?:^|\n)\s*ADDITIONAL CUSTOMER NOTES\s*\n?/i;
     const match = marker.exec(raw);
     return match ? { work: raw.slice(0, match.index).trim(), notes: raw.slice(match.index + match[0].length).trim() } : { work: raw.trim(), notes: "" };
   }
+  async function sendLeadOffer(lead, amountCents, button) {
+    if (!contractorPhoneIsVerified()) {
+      return showLeadRequirementNotice("Phone verification required","Verify your contractor phone number in My company before making an offer.");
+    }
+    if (!Number.isInteger(amountCents) || amountCents < 1) return;
+    setBusy(button, true, "Sending offer…");
+    try {
+      const { data, error } = await db.rpc("submit_lead_offer", { p_lead_id: lead.id, p_offer_cents: amountCents });
+      if (error) throw error;
+      if (!data?.success) throw new Error("The offer was not confirmed by the server.");
+      const { data: offerRows, error: offerError } = await db.rpc("contractor_get_my_lead_offers");
+      if (offerError) throw offerError;
+      contractorLeadOffersById = new Map((offerRows || []).map(row => [row.lead_id, row]));
+      renderLeads();
+      message("appMessage", "Your offer of " + money(amountCents) + " was sent to the customer.", "success");
+    } catch (error) {
+      message("appMessage", "Could not send offer: " + (error.message || "Unknown error"), "error");
+    } finally { setBusy(button, false); }
+  }
+
+  async function declineLeadOffer(lead, button) {
+    if (!window.confirm("Decline this customer-budget job?")) return;
+    setBusy(button, true, "Declining…");
+    try {
+      const { data, error } = await db.rpc("decline_lead_offer", { p_lead_id: lead.id });
+      if (error) throw error;
+      if (!data?.success) throw new Error("The decline was not confirmed.");
+      const { data: offerRows, error: offerError } = await db.rpc("contractor_get_my_lead_offers");
+      if (offerError) throw offerError;
+      contractorLeadOffersById = new Map((offerRows || []).map(row => [row.lead_id, row]));
+      renderLeads();
+      message("appMessage", "You declined this job.", "success");
+    } catch (error) {
+      message("appMessage", "Could not decline this job: " + (error.message || "Unknown error"), "error");
+      setBusy(button, false);
+    }
+  }
+
   function renderLeads() {
     const list = $("leadsList"), query = ($("leadSearch").value || "").trim().toLowerCase();
     const zipQuery = ($("leadZipFilter").value || "").replace(/\\D/g, "").slice(0,5);
@@ -2274,7 +2313,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const zip = document.createElement("span"); zip.className = "lead-summary-zip"; zip.textContent = "ZIP " + (lead.zip_code || "Area not specified");
       summaryMain.append(title, zip);
       const summarySide = document.createElement("span"); summarySide.className = "lead-summary-side";
-      const price = document.createElement("strong"); price.className = "lead-summary-price"; price.textContent = money(lead.price_cents);
+      const price = document.createElement("strong"); price.className = "lead-summary-price"; price.textContent = lead.customer_budget_cents != null ? "Budget " + money(lead.customer_budget_cents) : money(lead.price_cents);
       const chevron = document.createElement("span"); chevron.className = "lead-summary-chevron"; chevron.textContent = "＋";
       summarySide.append(price, chevron); summary.append(summaryMain, summarySide); card.append(summary);
       const details = document.createElement("div"); details.className = "lead-details hidden";
@@ -2301,6 +2340,18 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         }
       }
       const ownsPurchase = purchasedLeadIds.has(lead.id);
+      if (lead.customer_budget_cents != null) {
+        const budgetLine = document.createElement("p");
+        budgetLine.className = "lead-details-description";
+        const budgetLabel = document.createElement("strong");
+        budgetLabel.textContent = "Customer project budget: ";
+        budgetLine.append(budgetLabel, document.createTextNode(money(lead.customer_budget_cents)));
+        const feeLine = document.createElement("p");
+        feeLine.className = "lead-details-description";
+        feeLine.style.marginTop = "4px";
+        feeLine.textContent = "ZELPX lead purchase fee: " + money(lead.price_cents);
+        details.append(budgetLine, feeLine);
+      }
       if (ownsPurchase && descriptionParts.notes) {
         const notesTitle = document.createElement("h3"); notesTitle.className = "lead-details-label"; notesTitle.textContent = "Additional customer notes";
         const notes = document.createElement("p"); notes.className = "lead-details-description"; notes.textContent = descriptionParts.notes;
@@ -2319,11 +2370,56 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           eligibility.textContent = lead.previewOnly ? "Public preview — details protected" : "Select this service in your profile";
           badges.append(eligibility);
         }
-        const buyButton = document.createElement("button"); buyButton.type = "button";
-        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
-        buyButton.disabled = !canOpenPurchase;
-        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
-        footer.append(buyButton);
+        if (lead.customer_budget_cents != null) {
+          const existingOffer = contractorLeadOffersById.get(lead.id);
+          if (existingOffer?.status === "pending") {
+            const offerStatus = document.createElement("span");
+            offerStatus.className = "pill available";
+            offerStatus.textContent = "Offer sent";
+            footer.append(offerStatus);
+          } else if (existingOffer?.status === "declined") {
+            const offerStatus = document.createElement("span");
+            offerStatus.className = "pill";
+            offerStatus.textContent = "Passed";
+            footer.append(offerStatus);
+          }
+          const offerButton = document.createElement("button");
+          offerButton.type = "button";
+          offerButton.textContent = existingOffer?.status === "pending" ? "Update Offer" : "Offer";
+          offerButton.disabled = !canOpenPurchase;
+          if (canOpenPurchase) offerButton.addEventListener("click", () => sendLeadOffer(lead, Number(lead.customer_budget_cents), offerButton));
+          footer.append(offerButton);
+          const moreButton = document.createElement("button");
+          moreButton.type = "button";
+          moreButton.className = "secondary";
+          moreButton.textContent = "Offer More";
+          moreButton.disabled = !canOpenPurchase;
+          if (canOpenPurchase) moreButton.addEventListener("click", () => {
+            const suggested = (Number(lead.customer_budget_cents) / 100).toFixed(2);
+            const entered = window.prompt("Enter your proposed job price in USD. Customer budget: $" + suggested, suggested);
+            if (entered === null) return;
+            const amount = Number(entered);
+            if (!Number.isFinite(amount) || amount <= Number(lead.customer_budget_cents) / 100 || Math.round(amount * 100) !== amount * 100) {
+              window.alert("Enter an amount higher than the customer's budget, with no more than 2 decimal places.");
+              return;
+            }
+            sendLeadOffer(lead, Math.round(amount * 100), moreButton);
+          });
+          footer.append(moreButton);
+          const declineButton = document.createElement("button");
+          declineButton.type = "button";
+          declineButton.className = "danger";
+          declineButton.textContent = "Decline";
+          declineButton.disabled = !canOpenPurchase;
+          if (canOpenPurchase) declineButton.addEventListener("click", () => declineLeadOffer(lead, declineButton));
+          footer.append(declineButton);
+        } else {
+          const buyButton = document.createElement("button"); buyButton.type = "button";
+          buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
+          buyButton.disabled = !canOpenPurchase;
+          if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+          footer.append(buyButton);
+        }
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
       details.append(footer); card.append(details);
@@ -2405,7 +2501,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     }
 
     let { data, error } = await db.from("leads")
-      .select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,status,created_at,lead_type,package_services")
+      .select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,customer_budget_cents,customer_budget_choice,status,created_at,lead_type,package_services")
       .order("created_at", { ascending: false }).limit(100);
     let publicPreviewOnly = false;
 
@@ -2432,7 +2528,14 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
 
     // Show the main lead list as soon as the primary query returns.
     cachedLeads = data || [];
-    if (publicPreviewOnly) purchasedLeadIds = new Set();
+    if (publicPreviewOnly) {
+      purchasedLeadIds = new Set();
+      contractorLeadOffersById = new Map();
+    } else if (currentContractor?.id) {
+      const { data: offerRows, error: offerRowsError } = await db.rpc("contractor_get_my_lead_offers");
+      if (offerRowsError) console.warn("Your lead offers could not be loaded:", offerRowsError.message);
+      contractorLeadOffersById = new Map((offerRows || []).map(row => [row.lead_id, row]));
+    }
     $("availableCount").textContent = String(cachedLeads.filter(lead => lead.status === "available").length);
     renderLeads();
 

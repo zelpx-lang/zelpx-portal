@@ -1725,6 +1725,24 @@
     }
   }
 
+  // Keep the Incoming leads badge independent from the request-list renderer.
+  // A badge refresh failure must never prevent the admin queue from loading.
+  async function refreshIncomingLeadBadge() {
+    const badge = $("incomingLeadBadge");
+    if (!badge || !isAdmin || !currentUser) return;
+    try {
+      const { count, error } = await db.from("service_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "new");
+      if (error) throw error;
+      badge.textContent = String(count || 0);
+      badge.classList.toggle("hidden", !(count > 0));
+      badge.setAttribute("aria-label", (count || 0) + " new incoming leads");
+    } catch (error) {
+      console.warn("Could not refresh Incoming leads badge:", error.message || error);
+    }
+  }
+
   function startContractorChangeAlerts() {
     if (!isAdmin || !currentUser) return;
     if (contractorRegistrationChannel) db.removeChannel(contractorRegistrationChannel);

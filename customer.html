@@ -449,6 +449,22 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible{outline:2px s
     .commercial-sharing-consent input{flex:0 0 18px;width:18px;height:18px;margin:2px 0 0;accent-color:var(--customer-orange)}
     .request-cancel-button{width:auto!important;min-height:38px;margin:0 8px 8px 0;padding:8px 13px;background:#fff7f2;color:#a84220;border:1px solid #edc5b0;box-shadow:none;font-size:13px}
     .request-cancel-button:hover:not(:disabled){background:#ffede2;color:#8e3215;box-shadow:none}
+    #customerBudgetSection{margin:16px 0;padding:17px;border:1px solid #f0ded2;border-radius:18px;background:linear-gradient(145deg,#fff 0%,#fff8f2 100%)}
+    #customerBudgetSection>strong{display:block;font-size:16px;color:var(--customer-ink)}
+    #customerBudgetSection>.subtitle{margin:6px 0 12px;text-align:left;font-size:12px}
+    .customer-budget-options{display:grid;gap:9px}
+    .customer-budget-option{display:flex;align-items:flex-start;gap:11px;margin:0;padding:12px;border:1px solid #eadbd0;border-radius:13px;background:#fffdfa;text-transform:none;letter-spacing:0;cursor:pointer}
+    .customer-budget-option:has(input:checked){border-color:#e99a70;background:#fff3eb}
+    .customer-budget-option>input{flex:0 0 19px;width:19px;height:19px;min-height:19px;margin:2px 0 0;accent-color:var(--customer-orange)}
+    .customer-budget-option>span{display:grid;gap:3px}
+    .customer-budget-option strong{font-size:13px;color:var(--customer-ink)}
+    .customer-budget-option small{font-size:12px;font-weight:450;color:var(--customer-muted);line-height:1.4}
+    .customer-budget-amount{margin:0 0 2px;padding:12px;border:1px dashed #e9b99e;border-radius:13px;background:#fffaf6}
+    .customer-budget-amount label{margin:0 0 6px}
+    .customer-budget-input{display:flex;align-items:center;gap:8px;padding-left:12px;border:1px solid #eadbd0;border-radius:12px;background:#fff}
+    .customer-budget-input>span{font-weight:800;color:#a85a35}
+    .customer-budget-input input{min-width:0;border:0!important;box-shadow:none!important}
+    .customer-budget-input input:focus{outline:0}
     #requestForm > button,#authForm > button { width:100%; }
     @media(max-width:600px) {
       body { padding:12px 9px; }
@@ -897,6 +913,29 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             <div id="removedServicesRestoreList"></div>
           </div>
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
+        </section>
+
+        <section id="customerBudgetSection" class="request-card" aria-labelledby="customerBudgetHeading">
+          <strong id="customerBudgetHeading">What is your budget for this project?</strong>
+          <p class="subtitle">Choose one option. Your budget helps contractors understand what you have in mind.</p>
+          <div class="customer-budget-options">
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="custom" required>
+              <span><strong>I know my budget</strong><small>I have a budget in mind.</small></span>
+            </label>
+            <div id="customerBudgetAmountWrap" class="customer-budget-amount hidden">
+              <label for="customerBudgetAmount">Your budget (USD)</label>
+              <div class="customer-budget-input"><span>$</span><input id="customerBudgetAmount" type="number" min="1" max="10000000" step="1" inputmode="decimal" placeholder="Enter amount"></div>
+            </div>
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="undecided">
+              <span><strong>Budget not decided</strong><small>I haven't decided how much I want to spend.</small></span>
+            </label>
+            <label class="customer-budget-option">
+              <input type="radio" name="customerBudgetChoice" value="guidance">
+              <span><strong>I want pricing guidance</strong><small>I'd like a contractor to help estimate the cost.</small></span>
+            </label>
+          </div>
         </section>
 
         <label for="propertyAddress">Property Street Address</label>
@@ -2259,6 +2298,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       });
     }
 
+    function updateCustomerBudgetFields() {
+      const selected = document.querySelector('input[name="customerBudgetChoice"]:checked')?.value || "";
+      const amountWrap = $("customerBudgetAmountWrap");
+      const amountInput = $("customerBudgetAmount");
+      const needsAmount = selected === "custom";
+      amountWrap.classList.toggle("hidden", !needsAmount);
+      amountInput.required = needsAmount;
+      if (!needsAmount) amountInput.value = "";
+    }
+    document.querySelectorAll('input[name="customerBudgetChoice"]').forEach(input => {
+      input.addEventListener("change", updateCustomerBudgetFields);
+    });
+    updateCustomerBudgetFields();
+
     $("requestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       clearMessage("requestMessage");
@@ -2308,6 +2361,18 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (isSpherePackage && requestedServices.length < 2) {
           throw new Error("A Special Lead Package must include at least two services. Please return to the sphere and select at least two.");
         }
+        const budgetChoice = document.querySelector('input[name="customerBudgetChoice"]:checked')?.value || "";
+        const budgetAmount = $("customerBudgetAmount").value.trim();
+        if (!budgetChoice) throw new Error("Please choose one budget option.");
+        if (budgetChoice === "custom" && (!budgetAmount || !Number.isFinite(Number(budgetAmount)) || Number(budgetAmount) <= 0)) {
+          throw new Error("Please enter a valid project budget greater than $0.");
+        }
+        const customerBudgetLabel = budgetChoice === "custom"
+          ? "$" + Number(budgetAmount).toLocaleString("en-US") + " (customer's proposed budget)"
+          : budgetChoice === "undecided"
+            ? "Budget not decided"
+            : "Customer wants pricing guidance";
+
         const request = {
           user_id: session.user.id,
           request_type: isSpherePackage ? "lead_package" : "regular",
@@ -2319,7 +2384,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           // Use the matched street-address coordinates, not the ZIP centroid.
           service_latitude: Number(verifiedAddress.latitude) || null,
           service_longitude: Number(verifiedAddress.longitude) || null,
-          description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
+          customer_budget_cents: budgetChoice === "custom" ? Math.round(Number(budgetAmount) * 100) : null,
+          customer_budget_choice: budgetChoice,
+          description: "CUSTOMER BUDGET: " + customerBudgetLabel + "\n\n" + (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null,
           commercial_sharing_consent_at: new Date().toISOString(),
           commercial_sharing_consent_version: "2026-11-22-v1"
@@ -2342,6 +2409,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         customerRequestIntent = null;
         sphereDraft = { service: "", zip: "", source: "", services: [] };
         $("requestForm").reset();
+        updateCustomerBudgetFields();
         $("serviceState").value = "";
         window.zelpxCommercialSharingAccepted = false;
         $("commercialSharingConsent").checked = false;
@@ -2587,12 +2655,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
         const { data, error } = await db
           .from("service_requests")
-          .select("id, lead_id, purchased_by, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at")
+          .select("id, lead_id, purchased_by, request_type, service_type, description, property_address, preferred_time, status, created_at, retention_kept_at, customer_budget_cents, customer_budget_choice")
           .eq("user_id", session.user.id)
           .is("hidden_at", null)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
+
+        const { data: customerOfferRows, error: customerOffersError } = await db.rpc("customer_get_my_lead_offers");
+        if (customerOffersError) console.warn("Contractor offers could not be loaded:", customerOffersError.message);
+        const offersByLead = new Map();
+        (customerOfferRows || []).forEach(offer => {
+          if (!offersByLead.has(offer.lead_id)) offersByLead.set(offer.lead_id, []);
+          offersByLead.get(offer.lead_id).push(offer);
+        });
 
         const requestLeadIds = (data || []).map(item => item.lead_id).filter(Boolean);
         const unreadByLead = new Map();
@@ -2691,6 +2767,61 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           summary.append(summaryText, unreadBell, chevron); card.appendChild(summary);
           const details = document.createElement("div"); details.className = "request-details hidden";
           details.append(address, description, date);
+
+          if (request.customer_budget_cents != null && Number(request.customer_budget_cents) > 0) {
+            const budget = document.createElement("p");
+            budget.textContent = "Your project budget: $" + (Number(request.customer_budget_cents) / 100).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+            details.appendChild(budget);
+          }
+
+          const offers = request.lead_id ? (offersByLead.get(request.lead_id) || []) : [];
+          const pendingOffers = offers.filter(offer => offer.status === "pending");
+          if (pendingOffers.length) {
+            const offerSection = document.createElement("section");
+            offerSection.className = "customer-chat";
+            const offerHeading = document.createElement("strong");
+            offerHeading.textContent = "Contractor offers";
+            offerSection.appendChild(offerHeading);
+            pendingOffers.forEach(offer => {
+              const offerRow = document.createElement("div");
+              offerRow.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--customer-line)";
+              const offerInfo = document.createElement("div");
+              const contractorName = document.createElement("strong");
+              contractorName.textContent = offer.company_name || "Verified contractor";
+              const offerPrice = document.createElement("p");
+              offerPrice.style.margin = "3px 0";
+              offerPrice.textContent = "Offer: $" + (Number(offer.offer_cents || 0) / 100).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+              offerInfo.append(contractorName, offerPrice);
+              const offerActions = document.createElement("div");
+              offerActions.style.cssText = "display:flex;gap:7px;flex-wrap:wrap";
+              for (const [decision, label] of [["approve","Approve"],["decline","Decline"]]) {
+                const action = document.createElement("button");
+                action.type = "button";
+                action.textContent = label;
+                if (decision === "decline") action.className = "secondary-button";
+                action.addEventListener("click", async () => {
+                  if (decision === "approve" && !window.confirm("Approve this contractor's offer? The lead purchase price will automatically be deducted from the contractor's ZELPX Credits balance.")) return;
+                  action.disabled = true;
+                  action.textContent = decision === "approve" ? "Approving…" : "Declining…";
+                  try {
+                    const { data: response, error: responseError } = await db.rpc("customer_respond_to_lead_offer", { p_offer_id: offer.offer_id, p_decision: decision });
+                    if (responseError) throw responseError;
+                    if (!response?.success) throw new Error("The response was not confirmed.");
+                    await loadRequests();
+                    showMessage("requestMessage", decision === "approve" ? "Offer approved. The contractor's lead purchase is complete." : "Offer declined.", "success");
+                  } catch (error) {
+                    action.disabled = false;
+                    action.textContent = label;
+                    window.alert(error.message || "Could not process this offer.");
+                  }
+                });
+                offerActions.appendChild(action);
+              }
+              offerRow.append(offerInfo, offerActions);
+              offerSection.appendChild(offerRow);
+            });
+            details.appendChild(offerSection);
+          }
 
           if (request.preferred_time) {
             const preferred = document.createElement("p");
