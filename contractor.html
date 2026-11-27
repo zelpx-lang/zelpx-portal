@@ -3389,24 +3389,38 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
             });
           }else if(r.request_type==="service_categories"){
             addDetail("Selected work categories",(changes.category_ids||[]).map(id=>categoryNames.get(id)||("Category ID "+id)).join(", ")||"No categories selected");
+          }else if(r.request_type==="company_profile"){
+            addDetail("Company name",changes.company_name);
+            addDetail("Contact name",changes.full_name);
+            addDetail("Email",changes.email);
+            addDetail("Phone",changes.phone);
+            const address=[changes.service_address,changes.service_city,changes.service_state?stateName(changes.service_state):"",changes.service_zip_code].filter(Boolean).join(", ");
+            addDetail("Business address",address);
+            if(changes.has_license!==undefined)addDetail("Has license",changes.has_license===true?"Yes":changes.has_license===false?"No":"Not specified");
+            const primaryLicense=[changes.license_state?stateName(changes.license_state):"",changes.license_type,changes.license_number,changes.license_expiration_date?formatUSDate(changes.license_expiration_date):""].filter(Boolean).join(" · ");
+            addDetail("License",primaryLicense|| (changes.has_license===true?"Details not entered in this update":null));
+            const secondLicense=[changes.license_state_2?stateName(changes.license_state_2):"",changes.license_type_2,changes.license_number_2,changes.license_expiration_date_2?formatUSDate(changes.license_expiration_date_2):""].filter(Boolean).join(" · ");
+            addDetail("Second state license",secondLicense);
+            if(Array.isArray(changes.additional_state_licenses))changes.additional_state_licenses.forEach((license,index)=>{
+              if(!license||typeof license!=="object")return;
+              const value=[license.state_code?stateName(license.state_code):"",license.license_type,license.license_number,license.expiration_date?formatUSDate(license.expiration_date):""].filter(Boolean).join(" · ");
+              addDetail("Additional license "+(index+1),value);
+            });
+            addDetail("Insurance company",changes.insurance_agency_name);
+            addDetail("Insurance agent phone",changes.insurance_agent_phone);
+            addDetail("Insurance policy number",changes.insurance_policy_number);
+            addDetail("Insurance expiration",changes.insurance_expiration_date?formatUSDate(changes.insurance_expiration_date):null);
+            if(changes.has_insurance!==undefined)addDetail("Business insurance",changes.has_insurance===true?"Yes":changes.has_insurance===false?"No":null);
+            if(changes.avatar_url||changes.profile_photo_url)addDetail("Profile photo","Updated");
+            addDetail("Service radius",changes.service_radius_miles!==undefined?changes.service_radius_miles+" miles":null);
           }else{
             Object.entries(changes).forEach(([key,value])=>{
-              if(key==="additional_state_licenses" && Array.isArray(value)){
-                if(!value.length)return;
-                const heading=document.createElement("h4");heading.textContent="Additional state licenses";detail.append(heading);
-                const list=document.createElement("div");list.style.cssText="display:grid;gap:8px";
-                value.forEach((license,index)=>{
-                  if(!license||typeof license!=="object")return;
-                  const item=document.createElement("div");item.style.cssText="padding:10px;border:1px solid #f0dfce;border-radius:10px;background:#fff";
-                  const title=document.createElement("strong");title.textContent="License "+(index+1)+" — "+stateName(license.state_code);item.append(title);
-                  const row=(label,val)=>{if(val===undefined||val===null||String(val).trim()===""||String(val).trim().toLowerCase()==="null")return;const p=document.createElement("p");p.style.margin="6px 0 0";const b=document.createElement("strong");b.textContent=label+": ";p.append(b,document.createTextNode(String(val)));item.append(p);};
-                  row("License type",license.license_type);row("License number",license.license_number);row("Expiration",formatUSDate(license.expiration_date));
-                  list.append(item);
-                });
-                detail.append(list);return;
-              }
               if(value===null||value===undefined||String(value).trim().toLowerCase()==="null")return;
-              addDetail(key.replaceAll("_"," "),typeof value==="object"?JSON.stringify(value):value);
+              if(["avatar_url","profile_photo_url"].includes(key)){addDetail("Profile photo","Updated");return;}
+              if(/(?:^|_)(?:latitude|longitude)$/.test(key)||/_url$/.test(key))return;
+              if(["state_code","service_state","license_state","license_state_2"].includes(key)){addDetail(key.replaceAll("_"," "),stateName(value));return;}
+              if(typeof value==="boolean"){addDetail(key.replaceAll("_"," "),value?"Yes":"No");return;}
+              addDetail(key.replaceAll("_"," "),typeof value==="object"?(Array.isArray(value)?value.join(", "):"Updated"):value);
             });
           }
           card.append(detail);
