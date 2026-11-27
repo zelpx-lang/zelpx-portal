@@ -2036,20 +2036,17 @@
           const requestsBox=document.createElement("section");
           requestsBox.style.cssText="margin:14px 0;padding:14px;border:1px solid #e7d8c7;border-radius:14px;background:#fffaf5;";
           const requestsTitle=document.createElement("h3");
-          requestsTitle.textContent="Account updates awaiting your decision";
+          requestsTitle.textContent="Account updates awaiting your decision ("+pendingChangeRequests.length+")";
           requestsTitle.style.cssText="margin:0 0 10px;font-size:16px;line-height:1.3;color:#243447;";
           requestsBox.append(requestsTitle);
-          pendingChangeRequests.forEach(request=>{
-            const card=document.createElement("div");
-            card.style.cssText="padding:12px 0;border-top:1px solid #eadfd3;";
-            const header=document.createElement("div");
-            header.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;";
+          pendingChangeRequests.forEach((request,index)=>{
+            const section=document.createElement("div");
+            section.style.cssText="padding:10px 0;"+(index?"border-top:1px solid #eadfd3;":"");
             const requestName=document.createElement("strong");
             requestName.textContent=request.request_type==="company_profile"?"Company profile":request.request_type==="profession_qualifications"?"Services and qualifications":"Account update";
-            requestName.style.cssText="font-size:15px;color:#243447;";
-            header.append(requestName);
+            requestName.style.cssText="display:block;margin-bottom:4px;font-size:15px;color:#243447;";
             const requestDate=document.createElement("p");
-            requestDate.style.cssText="margin:4px 0 10px;color:#777;font-size:12px;";
+            requestDate.style.cssText="margin:0 0 8px;color:#777;font-size:12px;";
             requestDate.textContent="Submitted "+(request.created_at?new Date(request.created_at).toLocaleString("en-US"):"date unavailable");
             const details=document.createElement("div");
             details.style.cssText="display:grid;grid-template-columns:minmax(0,1fr);gap:5px;padding:10px;background:#fff;border:1px solid #eee6dc;border-radius:10px;font-size:13px;color:#4c4c4c;";
@@ -2074,9 +2071,9 @@
                 else addDetail("License","No license details entered in this update");
                 const secondLicense=[stateName(changes.license_state_2),changes.license_type_2,changes.license_number_2,changes.license_expiration_date_2].filter(Boolean);
                 if(secondLicense.length)addDetail("Second license",secondLicense.join(" · "));
-                (Array.isArray(changes.additional_state_licenses)?changes.additional_state_licenses:[]).forEach((license,index)=>{
+                (Array.isArray(changes.additional_state_licenses)?changes.additional_state_licenses:[]).forEach((license,licenseIndex)=>{
                   const parts=[stateName(license.state_code),license.license_type,license.license_number,license.expiration_date].filter(Boolean);
-                  if(parts.length)addDetail("Additional license "+(index+1),parts.join(" · "));
+                  if(parts.length)addDetail("Additional license "+(licenseIndex+1),parts.join(" · "));
                 });
               }
               const insurance=[changes.insurance_agency_name,changes.insurance_agent_phone,changes.insurance_policy_number,changes.insurance_expiration_date].filter(Boolean);
@@ -2098,37 +2095,44 @@
               addDetail("Update","Details are available for administrator review");
             }
             if(!details.childElementCount)addDetail("Details","No information supplied");
-            const actions=document.createElement("div");
-            actions.style.cssText="display:flex;gap:9px;margin-top:10px;";
-            const createDecisionButton=(decision,label)=>{
-              const button=document.createElement("button");
-              button.type="button";
-              button.textContent=label;
-              button.className="secondary";
-              button.style.cssText="flex:1;min-width:0;min-height:42px;margin:0;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:750;"+(decision==="rejected"?"color:#b5472b;border-color:#e5c8bd;":"color:#16794b;border-color:#c8dfd1;");
-              button.addEventListener("click",async()=>{
-                if(button.disabled)return;
-                const verb=decision==="rejected"?"Decline":"Approve";
-                if(!window.confirm(verb+" this "+requestName.textContent.toLowerCase()+" update?"))return;
-                actions.querySelectorAll("button").forEach(b=>b.disabled=true);
-                button.textContent=decision==="rejected"?"Declining…":"Approving…";
-                try{
-                  const {error}=await db.rpc("review_contractor_change_request",{p_request_id:request.id,p_decision:decision,p_admin_note:null});
-                  if(error)throw error;
-                  message("unlicensedContractorsMessage",requestName.textContent+" "+(decision==="rejected"?"declined.":"approved."),"success");
-                  await loadUnlicensedContractors();
-                }catch(error){
-                  message("unlicensedContractorsMessage","Could not update request: "+(error.message||"Unknown error"),"error");
-                  actions.querySelectorAll("button").forEach(b=>b.disabled=false);
-                  button.textContent=label;
-                }
-              });
-              return button;
-            };
-            actions.append(createDecisionButton("approved_with_license","Approve"),createDecisionButton("rejected","Decline"));
-            card.append(header,requestDate,details,actions);
-            requestsBox.append(card);
+            section.append(requestName,requestDate,details);
+            requestsBox.append(section);
           });
+          const actions=document.createElement("div");
+          actions.style.cssText="display:flex;gap:9px;margin-top:12px;";
+          const approveAll=document.createElement("button");
+          approveAll.type="button";approveAll.textContent="Approve";approveAll.className="secondary";
+          approveAll.style.cssText="flex:1;min-width:0;min-height:42px;margin:0;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:750;color:#16794b;border-color:#c8dfd1;";
+          const declineAll=document.createElement("button");
+          declineAll.type="button";declineAll.textContent="Decline";declineAll.className="secondary";
+          declineAll.style.cssText="flex:1;min-width:0;min-height:42px;margin:0;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:750;color:#b5472b;border-color:#e5c8bd;";
+          const reviewAll=async decision=>{
+            if(approveAll.disabled||declineAll.disabled)return;
+            const verb=decision==="rejected"?"Decline":"Approve";
+            if(!window.confirm(verb+" all "+pendingChangeRequests.length+" pending updates for this account?"))return;
+            approveAll.disabled=true;declineAll.disabled=true;
+            approveAll.textContent=decision==="rejected"?"Declining…":"Approving…";
+            let completed=0;
+            try{
+              for(const request of pendingChangeRequests){
+                const changes=request.requested_changes||{};
+                const requestDecision=decision==="rejected"?"rejected":(request.request_type==="company_profile"&&changes.has_license===false?"approved_without_license":"approved_with_license");
+                const {error}=await db.rpc("review_contractor_change_request",{p_request_id:request.id,p_decision:requestDecision,p_admin_note:null});
+                if(error)throw new Error(error.message||"Could not review an update");
+                completed++;
+              }
+              message("unlicensedContractorsMessage",completed+" account update"+(completed===1?"":"s")+" "+(decision==="rejected"?"declined.":"approved."),"success");
+              await loadUnlicensedContractors();
+            }catch(error){
+              message("unlicensedContractorsMessage",completed+" of "+pendingChangeRequests.length+" updates processed. Remaining updates were not changed: "+(error.message||"Unknown error"),"error");
+              approveAll.disabled=false;declineAll.disabled=false;
+              approveAll.textContent="Approve";
+            }
+          };
+          approveAll.addEventListener("click",()=>reviewAll("approved"));
+          declineAll.addEventListener("click",()=>reviewAll("rejected"));
+          actions.append(approveAll,declineAll);
+          requestsBox.append(actions);
           panel.append(requestsBox);
         }
         const professionRows=professionsById.get(full.id)||[];
