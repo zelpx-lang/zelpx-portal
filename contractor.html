@@ -1126,13 +1126,14 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     const role=$("signupWorkRole")?.value||"independent";
     const licenseChoice=$("hasLicense")?.value||"";
-    const mappedIds=new Set(signupCategoryMapRows.filter(x=>x.mapping_status==="mapped"&&x.profession_id).map(x=>x.profession_id));
+    // The profession catalog is the source for signup choices. A missing category
+    // mapping must not hide a state-approved no-license profession from workers.
     const ruleByProfession=new Map(signupRuleRows.map(r=>[r.profession_id,String(r.requirement_status||"unverified").toLowerCase()]));
     const matches=signupProfessionCatalog.filter(p=>{
       const status=ruleByProfession.get(p.id)||"unverified";
       const eligible=role==="employee" || licenseChoice==="yes" ||
         (licenseChoice==="no" && status==="not_required");
-      return mappedIds.has(p.id) && eligible &&
+      return eligible &&
         (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(searchTerm);
     });
     if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
