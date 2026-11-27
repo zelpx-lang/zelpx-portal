@@ -1126,20 +1126,31 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     const role=$("signupWorkRole")?.value||"independent";
     const licenseChoice=$("hasLicense")?.value||"";
-    // The profession catalog is the source for signup choices. A missing category
-    // mapping must not hide a state-approved no-license profession from workers.
+    // No business license (and employee registration without verified personal
+    // credentials) must never expose licensed, conditional, or unverified scopes.
     const ruleByProfession=new Map(signupRuleRows.map(r=>[r.profession_id,String(r.requirement_status||"unverified").toLowerCase()]));
+    const noLicenseMode=role==="employee" || licenseChoice==="no";
     const matches=signupProfessionCatalog.filter(p=>{
       const status=ruleByProfession.get(p.id)||"unverified";
-      const eligible=role==="employee" || licenseChoice==="yes" ||
-        (licenseChoice==="no" && status==="not_required");
+      const eligible=noLicenseMode ? status==="not_required" : licenseChoice==="yes";
       return eligible &&
         (p.profession_name+" "+(p.category_name||"")).toLowerCase().includes(searchTerm);
     });
     if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
       root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;
     }
-    if(!matches.length){root.textContent="No professions match your license status and work role.";return;}
+    // Remove previously selected professions that are no longer eligible after
+    // changing license status, work role, or state.
+    if(/^[A-Z]{2}$/.test($("serviceState")?.value||"") && signupRuleRows.length){
+      const allowedIds=new Set(signupProfessionCatalog.filter(p=>{
+        const status=ruleByProfession.get(p.id)||"unverified";
+        return noLicenseMode ? status==="not_required" : licenseChoice==="yes";
+      }).map(p=>p.id));
+      for(const id of [...signupSelectedProfessionIds])if(!allowedIds.has(id))signupSelectedProfessionIds.delete(id);
+      signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
+      updateSignupSelectedServices();
+    }
+    if(!matches.length){root.textContent="No professions are approved for this license status in the selected state.";return;}
     matches.forEach(p=>{
       const label=document.createElement("label");
       label.style.cssText="display:flex;align-items:center;gap:9px;margin:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px";
@@ -1268,6 +1279,10 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const hasLicense = signupRole==="independent" && $("hasLicense").value === "yes";
     const licenseNumber = $("licenseNumber").value.trim(), licenseState = $("licenseState").value.trim().toUpperCase(), licenseType = $("licenseType").value.trim(), licenseExpirationDate = $("licenseExpirationDate").value;
     const selectedSignup=signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)), selectedServiceCategoryIds=[...signupSelectedCategoryIds];
+    const selectedWithoutIndividualLicense=selectedSignup.filter(p=>signupRuleRows.find(r=>r.profession_id===p.id)?.requirement_status!=="not_required");
+    if((signupRole==="employee" || $("hasLicense").value==="no") && selectedWithoutIndividualLicense.length){
+      return message("authMessage","Without the required license or verified trade credential, you may register only for work types marked Not Required in "+serviceState+". Remove the other work types and try again.","error");
+    }
     // Unverified scopes may register without claiming they are license-free.
     // The acknowledgement below keeps the account pending; credential-required
     // scopes are still blocked by explicitlyRequiredWithoutLicense, and lead access
