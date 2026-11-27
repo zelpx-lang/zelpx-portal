@@ -1212,6 +1212,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     }
     signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
     renderSignupProfessionOptions();
+    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
     renderSignupProfessionRules();
   }
   function renderSignupProfessionRules(){
@@ -1221,8 +1222,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const employee=$("signupWorkRole").value==="employee";
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
     if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
-    const employee=$("signupWorkRole").value==="employee";
-    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
     if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
