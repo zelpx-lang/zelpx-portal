@@ -982,8 +982,26 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     enabled ? show($("signupFields")) : hide($("signupFields"));
     enabled ? hide($("loginBtn")) : show($("loginBtn"));
     enabled ? hide($("showSignupBtn")) : show($("showSignupBtn"));
-    enabled ? show($("signupBtn")) : hide($("signupBtn"));
-    enabled ? show($("cancelSignupBtn")) : hide($("cancelSignupBtn"));
+    const completeButton=$("signupBtn");
+    const cancelButton=$("cancelSignupBtn");
+    const forgotLink=$("forgotPasswordLink");
+    if(enabled){
+      completeButton.classList.remove("hidden");
+      completeButton.style.display="inline-flex";
+      completeButton.style.visibility="visible";
+      completeButton.textContent="Confirm Registration";
+      cancelButton.classList.remove("hidden");
+      cancelButton.style.display="inline-flex";
+      if(forgotLink)forgotLink.classList.add("hidden");
+    }else{
+      completeButton.classList.add("hidden");
+      completeButton.style.display="";
+      completeButton.style.visibility="";
+      completeButton.textContent="Complete Registration";
+      cancelButton.classList.add("hidden");
+      cancelButton.style.display="";
+      if(forgotLink)forgotLink.classList.remove("hidden");
+    }
     enabled ? hide($("contractorSocialAuth")) : show($("contractorSocialAuth"));
     $("authPassword").autocomplete = enabled ? "new-password" : "current-password";
     if (enabled) loadSignupWorkTypes().catch(e => message("authMessage", "Could not load professions: " + e.message, "error"));
