@@ -685,7 +685,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <label for="hasLicense">Do you have the required current license / registration / trade credential?</label><p class="muted" style="font-size:12px;margin:4px 0 8px">Select Yes or No. License details appear only when you select Yes. No document upload is required.</p>
           <select id="hasLicense" required aria-label="Do you have a current business license?"><option value="" selected disabled>Select Yes or No</option><option value="no">No</option><option value="yes">Yes</option></select>
         </div>
-        <p class="muted" style="font-size:12px;margin:5px 0">Your selected services remain visible in the full catalog. Your state and work status determine the licensing review below. If a requirement is not verified, do not assume the work is license-free.</p>
+        <p class="muted" style="font-size:12px;margin:5px 0">Choose your state and license status to see only the work types eligible for your selection. If a requirement is not verified, that work will remain unavailable until reviewed.</p>
         <label for="signupServiceSearch">FIND A PROFESSION</label><input id="signupServiceSearch" type="search" placeholder="Search electrician, tile installer, cleaner…" style="margin:0 0 8px"><div id="signupProfessionOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px;max-height:300px;overflow:auto;padding:2px"><span>Select your state first, then choose professions.</span></div><div style="display:flex;justify-content:flex-end;margin-top:10px"><button id="clearSignupProfessionsBtn" type="button" class="secondary" style="width:auto;min-height:40px;padding:8px 14px">Clear selected services</button></div><div id="signupSelectedServicesPanel" style="margin-top:12px;padding:13px;border:1px solid #f0783c;border-radius:12px;background:#fff8f2"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px"><strong style="font-size:14px">Selected services</strong><span id="signupSelectedServicesCount" class="muted" style="font-size:12px">0 selected</span></div><div id="signupSelectedServicesList" style="display:flex;flex-wrap:wrap;gap:7px"><span class="muted" style="font-size:13px">Your chosen professions will appear here.</span></div></div>
         <div id="signupLicenseReviewPanel" tabindex="0" aria-label="Scrollable licensing requirements and agreement" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;max-height:min(42vh,360px);overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y">
           <p class="muted" style="font-size:12px;margin:0 0 8px">Review the requirements for the work you selected. Scroll inside this box to the bottom to agree.</p>
@@ -1171,7 +1171,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const stateSelect=$("serviceState"),previousState=stateSelect.value;
     stateSelect.replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select state";stateSelect.append(placeholder);
     (states||[]).forEach(x=>{const o=document.createElement("option");o.value=x.state_code;o.textContent=x.state_name;stateSelect.append(o);});
+    // ZELPX currently launches in the WA/OR market. Preselect Washington
+    // so the profession catalog is not left blank on first load.
+    // Contractors can still choose Oregon or another active state.
     if(previousState)stateSelect.value=previousState;
+    else if((states||[]).some(x=>x.state_code==="WA"))stateSelect.value="WA";
     const [professionsResult,categoriesResult,mapsResult]=await Promise.all([
       db.from("zelpx_professions").select("id,profession_name,category_name").eq("is_active",true).order("profession_name"),
       db.from("service_categories").select("id,name,slug").eq("is_active",true).order("name"),
@@ -1195,7 +1199,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     optionsRoot.replaceChildren();
     if(!/^[A-Z]{2}$/.test(state)){
       renderSignupProfessionOptions();
-      root.textContent="Select your state first. No professions are shown until state rules can be checked.";
+      root.textContent="Choose Washington, Oregon, or another state to load its approved work catalog.";
       return;
     }
     try {
