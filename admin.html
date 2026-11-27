@@ -660,7 +660,7 @@
           <div><label for="leadUrgency">Urgency</label><select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
           <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" placeholder="50.00" required></div>
         </div>
-        <label for="leadDescription">Work Details — Подробности и объём работ</label>
+        <label for="leadDescription">Work Details</label>
         <textarea id="leadDescription" placeholder="Enter work details: installation, repair, renovation, measurements, materials, demolition, and other details. Do not enter customer contact information here."></textarea>
         <h3 style="margin-top:24px">Customer contact information</h3><p class="muted">These details are kept private until a contractor purchases the lead.</p>
         <div class="grid">
@@ -800,11 +800,11 @@
         /already registered|user already exists|email.*already.*(use|registered|exists)|already.*email/i.test(errorText);
 
       if (duplicatePhone) {
-        message("authMessage", "Этот номер телефона уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой номер.", "error");
+        message("authMessage", "This phone number is already registered. Sign in to your existing account or use a different phone number.", "error");
       } else if (duplicateEmail) {
-        message("authMessage", "Этот email уже зарегистрирован. Повторная регистрация невозможна. Войдите в существующий аккаунт или используйте другой email.", "error");
+        message("authMessage", "This email is already registered. Sign in to your existing account or use a different email.", "error");
       } else {
-        message("authMessage", errorText || "Не удалось создать аккаунт. Попробуйте еще раз.", "error");
+        message("authMessage", "Could not create your account. Please try again.", "error");
       }
     } finally { setBusy($("signupBtn"), false); }
   }
