@@ -3901,15 +3901,20 @@ addDetail("License number",item.license_number);addDetail("License type",item.li
       });
     }
     updateSignupLicenseFields();
-    $("hasLicense").addEventListener("change", () => {
     $("addSignupLicenseStateBtn").addEventListener("click",openSignupAdditionalLicenseEditor);
     $("saveSignupAdditionalLicenseBtn").addEventListener("click",saveSignupAdditionalLicense);
     $("cancelSignupAdditionalLicenseBtn").addEventListener("click",()=>$("signupAdditionalLicenseEditor").classList.add("hidden"));
 
-      // Preserve selections when switching the license filter.
+    $("hasLicense").addEventListener("change", () => {
+      // Re-render immediately for the selected Yes/No filter, then refresh the
+      // selected state's rules before applying the final eligibility list.
       updateSignupLicenseFields();
       updateSignupInsuranceVisibility();
-      refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
+      renderSignupProfessionOptions();
+      refreshSignupProfessionRules().catch(e=>{
+        $("signupProfessionOptions").textContent="Could not load the license-free work list. Please refresh and try again.";
+        message("signupProfessionRules",e.message,"error");
+      });
     });
 
     $("serviceZip").addEventListener("change", () => lookupUsZip($("serviceZip"), $("serviceCity"), $("serviceState"), null));
