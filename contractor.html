@@ -586,6 +586,45 @@ button:focus-visible{
 .social-auth-button:disabled{background:#fff!important;border-color:#e8ddd4!important;opacity:.65}
 
 
+/* Mobile marketplace card layout: keep ZIP readable and stack price + budget */
+#leadsList .lead-summary{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  gap:12px!important;min-width:0!important;width:100%!important;box-sizing:border-box!important;
+}
+#leadsList .lead-summary-main{
+  flex:1 1 42%!important;min-width:0!important;width:auto!important;
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+}
+#leadsList .lead-summary-title{
+  display:block!important;max-width:100%!important;white-space:normal!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;
+}
+#leadsList .lead-summary-zip{
+  display:block!important;white-space:nowrap!important;word-break:normal!important;
+}
+#leadsList .lead-summary-side{
+  flex:0 1 58%!important;min-width:0!important;max-width:58%!important;
+  display:flex!important;flex-direction:column!important;align-items:flex-end!important;
+  justify-content:center!important;gap:5px!important;
+}
+#leadsList .lead-summary-price{
+  display:inline-block!important;max-width:100%!important;box-sizing:border-box!important;
+  white-space:nowrap!important;text-align:right!important;
+}
+#leadsList .lead-summary-budget{
+  display:block!important;max-width:100%!important;white-space:normal!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;
+  text-align:right!important;line-height:1.3!important;margin-top:0!important;
+}
+#leadsList .lead-summary-chevron{align-self:flex-end!important}
+@media(max-width:700px){
+  #leadsList .lead-summary{gap:8px!important;padding:12px 10px 12px 15px!important}
+  #leadsList .lead-summary-main{flex-basis:38%!important}
+  #leadsList .lead-summary-side{flex-basis:62%!important;max-width:62%!important}
+  #leadsList .lead-summary-price{font-size:13px!important;padding:6px 8px!important}
+  #leadsList .lead-summary-budget{font-size:12px!important}
+}
+
 /* Selected services: one clearly visible remove control per service */
 #selectedProfileServicesList .selected-service-row{
   display:flex!important;align-items:center!important;justify-content:space-between!important;
