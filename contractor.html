@@ -1222,9 +1222,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const employee=$("signupWorkRole").value==="employee";
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
     if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
-    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
-    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Enter a 2-letter state code first.";return;}
-    if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
     let conditional=false,unverified=false,required=false;
     signupProfessionCatalog.filter(p=>signupSelectedProfessionIds.has(p.id)).forEach(p=>{
       const r=signupRuleRows.find(x=>x.profession_id===p.id),status=r?.requirement_status||"unverified";
@@ -1241,7 +1238,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(hasUnmappedSelected)unverified=true;
     $("signupConditionalAckLabel").classList.toggle("hidden",!conditional);
     $("signupUnverifiedAckLabel").classList.toggle("hidden",!unverified);
-    $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
     if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent=employee?"At least one selected work type requires an individual trade license or certificate. You may register as a worker, but you must add and verify the required credential in your profile before performing that regulated work.":"At least one selected profession requires a current business license or contractor registration. Enter the business license details below to continue.";root.append(p);}
     $("signupConditionalAckLabel").querySelector("input").nextSibling.textContent=employee?" I will only perform this work under an appropriately licensed employer and required supervision.":" I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.";
     $("signupUnverifiedAckLabel").querySelector("input").nextSibling.textContent=employee?" I will verify individual credentials and employer requirements before performing work not yet verified in ZELPX.":" I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.";
