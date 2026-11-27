@@ -2348,7 +2348,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           badges.append(eligibility);
         }
         const offerState = contractorLeadOfferStates.get(lead.id);
-        if (canOpenPurchase) {
+        if (canOpenPurchase && lead.offer_mode === true) {
           const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
           const offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Your job offer ($)"; offerInput.setAttribute("aria-label","Your job offer in dollars"); offerInput.style.cssText="flex:1;min-width:145px";
           const offerButton = document.createElement("button"); offerButton.type="button"; offerButton.textContent=offerState?.status==="pending" ? "Update offer" : "Make an Offer";
