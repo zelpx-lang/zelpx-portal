@@ -1159,7 +1159,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       cb.addEventListener("change",()=>{
         if(cb.checked)signupSelectedProfessionIds.add(p.id);else signupSelectedProfessionIds.delete(p.id);
         signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
-        refreshSignupProfessionRules().catch(e=>message("signupProfessionRules",e.message,"error"));
+        updateSignupSelectedServices();
+        renderSignupProfessionRules();
       });
       const name=document.createElement("span");name.textContent=p.profession_name;name.style.flex="1";
       label.append(cb,name);root.append(label);
@@ -1211,6 +1212,15 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     }
     signupSelectedCategoryIds=new Set(signupCategoryMapRows.filter(m=>m.mapping_status==="mapped"&&m.profession_id&&signupSelectedProfessionIds.has(m.profession_id)).map(m=>m.category_id));
     renderSignupProfessionOptions();
+    renderSignupProfessionRules();
+  }
+  function renderSignupProfessionRules(){
+    const root=$("signupProfessionRules");
+    root.replaceChildren();
+    const state=$("serviceState").value.trim().toUpperCase();
+    const employee=$("signupWorkRole").value==="employee";
+    if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
+    if(!signupSelectedProfessionIds.size){root.textContent="Select one or more professions.";return;}
     const employee=$("signupWorkRole").value==="employee";
     $("signupConditionalAck").checked=false;$("signupUnverifiedAck").checked=false;
     if(!/^[A-Z]{2}$/.test(state)){root.textContent="Select your state to check the applicable requirements.";return;}
@@ -1236,6 +1246,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     if(required){const p=document.createElement("p");p.style.fontWeight="700";p.textContent=employee?"At least one selected work type requires an individual trade license or certificate. You may register as a worker, but you must add and verify the required credential in your profile before performing that regulated work.":"At least one selected profession requires a current business license or contractor registration. Enter the business license details below to continue.";root.append(p);}
     $("signupConditionalAckLabel").querySelector("input").nextSibling.textContent=employee?" I will only perform this work under an appropriately licensed employer and required supervision.":" I will not offer work that requires a license, registration, permit, or trade credential unless I obtain it first.";
     $("signupUnverifiedAckLabel").querySelector("input").nextSibling.textContent=employee?" I will verify individual credentials and employer requirements before performing work not yet verified in ZELPX.":" I understand that this state's rules are not yet verified in ZELPX and I will confirm requirements before offering these services.";
+
   }
   let signupAdditionalStateLicenses = [];
   function renderSignupAdditionalLicenses(){
