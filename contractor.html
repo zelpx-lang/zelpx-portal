@@ -1097,18 +1097,21 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const searchTerm=($("signupServiceSearch")?.value||"").trim().toLowerCase();
     const role=$("signupWorkRole")?.value||"independent";
     const licenseChoice=$("hasLicense")?.value||"";
-    // Workers looking for employment do not need a business-license Yes/No
-    // filter. They may select work types, while individual credentials and
-    // employer supervision are reviewed separately for each selected profession.
+    // Employees do not need a business-license Yes/No filter, but work
+    // requiring an individual trade license/credential must not be selectable.
+    // Employer-supervised conditional scopes remain available for review.
     const visibleCategories=signupServiceCatalog.filter(category=>{
       const map=signupCategoryMapRows.find(x=>x.category_id===category.id);
       const rule=map?.mapping_status==="mapped"&&map.profession_id
         ? signupRuleRows.find(x=>x.profession_id===map.profession_id)
         : null;
       const status=rule?.requirement_status||"unverified";
-      const eligible=role==="employee" || licenseChoice==="yes" ||
-        (licenseChoice==="no" && status==="not_required");
-      return eligible && (!searchTerm || category.name.toLowerCase().includes(searchTerm));
+      const individualCredentialRequired=rule?.eligibility_status==="individual_trade_credential_required";
+      const employeeEligible=role==="employee" && status!=="required" && !individualCredentialRequired;
+      const businessEligible=role!=="employee" && (licenseChoice==="yes" ||
+        (licenseChoice==="no" && status==="not_required"));
+      return (employeeEligible || businessEligible) &&
+        (!searchTerm || category.name.toLowerCase().includes(searchTerm));
     });
     if(role==="independent"&&licenseChoice!=="yes"&&licenseChoice!=="no"){
       root.textContent="Select Yes or No for your business license / registration status to see eligible work types.";return;
