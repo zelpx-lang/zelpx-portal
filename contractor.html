@@ -2467,12 +2467,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       $("leadResultsCount").textContent = "Updating leads…";
     }
 
-    let { data, error } = await db.from("leads")
-      .select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,customer_budget_choice,status,created_at,lead_type,package_services")
-      .order("created_at", { ascending: false }).limit(100);
+    let data = null, error = null;
     let publicPreviewOnly = false;
 
-    if (error && (error.code === "42501" || /permission denied/i.test(error.message || ""))) {
+    // Anonymous visitors and non-contractor accounts must use the public preview
+    // view, which explicitly includes the customer's budget fields.
+    if (!currentContractor && !isAdmin) {
       const preview = await db.from("public_available_leads")
         .select("id,service_category,service_state,zip_code,urgency,price_cents,project_value_cents,customer_budget_choice,created_at")
         .order("created_at", { ascending: false }).limit(100);
@@ -2484,7 +2484,12 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       }
       data = (preview.data || []).map(lead => ({ ...lead, status: "available", description: "", previewOnly: true }));
       publicPreviewOnly = true;
-      error = null;
+    } else {
+      const result = await db.from("leads")
+        .select("id,service_category,service_state,zip_code,description,urgency,price_cents,project_value_cents,customer_budget_choice,status,created_at,lead_type,package_services")
+        .order("created_at", { ascending: false }).limit(100);
+      data = result.data;
+      error = result.error;
     }
     if (sequence !== leadsLoadSequence) return;
     if (error) {
