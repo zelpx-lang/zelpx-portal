@@ -1317,7 +1317,7 @@
       const packageType = lead.lead_type === "lead_package";
       const typeLabel = packageType ? "Multi-Service Home Project" : (lead.service_category || "Regular Lead");
       const includedServices = packageType && Array.isArray(lead.package_services) ? lead.package_services.join(", ") : "—";
-      [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),packageType && lead.project_value_cents != null ? money(lead.project_value_cents) : "—",lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
+      [typeLabel,includedServices,lead.zip_code,lead.urgency,money(lead.price_cents),lead.project_value_cents != null ? money(lead.project_value_cents) : "—",lead.status,new Date(lead.created_at).toLocaleString()].forEach(value => addCell(tr,value));
       const actionCell = document.createElement("td");
       const removeButton = document.createElement("button");
       removeButton.type = "button"; removeButton.className = "danger"; removeButton.textContent = "Delete";
@@ -2327,10 +2327,20 @@
         const profile = profilesById[request.user_id] || {};
         const addressParts = [request.property_address, request.service_city, request.service_state, request.service_zip_code].filter(v => v && String(v).trim());
         const formattedAddress = addressParts.join(", ");
+        const budgetChoiceLabels = {
+          customer_entered: "Customer knows their budget",
+          custom: "Customer knows their budget",
+          not_decided: "Budget not decided",
+          pricing_guidance: "Customer wants pricing guidance"
+        };
+        const customerBudgetText = request.customer_budget_cents != null
+          ? money(request.customer_budget_cents) + (budgetChoiceLabels[request.customer_budget_choice] ? " · " + budgetChoiceLabels[request.customer_budget_choice] : "")
+          : (budgetChoiceLabels[request.customer_budget_choice] || "Not provided");
         const details = [
           ["Customer", profile.full_name || "Name not provided"],
           ["Phone", profile.phone || "Phone not provided"],
           ["Address", formattedAddress || "Address not provided"],
+          ["Customer project budget", customerBudgetText],
           ["Preferred time", request.preferred_time ? new Date(request.preferred_time).toLocaleString() : "Not specified"],
           ["Request ID", request.id]
         ];
