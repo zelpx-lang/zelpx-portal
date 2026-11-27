@@ -2027,10 +2027,7 @@
             const requestName=document.createElement("strong");
             requestName.textContent=request.request_type==="company_profile"?"Company profile":request.request_type==="profession_qualifications"?"Services and qualifications":"Account update";
             requestName.style.cssText="font-size:15px;color:#243447;";
-            const pendingTag=document.createElement("span");
-            pendingTag.textContent="Awaiting decision";
-            pendingTag.style.cssText="font-size:12px;font-weight:700;color:#8a5a18;background:#fff0d6;padding:4px 9px;border-radius:20px;";
-            header.append(requestName,pendingTag);
+            header.append(requestName);
             const requestDate=document.createElement("p");
             requestDate.style.cssText="margin:4px 0 10px;color:#777;font-size:12px;";
             requestDate.textContent="Submitted "+(request.created_at?new Date(request.created_at).toLocaleString("en-US"):"date unavailable");
