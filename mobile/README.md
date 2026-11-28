@@ -68,3 +68,13 @@ The app notification channel IDs are stable identifiers and should be used by th
 Every server event must be authorized from trusted database state, target only the intended user/device, avoid exposing customer contact details in lock-screen text, and be idempotent so retries do not send duplicate alerts. The Admin Panel remains web-only; administrator alerts should continue through its existing secure web push path and must not be routed to Customer/Contractor mobile accounts.
 
 The app stores up to 30 notifications received while active or opened from the Android notification tray in local device storage. Android's system notification tray remains the source for notifications received while the app is backgrounded or closed. A server-backed cross-device inbox and read/unread synchronization are not implemented yet.
+
+## Android preview build
+
+A GitHub Actions workflow builds a debug APK whenever files under `mobile/` change on the `mobile-app` branch. It also supports manual runs from the repository's Actions tab. The artifact is named `zelpx-android-preview-apk` and is retained for 14 days.
+
+The preview workflow injects the Supabase project URL and publishable key at build time. The publishable key is intended for public clients; no service-role key is included.
+
+For remote Android push, add a GitHub Actions repository secret named `ZELPX_GOOGLE_SERVICES_JSON` containing the full contents of the Firebase Android `google-services.json` for package `com.zelpx.app` in Firebase project `zelpx-af340`. The workflow will attach it during the build without committing the file to the repository. If that secret is absent, a preview APK can still be built, but remote FCM delivery will not work.
+
+This is a debug preview build, not a signed Google Play release. The app currently provides authentication, customer request summaries, contractor verification/wallet summaries, and the notification setup/inbox foundation. Creating requests, contractor onboarding, chat, offer approval/decline, lead purchase, Stripe payments, and the full server-side notification event pipeline still need to be implemented before calling the mobile app feature-complete.
