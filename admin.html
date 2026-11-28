@@ -2752,43 +2752,43 @@
         summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · " + (requestStatus === "published" ? "Published" : requestStatus);
         summaryMain.append(summaryName, summaryMeta);
 
-        // Show the automatic sale-verification result directly in the compact
+        // Show the automatic sale-saleVerification result directly in the compact
         // incoming-request list, without requiring the admin to open each order.
-        const verification = verificationByRequest[request.id];
-        const verificationChecks = verification?.checks || {};
-        const verificationHasFlags =
-          verificationChecks.same_customer_duplicate === true ||
-          verificationChecks.duplicate_description === true ||
-          verificationChecks.high_submission_frequency === true;
-        const verificationPassed = Boolean(
-          verification &&
-          String(verification.risk_level || "").toLowerCase() === "low" &&
-          verificationChecks.email_confirmed === true &&
-          verificationChecks.phone_sms_confirmed === true &&
-          verificationChecks.zip_format_valid === true &&
-          !verificationHasFlags
+        const saleVerification = verificationByRequest[request.id];
+        const saleVerificationChecks = saleVerification?.checks || {};
+        const saleVerificationHasFlags =
+          saleVerificationChecks.same_customer_duplicate === true ||
+          saleVerificationChecks.duplicate_description === true ||
+          saleVerificationChecks.high_submission_frequency === true;
+        const saleVerificationPassed = Boolean(
+          saleVerification &&
+          String(saleVerification.risk_level || "").toLowerCase() === "low" &&
+          saleVerificationChecks.email_confirmed === true &&
+          saleVerificationChecks.phone_sms_confirmed === true &&
+          saleVerificationChecks.zip_format_valid === true &&
+          !saleVerificationHasFlags
         );
-        const verificationNeedsReview = Boolean(
-          verification &&
-          (String(verification.risk_level || "").toLowerCase() === "high" ||
-           String(verification.risk_level || "").toLowerCase() === "review" ||
-           verificationHasFlags)
+        const saleVerificationNeedsReview = Boolean(
+          saleVerification &&
+          (String(saleVerification.risk_level || "").toLowerCase() === "high" ||
+           String(saleVerification.risk_level || "").toLowerCase() === "review" ||
+           saleVerificationHasFlags)
         );
-        const verificationBadge = document.createElement("span");
-        verificationBadge.className = "request-verification-badge " +
-          (verificationPassed ? "is-verified" : verificationNeedsReview ? "is-review" : "is-pending");
-        verificationBadge.setAttribute("role", "status");
-        if (verificationPassed) {
-          verificationBadge.textContent = "✓ Verified for sale";
-          verificationBadge.setAttribute("aria-label", "All automatic sale verification checks passed");
-        } else if (verificationNeedsReview) {
-          verificationBadge.textContent = "⚠ Review required";
-          verificationBadge.setAttribute("aria-label", "Automatic verification flagged this request for review");
+        const saleVerificationBadge = document.createElement("span");
+        saleVerificationBadge.className = "request-saleVerification-badge " +
+          (saleVerificationPassed ? "is-verified" : saleVerificationNeedsReview ? "is-review" : "is-pending");
+        saleVerificationBadge.setAttribute("role", "status");
+        if (saleVerificationPassed) {
+          saleVerificationBadge.textContent = "✓ Verified for sale";
+          saleVerificationBadge.setAttribute("aria-label", "All automatic sale saleVerification checks passed");
+        } else if (saleVerificationNeedsReview) {
+          saleVerificationBadge.textContent = "⚠ Review required";
+          saleVerificationBadge.setAttribute("aria-label", "Automatic saleVerification flagged this request for review");
         } else {
-          verificationBadge.textContent = "◷ Verification pending";
-          verificationBadge.setAttribute("aria-label", "Sale verification is incomplete or no result is available");
+          saleVerificationBadge.textContent = "◷ Verification pending";
+          saleVerificationBadge.setAttribute("aria-label", "Sale saleVerification is incomplete or no result is available");
         }
-        summaryMain.append(verificationBadge);
+        summaryMain.append(saleVerificationBadge);
 
         let attentionBell = null;
         if (needsAttention) {
