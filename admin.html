@@ -502,6 +502,12 @@
     .zelpx-confirm-actions button{flex:1;min-height:48px;border-radius:12px;font-weight:750;cursor:pointer}
     .zelpx-confirm-cancel{border:1px solid #d9e0e8;background:#fff;color:#435064}
     .zelpx-confirm-buy{border:1px solid #d96519;background:linear-gradient(135deg,#f28a32,#d96519);color:#fff;box-shadow:0 5px 14px rgba(217,101,25,.22)}
+    .zelpx-publish-body{text-align:left;max-height:min(48vh,420px);overflow-y:auto;padding:14px 25px 8px}
+    .zelpx-publish-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid #edf0f3}
+    .zelpx-publish-row span{color:#778294;font-size:13px;flex:0 0 38%}
+    .zelpx-publish-row strong{color:#263548;font-size:14px;text-align:right;overflow-wrap:anywhere;flex:1}
+    .zelpx-publish-warning{padding:12px;border-radius:12px;background:#fff7ed;color:#a34d16!important;text-align:center}
+    @media(max-width:480px){.zelpx-publish-body{max-height:48vh;padding:12px 18px 6px}.zelpx-publish-row{gap:8px}.zelpx-publish-row span{flex-basis:36%}.zelpx-publish-row strong{font-size:13px}}
     .zelpx-confirm-actions button:focus-visible{outline:3px solid #f7b77e;outline-offset:3px}
     @keyframes zelpxModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
     @media(max-width:480px){.zelpx-confirm-overlay{padding:16px}.zelpx-confirm-dialog{border-radius:19px}.zelpx-confirm-top{padding:22px 18px 15px}.zelpx-confirm-body{padding:17px 20px 5px}.zelpx-confirm-actions{padding:18px 20px 21px}}
@@ -951,6 +957,31 @@
       overlay.addEventListener("click", event => { if (event.target === overlay) finish(false); });
       document.addEventListener("keydown", onKey);
       buy.focus();
+    });
+  }
+
+  function confirmAdminPublish(details) {
+    return new Promise(resolve => {
+      const overlay=document.createElement("div");overlay.className="zelpx-confirm-overlay";
+      const dialog=document.createElement("section");dialog.className="zelpx-confirm-dialog";
+      dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-labelledby","zelpxPublishTitle");
+      const top=document.createElement("div");top.className="zelpx-confirm-top";
+      const icon=document.createElement("div");icon.className="zelpx-confirm-icon";icon.textContent="✓";
+      const title=document.createElement("h2");title.className="zelpx-confirm-title";title.id="zelpxPublishTitle";title.textContent="Review & publish request";
+      const subtitle=document.createElement("p");subtitle.className="zelpx-confirm-note";subtitle.textContent="Please verify the customer and job details before publishing.";
+      top.append(icon,title,subtitle);
+      const body=document.createElement("div");body.className="zelpx-confirm-body zelpx-publish-body";
+      const rows=[["Sale type",details.saleType],["Service",details.service],["Customer",details.customer],["Address",details.address],["ZIP code",details.zip],["City",details.city],["Lead purchase price",details.leadPrice],...(details.projectValue?[["Estimated project value",details.projectValue]]:[])];
+      rows.forEach(([label,value])=>{const row=document.createElement("div");row.className="zelpx-publish-row";const key=document.createElement("span");key.textContent=label;const val=document.createElement("strong");val.textContent=value||"Not provided";row.append(key,val);body.append(row);});
+      const note=document.createElement("p");note.className="zelpx-confirm-note zelpx-publish-warning";note.textContent="Only continue after verifying the customer's details.";body.append(note);
+      const actions=document.createElement("div");actions.className="zelpx-confirm-actions";
+      const cancel=document.createElement("button");cancel.type="button";cancel.className="zelpx-confirm-cancel";cancel.textContent="Cancel";
+      const confirm=document.createElement("button");confirm.type="button";confirm.className="zelpx-confirm-buy";confirm.textContent="Verify & Publish";
+      actions.append(cancel,confirm);dialog.append(top,body,actions);overlay.append(dialog);document.body.append(overlay);
+      let settled=false;const finish=value=>{if(settled)return;settled=true;document.removeEventListener("keydown",onKey);overlay.remove();resolve(value);};
+      const onKey=event=>{if(event.key==="Escape")finish(false);};
+      cancel.addEventListener("click",()=>finish(false));confirm.addEventListener("click",()=>finish(true));overlay.addEventListener("click",event=>{if(event.target===overlay)finish(false);});
+      document.addEventListener("keydown",onKey);confirm.focus();
     });
   }
 
@@ -2547,12 +2578,16 @@
             }
             const customerName = profile.full_name || "Unavailable";
             const saleLabel = isPackage ? "SPECIAL LEAD PACKAGE — one buyer purchases the entire project" : "REGULAR LEAD — one service";
-            if (!window.confirm("Publish this customer request?\n\nSale type: " + saleLabel +
-              "\nService: " + (isPackage ? "Multi-Service Home Project" : categoryValue) + (isPackage ? "\nIncluded services: " + selectedServices.join(", ") : "") +
-              "\nCustomer: " + customerName + "\nAddress: " + (request.property_address || "Missing") +
-              "\nZIP: " + zipValue + "\nCity: " + cityValue + ", " + stateValue + "\nLead purchase price: $" + priceValue.toFixed(2) +
-              (isPackage && projectValue !== null ? "\nEstimated total project value: $" + projectValue.toFixed(2) : "") +
-              "\n\nOnly continue after verifying the customer's details.")) return;
+            if (!await confirmAdminPublish({
+              saleType: saleLabel,
+              service: isPackage ? "Multi-Service Home Project — " + selectedServices.join(", ") : categoryValue,
+              customer: customerName,
+              address: request.property_address || "Missing",
+              zip: zipValue,
+              city: cityValue + ", " + stateValue,
+              leadPrice: "$" + priceValue.toFixed(2),
+              projectValue: isPackage && projectValue !== null ? "$" + projectValue.toFixed(2) : null
+            })) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
             try {
               // Reuse the ZIP lookup already performed when the admin entered/changed
