@@ -847,6 +847,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <label for="customerPhone">Phone Number</label>
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
+        <p id="customerPhoneVerificationStatus" class="subtitle" role="status">Phone verification status: checking…</p>
+        <button id="verifyCustomerPhoneButton" type="button" class="secondary-button" style="width:auto;min-height:42px;margin:6px 0 10px;padding:10px 16px">Verify Phone Number</button>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee1d8">
           <strong>Primary Home Address</strong>
@@ -1276,7 +1278,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       clearMessage("profileMessage");
       const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role,avatar_url,customer_address,customer_city,customer_state,customer_zip_code,customer_latitude,customer_longitude,customer_address_verified_at")
+        .select("full_name,phone,phone_verified_at,phone_verified_number,role,avatar_url,customer_address,customer_city,customer_state,customer_zip_code,customer_latitude,customer_longitude,customer_address_verified_at")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -1287,6 +1289,10 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      const phoneVerified = !!data.phone_verified_at && !!data.phone_verified_number && data.phone_verified_number === data.phone;
+      $("customerPhoneVerificationStatus").textContent = phoneVerified ? "Phone number verified." : "Phone number not verified. Verify your number to submit a service request.";
+      $("customerPhoneVerificationStatus").style.color = phoneVerified ? "#176b43" : "#a52a1c";
+      $("verifyCustomerPhoneButton").textContent = phoneVerified ? "Re-verify Phone Number" : "Verify Phone Number";
       $("customerHomeAddress").value = data.customer_address || "";
       $("customerHomeCity").value = data.customer_city || "";
       $("customerHomeState").value = data.customer_state || "";
@@ -1389,6 +1395,27 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const cancelProfileUpdateButton = $("cancelProfileUpdateButton");
     const homeAddressInputs = ["customerHomeAddress","customerHomeCity","customerHomeState","customerHomeZip"].map(id => $(id));
     let originalProfileValues = { fullName: "", phone: "", address: "", city: "", state: "", zip: "" };
+
+    $("verifyCustomerPhoneButton").addEventListener("click", async () => {
+      const button = $("verifyCustomerPhoneButton");
+      const { data: sessionData, error: sessionError } = await db.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        showMessage("profileMessage", "Please sign in again before verifying your phone number.", "error");
+        return;
+      }
+      button.disabled = true;
+      try {
+        const verified = await ensureCustomerRequestPhoneVerified(sessionData.session);
+        if (verified) {
+          await loadCustomerProfile(sessionData.session.user);
+          showMessage("profileMessage", "Your phone number has been successfully verified.", "success");
+        }
+      } catch (error) {
+        showMessage("profileMessage", error.message || "Phone verification failed.", "error");
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
