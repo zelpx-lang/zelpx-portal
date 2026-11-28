@@ -1407,7 +1407,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         homeCity !== originalProfileValues.city || homeState !== originalProfileValues.state ||
         homeZip !== originalProfileValues.zip;
       const addressNeedsVerification = addressChanged ||
-        !$("customerHomeAddressStatus").textContent.toLowerCase().includes("verified");
+        !$("customerHomeAddressStatus").textContent.trim().toLowerCase().startsWith("verified");
 
       if (!fullName) {
         showMessage("profileMessage", "Please enter your full name.", "error");
@@ -1475,7 +1475,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (savedPhoneStatusError) throw savedPhoneStatusError;
         const phoneIsVerified = !!savedPhoneStatus?.phone_verified_at &&
           savedPhoneStatus.phone_verified_number === savedPhoneStatus.phone;
-        const addressIsVerified = $("customerHomeAddressStatus").textContent.toLowerCase().includes("verified");
+        const addressIsVerified = $("customerHomeAddressStatus").textContent.trim().toLowerCase().startsWith("verified");
         if (!phoneIsVerified || !addressIsVerified) {
           throw new Error("Your profile was saved, but phone or address verification is still incomplete.");
         }
