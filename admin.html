@@ -685,7 +685,7 @@
           <p>New customer service requests arrive here first. Review the details, verify the service category and location, set the lead price, and publish only after your approval. Published leads become available in the contractor portal.</p>
           <div class="grid" style="margin:14px 0">
             <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
-            <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
+            <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All new leads</option><option value="new">New</option><option value="other">Other statuses</option></select></div>
           </div>
           <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh new leads</button><span id="requestCount" class="muted"></span></div>
           <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
@@ -2267,7 +2267,7 @@
       ).length;
       badge.textContent = String(count);
       badge.classList.toggle("hidden", count === 0);
-      badge.setAttribute("aria-label", count + " new new leads");
+      badge.setAttribute("aria-label", count + " new leads waiting to be published");
     } catch (error) {
       // Badge refresh must never prevent the request list from rendering.
       console.warn("New leads badge could not be refreshed:", error?.message || error);
@@ -2286,7 +2286,12 @@
       const { data: requests, error } = await db.rpc("admin_list_service_requests");
       if (error) throw error;
       refreshIncomingLeadBadge();
-      const requestIds = (requests || []).map(request => request.id);
+      // New leads contains only requests that have not been published for sale.
+      // Once a request has a linked lead or published status, it belongs in Verified leads.
+      const newRequests = (requests || []).filter(request =>
+        !request.lead_id && String(request.status || "").toLowerCase() !== "published"
+      );
+      const requestIds = newRequests.map(request => request.id);
       let verificationByRequest = {};
       if (requestIds.length) {
         const { data: verificationRows, error: verificationError } = await db
@@ -2310,7 +2315,7 @@
         serviceCategories = categoryRows || [];
       }
 
-      const userIds = [...new Set((requests || []).map(r => r.user_id).filter(Boolean))];
+      const userIds = [...new Set(newRequests.map(r => r.user_id).filter(Boolean))];
       let profilesById = {};
       if (userIds.length) {
         // Admin-only SECURITY DEFINER RPC: ordinary profile RLS intentionally hides other users.
@@ -2321,22 +2326,21 @@
 
       const searchTerm = ($("requestSearch")?.value || "").trim().toLowerCase();
       const statusFilter = $("requestStatusFilter")?.value || "all";
-      const filteredRequests = (requests || []).filter(request => {
+      const filteredRequests = newRequests.filter(request => {
         const profile = profilesById[request.user_id] || {};
-        const statusValue = request.lead_id || request.status === "published" ? "published" : (request.status || "other");
+        const statusValue = String(request.status || "other").toLowerCase();
         const statusMatch = statusFilter === "all" || (statusFilter === "new" && statusValue === "new") ||
-          (statusFilter === "published" && statusValue === "published") ||
-          (statusFilter === "other" && !["new","published"].includes(statusValue));
+          (statusFilter === "other" && statusValue !== "new");
         const searchable = [profile.full_name, profile.phone, request.service_type, request.description,
           request.property_address, request.service_city, request.service_state, request.service_zip_code, request.id]
           .filter(Boolean).join(" ").toLowerCase();
         return statusMatch && (!searchTerm || searchable.includes(searchTerm));
       });
-      $("requestCount").textContent = filteredRequests.length + " of " + (requests || []).length + " requests";
+      $("requestCount").textContent = filteredRequests.length + " of " + newRequests.length + " new leads";
       list.replaceChildren();
       if (!filteredRequests.length) {
         const empty = document.createElement("p"); empty.className = "muted";
-        empty.textContent = requests?.length ? "No requests match these filters." : "No customer service requests have been submitted.";
+        empty.textContent = newRequests.length ? "No new leads match these filters." : "No unpublished customer requests. Published leads are listed under Verified leads.";
         list.append(empty); return;
       }
 
