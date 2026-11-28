@@ -1406,6 +1406,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const addressChanged = homeAddress !== originalProfileValues.address ||
         homeCity !== originalProfileValues.city || homeState !== originalProfileValues.state ||
         homeZip !== originalProfileValues.zip;
+      const addressNeedsVerification = addressChanged ||
+        !$("customerHomeAddressStatus").textContent.toLowerCase().includes("verified");
 
       if (!fullName) {
         showMessage("profileMessage", "Please enter your full name.", "error");
@@ -1416,7 +1418,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         return;
       }
 
-      if (addressChanged && (!homeAddress || !homeCity || !/^[A-Z]{2}$/.test(homeState) || !/^[0-9]{5}$/.test(homeZip))) {
+      if (addressNeedsVerification && (!homeAddress || !homeCity || !/^[A-Z]{2}$/.test(homeState) || !/^[0-9]{5}$/.test(homeZip))) {
         showMessage("profileMessage", "Enter a complete street address, city, 2-letter state, and 5-digit ZIP code.", "error");
         return;
       }
@@ -1429,42 +1431,55 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         const user = sessionData.session?.user;
         if (!user) throw new Error("Please log in again.");
 
-        const profileUpdate = { full_name: fullName, phone };
-        if (addressChanged) {
+        const profileUpdate = { full_name: fullName };
+        if (addressNeedsVerification) {
           showMessage("profileMessage", "Verifying your primary home address...", "success");
-          const verified = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
-          profileUpdate.customer_address = verified.matched_address || verified.matchedAddress || homeAddress;
-          profileUpdate.customer_city = verified.matched_city || verified.city || homeCity;
-          profileUpdate.customer_state = (verified.matched_state || verified.state || homeState).toUpperCase();
-          profileUpdate.customer_zip_code = verified.matched_zip || verified.zip_code || verified.zip || homeZip;
-          profileUpdate.customer_latitude = Number(verified.latitude);
-          profileUpdate.customer_longitude = Number(verified.longitude);
+          const verifiedAddress = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
+          profileUpdate.customer_address = verifiedAddress.matched_address || verifiedAddress.matchedAddress || homeAddress;
+          profileUpdate.customer_city = verifiedAddress.matched_city || verifiedAddress.city || homeCity;
+          profileUpdate.customer_state = (verifiedAddress.matched_state || verifiedAddress.state || homeState).toUpperCase();
+          profileUpdate.customer_zip_code = verifiedAddress.matched_zip || verifiedAddress.zip_code || verifiedAddress.zip || homeZip;
+          profileUpdate.customer_latitude = Number(verifiedAddress.latitude);
+          profileUpdate.customer_longitude = Number(verifiedAddress.longitude);
           profileUpdate.customer_address_verified_at = new Date().toISOString();
         }
-        const { error } = await db
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("id", user.id);
+
+        // A phone number can only be changed by the SMS verification endpoint.
+        // This single Save Changes action starts verification when the number changed
+        // or the current number has not yet been verified.
+        const phoneChanged = phone !== originalProfileValues.phone;
+        const { data: currentPhoneStatus, error: phoneStatusError } = await db.from("profiles")
+          .select("phone,phone_verified_at,phone_verified_number")
+          .eq("id", user.id).maybeSingle();
+        if (phoneStatusError) throw phoneStatusError;
+        const phoneAlreadyVerified = !!currentPhoneStatus?.phone_verified_at &&
+          currentPhoneStatus.phone_verified_number === currentPhoneStatus.phone;
+        if (phoneChanged || !phoneAlreadyVerified) {
+          showMessage("profileMessage", "Verify your phone by SMS to finish saving your profile.", "success");
+          const smsVerified = await ensureCustomerRequestPhoneVerified(sessionData.session);
+          if (!smsVerified) throw new Error("Phone verification was cancelled. Your profile changes were not saved.");
+        }
+
+        const { error } = await db.from("profiles").update(profileUpdate).eq("id", user.id);
         if (error) throw error;
 
         const { error: metadataError } = await db.auth.updateUser({
-          data: { full_name: fullName, phone, account_type: "customer" }
+          data: { full_name: fullName, account_type: "customer" }
         });
         if (metadataError) throw metadataError;
 
         await loadCustomerProfile(user);
-        const phoneStatus = await db.from("profiles")
-          .select("phone_verified_at,phone_verified_number,phone")
+        const { data: savedPhoneStatus, error: savedPhoneStatusError } = await db.from("profiles")
+          .select("phone,phone_verified_at,phone_verified_number")
           .eq("id", user.id).maybeSingle();
-        const isPhoneVerified = !!phoneStatus.data?.phone_verified_at &&
-          phoneStatus.data.phone_verified_number === phoneStatus.data.phone;
-        if (!isPhoneVerified) {
-          showMessage("profileMessage", "Profile saved. Please complete SMS phone verification to activate your number.", "success");
-          const verified = await ensureCustomerRequestPhoneVerified(sessionData.session);
-          if (verified) await loadCustomerProfile(user);
-        } else {
-          showMessage("profileMessage", "Your profile changes have been saved successfully. Service requests will use this verified address.", "success");
+        if (savedPhoneStatusError) throw savedPhoneStatusError;
+        const phoneIsVerified = !!savedPhoneStatus?.phone_verified_at &&
+          savedPhoneStatus.phone_verified_number === savedPhoneStatus.phone;
+        const addressIsVerified = $("customerHomeAddressStatus").textContent.toLowerCase().includes("verified");
+        if (!phoneIsVerified || !addressIsVerified) {
+          throw new Error("Your profile was saved, but phone or address verification is still incomplete.");
         }
+        showMessage("profileMessage", "Profile saved. Your phone number and primary home address are verified.", "success");
         originalProfileValues = {
           fullName, phone,
           address: $("customerHomeAddress").value, city: $("customerHomeCity").value,
