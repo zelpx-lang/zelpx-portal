@@ -2358,7 +2358,16 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
           if (offerState?.status==="pending") { offerInput.value=(offerState.offer_cents/100).toFixed(2); const pending=document.createElement("small"); pending.textContent="Offer sent · awaiting customer approval"; offerWrap.append(pending); }
           offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
-        // Keep the existing instant-purchase flow for regular leads.
+        // The customer-set lead price is fixed. The purchase RPC receives only the lead ID
+        // and reads price_cents from the database; never accept a contractor-supplied amount.
+        if (canOpenPurchase) {
+          const fixedPriceNote = document.createElement("p");
+          fixedPriceNote.className = "lead-date";
+          fixedPriceNote.style.cssText = "width:100%;margin:8px 0 0;font-size:13px;color:#6f5142;font-weight:700";
+          fixedPriceNote.textContent = "Fixed customer price: " + money(lead.price_cents) + ". This amount cannot be changed when buying the lead.";
+          footer.append(fixedPriceNote);
+        }
+        // Keep the existing instant-purchase flow. The server determines the exact amount.
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
         buyButton.disabled = !canOpenPurchase;
