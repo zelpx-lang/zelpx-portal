@@ -463,5 +463,10 @@ const s = StyleSheet.create({
   notificationItem: { paddingVertical: 11, borderTopWidth: 1, borderTopColor: "#EEF0EC" },
   notificationTitle: { color: "#252B27", fontSize: 13, fontWeight: "700" },
   notificationTime: { color: "#969C97", fontSize: 10, marginTop: 5 },
+  requestItem: { paddingVertical: 12, borderTopWidth: 1, borderTopColor: "#EEF0EC" },
+  statusPill: { alignSelf: "flex-start", marginTop: 8, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99, backgroundColor: "#FFF0E8" },
+  statusText: { color: "#D95E2B", fontSize: 12, fontWeight: "800", textTransform: "capitalize" },
+  verificationRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#EEF0EC" },
+  walletText: { color: "#252B27", fontSize: 17, fontWeight: "800", marginTop: 14 },
   footer: { marginTop: "auto", paddingTop: 30, textAlign: "center", color: "#969C97", fontSize: 11 },
 });
