@@ -2328,13 +2328,11 @@
         const addressParts = [request.property_address, request.service_city, request.service_state, request.service_zip_code].filter(v => v && String(v).trim());
         const formattedAddress = addressParts.join(", ");
         const budgetChoiceLabels = {
-          customer_entered: "Customer knows their budget",
-          custom: "Customer knows their budget",
           not_decided: "Budget not decided",
           pricing_guidance: "Customer wants pricing guidance"
         };
         const customerBudgetText = request.customer_budget_cents != null
-          ? money(request.customer_budget_cents) + (budgetChoiceLabels[request.customer_budget_choice] ? " · " + budgetChoiceLabels[request.customer_budget_choice] : "")
+          ? money(request.customer_budget_cents)
           : (budgetChoiceLabels[request.customer_budget_choice] || "Not provided");
         const details = [
           ["Customer", profile.full_name || "Name not provided"],
