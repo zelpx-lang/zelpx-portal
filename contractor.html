@@ -2452,7 +2452,15 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         const offerState = contractorLeadOfferStates.get(lead.id);
         let offerInput = null;
         if (canOffer) {
-          const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
+          const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:12px";
+          const offerGuidance = document.createElement("div");
+          offerGuidance.style.cssText="width:100%;padding:12px 14px;border:1px solid #f2d8c5;border-radius:12px;background:#fff7f0;color:#76513b;font-size:14px;line-height:1.5";
+          const offerGuidanceTitle = document.createElement("strong");
+          offerGuidanceTitle.textContent="You can offer your own price for this project.";
+          const offerGuidanceText = document.createElement("div");
+          offerGuidanceText.textContent="Enter the total amount you would charge to complete the customer's work. The customer will review your offer and decide whether to approve or decline it. There is no ZELPX commission on an approved offer.";
+          offerGuidance.append(offerGuidanceTitle,offerGuidanceText);
+          offerWrap.append(offerGuidance);
           offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Required: your job offer ($)"; offerInput.setAttribute("aria-label","Required job offer in dollars before lead purchase"); offerInput.required=true; offerInput.style.cssText="flex:1;min-width:145px";
           const offerAlreadySent = offerState?.status === "pending";
           const offerButton = document.createElement("button"); offerButton.type="button";
