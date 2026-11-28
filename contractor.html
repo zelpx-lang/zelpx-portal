@@ -837,6 +837,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     </section>
     <section id="companyPanel" class="card hidden">
       <h2>My company</h2>
+      <section class="lead" id="leadPurchaseEligibilityCard">
+        <h3>Lead purchase eligibility</h3>
+        <div id="leadPurchaseEligibilityStatus" class="message" role="status" aria-live="polite">Checking administrator verification…</div>
+        <p class="muted">Buying leads and sending price offers are enabled only after your company profile, insurance, required license, and selected work types are approved.</p>
+      </section>
       <section class="lead">
         <h3>My change requests</h3>
         <p>Changes to company details, services, and work types stay pending until an administrator reviews them.</p>
@@ -1002,6 +1007,19 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
   let leadPurchaseEligibility = { allowed:false, reason:"Verification status is being checked. Refresh your account to continue." };
+  function renderLeadPurchaseEligibilityStatus() {
+    const status=$("leadPurchaseEligibilityStatus");
+    if(!status) return;
+    if(leadPurchaseEligibility.allowed===true) {
+      status.className="message success";
+      status.textContent="Approved — you can purchase leads and send offers.";
+    } else {
+      status.className="message";
+      status.style.cssText="background:#fff1eb;color:#93401f;border:1px solid #f1c7ae;padding:12px 14px;border-radius:12px";
+      status.textContent="Purchases locked: "+(leadPurchaseEligibility.reason||"Administrator verification is required.");
+    }
+  }
+
   let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
 
   function message(id, text, type) {
@@ -1645,6 +1663,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     } else if (isAdmin) {
       leadPurchaseEligibility = { allowed:false, reason:"Administrator accounts cannot purchase leads." };
     }
+    renderLeadPurchaseEligibilityStatus();
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
       if (walletError) throw walletError; currentWallet = wallet;
