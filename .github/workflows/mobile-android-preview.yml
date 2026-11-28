@@ -1,4 +1,5 @@
 name: ZELPX Android Preview APK
+run-name: ZELPX Android preview — ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
@@ -12,6 +13,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: zelpx-android-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   android-preview:
     name: Build Android preview APK
@@ -23,7 +28,6 @@ jobs:
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://zsrnjkndgbchfxibxiyd.supabase.co
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb
-      # Optional GitHub Actions secret containing the Firebase Android google-services.json contents.
       ZELPX_GOOGLE_SERVICES_JSON: ${{ secrets.ZELPX_GOOGLE_SERVICES_JSON }}
     steps:
       - name: Checkout
