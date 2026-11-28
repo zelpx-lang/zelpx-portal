@@ -753,6 +753,17 @@
   }
   // Expose the confirmation helper for every admin modal/realtime callback path.
   window.showPublishedRequestResult = showPublishedRequestResult;
+  // Once the database confirms publication, close any leftover modal layers so
+  // the administrator returns to the normal, undimmed dashboard.
+  function closeAdminPublishOverlays() {
+    document.querySelectorAll(".request-modal-backdrop").forEach(backdrop => {
+      backdrop.classList.add("hidden");
+      backdrop.setAttribute("aria-hidden", "true");
+    });
+    document.querySelectorAll(".zelpx-confirm-overlay").forEach(overlay => overlay.remove());
+    document.body.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("overflow");
+  }
   function setBusy(button, busy, label) {
     button.disabled = busy;
     if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
@@ -2649,6 +2660,7 @@
               request.lead_id = leadId;
               request.status = "published";
               window.showPublishedRequestResult(request.id, leadId);
+              closeAdminPublishOverlays();
               setBusy(publish, false);
               summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
               if (attentionBell) attentionBell.remove();
@@ -2673,6 +2685,7 @@
                     request.lead_id = latestRequest.lead_id;
                     request.status = latestRequest.status || "published";
                     window.showPublishedRequestResult(request.id, latestRequest.lead_id);
+                    closeAdminPublishOverlays();
                     summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
                     if (attentionBell) attentionBell.remove();
                     feedback.textContent = "This request was already published. Lead ID: " + latestRequest.lead_id;
