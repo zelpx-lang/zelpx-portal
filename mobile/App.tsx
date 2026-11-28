@@ -33,6 +33,29 @@ export default function App() {
     return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
 
+  useEffect(() => {
+    if (!session || !supabaseConfigReady) return;
+    let active = true;
+    supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle()
+      .then(async ({ data: profile, error }) => {
+        if (!active) return;
+        if (error || !profile) {
+          setMessage("Could not verify your ZELPX account. Please sign in again.");
+          await supabase.auth.signOut({ scope: "local" });
+          setSession(null);
+          setMode("welcome");
+          return;
+        }
+        if (profile.role === "admin") {
+          setMessage("Administrator accounts must use the separate ZELPX Admin website.");
+          await supabase.auth.signOut({ scope: "local" });
+          setSession(null);
+          setMode("welcome");
+        }
+      });
+    return () => { active = false; };
+  }, [session]);
+
   async function submitAuth() {
     if (!supabaseConfigReady) {
       setMessage("Supabase setup is required. Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY to mobile/.env.");
