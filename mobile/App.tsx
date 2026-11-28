@@ -351,9 +351,38 @@ export default function App() {
         </>}
 
         {mode === "signed-in" && session && <View style={s.panel}>
-          <Text style={s.heading}>You're signed in</Text>
-          <Text style={s.subheading}>{session.user.email}</Text>
-          <Text style={s.smallText}>Secure authentication is connected. The Customer and Contractor dashboard modules are the next development stage.</Text>
+          <Text style={s.heading}>Welcome, {dashboardName || session.user.email}</Text>
+          <Text style={s.subheading}>{dashboardRole === "customer" ? "Customer Dashboard" : dashboardRole === "contractor" ? "Contractor Dashboard" : "Loading your account…"}</Text>
+          {dashboardLoading && <ActivityIndicator color="#F36B32" />}
+          {!!dashboardError && <Text style={s.message}>{dashboardError}</Text>}
+          {dashboardRole === "customer" && <>
+            <Text style={s.panelTitle}>My Service Requests</Text>
+            {customerRequests.length === 0 && !dashboardLoading ? <Text style={s.smallText}>You have no service requests yet.</Text> : customerRequests.map((item) =>
+              <View key={item.id} style={s.requestItem}>
+                <Text style={s.notificationTitle}>{item.service_type || "Home service"}</Text>
+                <Text style={s.smallText}>{[item.service_city, item.service_state, item.service_zip_code].filter(Boolean).join(", ") || "Service location on file"}</Text>
+                {!!item.description && <Text style={s.smallText} numberOfLines={3}>{item.description}</Text>}
+                <View style={s.statusPill}><Text style={s.statusText}>{item.status || "Submitted"}</Text></View>
+                {typeof item.customer_budget_cents === "number" && <Text style={s.smallText}>Project budget: ${(item.customer_budget_cents / 100).toFixed(2)}</Text>}
+              </View>
+            )}
+          </>}
+          {dashboardRole === "contractor" && <>
+            <Text style={s.panelTitle}>Contractor Verification</Text>
+            {!contractorSummary ? <Text style={s.smallText}>No contractor profile was found for this account. Complete contractor registration through the ZELPX web portal.</Text> : <>
+              <Text style={s.notificationTitle}>{contractorSummary.company_name}</Text>
+              <View style={s.verificationRow}><Text style={s.smallText}>Account verification</Text><Text style={s.statusText}>{contractorSummary.verification_status}</Text></View>
+              <View style={s.verificationRow}><Text style={s.smallText}>License review</Text><Text style={s.statusText}>{contractorSummary.license_review_status}</Text></View>
+              <View style={s.verificationRow}><Text style={s.smallText}>Insurance review</Text><Text style={s.statusText}>{contractorSummary.insurance_review_status}</Text></View>
+              <Text style={s.smallText}>License: {[contractorSummary.license_type, contractorSummary.license_state].filter(Boolean).join(" · ") || "Not listed"}</Text>
+              <Text style={s.smallText}>Service area: {[contractorSummary.service_city, contractorSummary.service_state, contractorSummary.service_zip_code].filter(Boolean).join(", ") || "Not listed"}</Text>
+              <Text style={s.walletText}>Wallet balance: {walletBalanceCents === null ? "Not available" : "$" + (walletBalanceCents / 100).toFixed(2)}</Text>
+              <Text style={s.helper}>Lead purchasing and payment actions are not enabled in this preview. Verification status is displayed from your account record.</Text>
+            </>}
+          </>}
+          <Pressable style={s.settingsButton} onPress={() => setDashboardRefreshKey((v) => v + 1)} disabled={dashboardLoading}>
+            <Text style={s.settingsText}>{dashboardLoading ? "Refreshing…" : "Refresh Dashboard"}</Text>
+          </Pressable>
           <View style={s.panel}>
             <Text style={s.panelTitle}>Notifications & Sounds</Text>
             <Text style={s.smallText}>{notificationStatus}</Text>
