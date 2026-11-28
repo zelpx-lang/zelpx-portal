@@ -1434,11 +1434,12 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           showMessage("profileMessage", "Verifying your primary home address...", "success");
           const verified = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
           profileUpdate.customer_address = verified.matched_address || verified.matchedAddress || homeAddress;
-          profileUpdate.customer_city = verified.city || homeCity;
-          profileUpdate.customer_state = (verified.state || homeState).toUpperCase();
-          profileUpdate.customer_zip_code = verified.zip_code || verified.zip || homeZip;
+          profileUpdate.customer_city = verified.matched_city || verified.city || homeCity;
+          profileUpdate.customer_state = (verified.matched_state || verified.state || homeState).toUpperCase();
+          profileUpdate.customer_zip_code = verified.matched_zip || verified.zip_code || verified.zip || homeZip;
           profileUpdate.customer_latitude = Number(verified.latitude);
           profileUpdate.customer_longitude = Number(verified.longitude);
+          profileUpdate.customer_address_verified_at = new Date().toISOString();
         }
         const { error } = await db
           .from("profiles")
