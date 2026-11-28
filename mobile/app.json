@@ -11,6 +11,15 @@
       "versionCode": 1,
       "edgeToEdgeEnabled": true
     },
-    "plugins": []
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "zelpx_general",
+          "color": "#F36B32",
+          "enableRemoteNotifications": true
+        }
+      ]
+    ]
   }
 }
