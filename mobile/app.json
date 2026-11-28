@@ -11,11 +11,6 @@
       "versionCode": 1,
       "edgeToEdgeEnabled": true
     },
-    "plugins": [],
-    "extra": {
-      "eas": {
-        "projectId": "SET_AFTER_EAS_PROJECT_CREATION"
-      }
-    }
+    "plugins": []
   }
 }
