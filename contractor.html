@@ -2426,7 +2426,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       } else if (lead.customer_budget_choice === "not_decided" || lead.customer_budget_choice === "pricing_guidance") {
         const budgetChoice = document.createElement("span");
         budgetChoice.className = "lead-summary-budget";
-        budgetChoice.textContent = lead.customer_budget_choice === "not_decided" ? "Budget not decided" : "Wants pricing guidance";
+        budgetChoice.textContent = lead.customer_budget_choice === "not_decided" ? "We can agree on a price" : "Wants pricing guidance";
         budgetChoice.style.cssText = "display:block;font-size:12px;font-weight:600;color:#746b61;text-align:right;margin-top:4px";
         summarySide.append(budgetChoice);
       }
