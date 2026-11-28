@@ -913,7 +913,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <section class="request-card" style="margin:12px 0 18px">
           <strong>Service Address</strong>
           <p id="serviceZipStatus" class="subtitle">Your service address is taken from My Profile. Add or update your verified primary address there.</p>
-          <button id="editPrimaryAddressFromRequest" type="button" class="secondary-button" style="width:auto;margin:8px 0 12px">Add / Update Address in My Profile</button>
           <label for="propertyAddress">Property Street Address</label>
           <input id="propertyAddress" type="text" placeholder="Set your address in My Profile" autocomplete="street-address" required readonly disabled>
 
@@ -1320,9 +1319,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       $("serviceState").disabled = true;
       $("serviceZip").readOnly = true;
       $("serviceZip").disabled = true;
-      $("editPrimaryAddressFromRequest").textContent = hasVerifiedHomeAddress
-        ? "Update Address in My Profile"
-        : "Add Address in My Profile";
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarPreview").dataset.currentUrl = data.avatar_url || "";
       $("removeCustomerAvatarButton").hidden = !data.avatar_url;
@@ -1658,13 +1654,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       return result;
     }
 
-    // Address edits are made only in My Profile, never inside Request a Service.
-    $("editPrimaryAddressFromRequest").addEventListener("click", () => {
-      const profileButton = document.querySelector('.dashboard-menu-button[data-dashboard-page="profile"]');
-      if (profileButton) profileButton.click();
-      $("customerHomeAddress").scrollIntoView({behavior:"smooth",block:"center"});
-      $("customerHomeAddress").focus();
-    });
     const serviceDetailQuestions = {
       "Tile Installation": [["Work area","Floor, Walls, Walls & Floors, Shower, Backsplash"],["Approximate area (sq ft)","number"],["Tile type","Ceramic, porcelain, natural stone, not sure"],["Remove old tile?","Yes, no, not sure"],["Subfloor/wall repair needed?","Yes, no, not sure"],["Materials supplied by","Customer, contractor, not sure"]],
       "House Cleaning": [["Approximate area to clean (sq ft)","number"],["Bedrooms","number"],["Bathrooms","number"],["Home type","Apartment, single-story, multi-story, townhouse"],["Cleaning type","Standard, deep clean, move-in/out"],["Frequency","One-time, weekly, biweekly, monthly"],["Inside oven/fridge?","Yes, no"],["Pets?","Yes, no"]],
