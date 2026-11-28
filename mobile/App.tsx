@@ -89,7 +89,7 @@ export default function App() {
   const accountLabel = accountType === "customer" ? "Customer" : "Contractor";
 
   return <SafeAreaView style={s.safe}>
-    <StatusBar barStyle="dark-content" backgroundColor="#F7F7F5" />
+    <StatusBar barStyle="dark-content" />
     <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
         <View style={s.logo}><Text style={s.logoText}>Z</Text></View>
