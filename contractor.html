@@ -2454,18 +2454,46 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         if (canOffer) {
           const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
           offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Required: your job offer ($)"; offerInput.setAttribute("aria-label","Required job offer in dollars before lead purchase"); offerInput.required=true; offerInput.style.cssText="flex:1;min-width:145px";
-          const offerButton = document.createElement("button"); offerButton.type="button"; offerButton.textContent=offerState?.status==="pending" ? "Update offer" : "Make an Offer";
+          const offerAlreadySent = offerState?.status === "pending";
+          const offerButton = document.createElement("button"); offerButton.type="button";
+          offerButton.textContent = offerAlreadySent ? "Offer sent" : "Make an Offer";
+          offerButton.disabled = offerAlreadySent;
           offerButton.addEventListener("click",()=>submitContractorLeadOffer(lead,offerInput,offerButton));
           const declineButton = document.createElement("button"); declineButton.type="button"; declineButton.className="secondary"; declineButton.textContent=offerState?.status==="declined" ? "Declined" : "Decline"; declineButton.disabled=offerState?.status==="declined";
           declineButton.addEventListener("click",()=>declineContractorLead(lead,declineButton));
-          if (offerState?.status==="pending") { offerInput.value=(offerState.offer_cents/100).toFixed(2); const pending=document.createElement("small"); pending.textContent="Offer sent · awaiting customer approval"; offerWrap.append(pending); }
+          if (offerAlreadySent) {
+            offerInput.value=(offerState.offer_cents/100).toFixed(2);
+            offerInput.disabled=true;
+            const pending=document.createElement("small"); pending.textContent="Your offer was sent to the customer · awaiting response"; offerWrap.append(pending);
+          }
+          const isValidOffer = () => {
+            const amount=Number(offerInput.value);
+            return Number.isFinite(amount) && amount>0 && Math.round(amount*100)===amount*100;
+          };
+          offerButton.disabled = offerAlreadySent || !isValidOffer();
+          offerInput.addEventListener("input",()=>{ offerButton.disabled=offerAlreadySent || !isValidOffer(); });
           offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
         // Keep the existing instant-purchase flow for regular leads.
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
-        buyButton.disabled = !canOpenPurchase;
-        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton, canOffer ? offerInput : null));
+        const isValidPurchaseOffer = () => {
+          if (!canOffer) return true;
+          const amount=Number(offerInput?.value);
+          return Number.isFinite(amount) && amount>0 && Math.round(amount*100)===amount*100;
+        };
+        buyButton.disabled = !canOpenPurchase || (canOffer && !isValidPurchaseOffer());
+        if (canOpenPurchase) {
+          if (canOffer) offerInput.addEventListener("input",()=>{ buyButton.disabled=!isValidPurchaseOffer(); });
+          buyButton.addEventListener("click", () => {
+            if (canOffer && !isValidPurchaseOffer()) {
+              message("appMessage","Enter your job offer amount before continuing.","error");
+              offerInput?.focus();
+              return;
+            }
+            buyLead(lead, buyButton, canOffer ? offerInput : null);
+          });
+        }
         footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
