@@ -2174,7 +2174,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     if (!data?.length) first.textContent = "No active categories found";
   }
 
-  function confirmLeadPurchase(price, purchaseLabel) {
+  function confirmLeadPurchase(price, purchaseLabel, jobOffer) {
     return new Promise(resolve => {
       const overlay=document.createElement("div"); overlay.className="zelpx-confirm-overlay";
       const dialog=document.createElement("section"); dialog.className="zelpx-confirm-dialog";
@@ -2186,7 +2186,13 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const body=document.createElement("div"); body.className="zelpx-confirm-body";
       body.append(document.createTextNode("Buy "+purchaseLabel+" for"));
       const amount=document.createElement("strong"); amount.className="zelpx-confirm-price"; amount.textContent=price;
-      body.append(amount,document.createTextNode("The amount will be deducted from your ZELPX credit balance."));
+      body.append(amount,document.createTextNode("Lead purchase price — this amount will be deducted from your ZELPX credit balance."));
+      if (jobOffer) {
+        const offerLine=document.createElement("p");offerLine.style.cssText="margin:14px 0 0;padding:12px;border-radius:12px;background:#fff4e9;color:#8d451e;line-height:1.45";
+        const offerLabel=document.createElement("strong");offerLabel.textContent="Your job offer: "+jobOffer;
+        offerLine.append(offerLabel,document.createElement("br"),document.createTextNode("This is the amount you are offering to charge the customer for completing the work."));
+        body.append(offerLine);
+      }
       const note=document.createElement("p"); note.className="zelpx-confirm-note"; note.textContent="Please review the purchase before continuing."; body.append(note);
       const actions=document.createElement("div"); actions.className="zelpx-confirm-actions";
       const cancel=document.createElement("button"); cancel.type="button"; cancel.className="zelpx-confirm-cancel"; cancel.textContent="Cancel";
@@ -2219,11 +2225,30 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     actions.append(close,go);panel.append(title,body,actions);overlay.append(panel);document.body.append(overlay);go.focus();
   }
 
-  async function buyLead(lead, button) {
+  async function buyLead(lead, button, offerInput = null) {
     if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service not selected","This service is not selected in your contractor account. Update your account in My company → Work types & license requirements to become eligible to purchase this lead.");
     if(!contractorPhoneIsVerified())return showLeadRequirementNotice("Phone verification required","You have not verified the phone number for your contractor account. Verify it in My company → Account phone verification. After successful verification, you can purchase leads without another SMS check.");
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
-    if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel)) return;
+    const hasCustomerBudget = lead.project_value_cents != null && Number(lead.project_value_cents) > 0 &&
+      ["customer_entered","custom"].includes(lead.customer_budget_choice);
+    let offerAmount = null;
+    if (hasCustomerBudget) {
+      offerAmount = Number(offerInput?.value);
+      if (!offerInput || !Number.isFinite(offerAmount) || offerAmount <= 0 ||
+          Math.round(offerAmount * 100) !== offerAmount * 100) {
+        if (offerInput) {
+          offerInput.required = true;
+          offerInput.setCustomValidity("Enter your job offer before purchasing this lead.");
+          offerInput.reportValidity();
+          offerInput.addEventListener("input", () => offerInput.setCustomValidity(""), { once:true });
+        }
+        message("appMessage","Enter your job offer amount first. You must decide how much you are offering to charge for this work before purchasing the lead.","error");
+        offerInput?.focus();
+        return;
+      }
+    }
+    if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel,
+      offerAmount === null ? null : "$" + offerAmount.toFixed(2))) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
@@ -2425,9 +2450,10 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         const hasCustomerBudget = lead.project_value_cents != null && Number(lead.project_value_cents) > 0;
         const canOffer = canOpenPurchase && hasCustomerBudget && ["customer_entered","custom"].includes(lead.customer_budget_choice);
         const offerState = contractorLeadOfferStates.get(lead.id);
+        let offerInput = null;
         if (canOffer) {
           const offerWrap = document.createElement("div"); offerWrap.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;margin-top:8px";
-          const offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Your job offer ($)"; offerInput.setAttribute("aria-label","Your job offer in dollars"); offerInput.style.cssText="flex:1;min-width:145px";
+          offerInput = document.createElement("input"); offerInput.type="number"; offerInput.min="0.01"; offerInput.step="0.01"; offerInput.inputMode="decimal"; offerInput.placeholder="Required: your job offer ($)"; offerInput.setAttribute("aria-label","Required job offer in dollars before lead purchase"); offerInput.required=true; offerInput.style.cssText="flex:1;min-width:145px";
           const offerButton = document.createElement("button"); offerButton.type="button"; offerButton.textContent=offerState?.status==="pending" ? "Update offer" : "Make an Offer";
           offerButton.addEventListener("click",()=>submitContractorLeadOffer(lead,offerInput,offerButton));
           const declineButton = document.createElement("button"); declineButton.type="button"; declineButton.className="secondary"; declineButton.textContent=offerState?.status==="declined" ? "Declined" : "Decline"; declineButton.disabled=offerState?.status==="declined";
@@ -2439,7 +2465,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
         buyButton.disabled = !canOpenPurchase;
-        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton));
+        if (canOpenPurchase) buyButton.addEventListener("click", () => buyLead(lead, buyButton, canOffer ? offerInput : null));
         footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
       if (!ownsPurchase || !descriptionParts.notes) details.append(badges, descTitle, desc);
