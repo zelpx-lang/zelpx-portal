@@ -1,42 +1,39 @@
 # ZELPX Native Mobile App
 
-This is the native Android/iOS application workspace. The existing production website and separate web Admin Panel are not modified by mobile development.
-
-## Product structure
-
-- One native app: ZELPX.
-- Customers and contractors use the same app and select their workspace after sign-in.
-- The Admin Panel remains a separate web application.
-- The existing Supabase project remains the source of truth for accounts and marketplace data.
+Native Android/iOS application workspace. Existing production web portals and the separate Admin Panel remain untouched.
 
 ## Implemented foundation
 
-- Native Expo / React Native app scaffold (SDK 58, React Native 0.88).
-- Customer / Contractor entry selection.
-- Supabase Auth sign-in and customer account registration.
+- Expo SDK 58 / React Native 0.88 app scaffold.
+- Customer / Contractor entry selection and native Supabase Auth.
 - Persistent native sessions using AsyncStorage.
-- Admin-role rejection based on the trusted profiles.role database field.
-- No service-role key or other server secret is bundled into the app.
+- Trusted profile-role check; Admin accounts are directed to the separate Admin website.
+- Android notification permission flow and six sound-enabled notification channels: messages, leads, offers/approvals, account/verification, payments/purchases, and general updates.
+- Android device FCM token registration through the existing authenticated `zelpx-fcm-call` Edge Function.
+- An audible local test notification after enabling notifications.
+
+## Important notification setup still required
+
+The repository does not currently contain the Firebase Android client configuration. To receive remote Android push notifications in a development/release build, add the Firebase `google-services.json` for the Android Firebase app whose package name is `com.zelpx.app` and project is `zelpx-af340`. Do not substitute a service-account JSON file. The service-account private key must remain only in Supabase secrets.
+
+The current FCM Edge Function registers device tokens and supports its existing incoming-call action. The app-side notification channels are prepared, but every business event (new lead, new message, offer, approval/decline, purchase/payment, license/insurance review, account changes, and admin alerts) still needs its server-side event sender wired to the correct recipient and Android channel. Do not describe all event delivery as live until those backend senders have been implemented and tested.
+
+Android notification sounds use the system default sound. Users can change sound/importance per channel in Android Settings. Sound may be suppressed by Do Not Disturb, silent mode, or the device's notification settings.
 
 ## Not yet implemented
 
-- Native contractor registration and license/insurance review workflow.
-- Native phone verification screens (existing verified-phone API flow must be integrated).
+- Native contractor registration and full license/insurance review workflow.
+- Native phone verification UI.
 - Customer profile/address editor, service request creation, offers, approvals and chat.
-- Contractor job feed, lead purchase, wallet, offers and push notifications.
+- Contractor available jobs, lead purchase, wallet, offers and notifications feed.
 - Stripe checkout / Connect user flows.
-- Store-ready signing, screenshots, policy declarations and release bundle.
-
-Do not treat this scaffold as a finished marketplace app. Production database and payment actions must be connected only after the relevant RLS policies and server-side RPC contracts are verified.
+- Complete server-side event delivery for every notification category.
+- iOS push registration and APNs delivery.
+- Production signing, store screenshots, policy declarations and release bundle.
 
 ## Configuration
 
-Copy .env.example to .env and set:
-
-- EXPO_PUBLIC_SUPABASE_URL
-- EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-
-Use the Supabase publishable key only. Never use a service-role key or secret key in the mobile app. Keep .env out of Git.
+Copy `.env.example` to `.env` and set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Never place a service-role key or server secret in the mobile app.
 
 ## Local development
 
@@ -49,8 +46,8 @@ npx expo-doctor
 npm start
 ```
 
-Commit the generated package lockfile after dependency installation. Run on a development build / physical Android device for native integration testing.
+Remote push notifications require a development build and a physical Android device with Google Play services; Expo Go is not sufficient for remote push on Android. Rebuild the native app after adding notification configuration or Firebase files.
 
 ## Google Play readiness
 
-Expo SDK 58 targets Android API 36 (with compile SDK 37). Confirm the current Google Play target API requirement in Play Console immediately before submission. Release builds require an EAS project, app signing configuration, a verified privacy policy, Data safety declarations, and completed Play Console testing tracks.
+Verify the current Play target API requirement immediately before submission. Release builds need EAS project linking, signing configuration, a privacy policy, Data safety declarations, and completed Play Console testing tracks.
