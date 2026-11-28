@@ -704,7 +704,7 @@
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
           <h2>Verify Lead</h2>
-          <p>All customer requests with automatic sale-verification results are collected here. Review pending checks and flagged requests before approving them for sale.</p>
+          <p>This list contains leads that have already been published and posted for sale to contractors.</p>
           <div class="actions"><button id="refreshVerifyLeadBtn" type="button" class="secondary">Refresh Verify Lead</button><span id="verifyLeadCount" class="muted" aria-live="polite"></span></div>
           <div id="verifyLeadMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div id="verifyLeadList"><p class="muted">Open this page to load leads requiring verification…</p></div>
@@ -2856,75 +2856,60 @@
     const countLabel = $("verifyLeadCount");
     const badge = $("verifyLeadBadge");
     if (!list) return;
-    list.textContent = "Loading verification queue…";
+    list.textContent = "Loading published leads…";
     clearMessage("verifyLeadMessage");
     try {
       const { data: requests, error } = await db.rpc("admin_list_service_requests");
       if (error) throw error;
-      const ids = (requests || []).map(request => request.id).filter(Boolean);
-      let verificationByRequest = {};
-      if (ids.length) {
-        const { data: rows, error: verificationError } = await db
-          .from("lead_verification_checks")
-          .select("request_id,risk_score,risk_level,checks,checked_at")
-          .in("request_id", ids);
-        if (verificationError) throw verificationError;
-        (rows || []).forEach(row => { verificationByRequest[row.request_id] = row; });
-      }
-      const queue = (requests || []).map(request => {
-        const check = verificationByRequest[request.id] || null;
-        const checks = check?.checks || {};
-        const flagged = checks.same_customer_duplicate === true ||
-          checks.duplicate_description === true ||
-          checks.high_submission_frequency === true;
-        const passed = Boolean(check &&
-          String(check.risk_level || "").toLowerCase() === "low" &&
-          checks.email_confirmed === true &&
-          checks.phone_sms_confirmed === true &&
-          checks.zip_format_valid === true && !flagged);
-        const needsReview = Boolean(check &&
-          (["high","review"].includes(String(check.risk_level || "").toLowerCase()) || flagged));
-        return { request, check, passed, needsReview };
-      }).filter(item => !item.passed);
-      const pendingCount = queue.length;
+
+      // Verify Lead is the published-for-sale list, not a queue of requests
+      // waiting for verification. Include only requests already linked to a lead.
+      const publishedLeads = (requests || []).filter(request =>
+        Boolean(request.lead_id) || String(request.status || "").toLowerCase() === "published"
+      );
+      const publishedCount = publishedLeads.length;
       if (badge) {
-        badge.textContent = String(pendingCount);
-        badge.classList.toggle("hidden", pendingCount === 0);
-        badge.setAttribute("aria-label", pendingCount + " leads awaiting verification");
+        badge.textContent = String(publishedCount);
+        badge.classList.toggle("hidden", publishedCount === 0);
+        badge.setAttribute("aria-label", publishedCount + " leads posted for sale");
       }
-      if (countLabel) countLabel.textContent = pendingCount + " leads awaiting verification";
+      if (countLabel) countLabel.textContent = publishedCount + " leads posted for sale";
       list.replaceChildren();
-      if (!queue.length) {
+      if (!publishedLeads.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
-        empty.textContent = "No leads are waiting for verification.";
+        empty.textContent = "No leads have been posted for sale yet.";
         list.append(empty);
         return;
       }
-      queue.forEach(({request,check,needsReview}) => {
+
+      publishedLeads.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      publishedLeads.forEach(request => {
         const card = document.createElement("article");
         card.className = "request-summary-row";
         const main = document.createElement("div");
         main.className = "request-summary-main";
         const name = document.createElement("strong");
-        name.textContent = request.request_type === "lead_package" ? "Multi-Service Home Project" : (request.service_type || "Home service request");
+        name.textContent = request.request_type === "lead_package"
+          ? "Multi-Service Home Project"
+          : (request.service_type || "Home service request");
         const meta = document.createElement("small");
         const address = [request.service_city,request.service_state,request.service_zip_code].filter(Boolean).join(", ");
         const date = request.created_at ? new Date(request.created_at).toLocaleString() : "Date unavailable";
-        meta.textContent = date + (address ? " · " + address : "") + " · " + (request.lead_id || request.status === "published" ? "Published" : (request.status || "New"));
+        meta.textContent = date + (address ? " · " + address : "") + " · Published";
         main.append(name,meta);
+
         const state = document.createElement("span");
-        state.className = "request-verification-badge " + (needsReview ? "is-review" : "is-pending");
-        state.textContent = needsReview ? "⚠ Review required" : "◷ Verification pending";
+        state.className = "request-verification-badge is-verified";
+        state.textContent = "✓ Posted for sale";
         state.setAttribute("role","status");
+
         const action = document.createElement("button");
         action.type = "button";
         action.className = "request-open-button";
-        action.textContent = "Review";
+        action.textContent = "Open";
         action.addEventListener("click", async () => {
           try {
-            // Rebuild the full Incoming Leads detail modal using the existing
-            // admin review workflow, then open this exact request.
             await loadServiceRequests();
             const backdrop = [...document.querySelectorAll(".request-modal-backdrop")]
               .find(node => node.dataset.requestId === String(request.id));
@@ -2933,15 +2918,15 @@
             const close = backdrop.querySelector(".request-modal-head button");
             close?.focus();
           } catch (error) {
-            message("verifyLeadMessage", error.message || "Could not open request details.", "error");
+            message("verifyLeadMessage", error.message || "Could not open published lead details.", "error");
           }
         });
         card.append(main,state,action);
         list.append(card);
       });
     } catch (error) {
-      list.textContent = "Could not load Verify Lead queue: " + (error.message || "Unknown error");
-      message("verifyLeadMessage", error.message || "Could not load verification records.", "error");
+      list.textContent = "Could not load published leads: " + (error.message || "Unknown error");
+      message("verifyLeadMessage", error.message || "Could not load published leads.", "error");
     }
   }
 
