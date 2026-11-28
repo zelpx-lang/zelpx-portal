@@ -51,3 +51,20 @@ Remote push notifications require a development build and a physical Android dev
 ## Google Play readiness
 
 Verify the current Play target API requirement immediately before submission. Release builds need EAS project linking, signing configuration, a privacy policy, Data safety declarations, and completed Play Console testing tracks.
+
+## Notification event catalog for the backend integration
+
+The app notification channel IDs are stable identifiers and should be used by the server sender:
+
+| Channel ID | Events |
+| --- | --- |
+| `zelpx_messages` | New customer/contractor chat message; incoming call |
+| `zelpx_leads` | New matching job; lead becomes available; lead no longer available |
+| `zelpx_offers` | Contractor offer received; customer approves or declines; contractor offer accepted or declined |
+| `zelpx_account` | Phone verification; contractor application received; license/insurance review approved or rejected; profile change approved or rejected; account blocked/unblocked |
+| `zelpx_payments` | Lead purchase; payment success/failure; wallet credit/debit; refund or payout status |
+| `zelpx_general` | Service request status; important ZELPX system announcements |
+
+Every server event must be authorized from trusted database state, target only the intended user/device, avoid exposing customer contact details in lock-screen text, and be idempotent so retries do not send duplicate alerts. The Admin Panel remains web-only; administrator alerts should continue through its existing secure web push path and must not be routed to Customer/Contractor mobile accounts.
+
+The app stores up to 30 notifications received while active or opened from the Android notification tray in local device storage. Android's system notification tray remains the source for notifications received while the app is backgrounded or closed. A server-backed cross-device inbox and read/unread synchronization are not implemented yet.
