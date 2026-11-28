@@ -1001,6 +1001,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
   let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, cachedLeads = [];
+  let leadPurchaseEligibility = { allowed:false, reason:"Verification status is being checked. Refresh your account to continue." };
   let availableServiceCategories = [], selectedContractorCategoryIds = new Set(), savedContractorCategoryIds = new Set();
 
   function message(id, text, type) {
@@ -1631,6 +1632,19 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     $("accountLine").textContent = currentUser.email || "";
     if (isAdmin) show($("adminTabBtn")); else hide($("adminTabBtn"));
     currentContractor = contractor;
+    leadPurchaseEligibility = { allowed:false, reason:"Your contractor verification could not be confirmed. Refresh your account or contact ZELPX support." };
+    if (contractor && !isAdmin) {
+      const { data: purchaseGate, error: purchaseGateError } = await db.rpc("contractor_lead_purchase_eligibility");
+      if (purchaseGateError) {
+        console.error("Contractor purchase verification check failed:", purchaseGateError);
+      } else {
+        leadPurchaseEligibility = purchaseGate && typeof purchaseGate === "object"
+          ? { allowed:purchaseGate.allowed === true, reason:String(purchaseGate.reason || "Administrator verification is required.") }
+          : { allowed:false, reason:"Your contractor verification could not be confirmed. Contact ZELPX support." };
+      }
+    } else if (isAdmin) {
+      leadPurchaseEligibility = { allowed:false, reason:"Administrator accounts cannot purchase leads." };
+    }
     if (contractor) {
       const { data: wallet, error: walletError } = await db.from("credit_wallets").select("id,balance_cents").eq("contractor_id", contractor.id).maybeSingle();
       if (walletError) throw walletError; currentWallet = wallet;
@@ -2237,6 +2251,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   }
 
   async function buyLead(lead, button) {
+    if (leadPurchaseEligibility.allowed !== true) return showLeadRequirementNotice("Administrator verification required",leadPurchaseEligibility.reason || "Complete all required license, insurance, company, and work-type checks before purchasing leads.");
     if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service not selected","This service is not selected in your contractor account. Update your account in My company → Work types & license requirements to become eligible to purchase this lead.");
     if(!contractorPhoneIsVerified())return showLeadRequirementNotice("Phone verification required","You have not verified the phone number for your contractor account. Verify it in My company → Account phone verification. After successful verification, you can purchase leads without another SMS check.");
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
@@ -2292,6 +2307,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
   }
   const contractorLeadOfferStates = new Map();
   async function submitContractorLeadOffer(lead, amountInput, button) {
+    if (leadPurchaseEligibility.allowed !== true) return showLeadRequirementNotice("Administrator verification required",leadPurchaseEligibility.reason || "Complete all required license, insurance, company, and work-type checks before making offers.");
     if (!contractorPhoneIsVerified()) return showLeadRequirementNotice("Phone verification required","Verify your contractor phone number before sending an offer.");
     const amount = Number(amountInput.value);
     if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount * 100) !== amount * 100) {
@@ -2343,6 +2359,24 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     });
     $("leadResultsCount").textContent = `${filtered.length} ${filtered.length === 1 ? "lead" : "leads"} found`;
     list.replaceChildren();
+    if (!isAdmin && leadPurchaseEligibility.allowed !== true) {
+      const verificationNotice = document.createElement("section");
+      verificationNotice.className = "lead";
+      verificationNotice.style.cssText = "margin:0 0 14px;padding:14px 16px;border:1px solid #f1c7ae;border-left:5px solid #e87535;border-radius:14px;background:#fff7f0;color:#714326";
+      const noticeTitle = document.createElement("strong");
+      noticeTitle.textContent = "Purchases locked — verification pending";
+      const noticeText = document.createElement("p");
+      noticeText.style.cssText = "margin:7px 0 0;line-height:1.5";
+      noticeText.textContent = leadPurchaseEligibility.reason || "Your company profile, insurance, license, and selected work types must be approved by an administrator before you can buy leads or send offers.";
+      const noticeAction = document.createElement("button");
+      noticeAction.type = "button";
+      noticeAction.className = "secondary";
+      noticeAction.textContent = "Review My company";
+      noticeAction.style.cssText = "margin-top:10px";
+      noticeAction.addEventListener("click",()=>switchTab("companyPanel"));
+      verificationNotice.append(noticeTitle,noticeText,noticeAction);
+      list.append(verificationNotice);
+    }
     if (!filtered.length) {
       const empty = document.createElement("div"); empty.className = "lead";
       const title = document.createElement("h3"); title.textContent = cachedLeads.length ? "No matching leads" : "No leads available yet";
@@ -2485,16 +2519,18 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
             const amount=Number(offerInput.value);
             return Number.isFinite(amount) && amount>0 && Math.round(amount*100)===amount*100;
           };
-          offerButton.disabled = offerAlreadySent || !isValidOffer();
-          offerInput.addEventListener("input",()=>{ offerButton.disabled=offerAlreadySent || !isValidOffer(); });
+          offerInput.disabled = leadPurchaseEligibility.allowed !== true || offerAlreadySent;
+          offerButton.disabled = leadPurchaseEligibility.allowed !== true || offerAlreadySent || !isValidOffer();
+          offerInput.addEventListener("input",()=>{ offerButton.disabled=leadPurchaseEligibility.allowed !== true || offerAlreadySent || !isValidOffer(); });
+          if (leadPurchaseEligibility.allowed !== true) { const blocked=document.createElement("small"); blocked.textContent="Offers are locked until administrator verification is approved."; blocked.style.cssText="width:100%;color:#a34b27;font-weight:700"; offerWrap.append(blocked); }
           offerWrap.append(offerInput,offerButton,declineButton); footer.append(offerWrap);
         }
         // Keep the existing instant-purchase flow for regular leads.
         const buyButton = document.createElement("button"); buyButton.type = "button";
-        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
+        buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (leadPurchaseEligibility.allowed !== true ? "Verification required" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase"));
         // Buying never depends on the optional job-offer input. The displayed
         // customer lead price is the only price charged by the secure RPC.
-        buyButton.disabled = !canOpenPurchase;
+        buyButton.disabled = !canOpenPurchase || leadPurchaseEligibility.allowed !== true;
         if (canOpenPurchase) {
           buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         }
