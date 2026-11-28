@@ -732,6 +732,25 @@
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
   }
   function clearMessage(id) { hide($(id)); $(id).textContent = ""; }
+  // Show the definitive result of publishing a customer request in its own card.
+  // This helper is also called by the realtime listener after a successful publish.
+  function showPublishedRequestResult(requestId, leadId) {
+    const matchingButtons = [...document.querySelectorAll("[data-request-id]")].filter(
+      button => String(button.dataset.requestId) === String(requestId)
+    );
+    matchingButtons.forEach(button => {
+      const card = button.closest("article.lead") || button.closest(".lead") || button.parentElement;
+      const feedback = card?.querySelector(".request-publish-feedback");
+      if (feedback) {
+        feedback.textContent = "ORDER SENT — successfully published and available to contractors. Lead ID: " + leadId;
+        feedback.className = "message success request-publish-feedback";
+        feedback.setAttribute("role", "status");
+        feedback.setAttribute("aria-live", "polite");
+      }
+      button.disabled = true;
+      button.textContent = "Published successfully";
+    });
+  }
   function setBusy(button, busy, label) {
     button.disabled = busy;
     if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
