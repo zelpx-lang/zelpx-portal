@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
@@ -23,6 +23,8 @@ const NOTIFICATION_CHANNELS = [
   { id: "zelpx_general", name: "ZELPX updates" },
 ] as const;
 
+type LocalNotification = { id: string; title: string; body: string; receivedAt: string; data?: Record<string, unknown> };
+const NOTIFICATION_HISTORY_KEY = "zelpx_notification_history_v1";
 type AccountType = "customer" | "contractor";
 type Mode = "welcome" | "login" | "signup" | "signed-in";
 
@@ -38,6 +40,36 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState("Notifications are not enabled on this device.");
+  const [notificationHistory, setNotificationHistory] = useState<LocalNotification[]>([]);
+  const [notificationOpenStatus, setNotificationOpenStatus] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(NOTIFICATION_HISTORY_KEY).then((saved) => {
+      if (!active || !saved) return;
+      try { setNotificationHistory(JSON.parse(saved).slice(0, 30)); } catch { /* ignore invalid local cache */ }
+    });
+    const received = Notifications.addNotificationReceivedListener((notification) => {
+      const content = notification.request.content;
+      const item: LocalNotification = {
+        id: notification.request.identifier,
+        title: content.title || "ZELPX notification",
+        body: content.body || "",
+        receivedAt: new Date().toISOString(),
+        data: content.data as Record<string, unknown>,
+      };
+      setNotificationHistory((previous) => {
+        const next = [item, ...previous.filter((entry) => entry.id !== item.id)].slice(0, 30);
+        AsyncStorage.setItem(NOTIFICATION_HISTORY_KEY, JSON.stringify(next)).catch(() => {});
+        return next;
+      });
+    });
+    const response = Notifications.addNotificationResponseReceivedListener((event) => {
+      const content = event.notification.request.content;
+      setNotificationOpenStatus(content.title || "Notification opened.");
+    });
+    return () => { active = false; received.remove(); response.remove(); };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -253,6 +285,21 @@ export default function App() {
               {notificationBusy ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryText}>Enable All Notifications</Text>}
             </Pressable>
             <Text style={s.helper}>Messages, new leads, offers, approvals, account verification, purchases, and ZELPX updates use separate Android notification channels with the default notification sound.</Text>
+            <Pressable style={s.settingsButton} onPress={() => Linking.openSettings()}>
+              <Text style={s.settingsText}>Android Notification Settings</Text>
+            </Pressable>
+            {!!notificationOpenStatus && <Text style={s.smallText}>{notificationOpenStatus}</Text>}
+            <View style={s.historyHeader}>
+              <Text style={s.panelTitle}>Recent Notifications</Text>
+              <Text style={s.count}>{notificationHistory.length}</Text>
+            </View>
+            {notificationHistory.length === 0 ? <Text style={s.smallText}>No notifications received on this device yet.</Text> : notificationHistory.slice(0, 8).map((item) =>
+              <View key={item.id} style={s.notificationItem}>
+                <Text style={s.notificationTitle}>{item.title}</Text>
+                {!!item.body && <Text style={s.smallText}>{item.body}</Text>}
+                <Text style={s.notificationTime}>{new Date(item.receivedAt).toLocaleString()}</Text>
+              </View>
+            )}
           </View>
           <Pressable style={s.secondary} onPress={signOut} disabled={busy}><Text style={s.secondaryText}>{busy ? "Signing out…" : "Sign Out"}</Text></Pressable>
         </View>}
@@ -304,5 +351,12 @@ const s = StyleSheet.create({
   panel: { marginTop: 38, backgroundColor: "#fff", borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "#E5E7E3" },
   secondary: { borderWidth: 1, borderColor: "#E5E7E3", minHeight: 50, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 22 },
   secondaryText: { color: "#252B27", fontSize: 15, fontWeight: "700" },
+  settingsButton: { minHeight: 44, borderWidth: 1, borderColor: "#F36B32", borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 12 },
+  settingsText: { color: "#D95E2B", fontWeight: "700", fontSize: 13 },
+  historyHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24, marginBottom: 8 },
+  count: { color: "#D95E2B", fontSize: 13, fontWeight: "800" },
+  notificationItem: { paddingVertical: 11, borderTopWidth: 1, borderTopColor: "#EEF0EC" },
+  notificationTitle: { color: "#252B27", fontSize: 13, fontWeight: "700" },
+  notificationTime: { color: "#969C97", fontSize: 10, marginTop: 5 },
   footer: { marginTop: "auto", paddingTop: 30, textAlign: "center", color: "#969C97", fontSize: 11 },
 });
