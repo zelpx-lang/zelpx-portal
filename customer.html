@@ -739,6 +739,40 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",check,{once:true});else check();
 })();
 </script>
+<style>
+  /* Clear confirmation shown directly below Submit Request after a successful save. */
+  #requestMessage.success {
+    display:flex;
+    align-items:flex-start;
+    gap:13px;
+    margin:18px 0 4px;
+    padding:18px 20px;
+    border:1px solid #cfe3c9;
+    border-radius:18px;
+    background:#f1f9ed;
+    color:#174d20;
+    font-size:16px;
+    font-weight:600;
+    line-height:1.55;
+    box-shadow:0 8px 22px -18px #245b2c66;
+    white-space:pre-line;
+  }
+  #requestMessage.success::before {
+    content:"✓";
+    display:grid;
+    place-items:center;
+    flex:0 0 42px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#1c9b50;
+    color:#fff;
+    font-size:27px;
+    font-weight:800;
+    line-height:1;
+  }
+  #requestMessage.success::after { content:none; }
+</style>
 </head>
 
 <body>
@@ -2506,29 +2540,15 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
         showMessage(
           "requestMessage",
-          "Your service request has been submitted successfully.",
+          "Your service request was successfully submitted!\nWe've received your request and will notify you with updates.",
           "success"
         );
 
+        // Refresh the requests list in the background, but keep the customer
+        // on the Request a Service page so the green confirmation stays below
+        // the Submit Request button.
         await loadRequests();
-
-        // Take the customer straight to the new order and open its details,
-        // so the cancellation option is immediately visible after posting.
-        customerUnreadOnly = false;
-        applyRequestFilters();
-        document.querySelectorAll(".dashboard-page").forEach(page => {
-          page.hidden = page.id !== "dashboardPage-requests";
-        });
-        document.querySelectorAll(".dashboard-menu-button").forEach(item => {
-          const active = item.dataset.dashboardPage === "requests";
-          item.classList.toggle("active", active);
-          if (active) item.setAttribute("aria-current", "page");
-          else item.removeAttribute("aria-current");
-        });
-        const newestRequest = $("requestsList").querySelector("[data-request-card='1']");
-        const newestRequestSummary = newestRequest?.querySelector(".request-summary");
-        if (newestRequestSummary) newestRequestSummary.click();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        $("requestMessage").scrollIntoView({ behavior: "smooth", block: "nearest" });
 
         // The selected sphere work is now attached to the submitted request.
         try { localStorage.removeItem(SPHERE_DRAFT_KEY); } catch (_) {}
