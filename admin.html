@@ -726,7 +726,7 @@
   const show = (el) => el.classList.remove("hidden");
   const hide = (el) => el.classList.add("hidden");
   const money = (cents) => "$" + (Number(cents || 0) / 100).toFixed(2);
-  let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false;
+  let db = null, currentUser = null, currentProfile = null, currentContractor = null, currentWallet = null, isAdmin = false, signupMode = false, serviceRequestsEditing = false;
 
   function message(id, text, type) {
     const el = $(id); el.textContent = text; el.className = "message" + (type ? " " + type : ""); show(el);
