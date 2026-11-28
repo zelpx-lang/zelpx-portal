@@ -8,7 +8,7 @@ module.exports = async function handler(req, res) {
     if (!phone) return sendJson(res, 400, { error: "Enter a valid phone number in E.164 format, such as +15035550123." });
     const config = twilioConfig();
     const user = await authenticatedUser(req);
-    await requireActiveCustomer(user.id, config, body.purpose);
+    await requireActiveCustomer(user.id, config, body.purpose, user);
     if (body.purpose === "contractor_account") {
       const check = await fetch(SUPABASE_URL + "/rest/v1/contractors?select=id&user_id=eq." + encodeURIComponent(user.id), { headers: { Authorization: "Bearer " + config.serviceRoleKey, apikey: config.serviceRoleKey } });
       if (!check.ok || !(await check.json().catch(() => [])).length) return sendJson(res, 403, { error: "Contractor account required." });
