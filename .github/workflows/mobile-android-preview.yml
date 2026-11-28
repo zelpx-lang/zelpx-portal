@@ -51,6 +51,9 @@ jobs:
             echo "Firebase config not supplied. Building preview without remote FCM delivery."
           fi
 
+      - name: TypeScript check
+        run: npm run typecheck
+
       - name: Check Expo project
         run: npx expo-doctor
         continue-on-error: true
