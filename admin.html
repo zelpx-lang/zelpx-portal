@@ -622,7 +622,7 @@
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity <span id="contractorActivityBadge" class="contractor-activity-badge hidden" aria-label="Account updates awaiting review">0</span></button>
-        <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
+        <button type="button" data-admin-page="adminIncomingLeadsPage">New leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New new leads">0</span></button>
         <button type="button" data-admin-page="adminVerifyLeadPage">Verified leads <span id="verifyLeadBadge" class="incoming-lead-badge hidden" aria-label="Published leads available for sale">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
       </nav>
@@ -681,13 +681,13 @@
       <section id="adminIncomingLeadsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-          <h2>Incoming leads</h2>
+          <h2>New leads</h2>
           <p>New customer service requests arrive here first. Review the details, verify the service category and location, set the lead price, and publish only after your approval. Published leads become available in the contractor portal.</p>
           <div class="grid" style="margin:14px 0">
             <div><label for="requestSearch">Search customer / request</label><input id="requestSearch" type="search" placeholder="Name, phone, address, service, request ID"></div>
             <div><label for="requestStatusFilter">Filter by status</label><select id="requestStatusFilter"><option value="all">All requests</option><option value="new">New — not published</option><option value="published">Published</option><option value="other">Other statuses</option></select></div>
           </div>
-          <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh incoming leads</button><span id="requestCount" class="muted"></span></div>
+          <div class="actions"><button id="refreshRequestsBtn" type="button" class="secondary">Refresh new leads</button><span id="requestCount" class="muted"></span></div>
           <div id="serviceRequestsMessage" class="message hidden" role="status"></div>
           <div id="serviceRequestsList"><p class="muted">Open this page to load incoming customer requests…</p></div>
         </section>
@@ -1318,7 +1318,7 @@
       : { count: 0, error: null };
     if (purchaseError) throw purchaseError;
     const hasPurchases = (purchaseCount || 0) > 0;
-    const warning = "Delete this customer request from the Incoming leads list?\n\n" +
+    const warning = "Delete this customer request from the New leads list?\n\n" +
       (request.lead_id
         ? "Its published lead will be removed from sale. " +
           (hasPurchases ? "Existing contractor purchase and payment history will be preserved." : "The lead record will be retained as removed for audit/history.")
@@ -2255,7 +2255,7 @@
     }
   }
 
-  // Keep the Incoming leads badge synchronized with the administrator request queue.
+  // Keep the New leads badge synchronized with the administrator request queue.
   async function refreshIncomingLeadBadge() {
     const badge = $("incomingLeadBadge");
     if (!badge || !isAdmin) return;
@@ -2267,10 +2267,10 @@
       ).length;
       badge.textContent = String(count);
       badge.classList.toggle("hidden", count === 0);
-      badge.setAttribute("aria-label", count + " new incoming leads");
+      badge.setAttribute("aria-label", count + " new new leads");
     } catch (error) {
       // Badge refresh must never prevent the request list from rendering.
-      console.warn("Incoming leads badge could not be refreshed:", error?.message || error);
+      console.warn("New leads badge could not be refreshed:", error?.message || error);
     }
   }
 
@@ -2300,7 +2300,7 @@
         }
       }
       // Category lookup is only needed for the publish form. It must never
-      // prevent customer requests from appearing in the Incoming leads queue.
+      // prevent customer requests from appearing in the New leads queue.
       let serviceCategories = [];
       const { data: categoryRows, error: categoriesError } = await db.from("service_categories")
         .select("name").eq("is_active", true).order("name");
@@ -3192,13 +3192,13 @@
       signInButton.type = "button";
       signInButton.onclick = signIn;
     }
-    // Bind Incoming leads directly so the navigation works even if another
+    // Bind New leads directly so the navigation works even if another
     // document-level click handler interferes with delegated events.
     const incomingLeadsButton = document.querySelector('#adminPanel [data-admin-page="adminIncomingLeadsPage"]');
     incomingLeadsButton?.addEventListener("click", event => {
       event.preventDefault();
       if (!isAdmin) {
-        message("appMessage", "Administrator access is required to open Incoming leads.", "error");
+        message("appMessage", "Administrator access is required to open New leads.", "error");
         return;
       }
       show($("appView"));
