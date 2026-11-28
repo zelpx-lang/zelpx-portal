@@ -2371,13 +2371,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       });
       return lines.join("\n").trim();
     }
-    async function ensureCustomerRequestPhoneVerified(session) {
+    async function ensureCustomerRequestPhoneVerified(session, purpose = "profile_update") {
       return await new Promise(resolve => {
         const overlay = document.createElement("div");
         overlay.setAttribute("role","presentation"); overlay.style.cssText = "position:fixed!important;inset:0!important;z-index:2147483000!important;background:rgba(36,23,15,.72)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important";
         const panel = document.createElement("section");
         panel.style.cssText = "width:min(100%,420px);max-height:calc(100dvh - 36px);overflow-y:auto;box-sizing:border-box;background:#fffefa;border-radius:20px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005";
-        panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:25px;line-height:1.2">Verify your phone number</h2><p style="color:#756b64;line-height:1.5">Confirm your mobile number to save your customer profile.</p><label for="zelpxCustomerVerifyPhone" style="display:block;font-weight:700;margin:16px 0 6px">Mobile number</label><input id="zelpxCustomerVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px"><button id="zelpxCustomerSendCode" type="button" style="width:100%;padding:15px;margin-top:10px;border:0;border-radius:12px;background:#ef5b16;color:white;font-size:16px;font-weight:700">Send SMS code</button><label for="zelpxCustomerVerifyCode" style="display:block;font-weight:700;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxCustomerVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px;letter-spacing:2px"><p id="zelpxCustomerVerifyMessage" role="status" style="min-height:24px;margin:10px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button id="zelpxCustomerCancelVerify" type="button" style="min-height:52px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-weight:700">Cancel</button><button id="zelpxCustomerConfirmVerify" type="button" style="min-height:52px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-weight:700">Verify</button></div>';
+        panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:25px;line-height:1.2">Verify your phone number</h2><p style="color:#756b64;line-height:1.5">Confirm your mobile number to continue.</p><label for="zelpxCustomerVerifyPhone" style="display:block;font-weight:700;margin:16px 0 6px">Mobile number</label><input id="zelpxCustomerVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px"><button id="zelpxCustomerSendCode" type="button" style="width:100%;padding:15px;margin-top:10px;border:0;border-radius:12px;background:#ef5b16;color:white;font-size:16px;font-weight:700">Send SMS code</button><label for="zelpxCustomerVerifyCode" style="display:block;font-weight:700;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxCustomerVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px;letter-spacing:2px"><p id="zelpxCustomerVerifyMessage" role="status" style="min-height:24px;margin:10px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button id="zelpxCustomerCancelVerify" type="button" style="min-height:52px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-weight:700">Cancel</button><button id="zelpxCustomerConfirmVerify" type="button" style="min-height:52px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-weight:700">Verify</button></div>';
         overlay.append(panel); (document.body || document.documentElement).appendChild(overlay); panel.setAttribute("role","dialog"); panel.setAttribute("aria-modal","true"); panel.setAttribute("aria-label","Verify your phone number");
         const phoneInput=panel.querySelector("#zelpxCustomerVerifyPhone");
         const codeInput=panel.querySelector("#zelpxCustomerVerifyCode");
@@ -2394,7 +2394,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             const digits=raw.replace(/\D/g,"");
             const phone=raw.startsWith("+") ? "+"+digits : digits.length===10 ? "+1"+digits : digits.length===11&&digits.startsWith("1") ? "+"+digits : "";
             if(!phone || digits.length<10 || digits.length>15) throw new Error("Enter a valid mobile number, including area code.");
-            const response=await fetch("/api/customer-phone/send-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone,purpose:"profile_update"})});
+            const response=await fetch("/api/customer-phone/send-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone,purpose})});
             const result=await response.json().catch(()=>({}));
             if(!response.ok) {
               if(response.status===409) throw new Error("This phone number already belongs to another ZELPX account. Sign in to that account — it can use both Customer and Contractor dashboards.");
@@ -2413,7 +2413,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             if(!sentPhone) throw new Error("Send an SMS code first.");
             const code=codeInput.value.trim();
             if(!/^[0-9]{6}$/.test(code)) throw new Error("Enter the 6-digit SMS code.");
-            const response=await fetch("/api/customer-phone/verify-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone:sentPhone,code,purpose:"profile_update"})});
+            const response=await fetch("/api/customer-phone/verify-code",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({phone:sentPhone,code,purpose})});
             const result=await response.json().catch(()=>({}));
             if(!response.ok || !result.verified) {
               if(response.status===409) throw new Error("This phone number already belongs to another ZELPX account. Sign in to that account instead.");
@@ -2463,7 +2463,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           throw new Error("Please log in before submitting a request.");
         }
 
-        const phoneVerifiedForThisRequest = await ensureCustomerRequestPhoneVerified(session);
+        const phoneVerifiedForThisRequest = await ensureCustomerRequestPhoneVerified(session, "request_submission");
         if (!phoneVerifiedForThisRequest) {
           throw new Error("Phone verification is required before submitting your request.");
         }
