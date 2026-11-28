@@ -16,7 +16,7 @@ Native Android/iOS application workspace. Existing production web portals and th
 
 The repository does not currently contain the Firebase Android client configuration. To receive remote Android push notifications in a development/release build, add the Firebase `google-services.json` for the Android Firebase app whose package name is `com.zelpx.app` and project is `zelpx-af340`. Do not substitute a service-account JSON file. The service-account private key must remain only in Supabase secrets.
 
-The current FCM Edge Function registers device tokens and supports its existing incoming-call action. The app-side notification channels are prepared, but every business event (new lead, new message, offer, approval/decline, purchase/payment, license/insurance review, account changes, and admin alerts) still needs its server-side event sender wired to the correct recipient and Android channel. Do not describe all event delivery as live until those backend senders have been implemented and tested.
+The FCM delivery helper is now implemented in the existing `send-chat-push` Edge Function and uses the existing database webhook secret gate. Existing database triggers already enqueue Android push events for new chat messages, matching leads, customer lead purchases, contractor verification changes, wallet transactions, offer creation/decisions, and customer request status changes. The sender resolves the intended recipients from trusted database rows and selects the matching Android channel. Admin notifications remain in the separate web Admin Panel. Actual delivery still depends on the Firebase service-account secret being present in Supabase and a device having registered its FCM token.
 
 Android notification sounds use the system default sound. Users can change sound/importance per channel in Android Settings. Sound may be suppressed by Do Not Disturb, silent mode, or the device's notification settings.
 
@@ -27,7 +27,8 @@ Android notification sounds use the system default sound. Users can change sound
 - Customer profile/address editor, service request creation, offers, approvals and chat.
 - Contractor available jobs, lead purchase, wallet, offers and notifications feed.
 - Stripe checkout / Connect user flows.
-- Complete server-side event delivery for every notification category.
+- A server-backed cross-device notification inbox with read/unread synchronization.
+- iOS push registration and APNs delivery.
 - iOS push registration and APNs delivery.
 - Production signing, store screenshots, policy declarations and release bundle.
 
@@ -71,10 +72,10 @@ The app stores up to 30 notifications received while active or opened from the A
 
 ## Android preview build
 
-A GitHub Actions workflow builds a debug APK whenever files under `mobile/` change on the `mobile-app` branch. It also supports manual runs from the repository's Actions tab. The artifact is named `zelpx-android-preview-apk` and is retained for 14 days.
+A GitHub Actions workflow builds a debug APK whenever files under `mobile/` change on the `mobile-app` branch. It also supports manual runs from the repository's Actions tab. The artifact is named `zelpx-android-preview-apk` and is retained for 14 days. A preview APK can be built without Firebase client configuration for UI/auth testing; remote FCM registration and delivery require the Firebase file and server secret.
 
 The preview workflow injects the Supabase project URL and publishable key at build time. The publishable key is intended for public clients; no service-role key is included.
 
-For remote Android push, add a GitHub Actions repository secret named `ZELPX_GOOGLE_SERVICES_JSON` containing the full contents of the Firebase Android `google-services.json` for package `com.zelpx.app` in Firebase project `zelpx-af340`. The workflow will attach it during the build without committing the file to the repository. If that secret is absent, a preview APK can still be built, but remote FCM delivery will not work.
+For remote Android push, add a GitHub Actions repository secret named `ZELPX_GOOGLE_SERVICES_JSON` containing the full contents of the Firebase Android `google-services.json` for package `com.zelpx.app` in Firebase project `zelpx-af340`. The workflow will attach it during the build without committing the file to the repository. If that secret is absent, a preview APK can still be built and installed for UI/auth/local-notification testing, but remote FCM registration and delivery will not work. The Supabase Edge Functions also require the Firebase service-account JSON in the Supabase secret named `FIREBASE_SERVICE_ACCOUNT_JSON`; never put this service-account private key in GitHub client files or the APK.
 
-This is a debug preview build, not a signed Google Play release. The app currently provides authentication, customer request summaries, contractor verification/wallet summaries, and the notification setup/inbox foundation. Creating requests, contractor onboarding, chat, offer approval/decline, lead purchase, Stripe payments, and the full server-side notification event pipeline still need to be implemented before calling the mobile app feature-complete.
+This is a debug preview build, not a signed Google Play release. The app currently provides authentication, customer request summaries, contractor verification/wallet summaries, and the notification setup/inbox foundation. Creating requests, full contractor onboarding, chat, offer approval/decline, lead purchase, and Stripe payments still need to be implemented before calling the mobile app feature-complete. Core server-side Android push event routing is in place, but must be tested on a registered physical Android device before production release.
