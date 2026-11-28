@@ -2344,11 +2344,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     async function ensureCustomerRequestPhoneVerified(session) {
       return await new Promise(resolve => {
         const overlay = document.createElement("div");
-        overlay.style.cssText = "position:fixed;inset:0;z-index:100500;background:#24170f99;display:flex;align-items:center;justify-content:center;padding:18px";
+        overlay.setAttribute("role","presentation"); overlay.style.cssText = "position:fixed!important;inset:0!important;z-index:2147483000!important;background:rgba(36,23,15,.72)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important";
         const panel = document.createElement("section");
         panel.style.cssText = "width:min(100%,420px);max-height:calc(100dvh - 36px);overflow-y:auto;box-sizing:border-box;background:#fffefa;border-radius:20px;padding:24px;color:#30231e;box-shadow:0 20px 70px #0005";
         panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:25px;line-height:1.2">Verify your phone number</h2><p style="color:#756b64;line-height:1.5">SMS verification is required before you can submit a service request.</p><label for="zelpxCustomerVerifyPhone" style="display:block;font-weight:700;margin:16px 0 6px">Mobile number</label><input id="zelpxCustomerVerifyPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 503 555 0123" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px"><button id="zelpxCustomerSendCode" type="button" style="width:100%;padding:15px;margin-top:10px;border:0;border-radius:12px;background:#ef5b16;color:white;font-size:16px;font-weight:700">Send SMS code</button><label for="zelpxCustomerVerifyCode" style="display:block;font-weight:700;margin:18px 0 6px">6-digit SMS code</label><input id="zelpxCustomerVerifyCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code" style="display:block;width:100%;box-sizing:border-box;padding:15px;border:1px solid #ddd;border-radius:12px;background:#fff;font-size:17px;letter-spacing:2px"><p id="zelpxCustomerVerifyMessage" role="status" style="min-height:24px;margin:10px 0;color:#756b64;line-height:1.4"></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button id="zelpxCustomerCancelVerify" type="button" style="min-height:52px;border:1px solid #dfd6cf;border-radius:12px;background:#fff;color:#30231e;font-weight:700">Cancel</button><button id="zelpxCustomerConfirmVerify" type="button" style="min-height:52px;border:0;border-radius:12px;background:#ef5b16;color:#fff;font-weight:700">Verify</button></div>';
-        overlay.append(panel); document.body.append(overlay);
+        overlay.append(panel); (document.body || document.documentElement).appendChild(overlay); panel.setAttribute("role","dialog"); panel.setAttribute("aria-modal","true"); panel.setAttribute("aria-label","Verify your phone number");
         const phoneInput=panel.querySelector("#zelpxCustomerVerifyPhone");
         const codeInput=panel.querySelector("#zelpxCustomerVerifyCode");
         const status=panel.querySelector("#zelpxCustomerVerifyMessage");
@@ -2396,7 +2396,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             status.textContent=error.message || "Could not verify phone.";
           }
         };
-        phoneInput.focus();
+        requestAnimationFrame(() => { phoneInput.focus(); overlay.scrollIntoView({block:"center"}); });
       });
     }
 
