@@ -1,0 +1,84 @@
+name: ZELPX Android Preview APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - mobile-app
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-android-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  android-preview:
+    name: Build Android preview APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://zsrnjkndgbchfxibxiyd.supabase.co
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb
+      # Optional GitHub Actions secret containing the Firebase Android google-services.json contents.
+      ZELPX_GOOGLE_SERVICES_JSON: ${{ secrets.ZELPX_GOOGLE_SERVICES_JSON }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Create deterministic npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Add Firebase config when provided
+        shell: bash
+        run: |
+          if [ -n "$ZELPX_GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$ZELPX_GOOGLE_SERVICES_JSON" > google-services.json
+            node -e "const fs=require('fs'); const p='app.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); j.expo.android.googleServicesFile='./google-services.json'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\\n');"
+            echo "Firebase Android configuration attached."
+          else
+            echo "Firebase config not supplied. Building preview without remote FCM delivery."
+          fi
+
+      - name: Check Expo project
+        run: npx expo-doctor
+        continue-on-error: true
+
+      - name: Generate Android native project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: zelpx-android-preview-apk
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
