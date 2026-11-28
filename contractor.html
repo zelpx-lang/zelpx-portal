@@ -2380,6 +2380,17 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       const chevron = document.createElement("span"); chevron.className = "lead-summary-chevron"; chevron.textContent = "＋";
       summarySide.append(chevron); summary.append(summaryMain, summarySide); card.append(summary);
       const details = document.createElement("div"); details.className = "lead-details hidden";
+      // Keep the contractor's job-offer amount separate from the admin-set
+      // fixed lead purchase price. Both prices are visible in expanded details.
+      const leadPriceRow = document.createElement("div");
+      leadPriceRow.className = "lead-purchase-price";
+      leadPriceRow.style.cssText = "display:flex;justify-content:space-between;gap:12px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #f2d8c5;border-radius:12px;background:#fff4eb;color:#9a4b20;font-weight:800";
+      const leadPriceLabel = document.createElement("span");
+      leadPriceLabel.textContent = isPackage ? "Lead package price" : "Lead purchase price";
+      const leadPriceValue = document.createElement("strong");
+      leadPriceValue.textContent = money(lead.price_cents);
+      leadPriceRow.append(leadPriceLabel,leadPriceValue);
+      details.append(leadPriceRow);
       if (lead.project_value_cents != null && Number(lead.project_value_cents) > 0) {
         const customerBudget = document.createElement("div");
         customerBudget.className = "lead-customer-budget";
