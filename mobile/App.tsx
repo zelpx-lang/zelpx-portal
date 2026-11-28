@@ -147,6 +147,7 @@ export default function App() {
           title: "ZELPX notifications enabled",
           body: "Sound alerts are ready on this device.",
           sound: "default",
+          channelId: "zelpx_general",
           data: { channelId: "zelpx_general" },
         },
         trigger: null,
