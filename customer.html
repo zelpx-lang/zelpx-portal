@@ -1481,21 +1481,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (!user) throw new Error("Please log in again.");
 
         const profileUpdate = { full_name: fullName };
-        if (addressNeedsVerification) {
-          showMessage("profileMessage", "Verifying your primary home address...", "success");
-          const verifiedAddress = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
-          profileUpdate.customer_address = verifiedAddress.matched_address || verifiedAddress.matchedAddress || homeAddress;
-          profileUpdate.customer_city = verifiedAddress.matched_city || verifiedAddress.city || homeCity;
-          profileUpdate.customer_state = (verifiedAddress.matched_state || verifiedAddress.state || homeState).toUpperCase();
-          profileUpdate.customer_zip_code = verifiedAddress.matched_zip || verifiedAddress.zip_code || verifiedAddress.zip || homeZip;
-          profileUpdate.customer_latitude = Number(verifiedAddress.latitude);
-          profileUpdate.customer_longitude = Number(verifiedAddress.longitude);
-          profileUpdate.customer_address_verified_at = new Date().toISOString();
-        }
 
-        // A phone number can only be changed by the SMS verification endpoint.
-        // This single Save Changes action starts verification when the number changed
-        // or the current number has not yet been verified.
+        // Verify the phone first. The address-verification request can take time;
+        // it must not delay or prevent the SMS verification dialog from opening.
         const phoneChanged = phone !== originalProfileValues.phone;
         const { data: currentPhoneStatus, error: phoneStatusError } = await db.from("profiles")
           .select("phone,phone_verified_at,phone_verified_number")
@@ -1507,6 +1495,19 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           showMessage("profileMessage", "Verify your phone by SMS to finish saving your profile.", "success");
           const smsVerified = await ensureCustomerRequestPhoneVerified(sessionData.session);
           if (!smsVerified) throw new Error("Phone verification was cancelled. Your profile changes were not saved.");
+        }
+
+        // Only after SMS verification, verify and save any changed address.
+        if (addressNeedsVerification) {
+          showMessage("profileMessage", "Verifying your primary home address...", "success");
+          const verifiedAddress = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
+          profileUpdate.customer_address = verifiedAddress.matched_address || verifiedAddress.matchedAddress || homeAddress;
+          profileUpdate.customer_city = verifiedAddress.matched_city || verifiedAddress.city || homeCity;
+          profileUpdate.customer_state = (verifiedAddress.matched_state || verifiedAddress.state || homeState).toUpperCase();
+          profileUpdate.customer_zip_code = verifiedAddress.matched_zip || verifiedAddress.zip_code || verifiedAddress.zip || homeZip;
+          profileUpdate.customer_latitude = Number(verifiedAddress.latitude);
+          profileUpdate.customer_longitude = Number(verifiedAddress.longitude);
+          profileUpdate.customer_address_verified_at = new Date().toISOString();
         }
 
         const { error } = await db.from("profiles").update(profileUpdate).eq("id", user.id);
