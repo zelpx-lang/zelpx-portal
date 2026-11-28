@@ -622,7 +622,6 @@
       <nav class="tabs admin-page-nav" aria-label="Administrator pages">
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity <span id="contractorActivityBadge" class="contractor-activity-badge hidden" aria-label="Account updates awaiting review">0</span></button>
-        <button type="button" data-admin-page="adminCreateLeadPage">Admin - create a lead</button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
         <button type="button" data-admin-page="adminVerifyLeadPage">Verify Lead <span id="verifyLeadBadge" class="incoming-lead-badge hidden" aria-label="Leads requiring verification">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
@@ -658,37 +657,6 @@
       </section>
 
 
-      </section>
-      <section id="adminCreateLeadPage" class="admin-page hidden">
-        <button type="button" class="secondary" data-admin-home>← Admin menu</button>
-        <h2>Admin — create a lead</h2>
-      <p>Enter the customer's contact details privately. They will only be shown to the contractor who purchases this lead. Set the lead price manually.</p>
-      <div id="adminMessage" class="message hidden"></div>
-      <form id="leadForm">
-        <h3>Lead information</h3>
-        <div class="grid">
-          <div><label for="leadCategory">Service category</label><select id="leadCategory" required><option value="">Loading categories…</option></select></div>
-          <div><label for="leadZip">ZIP code</label><input id="leadZip" inputmode="numeric" maxlength="10" pattern="[0-9]{5}(-[0-9]{4})?" placeholder="e.g. 97201" autocomplete="postal-code" required><small id="leadZipLookup" class="muted">Enter a 5-digit ZIP to fill city and state automatically.</small></div>
-          <div><label for="leadUrgency">Urgency</label><select id="leadUrgency"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
-          <div><label for="leadPrice">Lead price (USD)</label><input id="leadPrice" type="number" min="0.01" step="0.01" placeholder="50.00" required></div>
-        </div>
-        <label for="leadDescription">Work Details</label>
-        <textarea id="leadDescription" placeholder="Enter work details: installation, repair, renovation, measurements, materials, demolition, and other details. Do not enter customer contact information here."></textarea>
-        <h3 style="margin-top:24px">Customer contact information</h3><p class="muted">These details are kept private until a contractor purchases the lead.</p>
-        <div class="grid">
-          <div><label for="customerName">Customer full name</label><input id="customerName" autocomplete="name" required></div>
-          <div><label for="customerPhone">Customer phone</label><input id="customerPhone" type="tel" autocomplete="tel" required></div>
-          <div><label for="customerEmail">Customer email (optional)</label><input id="customerEmail" type="email" autocomplete="email"></div>
-          <div><label for="customerStreet">Street address</label><input id="customerStreet" autocomplete="street-address" required></div>
-          <div><label for="customerCity">City</label><input id="customerCity" autocomplete="address-level2" required></div>
-          <div><label for="customerState">State</label><input id="customerState" autocomplete="address-level1" placeholder="e.g. OR" required></div>
-        </div>
-        <div class="actions">
-          <button id="createLeadBtn" type="submit">Create lead</button><button id="reloadCategoriesBtn" class="secondary" type="button">Reload categories</button>
-          <button id="refreshAdminBtn" class="secondary" type="button">Refresh lead list</button>
-        </div>
-      </form>
-      <h3 style="margin-top:24px">Recent leads</h3><div id="adminLeadsList"><p class="muted">Loading…</p></div>
       </section>
       <section id="adminRefundRequestsPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
@@ -3201,7 +3169,6 @@
     if (pageId === "adminIncomingLeadsPage") loadServiceRequests();
     if (pageId === "adminVerifyLeadPage") loadVerifyLeadQueue();
     if (pageId === "adminRefundRequestsPage") loadRefundRequests();
-    if (pageId === "adminCreateLeadPage") loadCategories();
   }
   function switchTab(tabId) {
     ["availablePanel","purchasesPanel","companyPanel","adminPanel"].forEach(id => $(id).classList.toggle("hidden", id !== tabId));
@@ -3278,13 +3245,10 @@
     }));
     $("signupBtn").addEventListener("click", signUp);
     $("showSignupBtn").addEventListener("click", () => setSignupMode(true)); $("cancelSignupBtn").addEventListener("click", () => setSignupMode(false));
-    $("logoutBtn").addEventListener("click", logout); $("leadForm").addEventListener("submit", createLead);
-    $("leadZip").addEventListener("change", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
-    $("leadZip").addEventListener("blur", () => lookupUsZip($("leadZip"), $("customerCity"), $("customerState"), $("leadZipLookup")));
-    $("refreshLeadsBtn").addEventListener("click", loadLeads); $("refreshAdminBtn").addEventListener("click", loadAdminLeads);
+    $("logoutBtn").addEventListener("click", logout);
     $("adminFindContractorsInput").addEventListener("input", filterAdminContractorDirectory);
     $("adminFindContractorsRefresh").addEventListener("click", loadAdminContractorDirectory);
-$("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors); $("reloadCategoriesBtn").addEventListener("click", loadCategories);
+$("refreshUnlicensedContractorsBtn").addEventListener("click", loadUnlicensedContractors);
     $("saveCompanyBtn").addEventListener("click", saveCompany);
     $("hasLicense").addEventListener("change", () => $("signupLicenseFields").classList.toggle("hidden", $("hasLicense").value !== "yes"));
     $("profileHasLicense").addEventListener("change", () => $("profileLicenseFields").classList.toggle("hidden", $("profileHasLicense").value !== "yes"));
