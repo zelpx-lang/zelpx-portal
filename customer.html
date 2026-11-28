@@ -38,7 +38,7 @@
     #serviceDetails .job-choice-trigger:hover:not(:disabled) {
       transform:none; background:#fff1e9; border-color:#e47b50; color:#302820; box-shadow:none;
     }
-    #serviceDetails .job-detail-service { padding:12px 0!important; }
+    #propertyAddress { min-height:76px; height:auto; padding:12px 14px; font-size:16px; line-height:1.45; text-align:left; white-space:pre-wrap; overflow-wrap:anywhere; word-break:normal; resize:none; overflow:hidden; }\n    #serviceDetails .job-detail-service { padding:12px 0!important; }
     @media(max-width:480px) {
       #serviceDetails .job-choice-trigger { min-height:44px; padding:10px 12px; font-size:14px; border-radius:11px; }
       #serviceDetails .job-detail-service h3 { font-size:18px; line-height:1.3; }
@@ -914,7 +914,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <strong>Service Address</strong>
           <p id="serviceZipStatus" class="subtitle">Your service address is taken from My Profile. Add or update your verified primary address there.</p>
           <label for="propertyAddress">Property Street Address</label>
-          <input id="propertyAddress" type="text" placeholder="Set your address in My Profile" autocomplete="street-address" required readonly disabled>
+          <textarea id="propertyAddress" rows="2" placeholder="Set your address in My Profile" autocomplete="street-address" required readonly disabled aria-label="Full service address"></textarea>
 
           <div class="grid">
           <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required readonly disabled></div>
