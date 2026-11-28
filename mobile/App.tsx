@@ -1,7 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import type { Session } from "@supabase/supabase-js";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { supabase, supabaseConfigReady } from "./lib/supabase";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+const NOTIFICATION_CHANNELS = [
+  { id: "zelpx_messages", name: "Messages" },
+  { id: "zelpx_leads", name: "New jobs and leads" },
+  { id: "zelpx_offers", name: "Offers and approvals" },
+  { id: "zelpx_account", name: "Account and verification" },
+  { id: "zelpx_payments", name: "Payments and purchases" },
+  { id: "zelpx_general", name: "ZELPX updates" },
+] as const;
 
 type AccountType = "customer" | "contractor";
 type Mode = "welcome" | "login" | "signup" | "signed-in";
@@ -16,6 +36,72 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [notificationBusy, setNotificationBusy] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState("Notifications are not enabled on this device.");
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      Promise.all(NOTIFICATION_CHANNELS.map((channel) =>
+        Notifications.setNotificationChannelAsync(channel.id, {
+          name: channel.name,
+          importance: Notifications.AndroidImportance.MAX,
+          sound: "default",
+          vibrationPattern: [0, 250, 150, 250],
+          enableVibrate: true,
+          showBadge: true,
+        })
+      )).catch(() => setNotificationStatus("Could not prepare Android notification channels."));
+    }
+  }, []);
+
+  async function enableNotifications() {
+    if (!session) return;
+    setNotificationBusy(true);
+    setNotificationStatus("Setting up sound notifications…");
+    try {
+      if (Platform.OS !== "android") {
+        throw new Error("Android push delivery is connected first. iPhone notifications will be enabled in the next release stage.");
+      }
+      const current = await Notifications.getPermissionsAsync();
+      let status = current.status;
+      if (status !== "granted") {
+        const requested = await Notifications.requestPermissionsAsync();
+        status = requested.status;
+      }
+      if (status !== "granted") {
+        throw new Error("Notification permission was not granted. Allow notifications for ZELPX in Android Settings.");
+      }
+
+      const nativeToken = await Notifications.getDevicePushTokenAsync();
+      const fcmToken = String(nativeToken.data || "");
+      if (!fcmToken) throw new Error("Android did not return an FCM device token. Check Firebase Android app configuration.");
+
+      let deviceId = await AsyncStorage.getItem("zelpx_fcm_device_id");
+      if (!deviceId) {
+        deviceId = "android-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+        await AsyncStorage.setItem("zelpx_fcm_device_id", deviceId);
+      }
+      const { error } = await supabase.functions.invoke("zelpx-fcm-call", {
+        body: { action: "register_token", fcm_token: fcmToken, device_id: deviceId },
+      });
+      if (error) throw error;
+
+      setNotificationStatus("Sound notifications are enabled on this Android device.");
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "ZELPX notifications enabled",
+          body: "Sound alerts are ready on this device.",
+          sound: "default",
+          data: { channelId: "zelpx_general" },
+        },
+        trigger: null,
+      });
+    } catch (error) {
+      setNotificationStatus(error instanceof Error ? error.message : "Could not enable notifications.");
+    } finally {
+      setNotificationBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!supabaseConfigReady) return;
@@ -160,6 +246,14 @@ export default function App() {
           <Text style={s.heading}>You're signed in</Text>
           <Text style={s.subheading}>{session.user.email}</Text>
           <Text style={s.smallText}>Secure authentication is connected. The Customer and Contractor dashboard modules are the next development stage.</Text>
+          <View style={s.panel}>
+            <Text style={s.panelTitle}>Notifications & Sounds</Text>
+            <Text style={s.smallText}>{notificationStatus}</Text>
+            <Pressable style={s.primary} onPress={enableNotifications} disabled={notificationBusy || !session}>
+              {notificationBusy ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryText}>Enable All Notifications</Text>}
+            </Pressable>
+            <Text style={s.helper}>Messages, new leads, offers, approvals, account verification, purchases, and ZELPX updates use separate Android notification channels with the default notification sound.</Text>
+          </View>
           <Pressable style={s.secondary} onPress={signOut} disabled={busy}><Text style={s.secondaryText}>{busy ? "Signing out…" : "Sign Out"}</Text></Pressable>
         </View>}
 
