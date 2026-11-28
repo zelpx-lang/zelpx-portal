@@ -65,8 +65,21 @@ export default function App() {
       });
     });
     const response = Notifications.addNotificationResponseReceivedListener((event) => {
-      const content = event.notification.request.content;
+      const notification = event.notification;
+      const content = notification.request.content;
       setNotificationOpenStatus(content.title || "Notification opened.");
+      const item: LocalNotification = {
+        id: notification.request.identifier,
+        title: content.title || "ZELPX notification",
+        body: content.body || "",
+        receivedAt: new Date().toISOString(),
+        data: content.data as Record<string, unknown>,
+      };
+      setNotificationHistory((previous) => {
+        const next = [item, ...previous.filter((entry) => entry.id !== item.id)].slice(0, 30);
+        AsyncStorage.setItem(NOTIFICATION_HISTORY_KEY, JSON.stringify(next)).catch(() => {});
+        return next;
+      });
     });
     return () => { active = false; received.remove(); response.remove(); };
   }, []);
