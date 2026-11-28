@@ -623,7 +623,7 @@
         <button type="button" data-admin-page="adminFindContractorsPage">Find contractors</button>
         <button type="button" data-admin-page="adminUnlicensedPage">Contractor activity <span id="contractorActivityBadge" class="contractor-activity-badge hidden" aria-label="Account updates awaiting review">0</span></button>
         <button type="button" data-admin-page="adminIncomingLeadsPage">Incoming leads <span id="incomingLeadBadge" class="incoming-lead-badge hidden" aria-label="New incoming leads">0</span></button>
-        <button type="button" data-admin-page="adminVerifyLeadPage">Verify Lead <span id="verifyLeadBadge" class="incoming-lead-badge hidden" aria-label="Leads requiring verification">0</span></button>
+        <button type="button" data-admin-page="adminVerifyLeadPage">Verified leads <span id="verifyLeadBadge" class="incoming-lead-badge hidden" aria-label="Published leads available for sale">0</span></button>
         <button type="button" data-admin-page="adminRefundRequestsPage">💬 Refund requests <span id="refundRequestBadge" class="badge hidden">0</span></button>
       </nav>
       <section id="adminFindContractorsPage" class="admin-page hidden">
@@ -671,9 +671,9 @@
       <section id="adminVerifyLeadPage" class="admin-page hidden">
         <button type="button" class="secondary" data-admin-home>← Admin menu</button>
         <section class="lead">
-          <h2>Verify Lead</h2>
+          <h2>Verified leads</h2>
           <p>This list contains leads that have already been published and posted for sale to contractors.</p>
-          <div class="actions"><button id="refreshVerifyLeadBtn" type="button" class="secondary">Refresh Verify Lead</button><span id="verifyLeadCount" class="muted" aria-live="polite"></span></div>
+          <div class="actions"><button id="refreshVerifyLeadBtn" type="button" class="secondary">Refresh verified leads</button><span id="verifyLeadCount" class="muted" aria-live="polite"></span></div>
           <div id="verifyLeadMessage" class="message hidden" role="status" aria-live="polite"></div>
           <div id="verifyLeadList"><p class="muted">Open this page to load leads requiring verification…</p></div>
         </section>
@@ -2830,7 +2830,7 @@
       const { data: requests, error } = await db.rpc("admin_list_service_requests");
       if (error) throw error;
 
-      // Verify Lead is the published-for-sale list, not a queue of requests
+      // Verified leads is the published-for-sale list, not a queue of requests
       // waiting for verification. Include only requests already linked to a lead.
       const publishedLeads = (requests || []).filter(request =>
         Boolean(request.lead_id) || String(request.status || "").toLowerCase() === "published"
