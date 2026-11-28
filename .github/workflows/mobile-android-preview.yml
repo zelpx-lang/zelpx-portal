@@ -71,13 +71,15 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-36
-            build-tools;36.0.0
+      - name: Verify preinstalled Android SDK
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME/platform-tools"
+          test -d "$ANDROID_HOME/platforms"
+          test -d "$ANDROID_HOME/build-tools"
+          ls -la "$ANDROID_HOME/platforms"
+          ls -la "$ANDROID_HOME/build-tools"
 
       - name: Build debug APK
         run: |
