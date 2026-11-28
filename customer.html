@@ -848,6 +848,18 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
         <p class="subtitle">Your phone number is saved to your private customer profile.</p>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee1d8">
+          <strong>Primary Home Address</strong>
+          <p class="subtitle">Service requests can only be submitted for this verified address. To use a different address, update and verify it here first.</p>
+          <label for="customerHomeAddress">Street Address</label>
+          <input id="customerHomeAddress" type="text" autocomplete="street-address" placeholder="Street address" required readonly>
+          <div class="grid">
+            <div><label for="customerHomeCity">City</label><input id="customerHomeCity" type="text" autocomplete="address-level2" required readonly></div>
+            <div><label for="customerHomeState">State</label><input id="customerHomeState" type="text" maxlength="2" autocomplete="address-level1" placeholder="WA" required readonly></div>
+            <div><label for="customerHomeZip">ZIP Code</label><input id="customerHomeZip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" autocomplete="postal-code" required readonly></div>
+          </div>
+          <small id="customerHomeAddressStatus" class="subtitle">No verified primary address saved yet. Add one before submitting a service request.</small>
+        </div>
         <button id="requestProfileUpdateButton" type="button">Edit Profile</button>
         <button id="saveCustomerProfileButton" type="button" class="hidden">Save Changes</button>
         <button id="cancelProfileUpdateButton" type="button" class="secondary-button hidden">Cancel</button>
@@ -1261,7 +1273,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       clearMessage("profileMessage");
       const { data, error } = await db
         .from("profiles")
-        .select("full_name,phone,role,avatar_url")
+        .select("full_name,phone,role,avatar_url,customer_address,customer_city,customer_state,customer_zip_code,customer_latitude,customer_longitude,customer_address_verified_at")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -1272,6 +1284,28 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
 
       $("customerFullName").value = data.full_name || user.user_metadata?.full_name || "";
       $("customerPhone").value = data.phone || user.user_metadata?.phone || "";
+      $("customerHomeAddress").value = data.customer_address || "";
+      $("customerHomeCity").value = data.customer_city || "";
+      $("customerHomeState").value = data.customer_state || "";
+      $("customerHomeZip").value = data.customer_zip_code || "";
+      const hasVerifiedHomeAddress = !!data.customer_address_verified_at && !!data.customer_address;
+      $("customerHomeAddressStatus").textContent = hasVerifiedHomeAddress
+        ? "Verified primary address saved to your account."
+        : "No verified primary address saved yet. Add one before submitting a service request.";
+      $("propertyAddress").value = data.customer_address || "";
+      $("serviceCity").value = data.customer_city || "";
+      $("serviceState").value = data.customer_state || "";
+      $("serviceZip").value = data.customer_zip_code || "";
+      $("serviceZip").dataset.latitude = data.customer_latitude == null ? "" : String(data.customer_latitude);
+      $("serviceZip").dataset.longitude = data.customer_longitude == null ? "" : String(data.customer_longitude);
+      $("serviceZip").dataset.verifiedZip = data.customer_zip_code || "";
+      $("serviceZipStatus").textContent = hasVerifiedHomeAddress
+        ? "Using your verified primary account address. Change it in My Profile if you have moved."
+        : "Add and verify your primary home address in My Profile before requesting service.";
+      $("propertyAddress").readOnly = true;
+      $("serviceCity").readOnly = true;
+      $("serviceState").disabled = true;
+      $("serviceZip").readOnly = true;
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarPreview").dataset.currentUrl = data.avatar_url || "";
       $("removeCustomerAvatarButton").hidden = !data.avatar_url;
@@ -1343,13 +1377,19 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const requestProfileUpdateButton = $("requestProfileUpdateButton");
     const confirmProfileUpdateButton = $("saveCustomerProfileButton");
     const cancelProfileUpdateButton = $("cancelProfileUpdateButton");
-    let originalProfileValues = { fullName: "", phone: "" };
+    const homeAddressInputs = ["customerHomeAddress","customerHomeCity","customerHomeState","customerHomeZip"].map(id => $(id));
+    let originalProfileValues = { fullName: "", phone: "", address: "", city: "", state: "", zip: "" };
 
     requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
-      originalProfileValues = { fullName: profileNameInput.value, phone: profilePhoneInput.value };
+      originalProfileValues = {
+        fullName: profileNameInput.value, phone: profilePhoneInput.value,
+        address: $("customerHomeAddress").value, city: $("customerHomeCity").value,
+        state: $("customerHomeState").value, zip: $("customerHomeZip").value
+      };
       profileNameInput.readOnly = false;
       profilePhoneInput.readOnly = false;
+      homeAddressInputs.forEach(input => input.readOnly = false);
       requestProfileUpdateButton.classList.add("hidden");
       confirmProfileUpdateButton.classList.remove("hidden");
       cancelProfileUpdateButton.classList.remove("hidden");
@@ -1359,8 +1399,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     cancelProfileUpdateButton.addEventListener("click", () => {
       profileNameInput.value = originalProfileValues.fullName;
       profilePhoneInput.value = originalProfileValues.phone;
+      $("customerHomeAddress").value = originalProfileValues.address;
+      $("customerHomeCity").value = originalProfileValues.city;
+      $("customerHomeState").value = originalProfileValues.state;
+      $("customerHomeZip").value = originalProfileValues.zip;
       profileNameInput.readOnly = true;
       profilePhoneInput.readOnly = true;
+      homeAddressInputs.forEach(input => input.readOnly = true);
       requestProfileUpdateButton.classList.remove("hidden");
       confirmProfileUpdateButton.classList.add("hidden");
       cancelProfileUpdateButton.classList.add("hidden");
@@ -1372,6 +1417,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       clearMessage("profileMessage");
       const fullName = profileNameInput.value.trim();
       const phone = profilePhoneInput.value.trim();
+      const homeAddress = $("customerHomeAddress").value.trim();
+      const homeCity = $("customerHomeCity").value.trim();
+      const homeState = $("customerHomeState").value.trim().toUpperCase();
+      const homeZip = $("customerHomeZip").value.trim();
+      const addressChanged = homeAddress !== originalProfileValues.address ||
+        homeCity !== originalProfileValues.city || homeState !== originalProfileValues.state ||
+        homeZip !== originalProfileValues.zip;
 
       if (!fullName) {
         showMessage("profileMessage", "Please enter your full name.", "error");
@@ -1379,6 +1431,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       }
       if (!phone || phone.replace(/\D/g, "").length < 7) {
         showMessage("profileMessage", "Please enter a valid phone number.", "error");
+        return;
+      }
+
+      if (addressChanged && (!homeAddress || !homeCity || !/^[A-Z]{2}$/.test(homeState) || !/^[0-9]{5}$/.test(homeZip))) {
+        showMessage("profileMessage", "Enter a complete street address, city, 2-letter state, and 5-digit ZIP code.", "error");
         return;
       }
 
@@ -1390,9 +1447,20 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         const user = sessionData.session?.user;
         if (!user) throw new Error("Please log in again.");
 
+        const profileUpdate = { full_name: fullName, phone };
+        if (addressChanged) {
+          showMessage("profileMessage", "Verifying your primary home address...", "success");
+          const verified = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
+          profileUpdate.customer_address = verified.matched_address || verified.matchedAddress || homeAddress;
+          profileUpdate.customer_city = verified.city || homeCity;
+          profileUpdate.customer_state = (verified.state || homeState).toUpperCase();
+          profileUpdate.customer_zip_code = verified.zip_code || verified.zip || homeZip;
+          profileUpdate.customer_latitude = Number(verified.latitude);
+          profileUpdate.customer_longitude = Number(verified.longitude);
+        }
         const { error } = await db
           .from("profiles")
-          .update({ full_name: fullName, phone })
+          .update(profileUpdate)
           .eq("id", user.id);
         if (error) throw error;
 
@@ -1401,10 +1469,16 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         });
         if (metadataError) throw metadataError;
 
-        originalProfileValues = { fullName, phone };
-        showMessage("profileMessage", "Your profile changes have been saved successfully.", "success");
+        await loadCustomerProfile(user);
+        originalProfileValues = {
+          fullName, phone,
+          address: $("customerHomeAddress").value, city: $("customerHomeCity").value,
+          state: $("customerHomeState").value, zip: $("customerHomeZip").value
+        };
+        showMessage("profileMessage", "Your profile changes have been saved successfully. Service requests will use this verified address.", "success");
         profileNameInput.readOnly = true;
         profilePhoneInput.readOnly = true;
+        homeAddressInputs.forEach(input => input.readOnly = true);
         requestProfileUpdateButton.classList.remove("hidden");
         confirmProfileUpdateButton.classList.add("hidden");
         cancelProfileUpdateButton.classList.add("hidden");
@@ -1551,12 +1625,11 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       }
     }
 
-    async function verifyCustomerStreetAddress() {
+    async function verifyCustomerStreetAddress(address, city, state, zip) {
       const { data: sessionData, error: sessionError } = await db.auth.getSession();
       if (sessionError) throw sessionError;
       const session = sessionData.session;
       if (!session) throw new Error("Please log in before verifying your address.");
-      $("serviceZipStatus").textContent = "Verifying street address and ZIP code…";
       const response = await fetch(SUPABASE_URL + "/functions/v1/verify-service-address", {
         method: "POST",
         headers: {
@@ -1566,20 +1639,18 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         },
         body: JSON.stringify({
           purpose: "customer_request",
-          address: $("propertyAddress").value.trim(),
-          city: $("serviceCity").value.trim(),
-          state: $("serviceState").value.trim().toUpperCase(),
-          zip: $("serviceZip").value.trim()
+          address: String(address || "").trim(),
+          city: String(city || "").trim(),
+          state: String(state || "").trim().toUpperCase(),
+          zip: String(zip || "").trim()
         })
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.verified !== true) {
-        $("serviceZipStatus").textContent = result.error || "We could not verify this street address.";
+        $("customerHomeAddressStatus").textContent = result.error || "We could not verify this street address.";
         throw new Error(result.error || "Street address verification failed.");
       }
-      $("serviceZip").dataset.latitude = String(result.latitude || "");
-      $("serviceZip").dataset.longitude = String(result.longitude || "");
-      $("serviceZipStatus").textContent = "Address matched to the US Census address database. ZIP and state match.";
+      $("customerHomeAddressStatus").textContent = "Address verified against the US Census address database.";
       return result;
     }
 
@@ -2201,10 +2272,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         $("serviceType").dispatchEvent(new Event("change"));
       }
     }
-    if (landingZip && /^[0-9]{5}$/.test(landingZip)) {
-      $("serviceZip").value = landingZip;
-      lookupCustomerZip();
-    }
+    // A ZIP supplied by a public landing-page selection must never replace the
+    // customer's saved primary address. The verified account address is loaded
+    // from profiles when the customer signs in.
     function collectServiceDetails() {
       const inputs = [...$("serviceDetails").querySelectorAll("[data-job-question]")];
       let currentService = "";
@@ -2326,7 +2396,15 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           throw new Error("Phone verification is required before submitting your request.");
         }
 
-        const verifiedAddress = await verifyCustomerStreetAddress();
+        const { data: savedAddress, error: addressError } = await db
+          .from("profiles")
+          .select("customer_address,customer_city,customer_state,customer_zip_code,customer_latitude,customer_longitude,customer_address_verified_at")
+          .eq("id", session.user.id)
+          .single();
+        if (addressError) throw addressError;
+        if (!savedAddress?.customer_address_verified_at || !savedAddress.customer_address) {
+          throw new Error("Add and verify your primary home address in My Profile before submitting a service request.");
+        }
 
         const isSpherePackage = sphereDraft.source === "sphere";
         if (isSpherePackage && requestedServices.length < 2) {
@@ -2336,13 +2414,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           user_id: session.user.id,
           request_type: isSpherePackage ? "lead_package" : "regular",
           service_type: $("serviceType").value,
-          property_address: $("propertyAddress").value.trim(),
-          service_city: $("serviceCity").value.trim(),
-          service_state: $("serviceState").value.trim().toUpperCase(),
-          service_zip_code: $("serviceZip").value.trim(),
-          // Use the matched street-address coordinates, not the ZIP centroid.
-          service_latitude: Number(verifiedAddress.latitude) || null,
-          service_longitude: Number(verifiedAddress.longitude) || null,
+          property_address: savedAddress.customer_address,
+          service_city: savedAddress.customer_city,
+          service_state: savedAddress.customer_state,
+          service_zip_code: savedAddress.customer_zip_code,
+          // Always use the verified coordinates stored with the customer's profile address.
+          service_latitude: Number(savedAddress.customer_latitude),
+          service_longitude: Number(savedAddress.customer_longitude),
           description: (requestedServices.length ? "SELECTED SERVICES\n" + requestedServices.map(service => "- " + service).join("\n") + "\n\n" : "") + "JOB DETAILS\n" + collectServiceDetails(),
           preferred_time: $("preferredTime").value || null,
           customer_budget_cents: (() => {
@@ -2367,8 +2445,8 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         }
         if (!request.service_type || !request.property_address || !request.service_city ||
             !/^[A-Z]{2}$/.test(request.service_state) || !/^[0-9]{5}$/.test(request.service_zip_code) ||
-            !request.service_type) {
-          throw new Error("Please complete the service address, city, 2-letter state, 5-digit ZIP code.");
+            request.service_latitude == null || request.service_longitude == null) {
+          throw new Error("Add and verify your primary home address in My Profile before submitting a service request.");
         }
 
         const { error } = await db
