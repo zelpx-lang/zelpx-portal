@@ -177,6 +177,59 @@ export default function App() {
   useEffect(() => {
     if (!session || !supabaseConfigReady) return;
     let active = true;
+    setDashboardLoading(true);
+    setDashboardError("");
+    async function loadDashboard() {
+      try {
+        const { data: profile, error: profileError } = await supabase.from("profiles")
+          .select("role,full_name").eq("id", session!.user.id).maybeSingle();
+        if (profileError) throw profileError;
+        if (!profile || !["customer", "contractor"].includes(profile.role)) {
+          throw new Error("Your account role could not be verified.");
+        }
+        if (!active) return;
+        setDashboardRole(profile.role as AccountType);
+        setDashboardName(profile.full_name || session!.user.email || "ZELPX member");
+
+        if (profile.role === "customer") {
+          const { data, error } = await supabase.from("service_requests")
+            .select("id,service_type,description,status,created_at,service_city,service_state,service_zip_code,customer_budget_cents")
+            .eq("user_id", session!.user.id).order("created_at", { ascending: false }).limit(20);
+          if (error) throw error;
+          if (active) {
+            setCustomerRequests((data || []) as CustomerRequest[]);
+            setContractorSummary(null);
+            setWalletBalanceCents(null);
+          }
+        } else {
+          const { data, error } = await supabase.from("contractors")
+            .select("id,company_name,verification_status,license_review_status,insurance_review_status,license_state,license_type,service_city,service_state,service_zip_code")
+            .eq("user_id", session!.user.id).maybeSingle();
+          if (error) throw error;
+          if (active) {
+            setContractorSummary((data || null) as ContractorSummary | null);
+            setCustomerRequests([]);
+          }
+          if (data) {
+            const { data: wallet, error: walletError } = await supabase.from("credit_wallets")
+              .select("balance_cents").eq("contractor_id", data.id).maybeSingle();
+            if (walletError) throw walletError;
+            if (active) setWalletBalanceCents(typeof wallet?.balance_cents === "number" ? wallet.balance_cents : 0);
+          } else if (active) setWalletBalanceCents(null);
+        }
+      } catch (error) {
+        if (active) setDashboardError(error instanceof Error ? error.message : "Could not load your dashboard.");
+      } finally {
+        if (active) setDashboardLoading(false);
+      }
+    }
+    loadDashboard();
+    return () => { active = false; };
+  }, [session, dashboardRefreshKey]);
+
+  useEffect(() => {
+    if (!session || !supabaseConfigReady) return;
+    let active = true;
     supabase.from("profiles").select("role").eq("id", session.user.id).maybeSingle()
       .then(async ({ data: profile, error }) => {
         if (!active) return;
