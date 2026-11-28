@@ -1493,10 +1493,13 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (addressNeedsVerification) {
           showMessage("profileMessage", "Verifying your primary home address...", "success");
           const verifiedAddress = await verifyCustomerStreetAddress(homeAddress, homeCity, homeState, homeZip);
-          profileUpdate.customer_address = verifiedAddress.matched_address || verifiedAddress.matchedAddress || homeAddress;
-          profileUpdate.customer_city = verifiedAddress.matched_city || verifiedAddress.city || homeCity;
-          profileUpdate.customer_state = (verifiedAddress.matched_state || verifiedAddress.state || homeState).toUpperCase();
-          profileUpdate.customer_zip_code = verifiedAddress.matched_zip || verifiedAddress.zip_code || verifiedAddress.zip || homeZip;
+          // Keep the customer's exact My Profile entries (including apartment/unit)
+          // as the canonical address. Census matching is used only to verify/geocode;
+          // its normalized street string must never overwrite what the customer typed.
+          profileUpdate.customer_address = homeAddress;
+          profileUpdate.customer_city = homeCity;
+          profileUpdate.customer_state = homeState;
+          profileUpdate.customer_zip_code = homeZip;
           profileUpdate.customer_latitude = Number(verifiedAddress.latitude);
           profileUpdate.customer_longitude = Number(verifiedAddress.longitude);
           profileUpdate.customer_address_verified_at = new Date().toISOString();
