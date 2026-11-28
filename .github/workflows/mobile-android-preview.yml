@@ -28,7 +28,7 @@ jobs:
     env:
       EXPO_PUBLIC_SUPABASE_URL: https://zsrnjkndgbchfxibxiyd.supabase.co
       EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_prE7ENnFQaUGIq3h8U_uAQ_V9SjuBnb
-      ZELPX_GOOGLE_SERVICES_JSON: ${{ secrets.ZELPX_GOOGLE_SERVICES_JSON }}
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,12 +47,12 @@ jobs:
       - name: Add Firebase config when provided
         shell: bash
         run: |
-          if [ -n "$ZELPX_GOOGLE_SERVICES_JSON" ]; then
-            printf '%s' "$ZELPX_GOOGLE_SERVICES_JSON" > google-services.json
-            node -e "const fs=require('fs'); const p='app.json'; const j=JSON.parse(fs.readFileSync(p,'utf8')); j.expo.android.googleServicesFile='./google-services.json'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\\n');"
-            echo "Firebase Android configuration attached."
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > google-services.json
+            node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('google-services.json','utf8')); if (!j.project_info?.project_id) throw new Error('Firebase config is missing project_info.project_id'); const clients=j.client||[]; if (!clients.some(c => c.client_info?.android_client_info?.package_name === 'com.zelpx.app')) throw new Error('Firebase config does not contain Android package com.zelpx.app'); const p='app.json'; const a=JSON.parse(fs.readFileSync(p,'utf8')); a.expo.android.googleServicesFile='./google-services.json'; fs.writeFileSync(p, JSON.stringify(a,null,2)+'\\n');"
+            echo "Firebase Android configuration decoded and validated for com.zelpx.app."
           else
-            echo "Firebase config not supplied. Building preview without remote FCM delivery."
+            echo "Firebase config secret GOOGLE_SERVICES_JSON_BASE64 is empty. Building without remote FCM delivery."
           fi
 
       - name: TypeScript check
