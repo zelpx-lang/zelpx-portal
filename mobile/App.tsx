@@ -141,7 +141,7 @@ export default function App() {
       });
       if (error) throw error;
 
-      setNotificationStatus("Sound notifications are enabled on this Android device.");
+      setNotificationStatus("Android notification permission and sound channels are enabled. Remote alerts still require Firebase server configuration.");
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "ZELPX notifications enabled",
@@ -390,7 +390,7 @@ export default function App() {
             <Pressable style={s.primary} onPress={enableNotifications} disabled={notificationBusy || !session}>
               {notificationBusy ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryText}>Enable All Notifications</Text>}
             </Pressable>
-            <Text style={s.helper}>Messages, new leads, offers, approvals, account verification, purchases, and ZELPX updates use separate Android notification channels with the default notification sound.</Text>
+            <Text style={s.helper}>Messages, new leads, offers, approvals, account verification, purchases, and ZELPX updates use separate Android notification channels with the default notification sound. Remote push delivery is not active until Firebase is fully configured.</Text>
             <Pressable style={s.settingsButton} onPress={() => Linking.openSettings()}>
               <Text style={s.settingsText}>Android Notification Settings</Text>
             </Pressable>
