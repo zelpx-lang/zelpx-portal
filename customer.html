@@ -848,8 +848,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         <input id="customerPhone" type="tel" autocomplete="tel" inputmode="tel"
                placeholder="+1 (555) 555-5555" required readonly>
         <p id="customerPhoneVerificationStatus" class="subtitle" role="status">Phone verification status: checking…</p>
-        <button id="verifyCustomerPhoneButton" type="button" class="secondary-button" style="width:auto;min-height:42px;margin:6px 0 10px;padding:10px 16px">Verify Phone Number</button>
-        <p class="subtitle">Your phone number is saved to your private customer profile.</p>
+        <p class="subtitle">Your phone number is saved to your private customer profile. If it is not verified, use Save Changes to verify it by SMS.</p>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee1d8">
           <strong>Primary Home Address</strong>
           <p class="subtitle">Service requests can only be submitted for this verified address. To use a different address, update and verify it here first.</p>
@@ -1292,7 +1291,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       const phoneVerified = !!data.phone_verified_at && !!data.phone_verified_number && data.phone_verified_number === data.phone;
       $("customerPhoneVerificationStatus").textContent = phoneVerified ? "Phone number verified." : "Phone number not verified. Verify your number to submit a service request.";
       $("customerPhoneVerificationStatus").style.color = phoneVerified ? "#176b43" : "#a52a1c";
-      $("verifyCustomerPhoneButton").textContent = phoneVerified ? "Re-verify Phone Number" : "Verify Phone Number";
       $("customerHomeAddress").value = data.customer_address || "";
       $("customerHomeCity").value = data.customer_city || "";
       $("customerHomeState").value = data.customer_state || "";
@@ -1396,27 +1394,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
     const homeAddressInputs = ["customerHomeAddress","customerHomeCity","customerHomeState","customerHomeZip"].map(id => $(id));
     let originalProfileValues = { fullName: "", phone: "", address: "", city: "", state: "", zip: "" };
 
-    $("verifyCustomerPhoneButton").addEventListener("click", async () => {
-      const button = $("verifyCustomerPhoneButton");
-      const { data: sessionData, error: sessionError } = await db.auth.getSession();
-      if (sessionError || !sessionData.session) {
-        showMessage("profileMessage", "Please sign in again before verifying your phone number.", "error");
-        return;
-      }
-      button.disabled = true;
-      try {
-        const verified = await ensureCustomerRequestPhoneVerified(sessionData.session);
-        if (verified) {
-          await loadCustomerProfile(sessionData.session.user);
-          showMessage("profileMessage", "Your phone number has been successfully verified.", "success");
-        }
-      } catch (error) {
-        showMessage("profileMessage", error.message || "Phone verification failed.", "error");
-      } finally {
-        button.disabled = false;
-      }
-    });
-
     requestProfileUpdateButton.addEventListener("click", () => {
       clearMessage("profileMessage");
       originalProfileValues = {
@@ -1507,12 +1484,23 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
         if (metadataError) throw metadataError;
 
         await loadCustomerProfile(user);
+        const phoneStatus = await db.from("profiles")
+          .select("phone_verified_at,phone_verified_number,phone")
+          .eq("id", user.id).maybeSingle();
+        const isPhoneVerified = !!phoneStatus.data?.phone_verified_at &&
+          phoneStatus.data.phone_verified_number === phoneStatus.data.phone;
+        if (!isPhoneVerified) {
+          showMessage("profileMessage", "Profile saved. Please complete SMS phone verification to activate your number.", "success");
+          const verified = await ensureCustomerRequestPhoneVerified(sessionData.session);
+          if (verified) await loadCustomerProfile(user);
+        } else {
+          showMessage("profileMessage", "Your profile changes have been saved successfully. Service requests will use this verified address.", "success");
+        }
         originalProfileValues = {
           fullName, phone,
           address: $("customerHomeAddress").value, city: $("customerHomeCity").value,
           state: $("customerHomeState").value, zip: $("customerHomeZip").value
         };
-        showMessage("profileMessage", "Your profile changes have been saved successfully. Service requests will use this verified address.", "success");
         profileNameInput.readOnly = true;
         profilePhoneInput.readOnly = true;
         homeAddressInputs.forEach(input => input.readOnly = true);
