@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "ZELPX",
+    "slug": "zelpx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "zelpx",
+    "android": {
+      "package": "com.zelpx.app",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "SET_AFTER_EAS_PROJECT_CREATION"
+      }
+    }
+  }
+}
