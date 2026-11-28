@@ -2905,7 +2905,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             const offerDetails = document.createElement("p");
             offerDetails.textContent = (offer.company_name || "Verified contractor") + " offers to complete this project for " + new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format((offer.offer_cents||0)/100) + ".";
             const feeNote = document.createElement("small");
-            feeNote.textContent = "No ZELPX commission or lead fee is charged for an approved offer. You choose whether to accept the contractor's proposed project price.";
+            feeNote.textContent = "No ZELPX commission is charged on the contractor's proposed project price. If you approve, the contractor's separate fixed lead purchase price is deducted from their ZELPX credit wallet; you are not charged that lead fee.";
             offerCard.append(offerTitle,offerDetails,feeNote);
             const offerActions = document.createElement("div");
             offerActions.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px";
@@ -2919,7 +2919,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
                 const {error:responseError}=await db.rpc("customer_respond_to_lead_offer",{p_offer_id:offer.offer_id,p_decision:decision});
                 if(responseError) throw responseError;
                 await loadRequests();
-                showMessage("requestMessage",decision==="approve" ? "Offer approved. The job is assigned to this contractor, who can now contact you. ZELPX fee: $0." : "Offer declined.","success");
+                showMessage("requestMessage",decision==="approve" ? "Offer approved. The job is assigned to this contractor, who can now contact you. The contractor paid the fixed lead purchase price from their ZELPX credits; no commission was charged on your project offer." : "Offer declined.","success");
               } catch(error) {
                 approve.disabled=false; decline.disabled=false;
                 window.alert(error.message || "Could not respond to this offer.");
