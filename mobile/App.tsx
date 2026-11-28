@@ -24,6 +24,8 @@ const NOTIFICATION_CHANNELS = [
 ] as const;
 
 type LocalNotification = { id: string; title: string; body: string; receivedAt: string; data?: Record<string, unknown> };
+type CustomerRequest = { id: string; service_type: string; description: string | null; status: string; created_at: string; service_city: string | null; service_state: string | null; service_zip_code: string | null; customer_budget_cents: number | null };
+type ContractorSummary = { id: string; company_name: string; verification_status: string; license_review_status: string; insurance_review_status: string; license_state: string | null; license_type: string | null; service_city: string | null; service_state: string | null; service_zip_code: string | null };
 const NOTIFICATION_HISTORY_KEY = "zelpx_notification_history_v1";
 type AccountType = "customer" | "contractor";
 type Mode = "welcome" | "login" | "signup" | "signed-in";
@@ -42,6 +44,14 @@ export default function App() {
   const [notificationStatus, setNotificationStatus] = useState("Notifications are not enabled on this device.");
   const [notificationHistory, setNotificationHistory] = useState<LocalNotification[]>([]);
   const [notificationOpenStatus, setNotificationOpenStatus] = useState("");
+  const [dashboardRole, setDashboardRole] = useState<AccountType | null>(null);
+  const [dashboardName, setDashboardName] = useState("");
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState("");
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+  const [customerRequests, setCustomerRequests] = useState<CustomerRequest[]>([]);
+  const [contractorSummary, setContractorSummary] = useState<ContractorSummary | null>(null);
+  const [walletBalanceCents, setWalletBalanceCents] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
