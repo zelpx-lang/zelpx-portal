@@ -2426,7 +2426,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
       } else if (lead.customer_budget_choice === "not_decided" || lead.customer_budget_choice === "pricing_guidance") {
         const budgetChoice = document.createElement("span");
         budgetChoice.className = "lead-summary-budget";
-        budgetChoice.textContent = lead.customer_budget_choice === "not_decided" ? "We can agree on a price" : "Wants pricing guidance";
+        budgetChoice.textContent = lead.customer_budget_choice === "not_decided" ? "We can agree on a price" : "Would like to discuss pricing";
         budgetChoice.style.cssText = "display:block;font-size:12px;font-weight:600;color:#746b61;text-align:right;margin-top:4px";
         summarySide.append(budgetChoice);
       }
@@ -2476,7 +2476,7 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         budgetPreference.className = "lead-details-description";
         const preferenceLabel = document.createElement("strong");
         preferenceLabel.textContent = "Customer budget preference: ";
-        const preferenceText = lead.customer_budget_choice === "customer_entered" ? "I know my budget" : lead.customer_budget_choice === "not_decided" ? "Budget not decided" : "I want pricing guidance";
+        const preferenceText = lead.customer_budget_choice === "customer_entered" ? "I know my budget" : lead.customer_budget_choice === "not_decided" ? "We can agree on a price" : "I’d like to discuss pricing";
         budgetPreference.append(preferenceLabel, document.createTextNode(preferenceText));
         details.append(budgetPreference);
       }
