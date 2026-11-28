@@ -911,12 +911,15 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           <label class="review-confirm"><input id="confirmSelectedServices" type="checkbox"> I confirm these are the services I want to request.</label>
         </section>
 
-        <label for="propertyAddress">Property Street Address</label>
-        <input id="propertyAddress" type="text"
-               placeholder="Street address" autocomplete="street-address" required>
+        <section class="request-card" style="margin:12px 0 18px">
+          <strong>Service Address</strong>
+          <p id="serviceZipStatus" class="subtitle">Your service address is taken from My Profile. Add or update your verified primary address there.</p>
+          <button id="editPrimaryAddressFromRequest" type="button" class="secondary-button" style="width:auto;margin:8px 0 12px">Add / Update Address in My Profile</button>
+          <label for="propertyAddress">Property Street Address</label>
+          <input id="propertyAddress" type="text" placeholder="Set your address in My Profile" autocomplete="street-address" required readonly disabled>
 
-        <div class="grid">
-          <div><label for="serviceCity">City (verified by ZIP)</label><input id="serviceCity" autocomplete="address-level2" required readonly></div>
+          <div class="grid">
+          <div><label for="serviceCity">City</label><input id="serviceCity" autocomplete="address-level2" required readonly disabled></div>
           <div><label for="serviceState">State (verified by ZIP)</label><select id="serviceState" autocomplete="address-level1" required disabled>
             <option value="">Select a state</option>
             <option value="AL">AL</option>
@@ -970,9 +973,9 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
             <option value="WI">WI</option>
             <option value="WY">WY</option>
           </select></div>
-          <div><label for="serviceZip">ZIP Code</label><input id="serviceZip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="" autocomplete="postal-code" required></div>
-        </div>
-        <p id="serviceZipStatus" class="subtitle">Enter a US ZIP code to look up city, state and approximate location.</p>
+          <div><label for="serviceZip">ZIP Code</label><input id="serviceZip" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Set in My Profile" autocomplete="postal-code" required readonly disabled></div>
+          </div>
+        </section>
 
         <label for="customerBudgetChoice">Project Budget</label>
         <select id="customerBudgetChoice" required>
@@ -1302,10 +1305,17 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       $("serviceZipStatus").textContent = hasVerifiedHomeAddress
         ? "Using your verified primary account address. Change it in My Profile if you have moved."
         : "Add and verify your primary home address in My Profile before requesting service.";
+      // Request form address controls remain disabled: address changes happen in My Profile.
       $("propertyAddress").readOnly = true;
+      $("propertyAddress").disabled = true;
       $("serviceCity").readOnly = true;
+      $("serviceCity").disabled = true;
       $("serviceState").disabled = true;
       $("serviceZip").readOnly = true;
+      $("serviceZip").disabled = true;
+      $("editPrimaryAddressFromRequest").textContent = hasVerifiedHomeAddress
+        ? "Update Address in My Profile"
+        : "Add Address in My Profile";
       $("customerAvatarPreview").src = data.avatar_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%23fff3eb'/%3E%3Ccircle cx='50' cy='38' r='17' fill='%23f46b2b'/%3E%3Cpath d='M18 91c3-22 15-33 32-33s29 11 32 33' fill='%23f46b2b'/%3E%3C/svg%3E";
       $("customerAvatarPreview").dataset.currentUrl = data.avatar_url || "";
       $("removeCustomerAvatarButton").hidden = !data.avatar_url;
@@ -1654,12 +1664,14 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
       return result;
     }
 
-    $("serviceZip").addEventListener("input", () => {
-      $("serviceZip").dataset.verifiedZip = "";
-      $("serviceZipStatus").textContent = "ZIP code changed. Verify it before submitting.";
+    // Address edits are made only in My Profile, never inside Request a Service.
+    $("editPrimaryAddressFromRequest").addEventListener("click", () => {
+      const profileButton = document.querySelector('.dashboard-menu-button[data-dashboard-page="profile"]');
+      if (profileButton) profileButton.click();
+      $("customerHomeAddress").scrollIntoView({behavior:"smooth",block:"center"});
+      $("requestProfileUpdateButton").click();
+      $("customerHomeAddress").focus();
     });
-    $("serviceZip").addEventListener("change", lookupCustomerZip);
-    $("serviceZip").addEventListener("blur", lookupCustomerZip);
     const serviceDetailQuestions = {
       "Tile Installation": [["Work area","Floor, Walls, Walls & Floors, Shower, Backsplash"],["Approximate area (sq ft)","number"],["Tile type","Ceramic, porcelain, natural stone, not sure"],["Remove old tile?","Yes, no, not sure"],["Subfloor/wall repair needed?","Yes, no, not sure"],["Materials supplied by","Customer, contractor, not sure"]],
       "House Cleaning": [["Approximate area to clean (sq ft)","number"],["Bedrooms","number"],["Bathrooms","number"],["Home type","Apartment, single-story, multi-story, townhouse"],["Cleaning type","Standard, deep clean, move-in/out"],["Frequency","One-time, weekly, biweekly, monthly"],["Inside oven/fridge?","Yes, no"],["Pets?","Yes, no"]],
@@ -2377,11 +2389,6 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           // Restore the confirmation automatically if the page was refreshed mid-draft.
           $("confirmSelectedServices").checked = true;
         }
-        const zipIsValid = $("serviceZip").dataset.verifiedZip === $("serviceZip").value.trim()
-          ? true : await lookupCustomerZip();
-        if (!zipIsValid) {
-          throw new Error("Please enter a valid US ZIP code. The request cannot be submitted until the ZIP is verified.");
-        }
         const { data: sessionData, error: sessionError } =
           await db.auth.getSession();
         if (sessionError) throw sessionError;
@@ -2403,6 +2410,7 @@ html.zelpx-maintenance-check body{visibility:hidden!important}
           .single();
         if (addressError) throw addressError;
         if (!savedAddress?.customer_address_verified_at || !savedAddress.customer_address) {
+          showMessage("requestMessage", "Please add and verify your primary home address in My Profile first.", "error");
           throw new Error("Add and verify your primary home address in My Profile before submitting a service request.");
         }
 
