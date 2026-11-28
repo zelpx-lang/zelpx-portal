@@ -95,6 +95,11 @@
     .request-summary-row .request-open-button{min-height:34px;padding:6px 12px;align-self:center;min-width:72px;flex:0 0 auto;font-size:12px;}
     .request-needs-review{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;padding:5px 7px;border-radius:999px;background:#fff1e8;color:#b9471d;font-size:10px;font-weight:800;white-space:nowrap;}
     .request-needs-review .bell{font-size:13px;line-height:1;}
+    .request-verification-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;max-width:100%;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:800;line-height:1.25;white-space:nowrap;}
+    .request-verification-badge.is-verified{background:#e8f6ed;color:#176b39;border:1px solid #c6e8d0;}
+    .request-verification-badge.is-pending{background:#fff4df;color:#955b08;border:1px solid #f1d7a7;}
+    .request-verification-badge.is-review{background:#fff0ef;color:#b42318;border:1px solid #f3c5c1;}
+    @media(max-width:700px){.request-verification-badge{font-size:9px;padding:4px 6px;}}
     .request-modal-backdrop{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:#15171ccc;}
     .request-modal-backdrop.hidden{display:none!important;}
     .request-modal{width:min(760px,100%);max-height:90dvh;overflow:auto;background:#f6f2ec;border-radius:20px;padding:16px;box-shadow:0 24px 80px #0006;}
@@ -2746,6 +2751,45 @@
         const needsAttention = requestStatus === "new";
         summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · " + (requestStatus === "published" ? "Published" : requestStatus);
         summaryMain.append(summaryName, summaryMeta);
+
+        // Show the automatic sale-verification result directly in the compact
+        // incoming-request list, without requiring the admin to open each order.
+        const verification = verificationByRequest[request.id];
+        const verificationChecks = verification?.checks || {};
+        const verificationHasFlags =
+          verificationChecks.same_customer_duplicate === true ||
+          verificationChecks.duplicate_description === true ||
+          verificationChecks.high_submission_frequency === true;
+        const verificationPassed = Boolean(
+          verification &&
+          String(verification.risk_level || "").toLowerCase() === "low" &&
+          verificationChecks.email_confirmed === true &&
+          verificationChecks.phone_sms_confirmed === true &&
+          verificationChecks.zip_format_valid === true &&
+          !verificationHasFlags
+        );
+        const verificationNeedsReview = Boolean(
+          verification &&
+          (String(verification.risk_level || "").toLowerCase() === "high" ||
+           String(verification.risk_level || "").toLowerCase() === "review" ||
+           verificationHasFlags)
+        );
+        const verificationBadge = document.createElement("span");
+        verificationBadge.className = "request-verification-badge " +
+          (verificationPassed ? "is-verified" : verificationNeedsReview ? "is-review" : "is-pending");
+        verificationBadge.setAttribute("role", "status");
+        if (verificationPassed) {
+          verificationBadge.textContent = "✓ Verified for sale";
+          verificationBadge.setAttribute("aria-label", "All automatic sale verification checks passed");
+        } else if (verificationNeedsReview) {
+          verificationBadge.textContent = "⚠ Review required";
+          verificationBadge.setAttribute("aria-label", "Automatic verification flagged this request for review");
+        } else {
+          verificationBadge.textContent = "◷ Verification pending";
+          verificationBadge.setAttribute("aria-label", "Sale verification is incomplete or no result is available");
+        }
+        summaryMain.append(verificationBadge);
+
         let attentionBell = null;
         if (needsAttention) {
           attentionBell = document.createElement("span");
