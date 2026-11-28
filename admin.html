@@ -971,7 +971,7 @@
       const subtitle=document.createElement("p");subtitle.className="zelpx-confirm-note";subtitle.textContent="Please verify the customer and job details before publishing.";
       top.append(icon,title,subtitle);
       const body=document.createElement("div");body.className="zelpx-confirm-body zelpx-publish-body";
-      const rows=[["Sale type",details.saleType],["Service",details.service],["Customer",details.customer],["Address",details.address],["ZIP code",details.zip],["City",details.city],["Lead purchase price",details.leadPrice],...(details.projectValue?[["Estimated project value",details.projectValue]]:[])];
+      const rows=[["Sale type",details.saleType],["Service",details.service],["Customer",details.customer],["Address",details.address],["ZIP code",details.zip],["City",details.city],...(details.customerProjectBudget?[["Customer project budget",details.customerProjectBudget]]:[]),["Lead purchase price",details.leadPrice],...(details.projectValue?[["Estimated project value",details.projectValue]]:[])];
       rows.forEach(([label,value])=>{const row=document.createElement("div");row.className="zelpx-publish-row";const key=document.createElement("span");key.textContent=label;const val=document.createElement("strong");val.textContent=value||"Not provided";row.append(key,val);body.append(row);});
       const note=document.createElement("p");note.className="zelpx-confirm-note zelpx-publish-warning";note.textContent="Only continue after verifying the customer's details.";body.append(note);
       const actions=document.createElement("div");actions.className="zelpx-confirm-actions";
@@ -2586,6 +2586,10 @@
               zip: zipValue,
               city: cityValue + ", " + stateValue,
               leadPrice: "$" + priceValue.toFixed(2),
+              customerProjectBudget: request.customer_budget_cents != null
+                ? money(request.customer_budget_cents)
+                : request.customer_budget_choice === "not_decided" ? "Budget not decided"
+                : request.customer_budget_choice === "pricing_guidance" ? "Wants pricing guidance" : null,
               projectValue: isPackage && projectValue !== null ? "$" + projectValue.toFixed(2) : null
             })) return;
             setBusy(publish, true, "Publishing…"); feedback.className = "message hidden"; feedback.textContent = "";
