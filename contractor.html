@@ -2225,30 +2225,13 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
     actions.append(close,go);panel.append(title,body,actions);overlay.append(panel);document.body.append(overlay);go.focus();
   }
 
-  async function buyLead(lead, button, offerInput = null) {
+  async function buyLead(lead, button) {
     if(!isLeadServiceSelected(lead))return showLeadRequirementNotice("Service not selected","This service is not selected in your contractor account. Update your account in My company → Work types & license requirements to become eligible to purchase this lead.");
     if(!contractorPhoneIsVerified())return showLeadRequirementNotice("Phone verification required","You have not verified the phone number for your contractor account. Verify it in My company → Account phone verification. After successful verification, you can purchase leads without another SMS check.");
     const purchaseLabel = lead.lead_type === "lead_package" ? "this entire Lead Package" : "this exclusive lead";
-    const hasCustomerBudget = lead.project_value_cents != null && Number(lead.project_value_cents) > 0 &&
-      ["customer_entered","custom"].includes(lead.customer_budget_choice);
-    let offerAmount = null;
-    if (hasCustomerBudget) {
-      offerAmount = Number(offerInput?.value);
-      if (!offerInput || !Number.isFinite(offerAmount) || offerAmount <= 0 ||
-          Math.round(offerAmount * 100) !== offerAmount * 100) {
-        if (offerInput) {
-          offerInput.required = true;
-          offerInput.setCustomValidity("Enter your job offer before purchasing this lead.");
-          offerInput.reportValidity();
-          offerInput.addEventListener("input", () => offerInput.setCustomValidity(""), { once:true });
-        }
-        message("appMessage","Enter your job offer amount first. You must decide how much you are offering to charge for this work before purchasing the lead.","error");
-        offerInput?.focus();
-        return;
-      }
-    }
-    if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel,
-      offerAmount === null ? null : "$" + offerAmount.toFixed(2))) return;
+    // Buying a lead is separate from making a job-price offer. The purchase
+    // amount is always read and charged by the buy_lead database function.
+    if (!await confirmLeadPurchase(money(lead.price_cents), purchaseLabel)) return;
     clearMessage("appMessage"); setBusy(button, true, "Purchasing…");
     try {
       const { data, error } = await db.rpc("buy_lead", { p_lead_id: lead.id });
@@ -2485,22 +2468,11 @@ panel.innerHTML = '<h2 style="margin:0 0 8px;font-size:26px;line-height:1.2;colo
         // Keep the existing instant-purchase flow for regular leads.
         const buyButton = document.createElement("button"); buyButton.type = "button";
         buyButton.textContent = lead.previewOnly ? "Sign in to view details" : (canBuy ? (isPackage ? "View & Buy Lead Package" : "View & Buy Lead") : "Not eligible to purchase");
-        const isValidPurchaseOffer = () => {
-          if (!canOffer) return true;
-          const amount=Number(offerInput?.value);
-          return Number.isFinite(amount) && amount>0 && Math.round(amount*100)===amount*100;
-        };
-        buyButton.disabled = !canOpenPurchase || (canOffer && !isValidPurchaseOffer());
+        // Buying never depends on the optional job-offer input. The displayed
+        // customer lead price is the only price charged by the secure RPC.
+        buyButton.disabled = !canOpenPurchase;
         if (canOpenPurchase) {
-          if (canOffer) offerInput.addEventListener("input",()=>{ buyButton.disabled=!isValidPurchaseOffer(); });
-          buyButton.addEventListener("click", () => {
-            if (canOffer && !isValidPurchaseOffer()) {
-              message("appMessage","Enter your job offer amount before continuing.","error");
-              offerInput?.focus();
-              return;
-            }
-            buyLead(lead, buyButton, canOffer ? offerInput : null);
-          });
+          buyButton.addEventListener("click", () => buyLead(lead, buyButton));
         }
         footer.append(buyButton);
       } else { const note = document.createElement("span"); note.className = "lead-date"; note.textContent = "Already purchased · details private"; footer.append(note); }
