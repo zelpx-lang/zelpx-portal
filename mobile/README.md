@@ -29,7 +29,6 @@ Android notification sounds use the system default sound. Users can change sound
 - Stripe checkout / Connect user flows.
 - A server-backed cross-device notification inbox with read/unread synchronization.
 - iOS push registration and APNs delivery.
-- iOS push registration and APNs delivery.
 - Production signing, store screenshots, policy declarations and release bundle.
 
 ## Configuration
