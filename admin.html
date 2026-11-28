@@ -751,6 +751,8 @@
       button.textContent = "Published successfully";
     });
   }
+  // Expose the confirmation helper for every admin modal/realtime callback path.
+  window.showPublishedRequestResult = showPublishedRequestResult;
   function setBusy(button, busy, label) {
     button.disabled = busy;
     if (busy) { button.dataset.oldText = button.textContent; button.textContent = label || "Please wait…"; }
@@ -1825,7 +1827,7 @@
         if (!isAdmin || !currentUser) return;
         const updated = payload.new || {};
         if (updated.status === "published" && updated.lead_id) {
-          showPublishedRequestResult(updated.id, updated.lead_id);
+          window.showPublishedRequestResult(updated.id, updated.lead_id);
         }
         refreshIncomingLeadBadge();
       })
@@ -2646,7 +2648,7 @@
               // database returns the new lead ID. Keep the dialog and current page in place.
               request.lead_id = leadId;
               request.status = "published";
-              showPublishedRequestResult(request.id, leadId);
+              window.showPublishedRequestResult(request.id, leadId);
               setBusy(publish, false);
               summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
               if (attentionBell) attentionBell.remove();
@@ -2670,7 +2672,7 @@
                   if (!latestError && latestRequest?.lead_id) {
                     request.lead_id = latestRequest.lead_id;
                     request.status = latestRequest.status || "published";
-                    showPublishedRequestResult(request.id, latestRequest.lead_id);
+                    window.showPublishedRequestResult(request.id, latestRequest.lead_id);
                     summaryMeta.textContent = modalDate + (modalAddress ? " · " + modalAddress : "") + " · Published";
                     if (attentionBell) attentionBell.remove();
                     feedback.textContent = "This request was already published. Lead ID: " + latestRequest.lead_id;
