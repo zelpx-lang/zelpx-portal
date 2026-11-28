@@ -63,6 +63,10 @@ export default function App() {
     }
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !password) { setMessage("Enter your email and password."); return; }
+    if (mode === "signup" && accountType !== "customer") {
+      setMessage("Contractor registration requires company details, service areas, and license verification. Existing contractors can sign in; native contractor registration is being built.");
+      return;
+    }
     if (mode === "signup" && (!fullName.trim() || !phone.trim())) { setMessage("Enter your full name and phone number."); return; }
     if (mode === "signup" && password.length < 8) { setMessage("Use a password with at least 8 characters."); return; }
 
@@ -146,9 +150,9 @@ export default function App() {
           <Pressable disabled={busy} style={[s.primary, busy && s.disabled]} onPress={submitAuth}>
             {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryText}>{mode === "login" ? "Sign In" : "Create Account"}</Text>}
           </Pressable>
-          <Pressable onPress={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
+          {accountType === "customer" && <Pressable onPress={() => { setMode(mode === "login" ? "signup" : "login"); setMessage(""); }}>
             <Text style={s.switchText}>{mode === "login" ? "New to ZELPX? Create an account" : "Already have an account? Sign in"}</Text>
-          </Pressable>
+          </Pressable>}
           {mode === "signup" && accountType === "contractor" && <Text style={s.helper}>Contractor registration with company information, service areas, and license verification is the next dedicated mobile flow. Existing contractors can sign in now.</Text>}
         </>}
 
